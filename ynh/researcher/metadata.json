@@ -1,0 +1,12 @@
+{
+  "ynh": {
+    "default_vendor": "claude",
+    "includes": [
+      {
+        "git": "github.com/eyelock/assistants",
+        "path": "skills/dev",
+        "pick": ["dev-review"]
+      }
+    ]
+  }
+}

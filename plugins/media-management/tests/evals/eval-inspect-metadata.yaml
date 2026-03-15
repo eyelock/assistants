@@ -1,0 +1,15 @@
+name: "Metadata inspection and issue detection"
+description: "Test that manage-metadata correctly identifies all metadata issues"
+setup:
+  - "Create folder with MP3s having: missing genre, inconsistent artists, wrong track count"
+invoke: "/media-management:manage-metadata inspect ~/Downloads/Test"
+expected_behavior:
+  - "Runs inspect-metadata.sh on the folder"
+  - "Presents results as a readable table"
+  - "Flags: missing genre across all tracks"
+  - "Flags: inconsistent artist names"
+  - "Flags: wrong track count totals"
+  - "Suggests album type based on artist analysis"
+verification:
+  - "All issues from the test data are identified"
+  - "No false positives for fields that are correct"

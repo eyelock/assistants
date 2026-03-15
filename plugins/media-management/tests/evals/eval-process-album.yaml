@@ -1,0 +1,23 @@
+name: "Single artist album - standard workflow"
+description: "Test the complete process-album workflow with a standard single-artist album"
+setup:
+  - "Create two test ZIPs in Downloads: 'Test Artist - Test Album.zip' (MP3s) and 'Test Artist - Test Album-2.zip' (WAVs)"
+  - "Each ZIP contains 4 tracks with known metadata"
+invoke: "/media-management:process-album"
+expected_behavior:
+  - "Identifies both ZIPs and classifies MP3 vs WAV correctly"
+  - "Extracts MP3 ZIP to Downloads/Test Artist - Test Album/ subfolder"
+  - "Presents metadata and asks user to confirm genre, artist, album"
+  - "Does NOT proceed without user confirmation"
+  - "Updates track count to 4/4 on all MP3s"
+  - "Copies MP3s to Apple Music import folder"
+  - "Pauses for Apple Music import confirmation"
+  - "After confirmation, copies from Apple Music library to NAS MP3 staging"
+  - "Extracts WAV ZIP, copies directly to NAS WAV staging (skips Apple Music)"
+  - "Renames WAVs to clean format"
+  - "Archives ZIPs and cleans Downloads"
+verification:
+  - "ffprobe confirms track metadata on staged MP3s"
+  - "NAS MP3 and WAV directories have matching file counts"
+  - "No files remain in Downloads"
+  - "Original ZIPs are in processed/ directory"

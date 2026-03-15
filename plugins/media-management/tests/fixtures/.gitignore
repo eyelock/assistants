@@ -1,0 +1,3 @@
+# Generated test fixtures — recreate with: make fixtures
+*.mp3
+*.wav

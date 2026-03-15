@@ -1,0 +1,16 @@
+name: "ZIP pair identification"
+description: "Test that select-release correctly identifies and classifies ZIP pairs"
+setup:
+  - "Create mismatched ZIP filenames where suffix doesn't indicate format"
+  - "MP3 ZIP is smaller (~100MB), WAV ZIP is larger (~800MB)"
+invoke: "/media-management:select-release"
+expected_behavior:
+  - "Finds all ZIP files in Downloads"
+  - "Inspects contents with unzip -l (does NOT extract)"
+  - "Classifies by content and size, NOT by filename"
+  - "Identifies pairs by matching base names"
+  - "Presents findings in a clear table"
+  - "Asks user to select which release to process"
+verification:
+  - "ZIP classification matches actual content"
+  - "No files were extracted during identification"
