@@ -4,23 +4,23 @@
     "includes": [
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/dev/skills",
-        "pick": ["dev-project", "dev-quality", "dev-review", "dev-security", "dev-backend", "dev-ui", "dev-debug"]
+        "path": "skills/dev",
+        "pick": ["skills/dev-project", "skills/dev-quality", "skills/dev-review", "skills/dev-security", "skills/dev-backend", "skills/dev-ui", "skills/dev-debug"]
       },
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/tech/skills",
-        "pick": ["go-lang"]
+        "path": "skills/tech",
+        "pick": ["skills/go-lang"]
       },
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/infra/skills",
-        "pick": ["gh-os-repo", "terraform-backend-aws"]
+        "path": "skills/infra",
+        "pick": ["skills/gh-os-repo", "skills/terraform-backend-aws"]
       },
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/pause/skills",
-        "pick": ["help-me-answer", "take-a-moment"]
+        "path": "skills/pause",
+        "pick": ["skills/help-me-answer", "skills/take-a-moment"]
       }
     ]
   }

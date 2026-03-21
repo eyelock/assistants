@@ -4,8 +4,8 @@
     "includes": [
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/dev/skills",
-        "pick": ["dev-review"]
+        "path": "skills/dev",
+        "pick": ["skills/dev-review"]
       }
     ]
   }

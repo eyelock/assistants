@@ -4,13 +4,13 @@
     "includes": [
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/dev/skills",
-        "pick": ["dev-quality"]
+        "path": "skills/dev",
+        "pick": ["skills/dev-quality"]
       },
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/tech/skills",
-        "pick": ["go-lang"]
+        "path": "skills/tech",
+        "pick": ["skills/go-lang"]
       }
     ]
   }
