@@ -1,16 +1,6 @@
 {
-  "description": "Media Management hooks — safety checks + frictionless auto-approval",
+  "description": "Media Management hooks — safety checks + path-based auto-approval",
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-init.sh"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

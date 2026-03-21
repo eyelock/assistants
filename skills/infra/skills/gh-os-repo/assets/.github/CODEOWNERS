@@ -1,0 +1,10 @@
+# Default owners for everything in the repo
+* @{owner}
+
+# Source code
+/src/ @{owner}
+/tests/ @{owner}
+
+# Build and CI
+/Makefile @{owner}
+/.github/workflows/ @{owner}

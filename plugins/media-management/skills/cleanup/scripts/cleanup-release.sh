@@ -17,8 +17,11 @@ Move processed ZIP files to a "processed/" subfolder and remove extraction
 folders for a given release.
 
 This script calls find-release-artifacts.sh to locate items, then:
-  - Moves all matching ZIPs to <downloads_folder>/processed/
+  - Moves all matching ZIPs to MEDIA_MGMT_PROCESSED (or <downloads_folder>/processed/)
   - Removes all matching extraction folders
+
+Environment:
+  MEDIA_MGMT_PROCESSED  Override processed ZIP destination (default: <downloads_folder>/processed/)
 
 Arguments:
   downloads_folder  Path to the downloads directory
@@ -97,9 +100,12 @@ archived_zips="[]"
 zips_archived=0
 errors=0
 
+# Determine processed destination: env var > config > fallback to $DOWNLOADS/processed
+PROCESSED_DIR="${MEDIA_MGMT_PROCESSED:-$DOWNLOADS/processed}"
+
 if [[ $zip_count -gt 0 ]]; then
-  mkdir -p "$DOWNLOADS/processed" || {
-    echo "Error: failed to create processed/ directory" >&2
+  mkdir -p "$PROCESSED_DIR" || {
+    echo "Error: failed to create processed directory: $PROCESSED_DIR" >&2
     exit 3
   }
 
@@ -107,10 +113,10 @@ if [[ $zip_count -gt 0 ]]; then
     zip_path=$(echo "$artifacts" | jq -r ".zips[$i].path")
     zip_file=$(echo "$artifacts" | jq -r ".zips[$i].file")
 
-    if mv "$zip_path" "$DOWNLOADS/processed/" 2>/dev/null; then
+    if mv "$zip_path" "$PROCESSED_DIR/" 2>/dev/null; then
       archived_zips=$(echo "$archived_zips" | jq --arg name "$zip_file" '. + [$name]')
       zips_archived=$((zips_archived + 1))
-      echo "Archived: $zip_file → processed/" >&2
+      echo "Archived: $zip_file → $PROCESSED_DIR/" >&2
     else
       echo "Error archiving: $zip_file" >&2
       errors=$((errors + 1))

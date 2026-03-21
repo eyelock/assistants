@@ -4,12 +4,12 @@
     "includes": [
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/dev",
+        "path": "skills/dev/skills",
         "pick": ["dev-project", "dev-review"]
       },
       {
         "git": "github.com/eyelock/assistants",
-        "path": "skills/gh",
+        "path": "skills/infra/skills",
         "pick": ["gh-os-repo"]
       }
     ]

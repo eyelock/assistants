@@ -1,0 +1,13 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+*.tfplan
+
+# tfvars may contain sensitive values
+*.tfvars
+!terraform.tfvars.example
+
+# OS
+.DS_Store

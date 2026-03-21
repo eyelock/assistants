@@ -1,0 +1,14 @@
+# =============================================================================
+# Terraform Backend Configuration
+# =============================================================================
+# This file drives both terraform variables AND backend config.
+# The Makefile extracts bucket, region, and dynamodb_table for -backend-config flags.
+
+bucket         = "myproject-terraform-state"
+region         = "eu-west-1"
+dynamodb_table = "myproject-terraform-locks"
+
+tags = {
+  Project   = "myproject"
+  ManagedBy = "terraform"
+}
