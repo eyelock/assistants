@@ -1,0 +1,37 @@
+# Codex configuration for the media-management plugin.
+#
+# This is the Codex equivalent of what .claude/settings.json and .mcp.json
+# provide for Claude Code and Cursor. Copy this to your project's
+# .codex/config.toml or merge it into ~/.codex/config.toml.
+#
+# Note: Codex does not have a plugin/marketplace system. Skills are installed
+# by copying them to ~/.agents/skills/ or .agents/skills/ in your project.
+
+# --- Sandbox ---
+# Media management scripts need write access to specific directories.
+# Adjust these paths for your installation.
+
+[sandbox_workspace_write]
+writable_roots = [
+  "/Users/david/Downloads",
+  "/Users/david/Music",
+  "/Users/david/Storage/Music",
+]
+network_access = false
+
+# --- Environment ---
+# Equivalent of the MEDIA_MGMT_* env vars from CLAUDE.md / AGENTS.md.
+# Uncomment and edit to override default paths from config.json.
+
+# [env]
+# MEDIA_MGMT_DOWNLOADS = "/Users/david/Downloads"
+# MEDIA_MGMT_LIBRARY_IMPORT = "/Users/david/Automatically Add to Music.localized"
+# MEDIA_MGMT_LIBRARY_STORAGE = "/Users/david/Music"
+# MEDIA_MGMT_ARCHIVE_WORKDIR = "/Users/david/Storage/Music"
+
+# --- Skills ---
+# Disable any skills that shouldn't auto-invoke for this project.
+
+# [[skills.config]]
+# path = "~/.agents/skills/split-long-tracks/SKILL.md"
+# enabled = true

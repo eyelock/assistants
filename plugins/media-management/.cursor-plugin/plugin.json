@@ -1,0 +1,8 @@
+{
+  "name": "media-management",
+  "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS",
+  "version": "0.1.0",
+  "author": {
+    "name": "eyelock"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "eyelock-assistants",
+  "owner": {
+    "name": "eyelock"
+  },
+  "metadata": {
+    "description": "Plugins and skills for development workflows, media management, and conversational alignment."
+  },
+  "plugins": [
+    {
+      "name": "media-management",
+      "source": "./plugins/media-management",
+      "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "dev-skills",
+      "source": "./skills/dev",
+      "description": "Development workflow skills: project setup, code quality, review, debugging, backend, UI, and security patterns.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "tech-skills",
+      "source": "./skills/tech",
+      "description": "Language-specific development skills: Go and Java workflows, tooling, and patterns.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "infra-skills",
+      "source": "./skills/infra",
+      "description": "Infrastructure skills: GitHub repository setup, Terraform backend provisioning on AWS.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "pause-skills",
+      "source": "./skills/pause",
+      "description": "Conversational skills: guided elicitation and context checkpoints for alignment.",
+      "version": "0.1.0"
+    }
+  ]
+}
