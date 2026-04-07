@@ -4,7 +4,7 @@ This is a reference repository of sample plugins, skills, and personas. It is no
 
 ## Repository Structure
 
-- `plugins/` — Self-contained plugins with vendor-specific manifests (`.claude-plugin/`, `.cursor-plugin/`)
+- `plugins/` — Self-contained plugins with manifests (`harness.json`, `.cursor-plugin/`)
 - `skills/` — Shared skill plugins organized by domain, each with its own plugin manifests
 - `ynh/` — Personas that compose skills from the shared library via includes
 - `.claude-plugin/marketplace.json` — Claude Code marketplace index
@@ -28,6 +28,6 @@ Skills live under `skills/<domain>/skills/<skill-name>/SKILL.md`.
 ## Working with this repo
 
 - Do not modify skills content without understanding the agentskills.io spec
-- Plugin manifests exist in both `.claude-plugin/` and `.cursor-plugin/` — keep them in sync
+- Plugin manifests exist as `harness.json` and `.cursor-plugin/plugin.json` — keep them in sync
 - Marketplace JSON files exist in both directories — keep them in sync
-- The `ynh/` personas use a separate metadata format (`metadata.json`) for skill composition
+- The `ynh/` personas use `harness.json` for skill composition (includes, default_vendor, etc.)

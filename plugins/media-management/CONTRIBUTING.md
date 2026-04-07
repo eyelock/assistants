@@ -39,7 +39,7 @@ Portability to other AI clients is not a priority.
 
 ```
 media-management/
-├── .claude-plugin/plugin.json     # Plugin manifest (name, version, author)
+├── harness.json                   # Harness manifest (name, version, author)
 ├── .claude/
 │   ├── CLAUDE.md                  # Project instructions, config, safety rules
 │   └── settings.json              # Permissions, env vars, announcements

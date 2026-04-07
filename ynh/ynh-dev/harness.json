@@ -1,0 +1,30 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "name": "ynh-dev",
+  "version": "0.1.0",
+  "default_vendor": "claude",
+  "allowed_remote_sources": [
+    "github.com/eyelock/assistants",
+    "github.com/Jeffallan/claude-skills"
+  ],
+  "includes": [
+    {
+      "git": "github.com/Jeffallan/claude-skills.git",
+      "pick": ["skills/golang-pro"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/dev",
+      "pick": ["skills/dev-quality", "skills/dev-review"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/tech",
+      "pick": ["skills/go-lang"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/pause"
+    }
+  ]
+}

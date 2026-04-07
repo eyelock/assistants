@@ -1,0 +1,29 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "name": "david",
+  "version": "0.1.0",
+  "description": "David's personal development persona with full skill set",
+  "default_vendor": "claude",
+  "includes": [
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/dev",
+      "pick": ["skills/dev-project", "skills/dev-quality", "skills/dev-review", "skills/dev-security", "skills/dev-backend", "skills/dev-ui", "skills/dev-debug"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/tech",
+      "pick": ["skills/go-lang"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/infra",
+      "pick": ["skills/gh-os-repo", "skills/terraform-backend-aws"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/pause",
+      "pick": ["skills/help-me-answer", "skills/take-a-moment"]
+    }
+  ]
+}
