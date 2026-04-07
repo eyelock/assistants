@@ -1,0 +1,9 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "name": "infra-skills",
+  "version": "0.1.0",
+  "description": "Infrastructure skills: GitHub repository setup, Terraform backend provisioning on AWS.",
+  "author": {
+    "name": "eyelock"
+  }
+}

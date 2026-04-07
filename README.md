@@ -6,7 +6,7 @@ Nothing here is guaranteed to be complete, stable, or suitable for any particula
 
 ## What This Repository Demonstrates
 
-- **Cross-vendor plugins** — Each plugin carries both `.claude-plugin/` and `.cursor-plugin/` manifests, making it usable from either tool's marketplace
+- **Cross-vendor plugins** — Each plugin carries a `harness.json` manifest and a `.cursor-plugin/` manifest, making it usable from either tool's marketplace
 - **Portable skills** — Skills follow the [agentskills.io specification](https://agentskills.io/specification), the open standard adopted by Claude Code, Cursor, Codex, GitHub Copilot, and others
 - **Dual marketplace** — The repo serves as both a Claude Code marketplace and a Cursor team marketplace from the same GitHub repository
 - **Vendor-neutral instructions** — `AGENTS.md` files provide project context for Codex and Cursor alongside `CLAUDE.md` for Claude Code
@@ -23,13 +23,13 @@ assistants/
 ├── AGENTS.md                     # Codex/Cursor project instructions
 ├── plugins/
 │   └── media-management/         # Self-contained plugin (skills, agents, hooks, tests)
-│       ├── .claude-plugin/plugin.json
+│       ├── harness.json
 │       ├── .cursor-plugin/plugin.json
 │       ├── .claude/CLAUDE.md     # Claude Code instructions
 │       └── AGENTS.md             # Codex/Cursor instructions
 ├── skills/
 │   ├── dev/                      # Development workflow plugin (7 skills)
-│   │   ├── .claude-plugin/plugin.json
+│   │   ├── harness.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── skills/
 │   │       ├── dev-project/
@@ -40,19 +40,19 @@ assistants/
 │   │       ├── dev-debug/
 │   │       └── dev-security/
 │   ├── tech/                     # Language-specific plugin (2 skills)
-│   │   ├── .claude-plugin/plugin.json
+│   │   ├── harness.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── skills/
 │   │       ├── go-lang/
 │   │       └── java-lang/
 │   ├── infra/                    # Infrastructure plugin (2 skills)
-│   │   ├── .claude-plugin/plugin.json
+│   │   ├── harness.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── skills/
 │   │       ├── gh-os-repo/
 │   │       └── terraform-backend-aws/
 │   └── pause/                    # Conversational alignment plugin (2 skills)
-│       ├── .claude-plugin/plugin.json
+│       ├── harness.json
 │       ├── .cursor-plugin/plugin.json
 │       └── skills/
 │           ├── help-me-answer/
@@ -111,7 +111,7 @@ $skill-installer dev-project
 | Layer | Claude Code | Cursor | Codex |
 |-------|-------------|--------|-------|
 | **Skills (SKILL.md)** | Native | Native | Native |
-| **Plugin manifest** | `.claude-plugin/plugin.json` | `.cursor-plugin/plugin.json` | N/A |
+| **Plugin manifest** | `harness.json` | `.cursor-plugin/plugin.json` | N/A |
 | **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | N/A |
 | **Instructions** | `.claude/CLAUDE.md` | `AGENTS.md`, `.cursor/rules/` | `AGENTS.md` |
 | **MCP servers** | `.mcp.json` | `.mcp.json` | `config.toml` |

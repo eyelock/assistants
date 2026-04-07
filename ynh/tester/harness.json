@@ -1,0 +1,19 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "name": "tester",
+  "version": "0.1.0",
+  "description": "Testing and quality assurance persona",
+  "default_vendor": "claude",
+  "includes": [
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/dev",
+      "pick": ["skills/dev-quality"]
+    },
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "skills/tech",
+      "pick": ["skills/go-lang"]
+    }
+  ]
+}
