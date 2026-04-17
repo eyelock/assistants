@@ -8,6 +8,12 @@
   },
   "plugins": [
     {
+      "name": "gitflow",
+      "source": "./plugins/gitflow",
+      "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
+      "version": "0.1.0"
+    },
+    {
       "name": "media-management",
       "source": "./plugins/media-management",
       "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",

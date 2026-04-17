@@ -1,0 +1,78 @@
+{
+  "name": "eyelock-assistants",
+  "description": "Harnesses, plugins, and skills for development workflows, media management, and conversational alignment.",
+  "entries": [
+    {
+      "name": "david",
+      "description": "David's personal full-stack development persona with Go, infra, and conversational alignment skills",
+      "keywords": ["go", "development", "full-stack", "infrastructure", "terraform"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/david",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "planner",
+      "description": "Architecture and implementation planning persona",
+      "keywords": ["planning", "architecture", "design", "review"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/planner",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "researcher",
+      "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
+      "keywords": ["research", "analysis", "investigation", "codebase", "api"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/researcher",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "tester",
+      "description": "Testing and quality assurance persona",
+      "keywords": ["testing", "quality", "qa", "go", "coverage"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/tester",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "ynh-dev",
+      "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
+      "keywords": ["ynh", "go", "development", "gitflow"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/ynh-dev",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "termq-dev",
+      "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
+      "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "ynh/termq-dev",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "gitflow",
+      "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
+      "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "plugins/gitflow",
+      "vendors": ["claude", "codex", "cursor"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "media-management",
+      "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
+      "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"],
+      "repo": "github.com/eyelock/assistants",
+      "path": "plugins/media-management",
+      "vendors": ["claude"],
+      "version": "0.1.0"
+    }
+  ]
+}
