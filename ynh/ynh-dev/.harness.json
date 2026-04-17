@@ -3,10 +3,6 @@
   "name": "ynh-dev",
   "version": "0.1.0",
   "default_vendor": "claude",
-  "allowed_remote_sources": [
-    "github.com/eyelock/assistants",
-    "github.com/Jeffallan/claude-skills"
-  ],
   "includes": [
     {
       "git": "github.com/eyelock/assistants",

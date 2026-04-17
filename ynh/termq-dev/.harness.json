@@ -4,9 +4,6 @@
   "version": "0.1.0",
   "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support.",
   "default_vendor": "claude",
-  "allowed_remote_sources": [
-    "github.com/eyelock/assistants"
-  ],
   "includes": [
     {
       "git": "github.com/eyelock/assistants",
