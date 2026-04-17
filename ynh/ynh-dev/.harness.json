@@ -9,13 +9,17 @@
   ],
   "includes": [
     {
+      "git": "github.com/eyelock/assistants",
+      "path": "plugins/gitflow"
+    },
+    {
       "git": "github.com/Jeffallan/claude-skills.git",
       "pick": ["skills/golang-pro"]
     },
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/dev",
-      "pick": ["skills/dev-quality", "skills/dev-review"]
+      "pick": ["skills/dev-quality", "skills/dev-review", "skills/skill-creator", "skills/gh-cli"]
     },
     {
       "git": "github.com/eyelock/assistants",
