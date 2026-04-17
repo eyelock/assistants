@@ -1,0 +1,9 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "name": "gitflow",
+  "version": "0.1.0",
+  "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
+  "author": {
+    "name": "eyelock"
+  }
+}
