@@ -38,19 +38,14 @@ Push committed work, open a PR targeting the correct base branch, monitor CI, an
 
    **Step A** — capture context and merge while CWD is still valid:
    ```bash
-   MAIN_REPO=$(git rev-parse --show-toplevel)
+   MAIN_REPO=$(git worktree list --porcelain | head -1 | sed 's/^worktree //')
+   WORKTREE_PATH=$(git rev-parse --show-toplevel)
    BRANCH=$(git branch --show-current)
    gh pr merge --squash
    ```
 
-   **Step B** — pivot CWD and clean up in a **single chained command**.
-   `cd` does not persist across Bash tool calls — Claude Code resets CWD to the session's
-   primary working directory on every call. Once the worktree directory is deleted, all
-   subsequent commands fail with "path does not exist". Chain everything after `cd` in one
-   shell invocation so it all runs before the shell exits:
+   **Step B** — run the cleanup script. The skill base directory is shown at the top of
+   this file when loaded — use it to locate the script:
    ```bash
-   cd "$MAIN_REPO" && git worktree prune && git branch -d "$BRANCH" && \
-     { git ls-remote --exit-code origin "$BRANCH" 2>/dev/null \
-       && git push origin --delete "$BRANCH" \
-       || echo "Remote branch already deleted"; }
+   bash "<skill-base>/scripts/post-merge-cleanup.sh" "$MAIN_REPO" "$WORKTREE_PATH" "$BRANCH"
    ```
