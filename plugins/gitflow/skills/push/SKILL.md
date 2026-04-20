@@ -41,7 +41,8 @@ Push committed work, open a PR targeting the correct base branch, monitor CI, an
    MAIN_REPO=$(git worktree list --porcelain | head -1 | sed 's/^worktree //')
    WORKTREE_PATH=$(git rev-parse --show-toplevel)
    BRANCH=$(git branch --show-current)
-   gh pr merge --squash
+   gh pr merge --squash   # feature/fix branches → develop
+   # Exception: release promotion PR (develop → main) must use --merge, not --squash
    ```
 
    **Step B** — run the cleanup script. The skill base directory is shown at the top of
