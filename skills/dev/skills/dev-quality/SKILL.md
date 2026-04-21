@@ -58,14 +58,21 @@ Check regularly — large batches of type errors are expensive to fix.
 
 ## Step 7: Test
 
-Run the test suite with coverage:
+**Tests are not optional.** Every code change must include tests covering the changed behaviour. This is a hard requirement, not a suggestion.
+
+Before running the suite, ask: *does the changed code have test coverage?* If not, write it first.
+
+- If logic lives in a testable layer: add or update tests directly.
+- If logic lives in a View or ViewModel layer that isn't unit-testable: extract the predicate or decision into a testable form (pure function, model method, helper) and test that. Do not accept "it's in a View" as a reason to skip tests.
+
+Run the test suite:
 
 ```bash
 make test          # or: go test -coverprofile=coverage.out ./...
 ```
 
-- All tests must pass
-- Review coverage for any significant gaps in changed code
+- All tests must pass — zero tolerance
+- New tests must cover the specific behaviour introduced or changed
 - If the project has integration tests, run them separately and ensure zero errors
 
 ## Step 8: Report

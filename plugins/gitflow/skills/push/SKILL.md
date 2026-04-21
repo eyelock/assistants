@@ -8,7 +8,7 @@ description: Push committed work, open a PR targeting the correct base branch, m
 Push committed work, open a PR targeting the correct base branch, monitor CI, and merge when ready.
 
 1. **Determine the base branch** from the current branch name:
-   - `develop` or `hotfix/*` → base is `main`
+   - `develop`, `hotfix/*`, or `release/*` → base is `main`
    - Any other branch → base is `develop`
 
 2. **Review commit count** — run `git log origin/<base>..HEAD --oneline`. Since this project
@@ -32,16 +32,21 @@ Push committed work, open a PR targeting the correct base branch, monitor CI, an
 
 6. **Monitor CI** — report each check's status as it completes.
 
-7. When all CI checks pass, report the result and **ask before merging**:
+7. When all CI checks pass, report the result and **ask before merging**.
+
+8. Merge and clean up — order is critical when working from a worktree:
+
+   **Step A** — capture context and merge while CWD is still valid:
    ```bash
-   gh pr merge --squash
+   MAIN_REPO=$(git worktree list --porcelain | head -1 | sed 's/^worktree //')
+   WORKTREE_PATH=$(git rev-parse --show-toplevel)
+   BRANCH=$(git branch --show-current)
+   gh pr merge --squash   # feature/fix branches → develop
+   # Exception: release promotion PR (develop → main) must use --merge, not --squash
    ```
 
-8. After merge: delete the remote branch and local branch.
-   Feature branches verify against `origin/develop`; `develop` and `hotfix/*` verify against `origin/main`.
-
+   **Step B** — run the cleanup script. The skill base directory is shown at the top of
+   this file when loaded — use it to locate the script:
    ```bash
-   git branch -r --merged origin/<base> | grep <branch-name>
-   git branch -d <branch-name>
-   git push origin --delete <branch-name>
+   bash "<skill-base>/scripts/post-merge-cleanup.sh" "$MAIN_REPO" "$WORKTREE_PATH" "$BRANCH"
    ```

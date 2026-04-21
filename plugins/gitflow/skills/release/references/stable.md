@@ -42,6 +42,20 @@ gh release view v{VERSION}
 # Should show: correct title, assets attached, NOT pre-release
 ```
 
+### 5. Forward-Port Auto-Generated Files to Develop — MANDATORY
+
+If your CI writes files directly to `main` after a release (e.g., an appcast or changelog update workflow), those changes are never automatically forward-ported. After verifying the release, sync them back to `develop`:
+
+```bash
+git checkout -b fix/sync-release-v{VERSION} develop
+git checkout origin/main -- Docs/appcast.xml Docs/appcast-beta.xml  # adjust paths as needed
+git commit -m "chore: Sync auto-generated release files for v{VERSION} back to develop"
+git push -u origin fix/sync-release-v{VERSION}
+gh pr create --base develop --title "chore: Sync release files for v{VERSION} back to develop"
+```
+
+Merge once CI passes. Skipping this creates conflicts on the next develop → main promotion.
+
 ## Troubleshooting
 
 **Release workflow fails on CI check:** The commit must have a passing CI run.
