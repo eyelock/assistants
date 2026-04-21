@@ -9,8 +9,8 @@ All four gates must pass before any code is committed:
 
 | Gate | What it checks | Requirement |
 |---|---|---|
-| Build | Compiles without errors | Zero errors |
-| Lint | Static analysis | Zero errors (minimize warnings) |
+| Build | Compiles without errors | Zero errors, zero warnings |
+| Lint | Static analysis | Zero violations — linter must exit 0 |
 | Format | Code style consistency | Clean — run your formatter to fix |
 | Tests | Automated test suite | All tests pass |
 
@@ -20,6 +20,8 @@ Run all four at once using your project's combined check target. For projects us
 make check
 ```
 
+The output must be clean. Any `warning:` or `error:` lines in the output are failures.
+
 Projects configure what each gate runs. The skill enforces the policy: zero tolerance on all four.
 
 ## Zero Tolerance
@@ -27,6 +29,18 @@ Projects configure what each gate runs. The skill enforces the policy: zero tole
 Never proceed to commit with build errors, lint errors, formatting violations, or failing tests.
 
 If the check passes locally but CI fails, that is a bug — investigate and file an issue rather than pushing again.
+
+## Verification Scope
+
+Always run the full combined check command, not individual build commands. Test targets compile separately from the main target — warnings in test files only surface when tests are compiled. A clean `swift build` or `make build` does not guarantee a clean `make check`.
+
+## No Suppression Annotations
+
+Do not add lint suppression annotations (e.g. `// swiftlint:disable`, `// nolint`, `#pragma warning disable`) to silence violations. Disabling rules file-wide or project-wide is also forbidden. Every violation must be fixed at the source.
+
+## Line Length
+
+When both a linter and a formatter enforce line length, they must be configured to the same limit. Neither tool auto-breaks long string literals — those require manual splitting. Do not disable line length rules; fix the code.
 
 ## Project Configuration
 
