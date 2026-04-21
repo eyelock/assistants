@@ -1,0 +1,7 @@
+{
+  "name": "infra-skills",
+  "description": "Infrastructure skills: GitHub repository setup, Terraform backend provisioning on AWS.",
+  "author": {
+    "name": "eyelock"
+  }
+}
