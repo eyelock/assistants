@@ -42,6 +42,12 @@
       "source": "./skills/pause",
       "description": "Conversational skills: guided elicitation and context checkpoints for alignment.",
       "version": "0.1.0"
+    },
+    {
+      "name": "ynh",
+      "source": "github.com/eyelock/ynh",
+      "description": "User skills for ynh: create harnesses, inspect projects, compress artifacts, validate, and set up team delegation.",
+      "version": "0.1.0"
     }
   ]
 }
