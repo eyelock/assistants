@@ -45,7 +45,7 @@
     },
     {
       "name": "ynh",
-      "source": "github.com/eyelock/ynh",
+      "source": {"source": "github", "url": "eyelock/ynh"},
       "description": "User skills for ynh: create harnesses, inspect projects, compress artifacts, validate, and set up team delegation.",
       "version": "0.1.0"
     }
