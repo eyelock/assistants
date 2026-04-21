@@ -32,7 +32,14 @@ If the check passes locally but CI fails, that is a bug — investigate and file
 
 ## Verification Scope
 
-Always run the full combined check command, not individual build commands. Test targets compile separately from the main target — warnings in test files only surface when tests are compiled. A clean `swift build` or `make build` does not guarantee a clean `make check`.
+Always run the full check command on a **clean build** before declaring the gate passed. Incremental compilation caches object files — repeat check runs will not regenerate warnings for already-compiled files. Only a clean build guarantees the full warning picture.
+
+For Swift/Make projects:
+```bash
+swift package clean && make check
+```
+
+**Never declare success from an incremental build.** Test targets compile separately from the main target — warnings in test files only surface when tests are compiled.
 
 ## No Suppression Annotations
 
