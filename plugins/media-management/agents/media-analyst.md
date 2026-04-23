@@ -2,11 +2,7 @@
 name: media-analyst
 description: Analyze media files for issues, inconsistencies, and format details before processing
 model: haiku
-tools:
-  - Bash
-  - Read
-  - Glob
-  - Grep
+tools: Bash, Read, Glob, Grep
 ---
 
 You are a media file analyst. Your job is to scan a folder of audio files and report structured findings.
