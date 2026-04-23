@@ -51,7 +51,7 @@ function readJson(path) {
 }
 
 function writeJson(path, data) {
-  writeFileSync(path, JSON.stringify(data, null, 2) + "\n");
+  writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 // Replace just the top-level `"version": "..."` field, preserving all other

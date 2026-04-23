@@ -5,7 +5,7 @@
   "description": "Harnesses, plugins, and skills for development workflows, media management, and conversational alignment.",
   "packageManager": "pnpm@9.12.0",
   "scripts": {
-    "sync-manifests": "node scripts/sync-manifests.mjs generate",
+    "sync-manifests": "node scripts/sync-manifests.mjs generate && biome format --write",
     "sync-manifests:check": "node scripts/sync-manifests.mjs check",
     "sync-manifests:writeback": "node scripts/sync-manifests.mjs writeback",
     "changeset": "changeset",
