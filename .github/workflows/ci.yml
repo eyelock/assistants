@@ -64,7 +64,7 @@ jobs:
         run: pnpm lint:spell
 
       - name: actionlint
-        uses: raven-actions/actionlint@v2
+        uses: reviewdog/action-actionlint@v1
 
       - name: shellcheck
         uses: ludeeus/action-shellcheck@master
