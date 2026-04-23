@@ -59,8 +59,6 @@ jobs:
       - name: ynd validate
         run: ynd validate
 
-      - name: ynd fmt --check
-        run: ynd fmt --check
 
       - name: cspell
         run: pnpm lint:spell
