@@ -71,6 +71,7 @@ jobs:
         with:
           scandir: "."
           ignore_paths: "node_modules"
+          severity: error
 
       - name: Changeset status (PRs only)
         if: github.event_name == 'pull_request'
