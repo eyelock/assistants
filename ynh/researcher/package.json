@@ -1,0 +1,9 @@
+{
+  "name": "@eyelock-assistants/researcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
+  "dependencies": {
+    "@eyelock-assistants/dev-skills": "workspace:*"
+  }
+}

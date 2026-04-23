@@ -1,0 +1,27 @@
+{
+  "name": "eyelock-assistants",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Harnesses, plugins, and skills for development workflows, media management, and conversational alignment.",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "sync-manifests": "node scripts/sync-manifests.mjs generate && biome format --write",
+    "sync-manifests:check": "node scripts/sync-manifests.mjs check",
+    "sync-manifests:writeback": "node scripts/sync-manifests.mjs writeback",
+    "changeset": "changeset",
+    "changeset:status": "changeset status",
+    "changeset:version": "changeset version && node scripts/sync-manifests.mjs writeback && node scripts/sync-manifests.mjs generate",
+    "format": "biome format --write && ynd fmt",
+    "format:check": "biome format",
+    "lint": "biome check && ynd lint && ynd validate",
+    "lint:fix": "biome check --write && ynd lint && ynd validate",
+    "lint:spell": "cspell --no-progress --no-summary \"**/*.md\" \"**/*.mdx\"",
+    "check": "pnpm sync-manifests:check && pnpm lint && pnpm format:check && pnpm lint:spell"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.11",
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.27.9",
+    "cspell": "^8.16.0"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@eyelock-assistants/infra-skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Infrastructure skills: GitHub repository setup, Terraform backend provisioning on AWS."
+}

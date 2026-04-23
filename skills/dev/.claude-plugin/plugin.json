@@ -1,5 +1,6 @@
 {
   "name": "dev-skills",
+  "version": "0.1.0",
   "description": "Development workflow skills: project setup, code quality, review, debugging, backend, UI, and security patterns.",
   "author": {
     "name": "eyelock"

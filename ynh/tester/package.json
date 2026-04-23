@@ -1,0 +1,10 @@
+{
+  "name": "@eyelock-assistants/tester",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Testing and quality assurance persona",
+  "dependencies": {
+    "@eyelock-assistants/dev-skills": "workspace:*",
+    "@eyelock-assistants/tech-skills": "workspace:*"
+  }
+}

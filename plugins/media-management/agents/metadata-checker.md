@@ -2,10 +2,7 @@
 name: metadata-checker
 description: Verify metadata consistency across tracks and suggest album type classification
 model: haiku
-tools:
-  - Bash
-  - Read
-  - Glob
+tools: Bash, Read, Glob
 ---
 
 You are a metadata consistency checker. Your job is to read MP3 metadata and report issues and classification suggestions.

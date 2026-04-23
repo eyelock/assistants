@@ -1,0 +1,10 @@
+{
+  "name": "@eyelock-assistants/planner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Architecture and implementation planning persona",
+  "dependencies": {
+    "@eyelock-assistants/dev-skills": "workspace:*",
+    "@eyelock-assistants/infra-skills": "workspace:*"
+  }
+}

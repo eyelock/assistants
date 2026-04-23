@@ -18,10 +18,8 @@ What I think we should do.
 
 **Details:**
 
-
 ## Boring Alternative
 What's the simple, obvious solution I'm NOT doing and why?
-
 
 ## Time Budget
 How long should this take?
@@ -29,10 +27,8 @@ How long should this take?
 - [ ] 1-2 hours
 - [ ] 2-4 hours
 - [ ] > 4 hours (reconsider the approach)
-
 ## Rollback Plan
 If this fails, how do we undo it?
-
 
 ## Blast Radius
 What breaks if this goes wrong?

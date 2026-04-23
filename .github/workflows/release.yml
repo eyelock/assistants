@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v5
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # If pending changesets exist, open/update the "Version Packages" PR.
+      # When that PR merges, this job re-runs with no pending changesets and
+      # falls through to the tagging + release step below.
+      - name: Create version PR or collect bumps
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset:version
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          # We are private: no publish, just tag below.
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # If changesets/action produced no PR (i.e. it just version-bumped + merged),
+      # hasChangesets will be 'false' and we can tag + release.
+      - name: Tag packages
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Snapshot pre-existing tags so we know what's new.
+          git tag > /tmp/tags-before.txt
+          pnpm exec changeset tag
+          git push --follow-tags
+          git tag > /tmp/tags-after.txt
+          comm -13 <(sort /tmp/tags-before.txt) <(sort /tmp/tags-after.txt) > /tmp/new-tags.txt
+          echo "New tags:"
+          cat /tmp/new-tags.txt
+
+      - name: Create GitHub releases
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -s /tmp/new-tags.txt ]; then
+            echo "No new tags — nothing to release."
+            exit 0
+          fi
+          while IFS= read -r tag; do
+            # Tag format: @scope/name@x.y.z   → extract pkg name + version
+            pkg="${tag%@*}"
+            ver="${tag##*@}"
+            # Locate the package directory via the sync-manifests adapter
+            pkg_dir=$(node scripts/sync-manifests.mjs locate "$pkg" || true)
+            if [ -z "$pkg_dir" ]; then
+              echo "Could not resolve path for $pkg — skipping"
+              continue
+            fi
+            changelog="$pkg_dir/CHANGELOG.md"
+            notes="Release $tag"
+            if [ -f "$changelog" ]; then
+              section=$(awk "/^## ${ver}\$/,/^## [0-9]/" "$changelog" | sed '$d')
+              [ -n "$section" ] && notes="$section"
+            fi
+            echo "Creating release for $tag"
+            gh release create "$tag" --title "$tag" --notes "$notes" || \
+              echo "Release $tag already exists, skipping"
+          done < /tmp/new-tags.txt

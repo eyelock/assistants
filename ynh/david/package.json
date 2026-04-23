@@ -1,0 +1,12 @@
+{
+  "name": "@eyelock-assistants/david",
+  "version": "0.1.0",
+  "private": true,
+  "description": "David's personal development persona with full skill set",
+  "dependencies": {
+    "@eyelock-assistants/dev-skills": "workspace:*",
+    "@eyelock-assistants/tech-skills": "workspace:*",
+    "@eyelock-assistants/infra-skills": "workspace:*",
+    "@eyelock-assistants/pause-skills": "workspace:*"
+  }
+}
