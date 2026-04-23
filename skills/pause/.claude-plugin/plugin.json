@@ -1,5 +1,6 @@
 {
   "name": "pause-skills",
+  "version": "0.1.0",
   "description": "Conversational skills: guided elicitation and context checkpoints for alignment.",
   "author": {
     "name": "eyelock"

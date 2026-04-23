@@ -1,0 +1,12 @@
+{
+  "name": "@eyelock-assistants/ynh-dev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "",
+  "dependencies": {
+    "@eyelock-assistants/gitflow": "workspace:*",
+    "@eyelock-assistants/dev-skills": "workspace:*",
+    "@eyelock-assistants/tech-skills": "workspace:*",
+    "@eyelock-assistants/pause-skills": "workspace:*"
+  }
+}

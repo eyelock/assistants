@@ -1,0 +1,11 @@
+{
+  "name": "@eyelock-assistants/termq-dev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support.",
+  "dependencies": {
+    "@eyelock-assistants/gitflow": "workspace:*",
+    "@eyelock-assistants/dev-skills": "workspace:*",
+    "@eyelock-assistants/tech-skills": "workspace:*"
+  }
+}
