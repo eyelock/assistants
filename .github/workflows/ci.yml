@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v5
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install ynd
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BIN_DIR: ${{ github.workspace }}/.bin
+        run: |
+          scripts/install-ynd.sh
+          echo "$BIN_DIR" >> $GITHUB_PATH
+
+      - name: Manifest sync check
+        run: pnpm sync-manifests:check
+
+      - name: Biome (format + lint)
+        run: pnpm exec biome check
+
+      - name: ynd lint
+        run: ynd lint
+
+      - name: ynd validate
+        run: ynd validate
+
+      - name: ynd fmt --check
+        run: ynd fmt --check
+
+      - name: cspell
+        run: pnpm lint:spell
+
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
+
+      - name: shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "."
+          ignore_paths: "node_modules"
+
+      - name: Changeset status (PRs only)
+        if: github.event_name == 'pull_request'
+        run: pnpm exec changeset status --since=origin/${{ github.base_ref }}
