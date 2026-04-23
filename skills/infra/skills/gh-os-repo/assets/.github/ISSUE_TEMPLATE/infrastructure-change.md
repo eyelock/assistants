@@ -21,7 +21,6 @@ What I think we should do.
 ## Boring Alternative
 What's the simple, obvious solution I'm NOT doing and why?
 
-
 ## Time Budget
 How long should this take?
 - [ ] < 1 hour
