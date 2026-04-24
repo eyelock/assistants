@@ -1,5 +1,5 @@
 {
-  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "planner",
   "version": "0.1.0",
   "description": "Architecture and implementation planning persona",
@@ -8,12 +8,17 @@
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/dev",
-      "pick": ["skills/dev-project", "skills/dev-review"]
+      "pick": [
+        "skills/dev-project",
+        "skills/dev-review"
+      ]
     },
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/infra",
-      "pick": ["skills/gh-os-repo"]
+      "pick": [
+        "skills/gh-os-repo"
+      ]
     }
   ]
 }

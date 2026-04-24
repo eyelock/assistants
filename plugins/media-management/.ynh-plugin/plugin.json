@@ -1,5 +1,5 @@
 {
-  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "media-management",
   "version": "0.1.0",
   "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS",
