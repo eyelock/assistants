@@ -12,19 +12,12 @@
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/dev",
-      "pick": [
-        "skills/dev-quality",
-        "skills/dev-review",
-        "skills/skill-creator",
-        "skills/gh-cli"
-      ]
+      "pick": ["skills/dev-quality", "skills/dev-review", "skills/skill-creator", "skills/gh-cli"]
     },
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/tech",
-      "pick": [
-        "skills/swift-lang"
-      ]
+      "pick": ["skills/swift-lang"]
     }
   ]
 }

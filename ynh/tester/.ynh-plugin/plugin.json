@@ -8,16 +8,12 @@
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/dev",
-      "pick": [
-        "skills/dev-quality"
-      ]
+      "pick": ["skills/dev-quality"]
     },
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/tech",
-      "pick": [
-        "skills/go-lang"
-      ]
+      "pick": ["skills/go-lang"]
     }
   ]
 }

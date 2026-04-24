@@ -16,13 +16,7 @@
       },
       "description": "David's personal full-stack development persona with Go, infra, and conversational alignment skills",
       "version": "0.1.0",
-      "keywords": [
-        "go",
-        "development",
-        "full-stack",
-        "infrastructure",
-        "terraform"
-      ]
+      "keywords": ["go", "development", "full-stack", "infrastructure", "terraform"]
     },
     {
       "name": "planner",
@@ -33,12 +27,7 @@
       },
       "description": "Architecture and implementation planning persona",
       "version": "0.1.0",
-      "keywords": [
-        "planning",
-        "architecture",
-        "design",
-        "review"
-      ]
+      "keywords": ["planning", "architecture", "design", "review"]
     },
     {
       "name": "researcher",
@@ -49,13 +38,7 @@
       },
       "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
       "version": "0.1.0",
-      "keywords": [
-        "research",
-        "analysis",
-        "investigation",
-        "codebase",
-        "api"
-      ]
+      "keywords": ["research", "analysis", "investigation", "codebase", "api"]
     },
     {
       "name": "tester",
@@ -66,13 +49,7 @@
       },
       "description": "Testing and quality assurance persona",
       "version": "0.1.0",
-      "keywords": [
-        "testing",
-        "quality",
-        "qa",
-        "go",
-        "coverage"
-      ]
+      "keywords": ["testing", "quality", "qa", "go", "coverage"]
     },
     {
       "name": "ynh-dev",
@@ -83,12 +60,7 @@
       },
       "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
       "version": "0.1.0",
-      "keywords": [
-        "ynh",
-        "go",
-        "development",
-        "gitflow"
-      ]
+      "keywords": ["ynh", "go", "development", "gitflow"]
     },
     {
       "name": "termq-dev",
@@ -99,14 +71,7 @@
       },
       "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
       "version": "0.1.0",
-      "keywords": [
-        "termq",
-        "swift",
-        "swiftui",
-        "macos",
-        "development",
-        "gitflow"
-      ]
+      "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
     },
     {
       "name": "gitflow",
@@ -117,14 +82,7 @@
       },
       "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
       "version": "0.1.0",
-      "keywords": [
-        "gitflow",
-        "branching",
-        "commits",
-        "release",
-        "ci",
-        "github-actions"
-      ]
+      "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"]
     },
     {
       "name": "media-management",
@@ -135,14 +93,7 @@
       },
       "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
       "version": "0.1.0",
-      "keywords": [
-        "media",
-        "music",
-        "mp3",
-        "apple-music",
-        "ffmpeg",
-        "metadata"
-      ]
+      "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
     }
   ]
 }

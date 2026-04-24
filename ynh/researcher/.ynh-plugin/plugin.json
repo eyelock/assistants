@@ -8,9 +8,7 @@
     {
       "git": "github.com/eyelock/assistants",
       "path": "skills/dev",
-      "pick": [
-        "skills/dev-review"
-      ]
+      "pick": ["skills/dev-review"]
     }
   ]
 }
