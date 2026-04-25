@@ -1,0 +1,100 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/marketplace.schema.json",
+  "name": "eyelock-assistants",
+  "owner": {
+    "name": "eyelock-assistants"
+  },
+  "metadata": {
+    "description": "Harnesses, plugins, and skills for development workflows, media management, and conversational alignment."
+  },
+  "harnesses": [
+    {
+      "name": "david",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/david"
+      },
+      "description": "David's personal full-stack development persona with Go, infra, and conversational alignment skills",
+      "version": "0.1.0",
+      "keywords": ["go", "development", "full-stack", "infrastructure", "terraform"]
+    },
+    {
+      "name": "planner",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/planner"
+      },
+      "description": "Architecture and implementation planning persona",
+      "version": "0.1.0",
+      "keywords": ["planning", "architecture", "design", "review"]
+    },
+    {
+      "name": "researcher",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/researcher"
+      },
+      "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
+      "version": "0.1.0",
+      "keywords": ["research", "analysis", "investigation", "codebase", "api"]
+    },
+    {
+      "name": "tester",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/tester"
+      },
+      "description": "Testing and quality assurance persona",
+      "version": "0.1.0",
+      "keywords": ["testing", "quality", "qa", "go", "coverage"]
+    },
+    {
+      "name": "ynh-dev",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/ynh-dev"
+      },
+      "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
+      "version": "0.1.0",
+      "keywords": ["ynh", "go", "development", "gitflow"]
+    },
+    {
+      "name": "termq-dev",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/termq-dev"
+      },
+      "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
+      "version": "0.1.0",
+      "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
+    },
+    {
+      "name": "gitflow",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/gitflow"
+      },
+      "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
+      "version": "0.1.0",
+      "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"]
+    },
+    {
+      "name": "media-management",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/media-management"
+      },
+      "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
+      "version": "0.1.0",
+      "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
+    }
+  ]
+}
