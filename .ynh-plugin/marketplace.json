@@ -1,4 +1,5 @@
 {
+  "$schema": "https://eyelock.github.io/ynh/schema/marketplace.schema.json",
   "name": "eyelock-assistants",
   "owner": {
     "name": "eyelock-assistants"
