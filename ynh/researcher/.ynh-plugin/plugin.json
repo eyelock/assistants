@@ -1,5 +1,5 @@
 {
-  "$schema": "https://eyelock.github.io/ynh/schema/harness.schema.json",
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "researcher",
   "version": "0.1.0",
   "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
