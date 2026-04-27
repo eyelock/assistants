@@ -41,23 +41,19 @@ gh release view v0.7.0-beta.1
 
 ## Promoting Beta to Stable
 
-Once testing is complete, open a PR to promote `develop` → `main`:
+Once testing is complete, follow the [stable release procedure](stable.md) in full.
+
+**NEVER promote by opening `develop → main` directly.** Always cut a `release/vX.Y.Z` branch
+first — see `stable.md` for the reasons and exact steps.
+
+The short version:
 
 ```bash
-gh pr create --base main --head develop --title "release: v0.7.0" \
-  --body "Promotes develop to main for stable release v0.7.0"
+git checkout -b release/v0.7.0 develop
+# Update CHANGELOG, push
+gh pr create --base main --head release/v0.7.0 --title "release: v0.7.0"
+# After merge: tag on main, back-merge release branch to develop
 ```
-
-Wait for CI to pass on the merge commit, then merge. After merge:
-
-```bash
-git checkout main
-git pull
-git tag -a "v0.7.0" -m "Release v0.7.0"
-git push origin v0.7.0
-```
-
-The stable release requires CI to pass and marks as latest (not pre-release).
 
 ## Version Progression
 
@@ -70,3 +66,4 @@ v1.0.0-alpha.1  →  v1.0.0-alpha.2  →  v1.0.0-beta.1  →  v1.0.0-beta.2  →
 - NEVER create beta releases without the suffix in the tag
 - NEVER mark stable releases as pre-release
 - NEVER promote beta to stable without testing
+- NEVER open `develop → main` directly for promotion — always use a release branch
