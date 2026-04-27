@@ -1,7 +1,7 @@
 {
   "name": "gitflow",
   "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "eyelock"
   }
