@@ -137,7 +137,12 @@ function cmdGenerate(pkgs) {
 // them, leaving any vendor-specific keys untouched.
 function syncVendorPluginManifests(p) {
   const manifest = readJson(p.source);
-  for (const rel of [".claude-plugin/plugin.json", ".cursor-plugin/plugin.json", ".ynh-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
+  for (const rel of [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".ynh-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+  ]) {
     const target = join(p.dir, rel);
     if (!existsSync(target)) continue;
     if (updateVersionInPlace(target, manifest.version)) {
@@ -229,7 +234,12 @@ function cmdCheck(pkgs) {
   }
   for (const p of pkgs) {
     const manifest = readJson(p.source);
-    for (const rel of [".claude-plugin/plugin.json", ".cursor-plugin/plugin.json", ".ynh-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
+    for (const rel of [
+      ".claude-plugin/plugin.json",
+      ".cursor-plugin/plugin.json",
+      ".ynh-plugin/plugin.json",
+      ".codex-plugin/plugin.json",
+    ]) {
       const target = join(p.dir, rel);
       if (!existsSync(target)) continue;
       const vendor = readJson(target);

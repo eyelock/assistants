@@ -105,7 +105,17 @@
       },
       "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
       "version": "0.1.0",
-      "keywords": ["vendor", "harness", "skills", "agents", "mcp", "hooks", "claude", "cursor", "codex"]
+      "keywords": [
+        "vendor",
+        "harness",
+        "skills",
+        "agents",
+        "mcp",
+        "hooks",
+        "claude",
+        "cursor",
+        "codex"
+      ]
     }
   ]
 }

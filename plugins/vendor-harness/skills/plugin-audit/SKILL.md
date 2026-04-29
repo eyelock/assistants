@@ -17,7 +17,7 @@ Use this skill when you want to know: "is this plugin ready to ship to all three
 
 5. **Hooks** (`hooks/hooks.json`) — invoke hooks-artifact. Check: event names (PascalCase vs legacy camelCase), event coverage per vendor, hook types used.
 
-6. **Startup context** (`CLAUDE.md`, `AGENTS.md`, `rules/`, `.cursorrules`) — invoke startup-context. Check: correct files present per vendor, rules format (.md vs .mdc), @-import workaround for Claude.
+6. **Startup context** (`CLAUDE.md`, `AGENTS.md`, `rules/`, `.cursorRules`) — invoke startup-context. Check: correct files present per vendor, rules format (.md vs .mdc), @-import workaround for Claude.
 
 ## Report Format
 
@@ -29,7 +29,7 @@ Cursor:       ✓ ready | issues: [list]
 Codex:        ✓ ready | issues: [list]
 ```
 
-Then a prioritised issue list:
+Then a prioritized issue list:
 
 ```
 HIGH  [artifact] description — affects: Claude/Cursor/Codex

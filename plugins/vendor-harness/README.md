@@ -54,7 +54,7 @@ Vendor support varies significantly — and changes on vendor timelines:
 Skills               ✓ full         ✓ full     ✓ full
 SubAgents            ✓ full         ~ partial  ✗ none
 MCP                  ✓ full         ✓ full     ✓ stdio only
-Hooks                ✓ 25 events    ✓ 25 evts  ~ 5 events (exp.)
+Hooks                ✓ 25 events    ✓ 25 events  ~ 5 events (exp.)
 Startup Context      ✓ CLAUDE.md    ✓ .mdc     ✓ AGENTS.md
 ```
 
