@@ -88,3 +88,8 @@ workspaces
 worktree
 writeback
 ynh
+behavioural
+inout
+launchservices
+swiftui
+worktrees

@@ -1,9 +1,11 @@
 ---
 name: swift-lang
-description: Swift 6 and SwiftUI development — concurrency model, observable patterns, testing with XCTest, and xcodebuild tooling.
+description: Swift 6 language and tooling — concurrency model, Sendable, actors, XCTest basics, and xcodebuild. For SwiftUI architecture and view-layer testing, see `swiftui-lang`.
 ---
 
 # Swift Development
+
+For SwiftUI-specific architecture (ViewModel extraction, DI, ViewInspector, snapshot testing, coverage targets by layer), load the `swiftui-lang` skill.
 
 ## Swift 6 Concurrency
 
@@ -41,36 +43,6 @@ struct Config: Sendable {
 - Mark `@Observable` types as `@MainActor` when they drive UI
 - Use `async/await` — avoid `DispatchQueue` and callback chains
 - Never use `nonisolated(unsafe)` without a clear documented reason
-
-## SwiftUI Patterns
-
-**`@Observable` (Swift 5.9+)** replaces `ObservableObject`:
-```swift
-@Observable
-final class BoardViewModel {
-    var cards: [Card] = []
-    var isLoading = false
-}
-```
-
-**View composition** — keep views thin:
-```swift
-struct CardListView: View {
-    let viewModel: BoardViewModel
-
-    var body: some View {
-        List(viewModel.cards) { card in
-            CardRowView(card: card)
-        }
-    }
-}
-```
-
-**Rules:**
-- One `@Observable` view model per screen/sheet
-- Views observe only what they render — split view models to avoid over-invalidation
-- Use `@Environment` for app-wide singletons (not property injection)
-- Prefer `List` + `ForEach` over manual `ScrollView` + `LazyVStack` unless custom layout is needed
 
 ## Testing with XCTest
 

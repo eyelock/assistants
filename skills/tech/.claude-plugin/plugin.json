@@ -1,7 +1,7 @@
 {
   "name": "tech-skills",
   "version": "0.1.0",
-  "description": "Language-specific development skills: Go and Java workflows, tooling, and patterns.",
+  "description": "Language-specific development skills: Go, Java, Swift, and SwiftUI workflows, tooling, and patterns.",
   "author": {
     "name": "eyelock"
   }
