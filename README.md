@@ -6,9 +6,9 @@ Nothing here is guaranteed to be complete, stable, or suitable for any particula
 
 ## What This Repository Demonstrates
 
-- **Cross-vendor plugins** — Each plugin carries a `harness.json` manifest and a `.cursor-plugin/` manifest, making it usable from either tool's marketplace
+- **Cross-vendor plugins** — Each plugin carries `.ynh-plugin/plugin.json`, `.claude-plugin/plugin.json`, and `.cursor-plugin/plugin.json` manifests, making it usable from Claude Code, Cursor, and YNH
 - **Portable skills** — Skills follow the [agentskills.io specification](https://agentskills.io/specification), the open standard adopted by Claude Code, Cursor, Codex, GitHub Copilot, and others
-- **Dual marketplace** — The repo serves as both a Claude Code marketplace and a Cursor team marketplace from the same GitHub repository
+- **Triple marketplace** — The repo serves as a Claude Code, Cursor, and YNH marketplace from the same GitHub repository
 - **Vendor-neutral instructions** — `AGENTS.md` files provide project context for Codex and Cursor alongside `CLAUDE.md` for Claude Code
 - **Persona composition** — How ynh personas reference and compose skills from shared libraries (`ynh/`)
 
@@ -20,48 +20,46 @@ assistants/
 │   └── marketplace.json          # Claude Code marketplace index
 ├── .cursor-plugin/
 │   └── marketplace.json          # Cursor marketplace index
+├── .ynh-plugin/
+│   └── marketplace.json          # YNH marketplace index
 ├── AGENTS.md                     # Codex/Cursor project instructions
 ├── plugins/
-│   └── media-management/         # Self-contained plugin (skills, agents, hooks, tests)
-│       ├── harness.json
+│   ├── gitflow/                  # Gitflow workflow plugin (6 skills, 1 agent)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .ynh-plugin/plugin.json
+│   ├── media-management/         # Music processing plugin (7 skills, 2 agents, hooks)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .ynh-plugin/plugin.json
+│   └── vendor-harness/           # Vendor harness lifecycle plugin (5+6 skills, 4 agents)
+│       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
-│       ├── .claude/CLAUDE.md     # Claude Code instructions
-│       └── AGENTS.md             # Codex/Cursor instructions
+│       └── .ynh-plugin/plugin.json
 ├── skills/
-│   ├── dev/                      # Development workflow plugin (7 skills)
-│   │   ├── harness.json
+│   ├── dev/                      # Development workflow plugin (9 skills)
+│   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── skills/
-│   │       ├── dev-project/
-│   │       ├── dev-quality/
-│   │       ├── dev-review/
-│   │       ├── dev-backend/
-│   │       ├── dev-ui/
-│   │       ├── dev-debug/
-│   │       └── dev-security/
-│   ├── tech/                     # Language-specific plugin (2 skills)
-│   │   ├── harness.json
+│   │   └── .ynh-plugin/plugin.json
+│   ├── tech/                     # Language-specific plugin (4 skills)
+│   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── skills/
-│   │       ├── go-lang/
-│   │       └── java-lang/
+│   │   └── .ynh-plugin/plugin.json
 │   ├── infra/                    # Infrastructure plugin (2 skills)
-│   │   ├── harness.json
+│   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── skills/
-│   │       ├── gh-os-repo/
-│   │       └── terraform-backend-aws/
+│   │   └── .ynh-plugin/plugin.json
 │   └── pause/                    # Conversational alignment plugin (2 skills)
-│       ├── harness.json
+│       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
-│       └── skills/
-│           ├── help-me-answer/
-│           └── take-a-moment/
+│       └── .ynh-plugin/plugin.json
 └── ynh/                          # Personas (compose skills via includes)
     ├── david/
     ├── planner/
     ├── tester/
-    └── researcher/
+    ├── researcher/
+    ├── ynh-dev/
+    └── termq-dev/
 ```
 
 ## Using the Marketplace
@@ -100,9 +98,11 @@ $skill-installer dev-project
 
 | Plugin | Skills | Description |
 |--------|--------|-------------|
+| `gitflow` | 6 | Gitflow branching, conventional commits, quality gate, tag-driven release, push/PR workflow |
 | `media-management` | 7 | Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS |
-| `dev-skills` | 7 | Project setup, code quality, review, debugging, backend, UI, and security patterns |
-| `tech-skills` | 2 | Go and Java development workflows |
+| `vendor-harness` | 11 | Lifecycle management for LLM vendor harness artifacts across Claude Code, Cursor, and Codex |
+| `dev-skills` | 9 | Project setup, code quality, review, debugging, backend, UI, security, and skill authoring |
+| `tech-skills` | 4 | Go, Java, Swift, and SwiftUI development workflows |
 | `infra-skills` | 2 | GitHub repository setup, Terraform backend provisioning |
 | `pause-skills` | 2 | Guided elicitation and context checkpoints for alignment |
 
@@ -111,10 +111,11 @@ $skill-installer dev-project
 | Layer | Claude Code | Cursor | Codex |
 |-------|-------------|--------|-------|
 | **Skills (SKILL.md)** | Native | Native | Native |
-| **Plugin manifest** | `harness.json` | `.cursor-plugin/plugin.json` | N/A |
-| **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | N/A |
-| **Instructions** | `.claude/CLAUDE.md` | `AGENTS.md`, `.cursor/rules/` | `AGENTS.md` |
-| **MCP servers** | `.mcp.json` | `.mcp.json` | `config.toml` |
+| **Plugin manifest** | `.claude-plugin/plugin.json` | `.cursor-plugin/plugin.json` | `.codex-plugin/plugin.json` |
+| **YNH manifest** | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` |
+| **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | `.agents/plugins/marketplace.json` |
+| **Instructions** | `CLAUDE.md` (via `@AGENTS.md`) | `AGENTS.md`, `.cursor/rules/*.mdc` | `AGENTS.md` |
+| **MCP servers** | `.mcp.json` | `mcp.json` (no dot) | `.mcp.json` |
 | **Custom repos** | Any user | Teams/Enterprise | Manual install |
 
 ## Specifications
