@@ -132,13 +132,17 @@ function cmdGenerate(pkgs) {
   syncMarketplaces(pkgs);
 }
 
-// Each package also carries `.claude-plugin/plugin.json` and optionally
-// `.cursor-plugin/plugin.json` — vendor-specific manifests consumed by each
-// marketplace. They are downstream of `.harness.json`: we sync the `version`
-// field into them, leaving any vendor-specific keys untouched.
+// Each package also carries vendor plugin manifests consumed by each marketplace.
+// They are downstream of the source manifest: we sync the `version` field into
+// them, leaving any vendor-specific keys untouched.
 function syncVendorPluginManifests(p) {
   const manifest = readJson(p.source);
-  for (const rel of [".claude-plugin/plugin.json", ".cursor-plugin/plugin.json"]) {
+  for (const rel of [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".ynh-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+  ]) {
     const target = join(p.dir, rel);
     if (!existsSync(target)) continue;
     if (updateVersionInPlace(target, manifest.version)) {
@@ -230,7 +234,12 @@ function cmdCheck(pkgs) {
   }
   for (const p of pkgs) {
     const manifest = readJson(p.source);
-    for (const rel of [".claude-plugin/plugin.json", ".cursor-plugin/plugin.json"]) {
+    for (const rel of [
+      ".claude-plugin/plugin.json",
+      ".cursor-plugin/plugin.json",
+      ".ynh-plugin/plugin.json",
+      ".codex-plugin/plugin.json",
+    ]) {
       const target = join(p.dir, rel);
       if (!existsSync(target)) continue;
       const vendor = readJson(target);

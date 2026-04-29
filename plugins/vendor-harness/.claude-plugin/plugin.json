@@ -1,0 +1,8 @@
+{
+  "name": "vendor-harness",
+  "description": "Lifecycle management for LLM vendor harness artifacts — skills, agents, MCP, hooks, and startup context across Claude Code, Cursor, and Codex.",
+  "version": "0.1.0",
+  "author": {
+    "name": "eyelock"
+  }
+}

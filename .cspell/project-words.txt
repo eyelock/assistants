@@ -93,3 +93,8 @@ inout
 launchservices
 swiftui
 worktrees
+cursorrules
+cursorRules
+dontAsk
+streamable
+subdirs
