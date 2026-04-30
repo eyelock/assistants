@@ -1,0 +1,8 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "invalid-schema",
+  "version": "0.1.0",
+  "description": "E2E fixture: deliberately broken — has an unknown top-level field which strict JSON parsing must reject.",
+  "default_vendor": "claude",
+  "this_field_does_not_exist": "trigger DisallowUnknownFields rejection"
+}

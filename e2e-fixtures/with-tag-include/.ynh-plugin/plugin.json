@@ -1,0 +1,14 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "with-tag-include",
+  "version": "0.1.0",
+  "description": "E2E fixture: harness with a tag-pinned include — used to verify tag motion and resolved-SHA assertions.",
+  "default_vendor": "claude",
+  "includes": [
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "e2e-fixtures/minimal",
+      "ref": "e2e-fixtures-v1"
+    }
+  ]
+}
