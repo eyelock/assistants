@@ -1,0 +1,14 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "with-pinned-include",
+  "version": "0.1.0",
+  "description": "E2E fixture: harness with a SHA-pinned include — used to verify the resolved SHA matches the pin exactly.",
+  "default_vendor": "claude",
+  "includes": [
+    {
+      "git": "github.com/eyelock/assistants",
+      "path": "e2e-fixtures/minimal",
+      "ref": "8713efacdee8a2b05bdb70fee83be73b66222cc4"
+    }
+  ]
+}
