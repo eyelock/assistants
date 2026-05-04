@@ -249,6 +249,109 @@ DispatchQueue.global(qos: .userInitiated).async {
 }
 ```
 
+## Async stores need a readiness signal
+
+A store that exposes `items: [T] = []` and flips an `isLoading` flag during refresh leaks a state ambiguity: consumers cannot tell *never loaded* from *loaded empty* from *loading*. Any UI gated on "is there a selected item?" or "is the list non-empty?" will render a wrong empty state during the cold-launch window before `refresh()` resolves. This is a load-bearing class of bug — every new sheet, list, or detail view added against the store inherits it.
+
+Model the lifecycle explicitly:
+
+```swift
+enum LoadState<T> {
+    case idle           // never loaded
+    case loading
+    case loaded(T)
+    case failed(Error)
+}
+
+@Observable
+@MainActor
+final class HarnessRepository {
+    private(set) var state: LoadState<[Harness]> = .idle
+    var harnesses: [Harness] { if case .loaded(let xs) = state { return xs } else { return [] } }
+    var isReady: Bool { if case .loaded = state { return true } else { return false } }
+}
+```
+
+Consumers gate on `isReady`, not on `harnesses.isEmpty`. A sheet that depends on a record from the store should not present until `isReady` is true — see the sheet pattern rule below.
+
+## Sheet presentation: prefer `.sheet(item:)` over `.sheet(isPresented:)`
+
+`.sheet(isPresented:)` with a content closure that conditionally renders nothing is a SwiftUI footgun:
+
+```swift
+// Footgun — presents an unsized empty view as a tiny white "pill" if the lookup fails
+.sheet(isPresented: $showLaunchSheet) {
+    if let harness = repo.selectedHarness {
+        HarnessLaunchSheet(harness: harness)
+    }
+}
+```
+
+If the lookup returns `nil` (e.g. the store has not finished loading), SwiftUI presents the sheet with an `EmptyView`, which sizes to its intrinsic zero size and renders as a blank rounded rectangle on a dimmed window. The user has no signal that anything is wrong; sometimes a restart "fixes it" because by then the data has loaded.
+
+Use `.sheet(item:)` with an `Identifiable` model. SwiftUI does not present at all while the item is `nil`:
+
+```swift
+.sheet(item: $launchTarget) { harness in
+    HarnessLaunchSheet(harness: harness)
+}
+```
+
+Set `launchTarget` only once you know the data is ready (see `isReady` above). Apply this rule project-wide — mixing the two patterns guarantees the next sheet to be added will reproduce the bug.
+
+## One canonical identity per domain entity
+
+When a model type has two equally-valid string forms — `id` vs `name`, namespaced vs bare, slug vs UUID — and different call sites lift different forms off the model, you have an identity seam. Each new consumer (sidebar tag, persisted preference, deep-link URL, log line, exposed API) has roughly a 50/50 chance of picking the wrong form. Fallbacks like `repo.first(where: { $0.id == key || $0.name == key })` paper over the symptom and let the seam keep leaking.
+
+Rules:
+
+- Pick one form as canonical. Almost always: the most-qualified form (`namespace/name`, full UUID).
+- Persistence, runtime keys, and view tags all use the canonical form. No exceptions.
+- The non-canonical form, if it must exist, is read-only and derived (`harness.shortName` as a computed property).
+- New code that lifts a string off a model and passes it across a seam is a review red flag — verify it is the canonical form.
+
+## Settings need a single source of truth
+
+A codebase that reads `UserDefaults.standard.string(forKey:)` from Views, uses `@AppStorage` in other Views, and adds per-instance overrides on top has no owner for the layering. Settings changes do not propagate reliably; overrides drift; tests cannot fake a setting without polluting global state.
+
+Introduce a `SettingsStore` (`@Observable`, `@MainActor`) that owns the read/write surface and the override layering. Views observe the store; tests inject a fake. `@AppStorage` is fine for one-off, non-overridden, view-local toggles — not for any setting that has per-instance overrides or cross-view consumers.
+
+## Testing — smells specific to SwiftUI/Swift codebases
+
+The coverage targets above are necessary but not sufficient. A test suite can hit 70% line coverage and still catch zero release-worthy bugs if the tests are at the wrong boundary. Watch for:
+
+| Smell | What it really means |
+|---|---|
+| Type-only assertions (`XCTAssertEqual(pane.id, "1")` on a struct you just constructed) | Test passes if the struct compiles — proves nothing |
+| Mocks that record call arrays, tests assert the mock recorded a call | You are testing the mock, not the production type |
+| Subprocess/system services mocked at the top (`MockYNHDetector` never runs `ynh`) | Cannot detect arg errors, env misconfig, or output-parse drift — the seam where bugs actually live is bypassed |
+| `Task.sleep(for: .milliseconds(50))` to "wait for debounce" | CI-load flake risk; use a clock abstraction or signal |
+| Codable round-trip tests (encode → decode → compare) | Passes whenever the codec is symmetric, regardless of whether the JSON shape matches what consumers actually emit |
+| No test reads a store *while* `isLoading == true` or *before* the first `refresh()` | Async/race coverage is zero — the load-bearing bug class is invisible to the suite |
+
+If recent hotfixes touched integration seams (subprocess, NSWorkspace, Sparkle, FileManager) and no existing test would have caught them, the suite is documenting current behaviour rather than preventing regressions. Add a thin integration-seam protocol (`YNHCommandRunner`, `WorkspaceProvider`, `UpdaterProvider`) and test through it with a fake that can return realistic outputs and errors.
+
+### Concurrent-access tests, not just state-transition tests
+
+Property-state-transition tests (set X, assert Y) do not exercise the cold-launch window. Add tests that:
+
+1. Construct the store
+2. Trigger `refresh()` but do **not** await it
+3. Read the consumer-facing property and assert the consumer receives a "not ready" signal (not `nil`, not an empty list misinterpreted as "loaded empty")
+4. Then await refresh and assert the loaded state
+
+This is the test that would catch an async-readiness regression before it ships.
+
+## Cross-cutting bug patterns to watch for
+
+When a codebase produces repeated late-cycle hotfixes, the patterns are almost always one of three:
+
+1. **Async state read before it is ready** — fix with the `LoadState` / `isReady` pattern above.
+2. **Identity ambiguity at a seam** — fix with one canonical form, no fallbacks.
+3. **System callback isolation** — closures handed to Apple SDKs from a `@MainActor` scope without `@Sendable`; fix per the rule earlier in this skill, enforced by `StrictConcurrency=complete` (see `swift-lang`).
+
+Symptom-only fixes (another fallback in the lookup, another guard in the consumer) leave the pattern in place and the next instance ships in the next release.
+
 ## Anti-patterns and smells
 
 | Smell | What it usually means |
@@ -260,6 +363,10 @@ DispatchQueue.global(qos: .userInitiated).async {
 | Fake test data appearing in app-visible `.json` files | Persistence singleton needs protocol + mock injection |
 | `@State` properties doing validation | Validation is business logic — move to ViewModel |
 | Methods taking 10+ parameters to avoid instantiating a service | Extract the service behind a protocol instead |
+| `.sheet(isPresented:)` whose content closure can render nothing | Blank-pill bug waiting to happen — switch to `.sheet(item:)` |
+| Store exposes `items: [T] = []` with `isLoading` flag | Conflates never-loaded / loading / loaded-empty — model `LoadState` instead |
+| `repo.first(where: { $0.id == key \|\| $0.name == key })` | Identity seam being papered over — pick a canonical form |
+| `try?` on git/subprocess/network calls | Loud bugs converted to silent ones — see `swift-lang` |
 
 ## Planning structure
 
