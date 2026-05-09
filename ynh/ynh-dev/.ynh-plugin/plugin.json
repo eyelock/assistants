@@ -51,10 +51,6 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/pause"
-    },
-    {
-      "git": "https://github.com/anthropics/claude-plugins-official",
-      "path": "plugins/math-olympiad"
     }
   ]
 }
