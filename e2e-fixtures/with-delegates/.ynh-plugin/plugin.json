@@ -6,7 +6,7 @@
   "default_vendor": "claude",
   "delegates_to": [
     {
-      "git": "github.com/eyelock/assistants",
+      "git": "https://github.com/eyelock/assistants",
       "path": "e2e-fixtures/included-skill"
     }
   ]
