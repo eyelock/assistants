@@ -4,6 +4,32 @@
   "version": "0.1.0",
   "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support.",
   "default_vendor": "claude",
+  "profiles": {
+    "thorough": {},
+    "quick": {},
+    "security": {}
+  },
+  "focuses": {
+    "code-review": {
+      "profile": "thorough",
+      "prompt": "Review this code for correctness, Swift 6 concurrency safety, and consistency with TermQ's surrounding patterns. Check for unhandled errors, memory leaks, and missing tests. Flag anything that would not survive a strict Swift 6 audit."
+    },
+    "security-audit": {
+      "profile": "security",
+      "prompt": "Audit this code for security issues: unsafe data handling, missing input validation, insecure IPC or MCP surface, logging of sensitive terminal output, and capability over-exposure. Treat all terminal content as user data — never log it."
+    },
+    "refactor": {
+      "profile": "thorough",
+      "prompt": "Identify refactoring opportunities in this code: repeated logic that could be extracted, SwiftUI views that are doing too much and should push state into a ViewModel or service, and abstractions that are premature or missing. Suggest concrete changes, not general principles."
+    },
+    "pr-summary": {
+      "profile": "quick",
+      "prompt": "Summarise what this PR does, why it is needed, and what the key design decisions were. Keep it to two short paragraphs — the first suitable for a CHANGELOG entry, the second for the PR description body."
+    },
+    "changelog": {
+      "prompt": "Write a CHANGELOG entry for this change. Format: a single bullet point starting with the type tag (feat / fix / refactor / chore) followed by a concise description of what changed and why it matters to users or developers. No more than two sentences."
+    }
+  },
   "includes": [
     {
       "git": "https://github.com/eyelock/assistants",
