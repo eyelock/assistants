@@ -9,7 +9,7 @@
       "path": "plugins/gitflow"
     },
     {
-      "git": "github.com/Jeffallan/claude-skills.git",
+      "git": "https://github.com/Jeffallan/claude-skills",
       "pick": ["skills/golang-pro"]
     },
     {
