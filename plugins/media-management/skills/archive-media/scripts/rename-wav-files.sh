@@ -53,17 +53,17 @@ for f in "${files[@]}"; do
 
   # Pattern 1: "Artist - Album - 01 Title.wav" or "Artist - Album - 1 Title.wav"
   if [[ "$filename" =~ ^.+\ -\ .+\ -\ ([0-9]+)\ (.+)\.wav$ ]]; then
-    track_num=$(printf "%02d" "${BASH_REMATCH[1]}")
+    track_num=$(printf "%02d" "$((10#${BASH_REMATCH[1]}))")
     title="${BASH_REMATCH[2]}"
     new_name="${track_num} ${title}.wav"
   # Pattern 2: "01 Title.wav" or "1 Title.wav" (already close to target)
   elif [[ "$filename" =~ ^([0-9]+)\ (.+)\.wav$ ]]; then
-    track_num=$(printf "%02d" "${BASH_REMATCH[1]}")
+    track_num=$(printf "%02d" "$((10#${BASH_REMATCH[1]}))")
     title="${BASH_REMATCH[2]}"
     new_name="${track_num} ${title}.wav"
   # Pattern 3: "01. Title.wav" or "01 - Title.wav"
   elif [[ "$filename" =~ ^([0-9]+)[.\ -]+(.+)\.wav$ ]]; then
-    track_num=$(printf "%02d" "${BASH_REMATCH[1]}")
+    track_num=$(printf "%02d" "$((10#${BASH_REMATCH[1]}))")
     title="${BASH_REMATCH[2]}"
     new_name="${track_num} ${title}.wav"
   else
@@ -73,7 +73,7 @@ for f in "${files[@]}"; do
     title=$(echo "$meta" | jq -r '.format.tags.title // .format.tags.TITLE // ""')
 
     if [[ -n "$track" && -n "$title" ]]; then
-      track_num=$(printf "%02d" "$track")
+      track_num=$(printf "%02d" "$((10#$track))")
       new_name="${track_num} ${title}.wav"
     else
       skipped_json=$(echo "$skipped_json" | jq --arg file "$filename" '. + [$file]')
