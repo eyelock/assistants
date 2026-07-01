@@ -15,6 +15,8 @@ metadata:
 2. If unset, use the default Downloads path from CLAUDE.md
 3. If CLAUDE.md has no path, read config.json from the project root
 
+Scripts are in `scripts/` relative to this skill directory.
+
 ## Scripts
 
 This skill has two scripts in `scripts/`:
@@ -30,7 +32,7 @@ Run `--help` on either script for full usage details.
 
 Run the find-releases script with the resolved downloads path:
 ```bash
-/Users/david/Storage/Workspace/mcp-servers/media-management/skills/select-release/scripts/find-releases.sh "$DOWNLOADS_PATH"
+bash scripts/find-releases.sh "$DOWNLOADS_PATH"
 ```
 
 This will:
