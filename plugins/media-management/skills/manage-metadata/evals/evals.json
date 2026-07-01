@@ -5,9 +5,7 @@
     {
       "id": 1,
       "prompt": "can you check the tags on this album folder, tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album, before I import it",
-      "files": [
-        "tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"
-      ],
+      "files": ["tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"],
       "expected_output": "A per-track metadata table (title, artist, album, genre, track number, album artist) plus a flagged list of issues: missing titles, missing/empty genre, inconsistent artist names, missing/wrong track numbers, album artist inconsistencies, compilation flag issues. This fixture is clean (genre=Electronic, single artist) so no issues should be flagged.",
       "assertions": [
         "Presents a table with one row per track showing title, artist, album, genre, track number, and album artist",
@@ -18,9 +16,7 @@
     {
       "id": 2,
       "prompt": "the genre is blank on tests/fixtures/eval-sandbox/extracted/Foo - Bar, set it to Techno for me",
-      "files": [
-        "tests/fixtures/eval-sandbox/extracted/Foo - Bar"
-      ],
+      "files": ["tests/fixtures/eval-sandbox/extracted/Foo - Bar"],
       "expected_output": "Runs inspect first, confirms genre is indeed empty on all 3 tracks, then updates the genre field to Techno across all tracks and verifies the change with a follow-up inspect.",
       "assertions": [
         "Inspects before updating rather than updating blind",
@@ -31,9 +27,7 @@
     {
       "id": 3,
       "prompt": "why does my import show up as a bunch of separate tracks instead of one album in Apple Music? the files are in tests/fixtures/eval-sandbox/extracted/Various - Comp",
-      "files": [
-        "tests/fixtures/eval-sandbox/extracted/Various - Comp"
-      ],
+      "files": ["tests/fixtures/eval-sandbox/extracted/Various - Comp"],
       "expected_output": "Inspects the folder, detects 3 distinct Artist values (Artist 1, Artist 2, Artist 3), identifies this as a likely compilation, and proposes setting Album Artist to 'Various Artists' with the compilation flag — asking for user confirmation before applying.",
       "assertions": [
         "Detects all 3 distinct artist values across the tracks in the folder",

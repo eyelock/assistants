@@ -3,7 +3,7 @@ name: setup
 description: >-
   Check that all media-management paths (Downloads, Apple Music, NAS archive,
   rekordbox-mcp) are resolvable via env var or config.json, and help the user
-  fix any that are missing. Use when paths seem unconfigured, when a skill
+  fix any that are missing. Use when paths seem not configured, when a skill
   fails to resolve a path, when explicitly asked to set up/configure the
   plugin, or when asked where its config lives or how path resolution works.
 allowed-tools: Bash Read Write

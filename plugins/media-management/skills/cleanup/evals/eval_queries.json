@@ -1,13 +1,31 @@
 [
-  { "query": "everything's archived, can you tidy up my downloads folder now for Artist - Album", "should_trigger": true },
-  { "query": "move the zips for this release to processed and remove the extraction folder", "should_trigger": true },
+  {
+    "query": "everything's archived, can you tidy up my downloads folder now for Artist - Album",
+    "should_trigger": true
+  },
+  {
+    "query": "move the zips for this release to processed and remove the extraction folder",
+    "should_trigger": true
+  },
   { "query": "I'm done with this album, clean up the leftover files", "should_trigger": true },
-  { "query": "get rid of the extracted folders for Foo - Bar, I already archived everything", "should_trigger": true },
-  { "query": "archive the original zips for this release now that it's fully processed", "should_trigger": true },
-  { "query": "delete all the screenshots and random files cluttering my downloads folder", "should_trigger": false },
+  {
+    "query": "get rid of the extracted folders for Foo - Bar, I already archived everything",
+    "should_trigger": true
+  },
+  {
+    "query": "archive the original zips for this release now that it's fully processed",
+    "should_trigger": true
+  },
+  {
+    "query": "delete all the screenshots and random files cluttering my downloads folder",
+    "should_trigger": false
+  },
   { "query": "stage this album's files to the NAS", "should_trigger": false },
   { "query": "find the zip files for this release so I can inspect them", "should_trigger": false },
   { "query": "empty my trash", "should_trigger": false },
-  { "query": "remove the download of these tracks from apple music to free space", "should_trigger": false },
+  {
+    "query": "remove the download of these tracks from apple music to free space",
+    "should_trigger": false
+  },
   { "query": "what's the best way to organize a music library", "should_trigger": false }
 ]

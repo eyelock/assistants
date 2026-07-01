@@ -1,13 +1,28 @@
 [
-  { "query": "the apple music import looked good, stage the mp3s to the NAS", "should_trigger": true },
+  {
+    "query": "the apple music import looked good, stage the mp3s to the NAS",
+    "should_trigger": true
+  },
   { "query": "archive these wav files to my NAS staging folder", "should_trigger": true },
   { "query": "copy this album over to storage now that it's imported", "should_trigger": true },
-  { "query": "I fixed the metadata after archiving, can you re-archive the corrected files", "should_trigger": true },
-  { "query": "stage the lossless files for this release to the archive workdir", "should_trigger": true },
+  {
+    "query": "I fixed the metadata after archiving, can you re-archive the corrected files",
+    "should_trigger": true
+  },
+  {
+    "query": "stage the lossless files for this release to the archive workdir",
+    "should_trigger": true
+  },
   { "query": "import these mp3s into apple music first", "should_trigger": false },
-  { "query": "clean up the downloads folder and move the zips to processed", "should_trigger": false },
+  {
+    "query": "clean up the downloads folder and move the zips to processed",
+    "should_trigger": false
+  },
   { "query": "check if my NAS has enough free space", "should_trigger": false },
-  { "query": "offload the local downloads for these tracks since they're already synced to icloud", "should_trigger": false },
+  {
+    "query": "offload the local downloads for these tracks since they're already synced to icloud",
+    "should_trigger": false
+  },
   { "query": "rename these vendor-format wav files", "should_trigger": false },
   { "query": "what format should I export my mixes in", "should_trigger": false }
 ]

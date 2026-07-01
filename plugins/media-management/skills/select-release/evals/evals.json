@@ -32,9 +32,7 @@
     {
       "id": 3,
       "prompt": "I downloaded a Bandcamp order but only see one zip — did the WAV one fail to download or something?",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Solo Artist - Lonely EP.zip"
-      ],
+      "files": ["tests/fixtures/eval-sandbox/downloads/Solo Artist - Lonely EP.zip"],
       "expected_output": "Reports the unmatched ZIP separately from any matched pairs, without inventing a WAV pair that doesn't exist.",
       "assertions": [
         "Unmatched ZIPs are listed separately from matched MP3/WAV pairs",
