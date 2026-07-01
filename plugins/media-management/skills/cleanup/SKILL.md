@@ -13,7 +13,7 @@ metadata:
 
 1. Check environment variable: MEDIA_MGMT_DOWNLOADS
 2. If unset, use the default Downloads path from CLAUDE.md
-3. If CLAUDE.md has no path, read config.json from the project root
+3. If CLAUDE.md has no path, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
 
 Scripts are in `scripts/` relative to this skill directory.
 
