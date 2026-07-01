@@ -39,7 +39,9 @@ The plugin needs to know where your files are. Paths are resolved in this order:
 
 1. **Environment variables** (highest priority)
 2. **CLAUDE.md defaults** (edit `.claude/CLAUDE.md` for your setup)
-3. **config.json** at the project root (lowest priority)
+3. **config.json**, a per-user file at `$MEDIA_MGMT_CONFIG_PATH` (lowest priority)
+
+Run `/media-management:setup` to check which of these are missing and get help filling them in — it can write `config.json` for you.
 
 ### Environment variables
 
@@ -51,6 +53,12 @@ Set any of these in your shell profile to override defaults:
 | `MEDIA_MGMT_LIBRARY_IMPORT` | Apple Music auto-import folder | `~/Automatically Add to Music.localized` |
 | `MEDIA_MGMT_LIBRARY_STORAGE` | Apple Music library location | `~/Music` |
 | `MEDIA_MGMT_ARCHIVE_WORKDIR` | NAS staging directory | `~/Storage/Music` |
+| `MEDIA_MGMT_REKORDBOX_MCP_PATH` | Local checkout of the [rekordbox-mcp](https://github.com/davehenke/rekordbox-mcp) server | — (no default; required for the `rekordbox-database` MCP server) |
+| `MEDIA_MGMT_CONFIG_PATH` | Location of the fallback config file | `~/.config/media-management/config.json` |
+
+### config.json
+
+`config.json` is **not** shipped in this repo — it's a per-user file, since it holds machine-specific paths. `/media-management:setup` creates it for you at `$MEDIA_MGMT_CONFIG_PATH` (or its default location) if it doesn't already exist.
 
 ### Finding your Apple Music import path
 
@@ -82,12 +90,14 @@ Each step of the workflow is also available as a standalone skill:
 
 | Skill | What it does |
 |-------|-------------|
+| `/media-management:setup` | Check required paths are configured; help fill in any that are missing |
 | `/media-management:select-release` | Find and identify ZIP pairs in Downloads |
 | `/media-management:manage-metadata` | Inspect or update MP3 metadata |
 | `/media-management:split-long-tracks` | Split tracks exceeding 78 minutes at quiet points |
 | `/media-management:import-to-apple-music` | Copy files to Apple Music auto-import |
 | `/media-management:archive-media` | Stage files to NAS storage |
 | `/media-management:cleanup` | Archive ZIPs and remove temp folders |
+| `/media-management:reclaim-space` | Offload cloud-backed Apple Music downloads to free local disk |
 
 ### Inspect metadata without changing anything
 

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "rekordbox-database": {
+      "command": "uv",
+      "args": ["run", "rekordbox-mcp"],
+      "cwd": "${MEDIA_MGMT_REKORDBOX_MCP_PATH}"
+    }
+  }
+}
