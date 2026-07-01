@@ -1,0 +1,29 @@
+{
+  "skill_name": "import-to-apple-music",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Use tests/fixtures/eval-sandbox/auto-import (empty) as the import destination instead of the real Apple Music auto-import folder. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "metadata's all set, can you get tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album into Apple Music now (use tests/fixtures/eval-sandbox/auto-import as the import folder for this test)",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album",
+        "tests/fixtures/eval-sandbox/auto-import"
+      ],
+      "expected_output": "Copies the 3 MP3s to the auto-import folder, reports the file count, then asks the user to open Apple Music and verify the album looks correct before proceeding further.",
+      "assertions": [
+        "All 3 MP3 files are copied to the given auto-import folder",
+        "Explicitly asks the user to confirm the import looks correct (single album, correct artist/track order) before continuing",
+        "Does not proceed to archival or cleanup on its own"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I imported an album but it showed up as 8 separate tracks instead of one album, what happened",
+      "expected_output": "Identifies this as a likely Album/Album Artist metadata inconsistency, and offers to re-inspect and fix metadata before re-importing — rather than blindly re-copying the same files.",
+      "assertions": [
+        "Attributes the issue to inconsistent Album or Album Artist metadata rather than a generic 'try again'",
+        "Offers to fix metadata before re-attempting the import"
+      ]
+    }
+  ]
+}

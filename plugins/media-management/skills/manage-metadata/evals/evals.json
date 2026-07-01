@@ -1,0 +1,45 @@
+{
+  "skill_name": "manage-metadata",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first; each eval below operates directly on a folder under tests/fixtures/eval-sandbox/extracted/. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "can you check the tags on this album folder, tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album, before I import it",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"
+      ],
+      "expected_output": "A per-track metadata table (title, artist, album, genre, track number, album artist) plus a flagged list of issues: missing titles, missing/empty genre, inconsistent artist names, missing/wrong track numbers, album artist inconsistencies, compilation flag issues. This fixture is clean (genre=Electronic, single artist) so no issues should be flagged.",
+      "assertions": [
+        "Presents a table with one row per track showing title, artist, album, genre, track number, and album artist",
+        "Does not flag a missing genre — this fixture's tracks all have genre=Electronic set",
+        "Does not apply any changes — inspect mode is read-only"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "the genre is blank on tests/fixtures/eval-sandbox/extracted/Foo - Bar, set it to Techno for me",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/Foo - Bar"
+      ],
+      "expected_output": "Runs inspect first, confirms genre is indeed empty on all 3 tracks, then updates the genre field to Techno across all tracks and verifies the change with a follow-up inspect.",
+      "assertions": [
+        "Inspects before updating rather than updating blind",
+        "Applies the exact genre value the user specified (Techno) without asking them to re-confirm a value they already gave",
+        "Re-runs inspection after the update to confirm genre=Techno on all 3 tracks"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "why does my import show up as a bunch of separate tracks instead of one album in Apple Music? the files are in tests/fixtures/eval-sandbox/extracted/Various - Comp",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/Various - Comp"
+      ],
+      "expected_output": "Inspects the folder, detects 3 distinct Artist values (Artist 1, Artist 2, Artist 3), identifies this as a likely compilation, and proposes setting Album Artist to 'Various Artists' with the compilation flag — asking for user confirmation before applying.",
+      "assertions": [
+        "Detects all 3 distinct artist values across the tracks in the folder",
+        "Proposes the compilation classification (Various Artists + compilation flag) rather than a single/collaboration classification",
+        "Asks the user to confirm before applying any changes"
+      ]
+    }
+  ]
+}

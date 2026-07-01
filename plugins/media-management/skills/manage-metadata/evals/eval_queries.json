@@ -1,0 +1,14 @@
+[
+  { "query": "check the tags on this album before I import it", "should_trigger": true },
+  { "query": "does this folder have consistent metadata across tracks?", "should_trigger": true },
+  { "query": "set the genre to house for these tracks in ~/Downloads/Foo - Bar", "should_trigger": true },
+  { "query": "clear the album artist field, it's set for some reason and it's not a compilation", "should_trigger": true },
+  { "query": "why do these show up as separate tracks instead of an album in itunes", "should_trigger": true },
+  { "query": "can you update the track count on this folder, I split a couple files", "should_trigger": true },
+  { "query": "import these already-tagged files into apple music, ~/Downloads/Artist - Album", "should_trigger": false },
+  { "query": "split this really long track, it's like 90 minutes", "should_trigger": false },
+  { "query": "what genre does spotify list this album under", "should_trigger": false },
+  { "query": "rename these files to remove the vendor prefix junk", "should_trigger": false },
+  { "query": "archive this album to my NAS, metadata's already fine", "should_trigger": false },
+  { "query": "what's a good crossfade time for a house set", "should_trigger": false }
+]

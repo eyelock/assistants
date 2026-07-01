@@ -1,8 +1,11 @@
 ---
 name: select-release
 description: >-
-  Find and identify music release ZIP files in Downloads, classifying MP3
-  vs WAV. Use to see what music is available for processing.
+  Find music release ZIPs in Downloads and classify each as MP3 or WAV by
+  inspecting archive contents (never filenames), matching pairs by release
+  name. Use to see what's available to process — e.g. "what did I just buy"
+  or "what's in my downloads" — even if the user doesn't mention ZIPs or
+  file formats directly.
 allowed-tools: Bash Read
 metadata:
   author: eyelock

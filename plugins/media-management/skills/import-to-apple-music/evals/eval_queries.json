@@ -1,0 +1,13 @@
+[
+  { "query": "metadata's all set, get this album into apple music", "should_trigger": true },
+  { "query": "can you add these tracks to my apple music library now", "should_trigger": true },
+  { "query": "copy this folder to the auto-import folder", "should_trigger": true },
+  { "query": "I imported an album but it showed up as 8 separate tracks instead of one", "should_trigger": true },
+  { "query": "put this album in itunes", "should_trigger": true },
+  { "query": "where's the automatically add to music folder on my mac", "should_trigger": false },
+  { "query": "check the metadata on this album before I do anything with it", "should_trigger": false },
+  { "query": "archive these wavs to the NAS, they never go through apple music", "should_trigger": false },
+  { "query": "delete this album from my apple music library", "should_trigger": false },
+  { "query": "offload the downloaded copies of these tracks to free disk space", "should_trigger": false },
+  { "query": "what's a good genre tag for deep house", "should_trigger": false }
+]

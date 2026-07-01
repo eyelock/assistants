@@ -3,6 +3,22 @@
 # which required ones are still missing. Outputs JSON; never fails the caller.
 set -euo pipefail
 
+if [[ "${1:-}" == "--help" ]]; then
+  cat <<'HELP'
+Usage: check-config.sh
+
+Check each MEDIA_MGMT_* path (downloads, library_import, library_storage,
+archive_workdir, processed, rekordbox_mcp_path) against its env var, then
+against config.json at $MEDIA_MGMT_CONFIG_PATH (default
+~/.config/media-management/config.json). Takes no arguments.
+
+Output: JSON to stdout — config_path, config_exists, items (per-key value
+and source), missing_required, ok.
+Exit codes: always 0; missing config is reported in the JSON, not via exit code.
+HELP
+  exit 0
+fi
+
 if ! command -v jq &>/dev/null; then
   echo '{"error": "jq not installed", "ok": false}'
   exit 0

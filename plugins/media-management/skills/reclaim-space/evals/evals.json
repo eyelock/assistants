@@ -1,0 +1,25 @@
+{
+  "skill_name": "reclaim-space",
+  "fixtures": "No file fixtures apply — this skill drives the real Apple Music app via AppleScript. Running these evals for real requires either a disposable test Apple Music library or a stubbed osascript on PATH returning canned JSON matching audit-library.sh/build-offload-playlist.sh's expected shapes.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "my mac is almost out of disk space and I think it's all these apple music downloads, can you help",
+      "expected_output": "Audits iCloud status first, confirms Sync Library is on and cloud-safe tracks exist, then builds an offload playlist protecting DJ crates and lossless/local-only files, and tells the user to manually run Remove Download themselves rather than automating it.",
+      "assertions": [
+        "Runs the audit step before building any playlist",
+        "Stops and warns if Sync Library appears off or nothing is cloud-safe, rather than proceeding anyway",
+        "Excludes DJ-tagged tracks and local-only formats (e.g. WAV) from the offload playlist by default",
+        "Explicitly tells the user to run Remove Download themselves in Apple Music rather than automating that step"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I already built the offload playlist last month, can you refresh it since I've added new tracks",
+      "expected_output": "Re-runs the build-offload-playlist step with --replace to refresh the existing playlist rather than creating a duplicate, and reports the updated in_playlist/excluded counts.",
+      "assertions": [
+        "Uses the replace/refresh behavior instead of creating a second, duplicate playlist"
+      ]
+    }
+  ]
+}

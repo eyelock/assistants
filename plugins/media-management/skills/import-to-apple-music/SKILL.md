@@ -1,8 +1,10 @@
 ---
 name: import-to-apple-music
 description: >-
-  Import MP3 files into Apple Music via auto-import folder. Use when importing
-  music to Apple Music library.
+  Copy finished MP3s into Apple Music via the auto-import folder and verify
+  the album lands correctly. Use once metadata is finalized and the user
+  wants tracks added to their library — e.g. "add this to Apple Music" or
+  "import these tracks" — even if they don't say "auto-import" explicitly.
 allowed-tools: Bash Read
 metadata:
   author: eyelock

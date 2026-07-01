@@ -1,0 +1,30 @@
+{
+  "skill_name": "cleanup",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first; point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads, which already has the ZIPs and pre-extracted folders for 'Test Artist - Test Album' side by side. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "everything's archived for Test Artist - Test Album, can you tidy up my downloads folder now",
+      "files": [
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-wav"
+      ],
+      "expected_output": "Finds both ZIPs and both extraction folders, presents them to the user, asks for explicit confirmation, then moves both ZIPs to processed/ and removes both extraction folders.",
+      "assertions": [
+        "Presents the specific files/folders that will be moved or removed before taking action",
+        "Requires explicit user confirmation before deleting or moving anything",
+        "Reports 2 ZIPs archived and 2 folders removed"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "clean up Nonexistent - Release but I don't think there's anything left to clean, I already did it manually",
+      "expected_output": "Reports that no matching artifacts were found for that release and exits without error.",
+      "assertions": [
+        "If nothing is found for the release, reports this and exits rather than erroring or deleting unrelated files"
+      ]
+    }
+  ]
+}

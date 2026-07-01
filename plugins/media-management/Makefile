@@ -47,6 +47,9 @@ uninstall: ## Remove plugin symlink from ~/.claude/plugins/repos
 fixtures: ## Generate test audio fixtures
 	@bash tests/fixtures/generate-fixtures.sh tests/fixtures
 
+eval-fixtures: ## Assemble the sandbox tree used by skills/*/evals/evals.json
+	@bash tests/fixtures/generate-eval-fixtures.sh
+
 test: fixtures ## Run full test suite
 	@bash tests/run-tests.sh
 

@@ -1,0 +1,13 @@
+[
+  { "query": "this DJ mix track is like 90 minutes, apple music won't take it", "should_trigger": true },
+  { "query": "check if any tracks in this folder are too long for apple music", "should_trigger": true },
+  { "query": "can you split this long live set into parts at quiet points", "should_trigger": true },
+  { "query": "apple music rejected my upload, says track too long", "should_trigger": true },
+  { "query": "find tracks over 78 minutes in ~/Downloads/Various - Live", "should_trigger": true },
+  { "query": "chop this file into pieces every 20 minutes regardless of content", "should_trigger": false },
+  { "query": "trim the silence off the start and end of this track", "should_trigger": false },
+  { "query": "merge these two short tracks into one file", "should_trigger": false },
+  { "query": "convert this wav to mp3", "should_trigger": false },
+  { "query": "update the track count after I manually deleted a file", "should_trigger": false },
+  { "query": "what's the weather like today", "should_trigger": false }
+]

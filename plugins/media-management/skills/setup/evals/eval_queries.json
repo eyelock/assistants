@@ -1,0 +1,13 @@
+[
+  { "query": "is this plugin actually set up? I don't think I've configured any paths", "should_trigger": true },
+  { "query": "check my media-management config", "should_trigger": true },
+  { "query": "a skill just failed saying it couldn't find my downloads path, what's going on", "should_trigger": true },
+  { "query": "help me configure media-management for the first time", "should_trigger": true },
+  { "query": "where is my config.json supposed to live for this plugin", "should_trigger": true },
+  { "query": "process my new album, from downloads to the NAS", "should_trigger": false },
+  { "query": "check the metadata on this album folder", "should_trigger": false },
+  { "query": "is my NAS reachable right now", "should_trigger": false },
+  { "query": "what environment variables does my shell have set", "should_trigger": false },
+  { "query": "free up disk space on my mac", "should_trigger": false },
+  { "query": "what's the weather forecast this weekend", "should_trigger": false }
+]

@@ -1,0 +1,14 @@
+[
+  { "query": "what music did I just buy, check my downloads", "should_trigger": true },
+  { "query": "I've got a bandcamp order sitting in ~/Downloads, can you see what's there", "should_trigger": true },
+  { "query": "list the album zips I need to process", "should_trigger": true },
+  { "query": "any new music in downloads?", "should_trigger": true },
+  { "query": "can you find the mp3 and wav pairs from my last purchase", "should_trigger": true },
+  { "query": "I think I downloaded a beatport order yesterday, what's in there", "should_trigger": true },
+  { "query": "unzip this file for me: ~/Downloads/report.zip", "should_trigger": false },
+  { "query": "can you import these mp3s into apple music, they're already extracted at ~/Downloads/Artist - Album", "should_trigger": false },
+  { "query": "clean up my downloads folder, delete old screenshots and installers", "should_trigger": false },
+  { "query": "archive this album to my NAS, it's already imported", "should_trigger": false },
+  { "query": "check if this zip file is corrupted: ~/Downloads/weird_file.zip", "should_trigger": false },
+  { "query": "what's a good bpm range for a warmup set", "should_trigger": false }
+]

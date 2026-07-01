@@ -1,0 +1,31 @@
+{
+  "skill_name": "split-long-tracks",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. The long-track.mp3 fixture is only 15s with silence gaps at ~5s and ~11s, so run the split script with a small max_minutes value (e.g. 0.1 = 6s) instead of the real 78-minute default to actually trigger a split. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "one of the tracks in tests/fixtures/eval-sandbox/extracted/DJ Mix - Live Set is way too long for Apple Music, can you check and split it (use a 6 second / 0.1 minute threshold since this is a test fixture, not a real 78-minute track)",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/DJ Mix - Live Set"
+      ],
+      "expected_output": "Scans the folder, finds long-track.mp3 exceeding the given threshold, confirms with the user before splitting, then splits at its two silence points (~5s, ~11s) with 2s crossfades into 3 sequentially-numbered files.",
+      "assertions": [
+        "Scans for tracks exceeding the given threshold rather than assuming which file is long",
+        "Asks for explicit confirmation before splitting",
+        "Splits into exactly 3 output files at the fixture's two silence gaps",
+        "Split output files are numbered sequentially starting from 1, with no 'Part X' in the name"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "check if any tracks in tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album are too long for apple music",
+      "files": [
+        "tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"
+      ],
+      "expected_output": "Reports that no long tracks were found (using the real 78-minute default threshold, none of these ~3s tracks qualify) and stops without taking further action.",
+      "assertions": [
+        "If no tracks exceed the threshold, reports this clearly and exits without splitting anything"
+      ]
+    }
+  ]
+}
