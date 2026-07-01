@@ -1,0 +1,31 @@
+[
+  {
+    "query": "my mac is almost out of disk space, I think it's all these apple music downloads",
+    "should_trigger": true
+  },
+  {
+    "query": "can you free up some local storage without losing my DJ crates",
+    "should_trigger": true
+  },
+  {
+    "query": "help me offload cloud-backed music I don't need downloaded right now",
+    "should_trigger": true
+  },
+  {
+    "query": "refresh that offload playlist, I added new tracks since last time",
+    "should_trigger": true
+  },
+  {
+    "query": "running low on disk, is it safe to remove downloads for tracks that are in icloud",
+    "should_trigger": true
+  },
+  { "query": "archive this album's wav files to the NAS to save space", "should_trigger": false },
+  {
+    "query": "delete these tracks permanently from my library, I don't want them anymore",
+    "should_trigger": false
+  },
+  { "query": "clean up my downloads folder", "should_trigger": false },
+  { "query": "check disk space on my NAS", "should_trigger": false },
+  { "query": "why is my mac running slow", "should_trigger": false },
+  { "query": "what's a smart playlist in apple music", "should_trigger": false }
+]

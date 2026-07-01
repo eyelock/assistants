@@ -1,8 +1,11 @@
 ---
 name: select-release
 description: >-
-  Find and identify music release ZIP files in Downloads, classifying MP3
-  vs WAV. Use to see what music is available for processing.
+  Find music release ZIPs in Downloads and classify each as MP3 or WAV by
+  inspecting archive contents (never filenames), matching pairs by release
+  name. Use to see what's available to process — e.g. "what did I just buy"
+  or "what's in my downloads" — even if the user doesn't mention ZIPs or
+  file formats directly.
 allowed-tools: Bash Read
 metadata:
   author: eyelock
@@ -13,7 +16,9 @@ metadata:
 
 1. Check environment variable: MEDIA_MGMT_DOWNLOADS
 2. If unset, use the default Downloads path from CLAUDE.md
-3. If CLAUDE.md has no path, read config.json from the project root
+3. If CLAUDE.md has no path, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+
+Scripts are in `scripts/` relative to this skill directory.
 
 ## Scripts
 
@@ -30,7 +35,7 @@ Run `--help` on either script for full usage details.
 
 Run the find-releases script with the resolved downloads path:
 ```bash
-/Users/david/Storage/Workspace/mcp-servers/media-management/skills/select-release/scripts/find-releases.sh "$DOWNLOADS_PATH"
+bash scripts/find-releases.sh "$DOWNLOADS_PATH"
 ```
 
 This will:

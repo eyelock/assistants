@@ -29,7 +29,7 @@ The ONLY exception is Step 2 and Step 11 (ZIP extraction), which use this skill'
 1. Check environment variables: MEDIA_MGMT_DOWNLOADS, MEDIA_MGMT_LIBRARY_IMPORT,
    MEDIA_MGMT_LIBRARY_STORAGE, MEDIA_MGMT_ARCHIVE_WORKDIR
 2. For any unset variables, use the default paths from CLAUDE.md
-3. If CLAUDE.md has no paths, read config.json from the project root
+3. If CLAUDE.md has no paths, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
 
 Scripts are in `scripts/` relative to this skill directory.
 

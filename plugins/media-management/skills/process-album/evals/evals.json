@@ -1,0 +1,34 @@
+{
+  "skill_name": "process-album",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads, MEDIA_MGMT_LIBRARY_IMPORT at tests/fixtures/eval-sandbox/auto-import, MEDIA_MGMT_LIBRARY_STORAGE at tests/fixtures/eval-sandbox/library, and MEDIA_MGMT_ARCHIVE_WORKDIR at tests/fixtures/eval-sandbox/nas-archive. Note: this eval exercises real sub-skill delegation end to end (extraction, metadata, a real Apple Music import via the auto-import folder, archival, cleanup) — it is the most expensive eval in the plugin to actually run. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just bought Test Artist - Test Album, can you process it end to end",
+      "files": [
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      ],
+      "expected_output": "Orchestrates the full pipeline via sub-skills (select-release, extract, manage-metadata inspect/update, import-to-apple-music, archive-media for mp3, archive-media for wav, cleanup), stopping at the two mandatory user-confirmation checkpoints (metadata verification, Apple Music import verification) and never re-implementing sub-skill logic inline.",
+      "assertions": [
+        "Invokes sub-skills via the Skill tool (e.g. media-management:select-release) rather than calling their scripts directly",
+        "Stops and asks for explicit user confirmation of metadata (artist, album, genre, compilation status) before importing to Apple Music",
+        "Stops and asks the user to verify the Apple Music import before proceeding to NAS archival",
+        "Processes MP3s through the full Apple Music path and WAVs through NAS-only archival, never importing WAVs to Apple Music"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "process 'Test Artist - Test Album' — I already know it's a straightforward single-artist album",
+      "files": [
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      ],
+      "expected_output": "Uses the given release name to skip the select-release disambiguation step, but still performs the mandatory metadata and Apple Music verification checkpoints rather than skipping them because the user described the album type.",
+      "assertions": [
+        "Passes the user-provided release name through to select-release/downstream steps instead of re-prompting for it",
+        "Still stops for the mandatory metadata confirmation checkpoint even though the user described the album as simple"
+      ]
+    }
+  ]
+}

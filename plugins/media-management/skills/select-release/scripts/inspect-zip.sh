@@ -6,6 +6,12 @@
 
 set -euo pipefail
 
+# Process the ZIP listing as raw bytes. Vendor archives can contain non-UTF-8
+# (CP437/Latin-1) filenames; under a UTF-8 locale, BSD sed/awk/tr abort with
+# "illegal byte sequence", which (with set -e) silently drops the whole release
+# from the classifier. The C locale makes the text tools byte-safe.
+export LC_ALL=C
+
 show_help() {
   cat <<'HELP'
 Usage: inspect-zip.sh <zip_file>
