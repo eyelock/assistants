@@ -2,7 +2,10 @@
 name: manage-metadata
 description: >-
   Inspect and update MP3 tags: genre, artist, album, track count, compilation
-  flag. Use when checking or fixing music file metadata.
+  flag. Use when checking or fixing music file metadata — including
+  diagnostic questions like "why do these show up as separate tracks" or
+  "is this folder's metadata consistent," not just explicit tag-editing
+  requests.
 allowed-tools: Bash Read
 metadata:
   author: eyelock

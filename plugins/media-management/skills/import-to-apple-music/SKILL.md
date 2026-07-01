@@ -5,6 +5,8 @@ description: >-
   the album lands correctly. Use once metadata is finalized and the user
   wants tracks added to their library — e.g. "add this to Apple Music" or
   "import these tracks" — even if they don't say "auto-import" explicitly.
+  Also use to diagnose a bad import, e.g. "it showed up as separate tracks
+  instead of one album."
 allowed-tools: Bash Read
 metadata:
   author: eyelock

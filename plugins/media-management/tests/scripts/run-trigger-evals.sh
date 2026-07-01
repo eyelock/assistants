@@ -51,10 +51,16 @@ done
 
 check_triggered() {
   local query="$1"
-  claude -p "$query" --plugin-dir "$PLUGIN_ROOT" --output-format json 2>/dev/null \
-    | jq -e --arg skill "media-management:$SKILL_NAME" \
-      'any(.messages[].content[]?; .type == "tool_use" and .name == "Skill" and (.input.skill == $skill))' \
-      >/dev/null 2>&1
+  # --output-format json returns a single flat result object with no tool-call
+  # detail. stream-json + --verbose emits one JSON object per line, each
+  # optionally carrying a message with content blocks — that's where tool_use
+  # (and the Skill tool's `input.skill`, fully namespaced as
+  # "media-management:<name>") actually shows up.
+  claude -p "$query" --plugin-dir "$PLUGIN_ROOT" --output-format stream-json --verbose 2>/dev/null \
+    | jq -s -e --arg skill "media-management:$SKILL_NAME" '
+        [.[] | (.message.content? // [])[]?]
+        | any(.type == "tool_use" and .name == "Skill" and .input.skill == $skill)
+      ' >/dev/null 2>&1
 }
 
 count=$(jq length "$QUERIES_FILE")
