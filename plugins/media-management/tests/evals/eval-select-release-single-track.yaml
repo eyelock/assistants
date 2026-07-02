@@ -1,0 +1,14 @@
+name: "Single-track (loose file) identification"
+description: "Test that select-release finds and pairs loose MP3/WAV files with no ZIP wrapper"
+setup:
+  - "Place a loose 'Artist - Track.mp3' and 'Artist - Track.wav' directly in Downloads (no ZIP)"
+invoke: "/media-management:select-release"
+expected_behavior:
+  - "Finds loose audio files in Downloads, not just ZIPs"
+  - "Classifies each by extension, NOT by filename suffix"
+  - "Pairs the MP3 and WAV loose files by matching base name, same as it would ZIP pairs"
+  - "Presents the release in the findings table, noting it's a loose-file (not ZIP) source"
+  - "Asks user to select/confirm before processing"
+verification:
+  - "Release appears in the table with source_type 'file' for both sides"
+  - "No ZIP extraction attempted for this release"
