@@ -95,7 +95,6 @@
       "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
       "version": "0.1.0",
       "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
-<<<<<<< HEAD
     },
     {
       "name": "vendor-harness",
@@ -117,8 +116,6 @@
         "cursor",
         "codex"
       ]
-=======
->>>>>>> origin/main
     }
   ]
 }
