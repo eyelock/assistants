@@ -11,13 +11,13 @@
       "name": "gitflow",
       "source": "./plugins/gitflow",
       "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "media-management",
       "source": "./plugins/media-management",
       "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "dev-skills",
@@ -29,7 +29,7 @@
       "name": "tech-skills",
       "source": "./skills/tech",
       "description": "Language-specific development skills: Go and Java workflows, tooling, and patterns.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "infra-skills",
@@ -56,7 +56,7 @@
       "name": "vendor-harness",
       "source": "./plugins/vendor-harness",
       "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }
