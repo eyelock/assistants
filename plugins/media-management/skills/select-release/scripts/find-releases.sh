@@ -1,43 +1,50 @@
 #!/usr/bin/env bash
-# Find music release ZIP files in a downloads folder, classify each, and match into pairs.
+# Find music release ZIPs and loose audio files in a downloads folder,
+# classify each, and match into pairs.
 # Usage: find-releases.sh <downloads_folder>
-# Output: JSON to stdout with matched releases and any unmatched ZIPs
+# Output: JSON to stdout with matched releases and any unmatched sources
 # Exit codes: 0=success, 1=bad args, 2=folder not found
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSPECT_SCRIPT="$SCRIPT_DIR/inspect-zip.sh"
+INSPECT_ZIP_SCRIPT="$SCRIPT_DIR/inspect-zip.sh"
+INSPECT_FILE_SCRIPT="$SCRIPT_DIR/inspect-audio-file.sh"
 
 show_help() {
   cat <<'HELP'
 Usage: find-releases.sh <downloads_folder>
 
-Find all ZIP files in the downloads folder, inspect each for audio content,
-classify as MP3 or WAV, and match into release pairs by base name.
+Find all ZIP files AND loose audio files (single-track purchases with no
+ZIP) in the downloads folder, inspect each for audio content, classify as
+MP3/WAV/FLAC, and match into release pairs by base name.
 
 Pairing logic:
   - "Artist - Album.zip" and "Artist - Album-2.zip" → paired
   - "Artist - Album.zip" and "Artist - Album (1).zip" → paired
-  - Unpaired ZIPs are listed separately
+  - "Artist - Track.mp3" and "Artist - Track.wav" → paired (loose files)
+  - A ZIP and a loose file can pair with each other if their base names match
+  - Unpaired sources are listed separately
 
 Output: JSON to stdout
   {
     "releases": [
       {
         "name": "Artist - Album",
-        "mp3_zip": {"file": "...", "path": "...", "type": "mp3", "tracks": 8, ...},
-        "wav_zip": {"file": "...", "path": "...", "type": "wav", "tracks": 8, ...}
+        "mp3_source": {"file": "...", "path": "...", "type": "mp3", "tracks": 8,
+                        "source_type": "zip|file", ...},
+        "wav_source": {"file": "...", "path": "...", "type": "wav", "tracks": 8,
+                        "source_type": "zip|file", ...}
       }
     ],
     "unmatched": [
-      {"file": "...", "path": "...", "type": "mp3", "tracks": 5, ...}
+      {"file": "...", "path": "...", "type": "mp3", "tracks": 5, "source_type": "zip", ...}
     ],
-    "total_zips": 4
+    "total_sources": 5
   }
 
 Exit codes:
-  0  Success (even if no ZIPs found — check total_zips)
+  0  Success (even if nothing found — check total_sources)
   1  Bad arguments
   2  Folder not found
 HELP
@@ -69,36 +76,52 @@ while IFS= read -r f; do
   zip_files+=("$f")
 done < <(find "$DOWNLOADS" -maxdepth 1 -iname '*.zip' -type f | sort)
 
-if [[ ${#zip_files[@]} -eq 0 ]]; then
-  echo '{"releases": [], "unmatched": [], "total_zips": 0}'
+# Find all loose audio files (single-track purchases with no ZIP)
+audio_files=()
+while IFS= read -r f; do
+  audio_files+=("$f")
+done < <(find "$DOWNLOADS" -maxdepth 1 -type f \( -iname '*.mp3' -o -iname '*.wav' -o -iname '*.flac' \) | sort)
+
+total_sources=$((${#zip_files[@]} + ${#audio_files[@]}))
+
+if [[ $total_sources -eq 0 ]]; then
+  echo '{"releases": [], "unmatched": [], "total_sources": 0}'
   exit 0
 fi
 
-# Inspect each ZIP
+# Inspect each source
 declare -a inspected_json=()
-declare -a inspected_files=()
 
 for zip in "${zip_files[@]}"; do
-  result=$("$INSPECT_SCRIPT" "$zip" 2>/dev/null) || continue
+  result=$("$INSPECT_ZIP_SCRIPT" "$zip" 2>/dev/null) || continue
   type=$(echo "$result" | jq -r '.type')
   # Only include ZIPs with audio content
   if [[ "$type" != "unknown" ]]; then
     inspected_json+=("$result")
-    inspected_files+=("$(basename "$zip")")
+  fi
+done
+
+for f in "${audio_files[@]}"; do
+  result=$("$INSPECT_FILE_SCRIPT" "$f" 2>/dev/null) || continue
+  type=$(echo "$result" | jq -r '.type')
+  if [[ "$type" != "unknown" ]]; then
+    inspected_json+=("$result")
   fi
 done
 
 if [[ ${#inspected_json[@]} -eq 0 ]]; then
-  echo "{\"releases\": [], \"unmatched\": [], \"total_zips\": ${#zip_files[@]}}"
+  echo "{\"releases\": [], \"unmatched\": [], \"total_sources\": ${total_sources}}"
   exit 0
 fi
 
 # Extract base names for pairing
-# Strips common suffixes: -2, -wav, (1), (2), etc.
+# Strips the source extension (.zip/.mp3/.wav/.flac) and common vendor
+# duplicate suffixes: -2, -wav, (1), (2), etc.
 normalize_name() {
   local name="$1"
-  # Remove .zip extension (case-insensitive)
+  # Remove the source extension (case-insensitive)
   name=$(echo "$name" | sed -E 's/\.[zZ][iI][pP]$//')
+  name=$(echo "$name" | sed -E 's/\.([mM][pP]3|[wW][aA][vV]|[fF][lL][aA][cC])$//')
   # Remove Bandcamp duplicate suffixes: -2, _2, -wav, _wav, etc.
   # REQUIRE the hyphen/underscore separator to avoid stripping album names ending in numbers
   # Must come BEFORE other suffix stripping so e.g. "(pre-order)-2" → "(pre-order)" → stripped
@@ -161,23 +184,23 @@ for base_dir in "$pair_dir"/*/; do
       # Paired release
       release=$(jq -n \
         --arg name "$base" \
-        --argjson mp3_zip "$mp3_json" \
-        --argjson wav_zip "$wav_json" \
-        '{name: $name, mp3_zip: $mp3_zip, wav_zip: $wav_zip}')
+        --argjson mp3_source "$mp3_json" \
+        --argjson wav_source "$wav_json" \
+        '{name: $name, mp3_source: $mp3_source, wav_source: $wav_source}')
       releases=$(echo "$releases" | jq --argjson r "$release" '. + [$r]')
     elif $has_mp3; then
       # Solo MP3
       release=$(jq -n \
         --arg name "$base" \
-        --argjson mp3_zip "$mp3_json" \
-        '{name: $name, mp3_zip: $mp3_zip, wav_zip: null}')
+        --argjson mp3_source "$mp3_json" \
+        '{name: $name, mp3_source: $mp3_source, wav_source: null}')
       releases=$(echo "$releases" | jq --argjson r "$release" '. + [$r]')
     elif $has_wav; then
       # Solo WAV/FLAC
       release=$(jq -n \
         --arg name "$base" \
-        --argjson wav_zip "$wav_json" \
-        '{name: $name, mp3_zip: null, wav_zip: $wav_zip}')
+        --argjson wav_source "$wav_json" \
+        '{name: $name, mp3_source: null, wav_source: $wav_source}')
       releases=$(echo "$releases" | jq --argjson r "$release" '. + [$r]')
     fi
   fi
@@ -192,5 +215,5 @@ done
 jq -n \
   --argjson releases "$releases" \
   --argjson unmatched "$unmatched" \
-  --argjson total_zips "${#zip_files[@]}" \
-  '{releases: $releases, unmatched: $unmatched, total_zips: $total_zips}'
+  --argjson total_sources "$total_sources" \
+  '{releases: $releases, unmatched: $unmatched, total_sources: $total_sources}'
