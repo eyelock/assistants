@@ -1,6 +1,6 @@
 {
   "name": "@eyelock-assistants/david",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "David's personal development persona with full skill set",
   "dependencies": {
