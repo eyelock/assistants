@@ -1,0 +1,43 @@
+{
+  "skill_name": "select-release",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first, then point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads for these runs. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "hey what music did I just buy, I think there's something in my downloads folder",
+      "files": [
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      ],
+      "expected_output": "A table of detected releases (artist/album, MP3 ZIP, WAV ZIP, track counts per side), followed by a question asking which release to process. Classification is based on inspecting ZIP contents, not filenames.",
+      "assertions": [
+        "Output lists at least one release with both an MP3 ZIP and a WAV ZIP identified",
+        "The classification method inspects archive contents rather than trusting filename suffixes",
+        "Ends by asking the user which release to process, or confirms the single release found"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Check ~/Downloads for any new album purchases I can start processing",
+      "files": [
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
+        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      ],
+      "expected_output": "Same as above: a table of matched MP3/WAV release pairs found in the given Downloads path.",
+      "assertions": [
+        "Resolves the Downloads path from the user's message, env var, or config rather than asking unnecessarily",
+        "Presents results as a table with release name, ZIP filenames, and track counts"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I downloaded a Bandcamp order but only see one zip — did the WAV one fail to download or something?",
+      "files": ["tests/fixtures/eval-sandbox/downloads/Solo Artist - Lonely EP.zip"],
+      "expected_output": "Reports the unmatched ZIP separately from any matched pairs, without inventing a WAV pair that doesn't exist.",
+      "assertions": [
+        "Unmatched ZIPs are listed separately from matched MP3/WAV pairs",
+        "Does not fabricate a missing counterpart file"
+      ]
+    }
+  ]
+}

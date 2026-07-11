@@ -1,0 +1,7 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "fork-source",
+  "version": "0.1.0",
+  "description": "E2E fixture: a harness designed to be forked — used to verify forked_from provenance recording and carry-forward.",
+  "default_vendor": "claude"
+}

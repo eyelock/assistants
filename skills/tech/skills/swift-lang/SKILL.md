@@ -1,9 +1,11 @@
 ---
 name: swift-lang
-description: Swift 6 and SwiftUI development — concurrency model, observable patterns, testing with XCTest, and xcodebuild tooling.
+description: Swift 6 language and tooling — concurrency model, Sendable, actors, XCTest basics, and xcodebuild. For SwiftUI architecture and view-layer testing, see `swiftui-lang`.
 ---
 
 # Swift Development
+
+For SwiftUI-specific architecture (ViewModel extraction, DI, ViewInspector, snapshot testing, coverage targets by layer), load the `swiftui-lang` skill.
 
 ## Swift 6 Concurrency
 
@@ -42,35 +44,43 @@ struct Config: Sendable {
 - Use `async/await` — avoid `DispatchQueue` and callback chains
 - Never use `nonisolated(unsafe)` without a clear documented reason
 
-## SwiftUI Patterns
+### Enforce strict concurrency at compile time
 
-**`@Observable` (Swift 5.9+)** replaces `ObservableObject`:
+Manual review cannot catch every missed `@Sendable` on a closure handed to an Apple SDK that dispatches on a background queue. The only durable enforcement is the build flag:
+
 ```swift
-@Observable
-final class BoardViewModel {
-    var cards: [Card] = []
-    var isLoading = false
-}
+// Package.swift
+.target(
+    name: "App",
+    swiftSettings: [.enableExperimentalFeature("StrictConcurrency=complete")]
+)
 ```
 
-**View composition** — keep views thin:
-```swift
-struct CardListView: View {
-    let viewModel: BoardViewModel
+Until the project compiles cleanly under `StrictConcurrency=complete`, treat every closure literal written inside a `@MainActor` scope as a latent EXC_BREAKPOINT — see `swiftui-lang` for the per-call-site rule.
 
-    var body: some View {
-        List(viewModel.cards) { card in
-            CardRowView(card: card)
-        }
-    }
+### Pick one async primitive
+
+`DispatchQueue.main.asyncAfter`, `Task.sleep(nanoseconds:)`, `Timer.scheduledTimer`, and bare GCD coexisting in the same codebase is a smell. Default to `async/await`; reach for `Timer` only for periodic UI ticks. New code should not introduce GCD.
+
+`Task.sleep` used to wait for "something to be ready" (connect, callback drain, settle) is a race-condition workaround, not coordination. It will go flaky under load and mask the next race. Replace with an explicit signal: a continuation, an `AsyncStream`, or a state observer.
+
+## Error handling — `try?` is a regression amplifier
+
+`try?` converts loud failures into silent ones. The user sees "nothing happened" and there is nothing to debug. Reserve it for cases where the failure genuinely has no consequence (e.g. best-effort cache prime). For anything user-visible — git, subprocess, filesystem, network — surface the error:
+
+```swift
+// Bad — silent
+let branches = try? await git.listBranches()
+
+// Good — log and propagate or present
+do {
+    let branches = try await git.listBranches()
+    ...
+} catch {
+    logger.error("git listBranches failed: \(error)")
+    throw error  // or surface to the user
 }
 ```
-
-**Rules:**
-- One `@Observable` view model per screen/sheet
-- Views observe only what they render — split view models to avoid over-invalidation
-- Use `@Environment` for app-wide singletons (not property injection)
-- Prefer `List` + `ForEach` over manual `ScrollView` + `LazyVStack` unless custom layout is needed
 
 ## Testing with XCTest
 

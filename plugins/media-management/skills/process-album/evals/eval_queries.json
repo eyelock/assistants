@@ -1,0 +1,31 @@
+[
+  { "query": "I just bought an album, can you process it end to end", "should_trigger": true },
+  { "query": "process 'Artist - Album' for me", "should_trigger": true },
+  {
+    "query": "handle my new music purchase, from downloads all the way to the NAS",
+    "should_trigger": true
+  },
+  {
+    "query": "run the full album workflow on whatever's in my downloads folder",
+    "should_trigger": true
+  },
+  {
+    "query": "got a new bandcamp order, take it from zip to archived please",
+    "should_trigger": true
+  },
+  {
+    "query": "just check what's in my downloads, don't do anything with it yet",
+    "should_trigger": false
+  },
+  { "query": "only update the metadata on this one folder, nothing else", "should_trigger": false },
+  {
+    "query": "only stage this album to the NAS, it's already imported to apple music",
+    "should_trigger": false
+  },
+  { "query": "is my media-management plugin configured correctly", "should_trigger": false },
+  {
+    "query": "free up some disk space by removing downloaded copies in apple music",
+    "should_trigger": false
+  },
+  { "query": "what genre is this track", "should_trigger": false }
+]

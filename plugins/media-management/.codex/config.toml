@@ -13,9 +13,9 @@
 
 [sandbox_workspace_write]
 writable_roots = [
-  "/Users/david/Downloads",
-  "/Users/david/Music",
-  "/Users/david/Storage/Music",
+  "/Users/YOUR_USERNAME/Downloads",
+  "/Users/YOUR_USERNAME/Music",
+  "/Users/YOUR_USERNAME/path/to/archive-staging",
 ]
 network_access = false
 
@@ -24,10 +24,10 @@ network_access = false
 # Uncomment and edit to override default paths from config.json.
 
 # [env]
-# MEDIA_MGMT_DOWNLOADS = "/Users/david/Downloads"
-# MEDIA_MGMT_LIBRARY_IMPORT = "/Users/david/Automatically Add to Music.localized"
-# MEDIA_MGMT_LIBRARY_STORAGE = "/Users/david/Music"
-# MEDIA_MGMT_ARCHIVE_WORKDIR = "/Users/david/Storage/Music"
+# MEDIA_MGMT_DOWNLOADS = "/Users/YOUR_USERNAME/Downloads"
+# MEDIA_MGMT_LIBRARY_IMPORT = "/Users/YOUR_USERNAME/Music/Music/Media.localized/Automatically Add to Music.localized"
+# MEDIA_MGMT_LIBRARY_STORAGE = "/Users/YOUR_USERNAME/Music"
+# MEDIA_MGMT_ARCHIVE_WORKDIR = "/Users/YOUR_USERNAME/path/to/archive-staging"
 
 # --- Skills ---
 # Disable any skills that shouldn't auto-invoke for this project.

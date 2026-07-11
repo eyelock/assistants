@@ -43,7 +43,7 @@ media-management/
 ├── .claude/
 │   ├── CLAUDE.md                  # Project instructions, config, safety rules
 │   └── settings.json              # Permissions, env vars, announcements
-├── config.json                    # Fallback config (lowest priority)
+├── (no config.json here — per-user file at ~/.config/media-management/config.json)
 ├── hooks/
 │   ├── hooks.json                 # Hook registration (PreToolUse on Bash)
 │   └── validate-bash-command.sh   # Safety hook — blocks dangerous commands

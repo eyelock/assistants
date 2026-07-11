@@ -1,6 +1,16 @@
 {
   "description": "Media Management hooks — safety checks + path-based auto-approval",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-config-session.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -8,11 +18,24 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/validate-bash-command.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/gate-config-required-skills.sh"
           }
         ]
       },
       {
         "matcher": "Read|Glob|Grep|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/auto-approve-tools.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__plugin_media-management_rekordbox-database__.*",
         "hooks": [
           {
             "type": "command",

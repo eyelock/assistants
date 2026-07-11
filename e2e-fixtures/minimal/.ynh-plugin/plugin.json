@@ -1,0 +1,7 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "minimal",
+  "version": "0.1.0",
+  "description": "Bare-minimum installable harness used as an E2E fixture for ynh.",
+  "default_vendor": "claude"
+}

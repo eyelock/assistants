@@ -90,8 +90,17 @@ mkdir -p "$DEST" || {
 
 # Extract
 echo "Extracting $(basename "$ZIP_FILE") to $DEST" >&2
-if ! unzip -o "$ZIP_FILE" -d "$DEST" >&2 2>&1; then
-  echo "Error: extraction failed" >&2
+# Prefer ditto on macOS: it correctly handles non-UTF-8 (CP437/Latin-1) filenames
+# in vendor ZIPs (e.g. accented characters) that Info-ZIP's unzip mangles or fails
+# to write on APFS — surfaced misleadingly as "disk full" (exit 50), halting
+# extraction partway. Fall back to unzip on platforms without ditto.
+if command -v ditto >/dev/null 2>&1; then
+  if ! ditto -x -k "$ZIP_FILE" "$DEST" >&2 2>&1; then
+    echo "Error: extraction failed (ditto)" >&2
+    exit 3
+  fi
+elif ! unzip -o "$ZIP_FILE" -d "$DEST" >&2 2>&1; then
+  echo "Error: extraction failed (unzip)" >&2
   exit 3
 fi
 

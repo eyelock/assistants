@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Move processed ZIPs to archive and remove extraction folders.
+# Move processed ZIPs/audio files to archive and remove extraction folders.
 # Usage: cleanup-release.sh <downloads_folder> <release_name>
 # Output: JSON to stdout with cleanup results
 # Exit codes: 0=success, 1=bad args, 2=folder not found, 3=operation error
@@ -13,15 +13,17 @@ show_help() {
   cat <<'HELP'
 Usage: cleanup-release.sh <downloads_folder> <release_name>
 
-Move processed ZIP files to a "processed/" subfolder and remove extraction
-folders for a given release.
+Move processed ZIP files and loose audio files (single-track purchases with
+no ZIP) to a "processed/" subfolder, and remove extraction folders, for a
+given release.
 
 This script calls find-release-artifacts.sh to locate items, then:
-  - Moves all matching ZIPs to MEDIA_MGMT_PROCESSED (or <downloads_folder>/processed/)
+  - Moves all matching ZIPs and loose audio files to MEDIA_MGMT_PROCESSED
+    (or <downloads_folder>/processed/)
   - Removes all matching extraction folders
 
 Environment:
-  MEDIA_MGMT_PROCESSED  Override processed ZIP destination (default: <downloads_folder>/processed/)
+  MEDIA_MGMT_PROCESSED  Override processed destination (default: <downloads_folder>/processed/)
 
 Arguments:
   downloads_folder  Path to the downloads directory
@@ -32,8 +34,10 @@ Output: JSON to stdout
   {
     "release_name": "Artist - Album",
     "zips_archived": 2,
+    "audio_files_archived": 0,
     "folders_removed": 2,
     "archived_zips": ["Artist - Album.zip", "Artist - Album-2.zip"],
+    "archived_audio_files": [],
     "removed_folders": ["Artist - Album", "Artist - Album-wav"]
   }
 
@@ -83,25 +87,28 @@ artifacts=$("$FIND_SCRIPT" "$DOWNLOADS" "$RELEASE") || {
   exit 3
 }
 
-# Extract ZIP paths and folder paths
+# Extract ZIP paths, audio file paths, and folder paths
 zip_count=$(echo "$artifacts" | jq '.zips | length')
+audio_count=$(echo "$artifacts" | jq '.audio_files | length')
 folder_count=$(echo "$artifacts" | jq '.folders | length')
 
-if [[ $zip_count -eq 0 && $folder_count -eq 0 ]]; then
+if [[ $zip_count -eq 0 && $audio_count -eq 0 && $folder_count -eq 0 ]]; then
   echo "Nothing to clean up for release: $RELEASE" >&2
   jq -n \
     --arg release_name "$RELEASE" \
-    '{release_name: $release_name, zips_archived: 0, folders_removed: 0, archived_zips: [], removed_folders: []}'
+    '{release_name: $release_name, zips_archived: 0, audio_files_archived: 0, folders_removed: 0,
+      archived_zips: [], archived_audio_files: [], removed_folders: []}'
   exit 0
 fi
+
+# Determine processed destination: env var > config > fallback to $DOWNLOADS/processed
+PROCESSED_DIR="${MEDIA_MGMT_PROCESSED:-$DOWNLOADS/processed}"
+
+errors=0
 
 # Archive ZIPs
 archived_zips="[]"
 zips_archived=0
-errors=0
-
-# Determine processed destination: env var > config > fallback to $DOWNLOADS/processed
-PROCESSED_DIR="${MEDIA_MGMT_PROCESSED:-$DOWNLOADS/processed}"
 
 if [[ $zip_count -gt 0 ]]; then
   mkdir -p "$PROCESSED_DIR" || {
@@ -119,6 +126,31 @@ if [[ $zip_count -gt 0 ]]; then
       echo "Archived: $zip_file → $PROCESSED_DIR/" >&2
     else
       echo "Error archiving: $zip_file" >&2
+      errors=$((errors + 1))
+    fi
+  done
+fi
+
+# Archive loose audio files (single-track purchases with no ZIP)
+archived_audio_files="[]"
+audio_files_archived=0
+
+if [[ $audio_count -gt 0 ]]; then
+  mkdir -p "$PROCESSED_DIR" || {
+    echo "Error: failed to create processed directory: $PROCESSED_DIR" >&2
+    exit 3
+  }
+
+  for i in $(seq 0 $((audio_count - 1))); do
+    audio_path=$(echo "$artifacts" | jq -r ".audio_files[$i].path")
+    audio_file=$(echo "$artifacts" | jq -r ".audio_files[$i].file")
+
+    if mv "$audio_path" "$PROCESSED_DIR/" 2>/dev/null; then
+      archived_audio_files=$(echo "$archived_audio_files" | jq --arg name "$audio_file" '. + [$name]')
+      audio_files_archived=$((audio_files_archived + 1))
+      echo "Archived: $audio_file → $PROCESSED_DIR/" >&2
+    else
+      echo "Error archiving: $audio_file" >&2
       errors=$((errors + 1))
     fi
   done
@@ -151,8 +183,11 @@ fi
 jq -n \
   --arg release_name "$RELEASE" \
   --argjson zips_archived "$zips_archived" \
+  --argjson audio_files_archived "$audio_files_archived" \
   --argjson folders_removed "$folders_removed" \
   --argjson archived_zips "$archived_zips" \
+  --argjson archived_audio_files "$archived_audio_files" \
   --argjson removed_folders "$removed_folders" \
-  '{release_name: $release_name, zips_archived: $zips_archived, folders_removed: $folders_removed,
-    archived_zips: $archived_zips, removed_folders: $removed_folders}'
+  '{release_name: $release_name, zips_archived: $zips_archived, audio_files_archived: $audio_files_archived,
+    folders_removed: $folders_removed, archived_zips: $archived_zips,
+    archived_audio_files: $archived_audio_files, removed_folders: $removed_folders}'

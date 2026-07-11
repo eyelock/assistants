@@ -22,6 +22,18 @@ if [[ "$TOOL_NAME" == "Skill" ]]; then
   exit 0
 fi
 
+# --- rekordbox-database MCP tools: always auto-approve (bundled server, trusted) ---
+if [[ "$TOOL_NAME" == mcp__plugin_media-management_rekordbox-database__* ]]; then
+  jq -n '{
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "allow",
+      "permissionDecisionReason": "Media management: rekordbox-database MCP server"
+    }
+  }'
+  exit 0
+fi
+
 # --- Read/Glob/Grep: approve only if path is within configured directories ---
 
 # Extract the target path from tool input
@@ -39,7 +51,7 @@ if [[ "$TARGET" != /* ]]; then
 fi
 
 # Resolve configured paths: env var → config.json fallback
-CONFIG_FILE="${CLAUDE_PLUGIN_ROOT:-}/config.json"
+CONFIG_FILE="${MEDIA_MGMT_CONFIG_PATH:-$HOME/.config/media-management/config.json}"
 
 resolve_path() {
   local env_var="$1"

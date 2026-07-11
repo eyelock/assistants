@@ -25,6 +25,8 @@ importers:
 
   plugins/media-management: {}
 
+  plugins/vendor-harness: {}
+
   skills/dev: {}
 
   skills/infra: {}

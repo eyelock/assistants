@@ -6,6 +6,12 @@
 
 set -euo pipefail
 
+# Process the ZIP listing as raw bytes. Vendor archives can contain non-UTF-8
+# (CP437/Latin-1) filenames; under a UTF-8 locale, BSD sed/awk/tr abort with
+# "illegal byte sequence", which (with set -e) silently drops the whole release
+# from the classifier. The C locale makes the text tools byte-safe.
+export LC_ALL=C
+
 show_help() {
   cat <<'HELP'
 Usage: inspect-zip.sh <zip_file>
@@ -18,7 +24,7 @@ ZIP filename. Size is also reported for cross-validation.
 Output: JSON to stdout
   {"file": "Artist - Album.zip", "path": "/full/path/...", "type": "mp3|wav|mixed|unknown",
    "tracks": 8, "total_files": 10, "size_bytes": 95000000,
-   "audio_extensions": [".mp3"]}
+   "audio_extensions": [".mp3"], "source_type": "zip"}
 
 Exit codes:
   0  Success
@@ -123,4 +129,4 @@ jq -n \
   --argjson audio_extensions "$ext_json" \
   '{file: $file, path: $path, type: $type, tracks: $tracks,
     total_files: $total_files, size_bytes: $size_bytes,
-    audio_extensions: $audio_extensions}'
+    audio_extensions: $audio_extensions, source_type: "zip"}'

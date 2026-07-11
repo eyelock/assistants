@@ -1,0 +1,33 @@
+{
+  "skill_name": "archive-media",
+  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Use tests/fixtures/eval-sandbox/nas-archive (empty) as the NAS destination instead of a real archive_workdir. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "the apple music import for Test Artist - Test Album looked good, stage the mp3s to the NAS (source: tests/fixtures/eval-sandbox/library/Test Artist/Test Album, dest: tests/fixtures/eval-sandbox/nas-archive)",
+      "files": [
+        "tests/fixtures/eval-sandbox/library/Test Artist/Test Album",
+        "tests/fixtures/eval-sandbox/nas-archive"
+      ],
+      "expected_output": "Copies all 3 MP3s from the library source to the NAS destination, verifies the copied count matches (3), and reports the result.",
+      "assertions": [
+        "Sources the MP3s from the given Apple Music library-shaped path, not a Downloads path",
+        "Reports the copy as verified (3 files copied, count matches)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "archive the wav files for Test Artist - Test Album (source: tests/fixtures/eval-sandbox/wav-extraction/Test Artist - Test Album-wav, dest: tests/fixtures/eval-sandbox/nas-archive)",
+      "files": [
+        "tests/fixtures/eval-sandbox/wav-extraction/Test Artist - Test Album-wav",
+        "tests/fixtures/eval-sandbox/nas-archive"
+      ],
+      "expected_output": "Copies WAVs from the extraction folder (not Apple Music) to the NAS WAV destination, renames vendor-format filenames to clean format, verifies count, and reports results.",
+      "assertions": [
+        "All 3 WAV files are copied to the destination",
+        "Vendor filenames (e.g. 'Test Artist - Test Album - 01 Track 1.wav') are renamed to a cleaner format as part of the process",
+        "Reports the rename step's success or failure explicitly"
+      ]
+    }
+  ]
+}

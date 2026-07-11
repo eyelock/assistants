@@ -95,6 +95,27 @@
       "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
       "version": "0.1.0",
       "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
+    },
+    {
+      "name": "vendor-harness",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/vendor-harness"
+      },
+      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
+      "version": "0.1.0",
+      "keywords": [
+        "vendor",
+        "harness",
+        "skills",
+        "agents",
+        "mcp",
+        "hooks",
+        "claude",
+        "cursor",
+        "codex"
+      ]
     }
   ]
 }

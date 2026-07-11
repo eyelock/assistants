@@ -3,27 +3,53 @@
   "name": "ynh-dev",
   "version": "0.1.0",
   "default_vendor": "claude",
+  "profiles": {
+    "thorough": {},
+    "quick": {},
+    "security": {}
+  },
+  "focuses": {
+    "code-review": {
+      "profile": "thorough",
+      "prompt": "Review this Go code for correctness and idiom. Check: error wrapping (errors.As / errors.Is, not string matching), goroutine safety (shared state, missing mutexes), resource leaks (unclosed files, os.Exec without Wait), and misuse of the internal package boundaries. Flag anything that would not survive go vet, staticcheck, or a strict code review against Effective Go."
+    },
+    "security-hardening": {
+      "profile": "security",
+      "prompt": "Audit this code for security issues specific to a CLI tool that installs and executes AI-instructed shell commands and writes to ~/.ynh/. Focus on: path traversal in plugin or harness paths (user-controlled strings used in filepath.Join without cleaning), command injection in hook command fields, symlink attacks on install directories, TOCTOU races between stat and open, overly broad file permissions on written configs, and any place where untrusted plugin manifest content reaches exec.Command or os.WriteFile without validation."
+    },
+    "cli-contract": {
+      "profile": "thorough",
+      "prompt": "Review this change against YNH's CLI structured-output contract (docs/cli-structured.md). Check: that --format json output fields are additive only (no removals or renames), that new top-level keys are documented in the schema, that flag names follow the established conventions (--format, --check-updates, --skip-broken), that error output goes to stderr and structured output to stdout, and that exit codes are consistent with the existing contract. Flag any change that would break a TermQ or CI consumer parsing the JSON output."
+    },
+    "refactor": {
+      "profile": "quick",
+      "prompt": "Identify refactoring opportunities in this Go code: duplicated logic across internal packages that could live in pathutil or a shared helper, functions doing more than one thing that should be split, structs carrying state that is never used outside a single function, and any abstraction that was added speculatively but has only one implementation. Suggest concrete changes — not general advice."
+    },
+    "changelog": {
+      "prompt": "Write a CHANGELOG entry for this change. Format: a single bullet point starting with the type tag (feat / fix / refactor / chore) and a concise description of what changed and why it matters to a TermQ or CI consumer of YNH. No more than two sentences. Do not mention internal package names unless they are part of the public CLI contract."
+    }
+  },
   "includes": [
     {
-      "git": "github.com/eyelock/assistants",
+      "git": "https://github.com/eyelock/assistants",
       "path": "plugins/gitflow"
     },
     {
-      "git": "github.com/Jeffallan/claude-skills.git",
+      "git": "https://github.com/Jeffallan/claude-skills",
       "pick": ["skills/golang-pro"]
     },
     {
-      "git": "github.com/eyelock/assistants",
+      "git": "https://github.com/eyelock/assistants",
       "path": "skills/dev",
       "pick": ["skills/dev-quality", "skills/dev-review", "skills/skill-creator", "skills/gh-cli"]
     },
     {
-      "git": "github.com/eyelock/assistants",
+      "git": "https://github.com/eyelock/assistants",
       "path": "skills/tech",
       "pick": ["skills/go-lang"]
     },
     {
-      "git": "github.com/eyelock/assistants",
+      "git": "https://github.com/eyelock/assistants",
       "path": "skills/pause"
     }
   ]

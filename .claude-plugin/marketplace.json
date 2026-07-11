@@ -51,6 +51,12 @@
       },
       "description": "User skills for ynh: create harnesses, inspect projects, compress artifacts, validate, and set up team delegation.",
       "version": "0.1.0"
+    },
+    {
+      "name": "vendor-harness",
+      "source": "./plugins/vendor-harness",
+      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
+      "version": "0.1.0"
     }
   ]
 }

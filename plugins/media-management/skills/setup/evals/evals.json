@@ -1,0 +1,33 @@
+{
+  "skill_name": "setup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "is this plugin actually set up? I don't think I've configured any paths",
+      "expected_output": "Runs check-config.sh, reports that no config.json exists and lists which required paths are missing, then asks for each missing path one at a time (mentioning where to find the Apple Music auto-import folder if needed) before writing config.json.",
+      "assertions": [
+        "Runs the config check before making any claims about what is or isn't configured",
+        "Lists the specific missing required keys, not just a generic 'not configured'",
+        "Asks for missing values one at a time rather than dumping all questions at once",
+        "Writes the collected values to config.json at the resolved config path"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "check my media-management config",
+      "expected_output": "If everything resolves via env vars or config.json, reports a status table showing each key's value and exact source (the env var name, or the config file path) — not just the bare word 'env' or 'config'.",
+      "assertions": [
+        "Source column names the actual env var (e.g. 'env: MEDIA_MGMT_DOWNLOADS') or the config file path, not a bare 'env'/'config' label",
+        "Mentions that rekordbox_mcp_path is optional and doesn't treat its absence as a problem"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want the rekordbox tools to work — do I need to do anything besides setting rekordbox_mcp_path in config.json?",
+      "expected_output": "Explains that config.json alone isn't sufficient for rekordbox_mcp_path specifically, because .mcp.json only substitutes environment variables — the user must also export MEDIA_MGMT_REKORDBOX_MCP_PATH in their shell profile.",
+      "assertions": [
+        "Explicitly states that rekordbox_mcp_path must also be set as a real shell environment variable, not just in config.json, because .mcp.json can't read config.json"
+      ]
+    }
+  ]
+}

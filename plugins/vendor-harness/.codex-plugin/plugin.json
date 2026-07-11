@@ -1,0 +1,8 @@
+{
+  "name": "vendor-harness",
+  "version": "0.1.0",
+  "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
+  "author": {
+    "name": "eyelock"
+  }
+}

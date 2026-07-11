@@ -14,15 +14,16 @@ Process downloaded music purchases (MP3/WAV ZIP pairs) into Apple Music and NAS 
 
 Skills resolve paths in this order:
 1. Environment variables (if set)
-2. Default paths below (edit these for your setup)
-3. config.json at project root (if it exists)
+2. config.json at $MEDIA_MGMT_CONFIG_PATH, default `~/.config/media-management/config.json`
 
-### Default paths (edit for your installation)
+No default paths ship with the plugin. If neither source resolves a required
+path, run the `/setup` skill — it walks through each path and writes
+config.json for you. Typical values:
 
-- Downloads: /Users/david/Downloads
-- Apple Music import: /Users/david/Automatically Add to Music.localized
-- Apple Music library: /Users/david/Music
-- Archive/NAS staging: /Users/david/Storage/Music
+- Downloads: `~/Downloads` — where purchased ZIPs land
+- Apple Music import: the library's "Automatically Add to Music.localized" folder
+- Apple Music library: `~/Music`
+- Archive/NAS staging: a local staging folder that syncs to your NAS
 
 ### Environment variable overrides
 
@@ -31,6 +32,8 @@ Set any of these to override the defaults above:
 - MEDIA_MGMT_LIBRARY_IMPORT
 - MEDIA_MGMT_LIBRARY_STORAGE
 - MEDIA_MGMT_ARCHIVE_WORKDIR
+- MEDIA_MGMT_REKORDBOX_MCP_PATH
+- MEDIA_MGMT_CONFIG_PATH (path to the config.json fallback file itself; default `~/.config/media-management/config.json`)
 
 ## Safety Rules
 
