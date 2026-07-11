@@ -38,7 +38,7 @@ must say exactly where the value came from, not just `env` or `config`:
 
 | Key | Value | Source |
 |-----|-------|--------|
-| downloads | /Users/david/Downloads | env: MEDIA_MGMT_DOWNLOADS |
+| downloads | ~/Downloads | env: MEDIA_MGMT_DOWNLOADS |
 | library_import | ... | config: ~/.config/media-management/config.json |
 
 Mention that `rekordbox_mcp_path` is optional — it's only needed for the
