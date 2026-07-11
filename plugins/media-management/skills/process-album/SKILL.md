@@ -1,13 +1,13 @@
 ---
 name: process-album
 description: >-
-  End-to-end processing of downloaded music purchases: extract ZIPs, verify
-  metadata, import to Apple Music, archive to NAS, clean up. Use when
-  processing new music downloads.
+  End-to-end processing of downloaded music purchases: extract ZIPs (or copy
+  loose single-track files), verify metadata, import to Apple Music, archive
+  to NAS, clean up. Use when processing new music downloads.
 allowed-tools: Bash Read Skill
 metadata:
   author: eyelock
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 ## Delegation Rule
@@ -22,7 +22,8 @@ Skill("media-management:<skill-name>", args="<arguments>")
 **DO NOT** re-implement sub-skill logic inline.
 When a step says `→ Invoke:`, use the Skill tool exactly as shown.
 
-The ONLY exception is Step 2 and Step 11 (ZIP extraction), which use this skill's own script.
+The ONLY exception is Step 2 and Step 11 (getting the MP3/WAV source into a
+working folder), which use this skill's own scripts.
 
 ## Setup
 
@@ -36,6 +37,7 @@ Scripts are in `scripts/` relative to this skill directory.
 ## Scripts
 
 - **`extract-zip.sh <zip_file> <dest_folder>`** — Extract a ZIP into a named subfolder with safety checks. Run `--help` for details.
+- **`copy-file.sh <audio_file> <dest_folder>`** — Copy a loose (non-ZIP) audio file into a named subfolder, same safety checks as extract-zip.sh. Use this instead of extract-zip.sh when `select-release` reports `source_type: "file"` (a single-track purchase with no ZIP). Run `--help` for details.
 
 ## References
 
@@ -49,17 +51,24 @@ See [references/album-types.md](references/album-types.md) for album classificat
 **Step 1: Identify release**
 → Invoke: `Skill("media-management:select-release")`
 - If a release is specified in $ARGUMENTS, pass it as args
-- NEVER trust filename suffixes — the skill inspects archive contents
+- NEVER trust filename suffixes — the skill inspects archive/file contents
+- Note each source's `source_type` (`"zip"` or `"file"`) — it decides which script Step 2/Step 11 use
 
-**Step 2: Extract MP3 ZIP**
+**Step 2: Get the MP3 source into a working folder**
 
-Run the extraction script:
+If `mp3_source.source_type == "zip"`, extract it:
 ```bash
-bash scripts/extract-zip.sh "$MP3_ZIP" "$DOWNLOADS/$RELEASE_NAME"
+bash scripts/extract-zip.sh "$MP3_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME"
 ```
 
-The script creates the subfolder, extracts the ZIP, and outputs JSON with the file list.
-If extraction fails, ask user to extract manually via Finder.
+If `mp3_source.source_type == "file"` (a loose single-track purchase, no ZIP), copy it instead:
+```bash
+bash scripts/copy-file.sh "$MP3_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME"
+```
+
+Both scripts create the subfolder and output JSON with the resulting file list, so every later
+step operates on `$EXTRACTION_FOLDER` the same way regardless of source type.
+If either fails, ask user to move the file into the folder manually via Finder.
 
 **Step 3: Inspect metadata**
 → Invoke: `Skill("media-management:manage-metadata", args="inspect $EXTRACTION_FOLDER")`
@@ -105,11 +114,16 @@ If extraction fails, ask user to extract manually via Finder.
 
 ### Phase 3: WAV Processing
 
-**Step 11: Extract WAV ZIP**
+**Step 11: Get the WAV source into a working folder**
 
-Run the extraction script:
+If `wav_source.source_type == "zip"`, extract it:
 ```bash
-bash scripts/extract-zip.sh "$WAV_ZIP" "$DOWNLOADS/$RELEASE_NAME-wav"
+bash scripts/extract-zip.sh "$WAV_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME-wav"
+```
+
+If `wav_source.source_type == "file"`, copy it instead:
+```bash
+bash scripts/copy-file.sh "$WAV_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME-wav"
 ```
 
 **Step 12: Archive WAVs (SKIP Apple Music)**
@@ -118,4 +132,4 @@ bash scripts/extract-zip.sh "$WAV_ZIP" "$DOWNLOADS/$RELEASE_NAME-wav"
 
 **Step 13: Cleanup**
 → Invoke: `Skill("media-management:cleanup", args="$ARTIST - $ALBUM")`
-- Moves original ZIPs to processed/, cleans extraction folders
+- Moves original ZIPs/loose audio files to processed/, cleans extraction folders
