@@ -91,7 +91,14 @@ jobs:
             changelog="$pkg_dir/CHANGELOG.md"
             notes="Release $tag"
             if [ -f "$changelog" ]; then
-              section=$(awk "/^## ${ver}\$/,/^## [0-9]/" "$changelog" | sed '$d')
+              # Print lines strictly between the "## $ver" header and the next
+              # "## " header (a plain awk range ends immediately when the end
+              # pattern also matches the start line, as it does here).
+              section=$(awk -v ver="$ver" '
+                $0 == "## " ver { found=1; next }
+                found && /^## / { exit }
+                found { print }
+              ' "$changelog")
               [ -n "$section" ] && notes="$section"
             fi
             echo "Creating release for $tag"
