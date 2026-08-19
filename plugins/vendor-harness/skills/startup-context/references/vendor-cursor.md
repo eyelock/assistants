@@ -1,6 +1,6 @@
 # Cursor — Startup Context Reference
 
-Docs: https://docs.cursor.com/advanced/rules
+Docs: https://cursor.com/docs/context/rules (docs.cursor.com/advanced/rules now redirects here)
 
 ## Files
 
@@ -20,9 +20,19 @@ Rule content in markdown below frontmatter.
 
 ## Known ynh Discrepancy
 
-ynh writes rules as .md files — Cursor expects .mdc with frontmatter.
-Whether Cursor reads plain .md rules without frontmatter is unconfirmed.
-HIGH priority gap: ynh should write .mdc with globs/alwaysApply frontmatter.
+FIXED (eyelock/ynh#196, eyelock/ynh#201, merged 2026-08-19): ynh's Cursor adapter
+(`internal/vendor/cursor.go`, `Cursor.TransformArtifact`) now renames `.md` → `.mdc`
+and injects `description`/`alwaysApply: true` frontmatter at copy time (both
+`ynh run` staging and `ynh export`). No `globs` is emitted — ynh has no per-rule
+glob metadata to source it from.
+Background: a plain .md file in .cursor/rules is silently ignored — the rules
+system requires .mdc with frontmatter.
+
+## Rules Tiers
+
+Project rules: .cursor/rules/*.mdc (per-repo)
+User rules: Cursor settings (per-user, not checked into repo)
+Team rules: dashboard-managed, Team/Enterprise plans only
 
 ## AGENTS.md
 

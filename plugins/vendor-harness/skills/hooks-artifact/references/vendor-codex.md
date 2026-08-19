@@ -1,26 +1,28 @@
 # OpenAI Codex — Hooks Reference
 
-Docs: https://developers.openai.com/codex/hooks
+Docs: https://learn.chatgpt.com/docs/hooks (redirected from developers.openai.com/codex/hooks)
       https://github.com/openai/codex/tree/main/codex-rs/hooks/schema/generated
 
 ## Status
 
-Experimental. Requires feature flag in config:
+Enabled by default. Disable via feature flag in config:
   [features]
-  codex_hooks = true
+  hooks = false
+(Flag was previously named `codex_hooks`; renamed to `hooks`.)
 
 ## Declaration Files
 
 Repo-level: <repo>/.codex/hooks.json
 User-level: ~/.codex/hooks.json
 
-## Hook Events (5 only)
+## Hook Events (11)
 
-SessionStart, PreToolUse, PostToolUse, UserPromptSubmit, Stop
+SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop,
+SubagentStart, SubagentStop, PermissionRequest, PreCompact, PostCompact
 
 ## Hook Types
 
-command only. No http, prompt, or agent types.
+command only. `prompt` and `agent` types are parsed but silently skipped (not executed).
 
 ## Format
 
@@ -46,6 +48,9 @@ command only. No http, prompt, or agent types.
 
 statusMessage: display text shown during hook execution
 timeoutSec: alias for timeout
+additionalContextLimit: caps how much hook output is added back into context
+async: run hook without blocking the turn
+description (top-level in hooks.json): human-readable label for the hook set
 
 ## Matcher behavior
 
