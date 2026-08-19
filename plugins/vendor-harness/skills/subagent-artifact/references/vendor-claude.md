@@ -12,10 +12,15 @@ disallowedTools: Write     # optional; space-delimited
 skills:                    # optional; array
   - skill-name
 maxTurns: 10               # optional
-effort: normal             # optional
+effort: low                # optional; one of: low, medium, high, xhigh, max
 memory: true               # optional
 background: false          # optional
 isolation: worktree        # optional
+permissionMode: default    # optional
+mcpServers:                # optional; array, scopes MCP access for this subagent
+  - server-name
+hooks:                     # optional; lifecycle hooks declared directly in frontmatter
+  PreToolUse: ...
 
 ## Delegation
 
