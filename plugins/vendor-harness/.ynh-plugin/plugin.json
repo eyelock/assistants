@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "vendor-harness",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lifecycle management for LLM vendor harness artifacts — skills, agents, MCP, hooks, and startup context across Claude Code, Cursor, and Codex.",
   "author": {
     "name": "eyelock"

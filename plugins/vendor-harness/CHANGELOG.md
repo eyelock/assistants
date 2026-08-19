@@ -1,5 +1,11 @@
 # @eyelock-assistants/vendor-harness
 
+## 0.2.1
+
+### Patch Changes
+
+- [#28](https://github.com/eyelock/assistants/pull/28) [`e68936d`](https://github.com/eyelock/assistants/commit/e68936d1e4da98cb4552dcc1990cc632d589a2f6) Thanks [@eyelock](https://github.com/eyelock)! - Sync vendor reference docs (Claude Code, Codex, Cursor) with current vendor documentation and with fixes landed in eyelock/ynh. Updates hook event lists, MCP transport/format details, subagent frontmatter fields, plugin manifest fields, and the known-gaps table; corrects several stale "needs fix" entries that were already resolved in ynh.
+
 ## 0.2.0
 
 ### Minor Changes
