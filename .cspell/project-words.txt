@@ -101,4 +101,5 @@ workspaces
 worktree
 worktrees
 writeback
+xhigh
 ynh

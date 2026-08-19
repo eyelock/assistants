@@ -15,17 +15,23 @@
 ## Plugin Format
 
 Manifest: `.claude-plugin/plugin.json`
-Only `name` is required. Optional: `version`, `description`, `author`, `homepage`, `repository`, `license`, `keywords`.
+Only `name` is required. Optional: `version`, `description`, `author`, `homepage`, `repository`, `license`, `keywords`,
+`displayName`, `metadata`, `$schema`, `dependencies`, `defaultEnabled`, `channels`,
+`experimental.themes`, `experimental.monitors`.
 
-Component pointers in manifest (paths relative to plugin root, replace defaults):
-- `skills` — path to skills directory
-- `commands` — path to commands directory (legacy, prefer skills)
-- `agents` — path to agents directory
-- `hooks` — path to hooks config or inline object
-- `mcpServers` — path to MCP config or inline object
-- `lspServers` — path to LSP config or inline object
-- `outputStyles` — path to output styles
+Component pointers in manifest (paths relative to plugin root):
+- `skills` — path to skills directory; ADDS TO the default `skills/` scan
+- `commands` — path to commands directory (legacy, prefer skills); REPLACES default scan
+- `agents` — path to agents directory; REPLACES default scan
+- `workflows` — path to workflows directory; REPLACES default scan
+- `outputStyles` — path to output styles; REPLACES default scan
+- `hooks` — path to hooks config or inline object; MERGES with default
+- `mcpServers` — path to MCP config or inline object; MERGES with default
+- `lspServers` — path to LSP config or inline object; MERGES with default
 - `userConfig` — user-configurable options (substituted into configs)
+
+Single-skill plugin convention: a `SKILL.md` at the plugin root (no `skills/` dir) is auto-loaded.
+`claude plugin init` scaffolds a skills-directory plugin that auto-loads without a marketplace/install step.
 
 ## Plugin Directory Structure
 
@@ -35,24 +41,29 @@ plugin-root/
   skills/<name>/SKILL.md        (agent skills)
   commands/<name>.md            (legacy skills)
   agents/<name>.md              (subagents)
+  workflows/<name>.json         (workflows)
+  monitors/monitors.json        (background monitors)
   hooks/hooks.json              (hook config)
   .mcp.json                     (MCP servers)
   .lsp.json                     (LSP servers)
   bin/                          (executables added to PATH)
-  settings.json                 (only "agent" key supported)
+  settings.json                 ("agent" and "subagentStatusLine" keys supported)
 ```
 
-## Hook Events (25)
+## Hook Events (~30)
 
-SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PermissionDenied,
-PostToolUse, PostToolUseFailure, Notification, SubagentStart, SubagentStop,
+SessionStart, Setup, UserPromptSubmit, UserPromptExpansion, PreToolUse, PermissionRequest, PermissionDenied,
+PostToolUse, PostToolUseFailure, PostToolBatch, Notification, SubagentStart, SubagentStop,
 TaskCreated, TaskCompleted, Stop, StopFailure, TeammateIdle, InstructionsLoaded,
-ConfigChange, CwdChanged, FileChanged, WorktreeCreate, WorktreeRemove,
-PreCompact, PostCompact, Elicitation, ElicitationResult, SessionEnd
+ConfigChange, CwdChanged, DirectoryAdded, FileChanged, WorktreeCreate, WorktreeRemove,
+PreCompact, PostCompact, Elicitation, ElicitationResult, MessageDisplay, SessionEnd
 
 ## Hook Types
 
-command, http, prompt, agent
+command, http, prompt, agent, mcp_tool
+
+Hooks can also be declared directly in Skill frontmatter and Subagent frontmatter,
+not just hooks.json/settings.json.
 
 ## Hook Format (hooks/hooks.json or settings.json)
 
@@ -106,10 +117,16 @@ command, http, prompt, agent
 - `--mcp-config <path>` — load MCP servers from file
 - `--permission-mode <mode>` — default, auto, plan, dontAsk, bypassPermissions
 - `--dangerously-skip-permissions` — skip tool execution prompts
+- `--plugin-url <url>` — load a hosted `.zip` plugin for the session
+
+## Settings Governance Keys (new)
+
+`strictKnownMarketplaces`, `blockedMarketplaces`, `allowedChannelPlugins`,
+`disableCommandPluginSources`, `disableBundledSkills`, `disableAllHooks`
 
 ## Known Limitations for ynh
 
 - `--plugin-dir` auto-activates skills/commands but NOT hooks/MCP (need `/plugin enable` + `/reload-plugins`)
-- Plugin `settings.json` only supports `agent` key (not hooks)
+- Plugin `settings.json` supports `agent` and `subagentStatusLine` keys (not hooks)
 - Claude doesn't read AGENTS.md natively — export writes CLAUDE.md with `@AGENTS.md` import to bridge this
 - Environment vars available: `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_DATA}`

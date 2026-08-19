@@ -138,7 +138,7 @@ Artifact skills each carry per-vendor reference docs. Cross-cutting skills are c
   ┌─────────────────────────────────────────────────────────────┐
   │ feedback-composer                                           │
   │                                                             │
-  │  load hooks-artifact + vendor-cursor reference              │
+  │  load hooks-artifact + cursor reference                     │
   │  diagnose: Cursor plugin uses flat legacy event names,      │
   │            not PascalCase — likely format mismatch          │
   │                                                             │
@@ -283,20 +283,20 @@ vendor-harness/
     ├── skill-artifact/          Skills — spec, loading, vendor quirks
     │   └── references/
     │       ├── agentskills-spec.md
-    │       ├── vendor-claude.md
-    │       ├── vendor-cursor.md
-    │       └── vendor-codex.md
+    │       ├── claude.md
+    │       ├── cursor.md
+    │       └── codex.md
     ├── subagent-artifact/       Agents — frontmatter, delegation
-    │   └── references/  (vendor-*.md × 3)
+    │   └── references/  (claude.md, codex.md, cursor.md)
     ├── mcp-artifact/            MCP — spec, transport, vendor support
     │   └── references/
     │       ├── mcp-spec.md
     │       ├── mcp-toolkit.md
-    │       └── vendor-*.md × 3
+    │       └── claude.md, codex.md, cursor.md
     ├── hooks-artifact/          Hooks — events, types, format diffs
-    │   └── references/  (vendor-*.md × 3)
+    │   └── references/  (claude.md, codex.md, cursor.md)
     ├── startup-context/         CLAUDE.md, AGENTS.md, rules
-    │   └── references/  (vendor-*.md × 3)
+    │   └── references/  (claude.md, codex.md, cursor.md)
     ├── vendor-adapters/         Master cross-vendor reference
     │   └── references/
     │       ├── anthropic.md
@@ -313,6 +313,6 @@ vendor-harness/
 
 Vendor behavior changes frequently — sometimes days apart between vendors. The `vendor-sync` agent and `fetch-vendor-docs` / `flag-vendor-gaps` skills exist to make updates systematic rather than ad-hoc.
 
-The master reference is `vendor-adapters` — it holds the complete cross-vendor format mapping tables and the known-gaps tracker. Per-artifact reference files (`hooks-artifact/references/vendor-cursor.md` etc.) are focused views into that same knowledge, scoped to what that skill needs.
+The master reference is `vendor-adapters` — it holds the complete cross-vendor format mapping tables and the known-gaps tracker. Per-artifact reference files (`hooks-artifact/references/cursor.md` etc.) are focused views into that same knowledge, scoped to what that skill needs.
 
 When a vendor ships a change: run `vendor-sync`, confirm the diff, and the references stay authoritative.

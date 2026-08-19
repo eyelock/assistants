@@ -8,17 +8,22 @@ Plugin: hooks/hooks.json inside plugin directory
 Project: .claude/settings.json or .claude/settings.local.json
 User: ~/.claude/settings.json
 
-## Hook Events (25)
+## Hook Events (~30)
 
-SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PermissionDenied,
-PostToolUse, PostToolUseFailure, Notification, SubagentStart, SubagentStop,
+SessionStart, Setup, UserPromptSubmit, UserPromptExpansion, PreToolUse, PermissionRequest, PermissionDenied,
+PostToolUse, PostToolUseFailure, PostToolBatch, Notification, SubagentStart, SubagentStop,
 TaskCreated, TaskCompleted, Stop, StopFailure, TeammateIdle, InstructionsLoaded,
-ConfigChange, CwdChanged, FileChanged, WorktreeCreate, WorktreeRemove,
-PreCompact, PostCompact, Elicitation, ElicitationResult, SessionEnd
+ConfigChange, CwdChanged, DirectoryAdded, FileChanged, WorktreeCreate, WorktreeRemove,
+PreCompact, PostCompact, Elicitation, ElicitationResult, MessageDisplay, SessionEnd
 
 ## Hook Types
 
-command, http, prompt, agent
+command, http, prompt, agent, mcp_tool
+
+## Declaration also allowed in
+
+Skill frontmatter and Subagent frontmatter can declare lifecycle hooks directly,
+in addition to hooks.json / settings.json.
 
 ## Format (three-level nesting, PascalCase event names)
 

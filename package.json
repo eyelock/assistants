@@ -16,7 +16,8 @@
     "lint": "biome check && ynd lint && ynd validate",
     "lint:fix": "biome check --write && ynd lint && ynd validate",
     "lint:spell": "cspell --no-progress --no-summary \"**/*.md\" \"**/*.mdx\"",
-    "check": "pnpm sync-manifests:check && pnpm lint && pnpm format:check && pnpm lint:spell"
+    "test": "node --test",
+    "check": "pnpm sync-manifests:check && pnpm lint && pnpm format:check && pnpm lint:spell && pnpm test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",
