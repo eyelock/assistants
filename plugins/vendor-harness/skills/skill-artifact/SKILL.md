@@ -12,7 +12,7 @@ Check that `skill-artifact/SKILL.md` itself has no `metadata`, `compatibility`, 
 - `name`: required, lowercase a-z 0-9 hyphens only, must match directory name
 - `description`: required, 1–1024 chars, used for catalog discovery — keep under 130 chars for large skill collections
 - No other frontmatter fields are required by the agentskills.io spec
-- `compatibility`, `license`, `metadata` fields exist in spec but trigger a loading bug in Claude Code — see vendor-claude reference
+- `compatibility`, `license`, `metadata` fields exist in spec but trigger a loading bug in Claude Code — see claude reference
 
 **Directory layout (agentskills.io):**
 ```
