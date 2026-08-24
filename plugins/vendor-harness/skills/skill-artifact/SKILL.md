@@ -1,6 +1,6 @@
 ---
 name: skill-artifact
-description: Validate, diagnose, and understand Agent Skills (SKILL.md) across Claude Code, Cursor, and Codex — spec compliance, vendor-specific loading behavior, and known quirks.
+description: Validate, diagnose, and understand Agent Skills (SKILL.md) across Claude Code, Cursor, Codex, and Copilot CLI — spec compliance, vendor loading behavior, and known quirks.
 ---
 
 Use this skill when working with SKILL.md files — validating format, diagnosing why a skill isn't loading or appearing in the catalog, or understanding vendor-specific behavior differences.
@@ -32,5 +32,17 @@ skill-name/
 - Claude Code: `/plugin-name:skill-name`
 - Codex: `@plugin-name skill-name`
 - Cursor: `/plugin-name:skill-name`
+- Copilot CLI: `/skill-name`
+
+**Skill directories by vendor:**
+- Claude Code: plugin `skills/`, project `.claude/skills/`, user `~/.claude/skills/`
+- Cursor: plugin `skills/`, project `.cursor/skills/`, plus `.agents/skills/`
+- Codex: plugin `skills/`
+- Copilot CLI: plugin `skills/`, project `.github/skills/` + `.claude/skills/` + `.agents/skills/`,
+  user `~/.copilot/skills/` + `~/.agents/skills/`
+
+Copilot reads Claude's project skill path, so a `.claude/skills/` skill loads in both. Copilot
+resolves skills first-found-wins, so a project skill silently shadows a plugin skill of the
+same `name` — check that before anything else when a plugin skill "isn't loading".
 
 For vendor-specific loading quirks (metadata demotion bug, context budget limits, extension fields), see the references/ directory.

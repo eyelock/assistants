@@ -1,4 +1,6 @@
 agentskills
+anthropics
+Anysphere
 appcast
 appcasts
 assistants
@@ -48,9 +50,11 @@ ignorePaths
 ineffassign
 infra
 inout
+itemise
 JSONC
 launchservices
 ldflags
+LOCALAPPDATA
 lockfiles
 mapfile
 markdownlint
@@ -74,12 +78,14 @@ pnpmjs
 pyproject
 pytest
 PYTHONPATH
+recognise
 Rekordbox
 scriptable
 shellcheck
 silencedetect
 softprops
 springframework
+standardises
 staticcheck
 stdlib
 streamable
@@ -95,6 +101,8 @@ tfstate
 tfvars
 toplevel
 turborepo
+unrecognised
+USERPROFILE
 virtualisation
 WCAG
 workspaces

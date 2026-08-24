@@ -9,6 +9,7 @@ This is a reference repository of sample plugins, skills, and personas. It is no
 - `ynh/` — Personas that compose skills from the shared library via includes
 - `.claude-plugin/marketplace.json` — Claude Code marketplace index
 - `.cursor-plugin/marketplace.json` — Cursor marketplace index
+- `.github/plugin/marketplace.json` — GitHub Copilot CLI marketplace index
 
 ## Skills
 
@@ -29,5 +30,6 @@ Skills live under `skills/<domain>/skills/<skill-name>/SKILL.md`.
 
 - Do not modify skills content without understanding the agentskills.io spec
 - Plugin manifests exist as `harness.json` and `.cursor-plugin/plugin.json` — keep them in sync
-- Marketplace JSON files exist in both directories — keep them in sync
+- Marketplace JSON files exist in three directories — keep them in sync (`pnpm sync-manifests` handles versions; `pnpm sync-manifests:check` gates CI)
+- The Copilot index must avoid the `git-subdir`, `archive`, and `command` source types Claude allows — Copilot rejects the whole index over one unsupported entry
 - The `ynh/` personas use `harness.json` for skill composition (includes, default_vendor, etc.)

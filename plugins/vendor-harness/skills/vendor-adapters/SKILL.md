@@ -3,7 +3,7 @@ name: vendor-adapters
 description: Master cross-vendor reference for LLM vendor harness formats — complete format mapping tables, documentation URLs, known gaps, and the workflow for keeping references current.
 ---
 
-This is the single source of truth for how harness artifacts map across Claude Code, Cursor, and Codex. Use it when comparing vendor behavior, checking format compatibility, or running a vendor sync update.
+This is the single source of truth for how harness artifacts map across Claude Code, Cursor, Codex, and GitHub Copilot CLI. Use it when comparing vendor behavior, checking format compatibility, or running a vendor sync update.
 
 ## Vendor Documentation URLs
 
@@ -44,6 +44,25 @@ This is the single source of truth for how harness artifacts map across Claude C
 | CLI | https://cursor.com/cli |
 | Forum: .agents/ support | https://forum.cursor.com/t/support-for-agent-folder-compatibility/154167 |
 
+### GitHub Copilot CLI
+
+| Area | URL |
+|------|-----|
+| Product Page | https://github.com/features/copilot/cli |
+| About CLI Plugins | https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins |
+| Creating a Plugin | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-creating |
+| Creating a Marketplace | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace |
+| Plugin Reference | https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference |
+| Command Reference | https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference |
+| Programmatic Reference | https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference |
+| Config Directory Reference | https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference |
+| Hooks Reference | https://docs.github.com/en/copilot/reference/hooks-reference |
+| Custom Agents Configuration | https://docs.github.com/en/copilot/reference/custom-agents-configuration |
+| Agent Skills | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills |
+| Custom Instructions | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions |
+| MCP Servers | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers |
+| Issue Tracker | https://github.com/github/copilot-cli |
+
 ### Cross-Vendor Standards
 
 | Area | URL |
@@ -52,24 +71,65 @@ This is the single source of truth for how harness artifacts map across Claude C
 | AGENTS.md Spec | https://github.com/agentsmd/agents.md |
 | .agents/ Folder Spec | https://github.com/agentsfolder/spec |
 | MCP Spec | https://modelcontextprotocol.io/specification/2025-03-26 |
+| Agent Plugins 1.0 (Open Plugin Spec) | https://github.com/agentplugins/agent-plugins-spec |
 
 ## Vendor Support Matrix
 
 Quick-lookup: what each vendor supports. For format details see references/.
 
-| Artifact | Claude Code | Cursor | Codex |
-|----------|-------------|--------|-------|
-| Skills | ✓ full | ✓ full | ✓ full |
-| SubAgents | ✓ full | ~ partial (research needed) | ✗ not in plugins |
-| MCP | ✓ stdio + HTTP | ✓ stdio + SSE + OAuth | ✓ stdio only |
-| Hooks | ✓ 25 events, 4 types | ✓ 25 events, 2 formats | ~ 5 events, command only (experimental) |
-| Startup Context | ✓ CLAUDE.md + rules/ | ✓ .cursor/rules/*.mdc | ✓ AGENTS.md only |
-| Rules in plugins | ✓ .claude/rules/*.md | ✓ .mdc with frontmatter | ✗ not supported |
-| Commands | ✓ legacy (prefer skills) | ✓ commands/*.md | ✗ not supported |
+| Artifact | Claude Code | Cursor | Codex | Copilot CLI |
+|----------|-------------|--------|-------|-------------|
+| Skills | ✓ full | ✓ full | ✓ full | ✓ full (also reads `.claude/skills`) |
+| SubAgents | ✓ full | ✓ full (`name`+`description`) | ✗ not in plugins | ✓ full (`agents/*.md` or `*.agent.md`) |
+| MCP | ✓ stdio + HTTP | ✓ stdio + SSE + OAuth | ✓ stdio only | ✓ stdio/local + HTTP + SSE |
+| Hooks | ✓ ~30 events, 5 types | ✓ 18+ events, flat format | ✓ 11 events, command only | ✓ 14 events, 3 types, `version: 1` |
+| Startup Context | ✓ CLAUDE.md + rules/ | ✓ .cursor/rules/*.mdc | ✓ AGENTS.md only | ✓ AGENTS.md + CLAUDE.md + copilot-instructions.md |
+| Rules in plugins | ✓ .claude/rules/*.md | ✓ .mdc with frontmatter | ✗ not supported | ~ `*.instructions.md` with `applyTo` |
+| Commands | ✓ legacy (prefer skills) | ✓ commands/*.md | ✗ not supported | ~ manifest field only, format undocumented |
+| LSP | ✓ .lsp.json | ✗ | ✗ | ✓ lsp.json / .github/lsp.json |
+
+## Manifest and Marketplace Path Resolution
+
+Copilot CLI reads Claude Code's manifest paths as a fallback, which is why a Claude plugin
+often installs into Copilot unchanged.
+
+| Vendor | Plugin manifest | Marketplace index |
+|--------|-----------------|-------------------|
+| Claude Code | `.claude-plugin/plugin.json` | `.claude-plugin/marketplace.json` |
+| Cursor | `.cursor-plugin/plugin.json` | `.cursor-plugin/marketplace.json` |
+| Codex | `.codex-plugin/plugin.json` | `.agents/plugins/marketplace.json` |
+| Copilot CLI | `.plugin/` → `plugin.json` → `.github/plugin/` → `.claude-plugin/` | `marketplace.json` → `.plugin/` → `.github/plugin/` → `.claude-plugin/` |
+
+## Marketplace Source Types — the Claude ↔ Copilot trap
+
+Copilot CLI will read `.claude-plugin/marketplace.json`, but the two vendors do not accept
+the same `source` discriminators. An unrecognised type fails **the whole index**, not just
+that entry, so one bad row makes every plugin in the marketplace uninstallable from Copilot.
+
+| `source` type | Claude Code | Copilot CLI |
+|---------------|-------------|-------------|
+| relative path string | ✓ | ✓ |
+| `github` object | ✓ (no `path`) | ✓ (supports `path`) |
+| `url` object | ✓ (no `path`) | ✓ (supports `path`) |
+| `git-subdir` object | ✓ (only Claude type with `path`) | ✗ **rejected — fails whole file** |
+| `npm` object | ✓ | ✓ |
+| `archive` object | ✓ | ✗ not documented |
+| `command` object | ✓ | ✗ not documented |
+
+Plugin names must be kebab-case for Copilot; a dot (e.g. `wordpress.com`) also fails the whole
+index unless the plugin opts into Open Plugin Spec via `$schema`.
+
+Portable choice: relative paths. For a git subdirectory, Copilot wants
+`{"source": "github", "repo": "o/r", "path": "sub/dir"}` (or the `OWNER/REPO:PATH` install
+string) while Claude wants `{"source": "git-subdir", "url": …, "path": …}` — no single row
+satisfies both, so publish a Copilot-safe `.github/plugin/marketplace.json` alongside the
+Claude one.
+
+See references/copilot.md for the full detail and the upstream issues.
 
 ## Format Mapping Tables
 
-(See references/ directory for full format details — anthropic.md, cursor.md, codex.md)
+(See references/ directory for full format details — anthropic.md, cursor.md, codex.md, copilot.md)
 
 ## Known Gaps
 

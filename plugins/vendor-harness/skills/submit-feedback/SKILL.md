@@ -15,6 +15,23 @@ Use this skill after compose-feedback has produced a complete report. Select the
 | not_committer + no GitHub repo | Email or message (ask for contact) |
 | no source repo found | Ask user how they want to proceed |
 
+**When the problem is the vendor, not the artifact:**
+
+If the artifact is correct and the vendor's own behavior or documentation is at fault, the
+report belongs on the vendor's tracker, not the artifact's repo:
+
+| Vendor | Tracker |
+|--------|---------|
+| Claude Code | https://github.com/anthropics/claude-code |
+| Claude plugin marketplace | https://github.com/anthropics/claude-plugins-official |
+| GitHub Copilot CLI | https://github.com/github/copilot-cli |
+| OpenAI Codex | https://github.com/openai/codex |
+| Cursor | https://forum.cursor.com |
+| Agent Plugins (Open Plugin Spec) | https://github.com/agentplugins/agent-plugins-spec |
+
+Search for an existing report first — cross-vendor format incompatibilities are usually
+already filed. Link the existing issue rather than duplicating it.
+
 **Filing a GitHub issue:**
 `gh issue create --repo owner/repo --title "title" --body "body"`
 Label suggestions: `bug`, `enhancement`, `vendor-compat` (if vendor-specific)

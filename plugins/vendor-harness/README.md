@@ -1,10 +1,10 @@
 # vendor-harness
 
-Lifecycle management for LLM vendor harness artifacts — across Claude Code, Cursor, and Codex.
+Lifecycle management for LLM vendor harness artifacts — across Claude Code, Cursor, Codex, and GitHub Copilot CLI.
 
 ## Core Concept
 
-Every LLM coding assistant (Claude Code, Cursor, Codex) runs a **model** wrapped in a **harness** — everything that shapes what the model sees, what it can do, and how it behaves. That harness is assembled from discrete artifacts:
+Every LLM coding assistant (Claude Code, Cursor, Codex, GitHub Copilot CLI) runs a **model** wrapped in a **harness** — everything that shapes what the model sees, what it can do, and how it behaves. That harness is assembled from discrete artifacts:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -43,20 +43,27 @@ Each artifact type influences the harness differently and has distinct spec, for
 │ MCP Servers      │ What tools the model can reach outside itself     │
 │ Hooks            │ What intercepts the model at lifecycle boundaries │
 │ Startup Context  │ What the model knows before any prompt            │
+│ LSP Servers      │ What language intelligence the model can query    │
 └──────────────────┴─────────────────────────────────────────────────-─┘
 ```
 
 Vendor support varies significantly — and changes on vendor timelines:
 
 ```
-                     Claude Code    Cursor     Codex
-                     ───────────    ──────     ─────
-Skills               ✓ full         ✓ full     ✓ full
-SubAgents            ✓ full         ~ partial  ✗ none
-MCP                  ✓ full         ✓ full     ✓ stdio only
-Hooks                ✓ 25 events    ✓ 25 events  ~ 5 events (exp.)
-Startup Context      ✓ CLAUDE.md    ✓ .mdc     ✓ AGENTS.md
+                     Claude Code    Cursor        Codex          Copilot CLI
+                     ───────────    ──────        ─────          ───────────
+Skills               ✓ full         ✓ full        ✓ full         ✓ full
+SubAgents            ✓ full         ✓ full        ✗ none         ✓ .md or .agent.md
+MCP                  ✓ full         ✓ full        ✓ stdio only   ✓ full
+Hooks                ✓ ~30 events   ✓ 18+ events  ✓ 11 events    ✓ 14 events
+Startup Context      ✓ CLAUDE.md    ✓ .mdc        ✓ AGENTS.md    ✓ AGENTS.md + CLAUDE.md
+LSP                  ✓ .lsp.json    ✗             ✗              ✓ lsp.json
 ```
+
+Copilot CLI is the closest thing to a Claude Code superset among the non-Anthropic vendors —
+it reads `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.claude/skills`,
+`.claude/CLAUDE.md`, Claude's PascalCase hook event names, and `${CLAUDE_PLUGIN_DATA}`. Where
+it diverges, it diverges sharply — see below.
 
 ## Agents
 
@@ -192,23 +199,26 @@ Artifact skills each carry per-vendor reference docs. Cross-cutting skills are c
   │  fetch-vendor-docs                                         │
   │    ├── GET code.claude.com/docs/en/hooks-guide             │
   │    ├── GET docs.cursor.com/advanced/mcp                    │
-  │    └── GET developers.openai.com/codex/plugins             │
+  │    ├── GET developers.openai.com/codex/plugins             │
+  │    └── GET docs.github.com/.../cli-plugin-reference        │
   │                                                            │
   │  compare against stored references/                        │
   │    ├── anthropic.md ──► no changes                         │
   │    ├── cursor.md    ──► OAuth section added to MCP         │
-  │    └── codex.md     ──► hooks now GA (was experimental)    │
+  │    ├── codex.md     ──► hooks now GA (was experimental)    │
+  │    └── copilot.md   ──► npm source type now documented     │
   │                                                            │
   │  present diff to user                                      │
-  │    "2 changes found. Confirm to update?"                   │
+  │    "3 changes found. Confirm to update?"                   │
   │                                                            │
   │  on confirm:                                               │
   │    ├── update cursor.md                                    │
   │    ├── update codex.md                                     │
+  │    ├── update copilot.md                                   │
   │    └── flag-vendor-gaps                                    │
   │          ──► resolve: "Codex hooks experimental"           │
   │                                                            │
-  │  report: 2 references updated, 1 gap resolved              │
+  │  report: 3 references updated, 1 gap resolved              │
   └────────────────────────────────────────────────────────────┘
 ```
 
@@ -259,6 +269,9 @@ Artifact skills each carry per-vendor reference docs. Cross-cutting skills are c
         ├─4─► ~/.codex/plugins/cache/ ───────────────► plugin manifest
         │       (Codex plugin install)
         │
+        ├─4b─► ~/.copilot/installed-plugins/ ────────► plugin manifest
+        │       (Copilot CLI install; or `copilot plugin list`)
+        │
         ├─5─► git log --follow <file> + git remote -v ► origin repo
         │       (embedded in current repo — check if worktree!)
         │
@@ -285,23 +298,26 @@ vendor-harness/
     │       ├── agentskills-spec.md
     │       ├── claude.md
     │       ├── cursor.md
-    │       └── codex.md
+    │       ├── codex.md
+    │       └── copilot.md
     ├── subagent-artifact/       Agents — frontmatter, delegation
-    │   └── references/  (claude.md, codex.md, cursor.md)
+    │   └── references/  (claude.md, codex.md, cursor.md, copilot.md)
     ├── mcp-artifact/            MCP — spec, transport, vendor support
     │   └── references/
     │       ├── mcp-spec.md
     │       ├── mcp-toolkit.md
-    │       └── claude.md, codex.md, cursor.md
+    │       └── claude.md, codex.md, cursor.md, copilot.md
     ├── hooks-artifact/          Hooks — events, types, format diffs
-    │   └── references/  (claude.md, codex.md, cursor.md)
-    ├── startup-context/         CLAUDE.md, AGENTS.md, rules
-    │   └── references/  (claude.md, codex.md, cursor.md)
+    │   └── references/  (claude.md, codex.md, cursor.md, copilot.md)
+    ├── startup-context/         CLAUDE.md, AGENTS.md, instructions, rules
+    │   └── references/  (claude.md, codex.md, cursor.md, copilot.md)
     ├── vendor-adapters/         Master cross-vendor reference
     │   └── references/
     │       ├── anthropic.md
     │       ├── cursor.md
-    │       └── codex.md
+    │       ├── codex.md
+    │       ├── copilot.md
+    │       └── known-gaps.md
     ├── fetch-vendor-docs/       Fetch current docs from vendor URLs
     ├── flag-vendor-gaps/        Maintain the known-gaps table
     ├── locate-artifact-source/  Multi-path provenance detective
@@ -309,10 +325,50 @@ vendor-harness/
     └── submit-feedback/         Channel selection + submission
 ```
 
+## The Marketplace Compatibility Trap
+
+The one incompatibility that bites hardest is not inside a plugin — it is in the marketplace
+index that ships plugins. Claude Code and Copilot CLI read the same file format from
+overlapping paths, but accept different `source` discriminators:
+
+```
+  .claude-plugin/marketplace.json
+        │
+        ├──► Claude Code   accepts: "./path", github, url, git-subdir, npm, archive, command
+        │
+        └──► Copilot CLI   accepts: "./path", github, url, npm
+                           rejects: git-subdir, archive, command
+                                    ↓
+                   Failed to add marketplace: Invalid marketplace.json:
+                     plugins.2.source: Invalid input, plugins.5.source: ...
+                                    ↓
+                   the WHOLE index fails — every plugin becomes uninstallable
+```
+
+Two more fail-whole-file rules on the Copilot side: plugin names must be kebab-case (a dot,
+as in `wordpress.com`, fails the index), and `strict` defaults to `true`.
+
+Subdirectory sourcing exists on both sides but is spelled differently, and no single row
+satisfies both:
+
+```
+  Claude Code   {"source": "git-subdir", "url": "…", "path": "tools/plugin"}
+  Copilot CLI   {"source": "github", "repo": "o/r", "path": "tools/plugin"}
+                or the install string  OWNER/REPO:PATH/TO/PLUGIN
+```
+
+The workaround is two indexes. Copilot resolves `.github/plugin/marketplace.json` before it
+falls back to `.claude-plugin/marketplace.json`, and Claude Code never looks at
+`.github/plugin/` — so a Copilot-safe index can sit alongside the Claude one without
+affecting Claude users.
+
+Full detail, upstream issue links, and the per-vendor tables live in
+`skills/vendor-adapters/references/copilot.md`.
+
 ## Keeping References Current
 
 Vendor behavior changes frequently — sometimes days apart between vendors. The `vendor-sync` agent and `fetch-vendor-docs` / `flag-vendor-gaps` skills exist to make updates systematic rather than ad-hoc.
 
-The master reference is `vendor-adapters` — it holds the complete cross-vendor format mapping tables and the known-gaps tracker. Per-artifact reference files (`hooks-artifact/references/cursor.md` etc.) are focused views into that same knowledge, scoped to what that skill needs.
+The master reference is `vendor-adapters` — it holds the complete cross-vendor format mapping tables and the known-gaps tracker. Per-artifact reference files (`hooks-artifact/references/cursor.md`, `mcp-artifact/references/copilot.md` etc.) are focused views into that same knowledge, scoped to what that skill needs.
 
 When a vendor ships a change: run `vendor-sync`, confirm the diff, and the references stay authoritative.
