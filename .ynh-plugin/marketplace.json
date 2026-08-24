@@ -103,7 +103,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "plugins/vendor-harness"
       },
-      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, and Codex.",
+      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
       "version": "0.1.0",
       "keywords": [
         "vendor",

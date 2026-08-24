@@ -19,6 +19,18 @@ const SCOPE = "@eyelock-assistants";
 // Workspace roots — every direct subdirectory is a candidate package.
 const WORKSPACE_ROOTS = ["plugins", "skills", "ynh"];
 
+// Marketplace indexes whose plugin `version` fields mirror the source manifests.
+// `.github/plugin/marketplace.json` is the Copilot CLI-safe index: Copilot resolves it
+// before falling back to `.claude-plugin/marketplace.json`, and it must avoid the
+// `git-subdir` / `archive` / `command` source types Claude allows but Copilot rejects —
+// one unsupported entry fails the whole index for Copilot. See
+// plugins/vendor-harness/skills/vendor-adapters/references/copilot.md.
+const MARKETPLACES = [
+  ".claude-plugin/marketplace.json",
+  ".cursor-plugin/marketplace.json",
+  ".github/plugin/marketplace.json",
+];
+
 function discoverPackages() {
   const dirs = WORKSPACE_ROOTS.flatMap((root) => {
     const rootDir = join(ROOT, root);
@@ -182,7 +194,7 @@ function syncRegistry(pkgs) {
 
 function syncMarketplaces(pkgs) {
   const vmap = versionMap(pkgs);
-  for (const rel of [".claude-plugin/marketplace.json", ".cursor-plugin/marketplace.json"]) {
+  for (const rel of MARKETPLACES) {
     const path = join(ROOT, rel);
     if (!existsSync(path)) continue;
     const mp = readJson(path);
@@ -259,7 +271,7 @@ function cmdCheck(pkgs) {
       }
     }
   }
-  for (const rel of [".claude-plugin/marketplace.json", ".cursor-plugin/marketplace.json"]) {
+  for (const rel of MARKETPLACES) {
     const path = join(ROOT, rel);
     if (!existsSync(path)) continue;
     const mp = readJson(path);
