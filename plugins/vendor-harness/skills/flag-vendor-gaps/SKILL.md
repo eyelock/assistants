@@ -14,6 +14,7 @@ Use this skill when you discover a gap in vendor support, or when a known gap ha
 | HIGH | Codex skills export path wrong (.agents/skills/ should be skills/) | Codex | OPEN |
 | MED | Cursor plugin hooks format mismatch (flat legacy vs three-level) | Cursor | OPEN |
 | MED | Cursor .mdc rules format (ynh writes .md, Cursor wants .mdc) | Cursor | OPEN |
+| MED | Copilot rejects `git-subdir` marketplace source — whole index fails | Copilot CLI | OPEN |
 | LOW | SessionStart canonical event not mapped | All | OPEN |
 ```
 
@@ -25,7 +26,7 @@ Use this skill when you discover a gap in vendor support, or when a known gap ha
 **When adding a gap:**
 1. Check if it already exists in the table — update rather than duplicate
 2. Assign priority based on impact
-3. Note which vendor(s) are affected
+3. Note which vendor(s) are affected — one of Claude Code, Cursor, Codex, Copilot CLI, or All
 4. Add a brief description of what the correct behavior should be
 
 **When resolving a gap:**

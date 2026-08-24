@@ -13,6 +13,21 @@ Cursor: https://github.com/cursor/plugin-template (README), https://docs.cursor.
 Note: docs.cursor.com aggressively rate-limits. Try GitHub sources first. Manual browsing may be needed.
 
 Codex: https://developers.openai.com/codex/plugins, https://developers.openai.com/codex/plugins/build, https://developers.openai.com/codex/hooks, https://github.com/openai/codex (README)
+Note: developers.openai.com/codex/* redirects to learn.chatgpt.com/docs/*.
+
+GitHub Copilot CLI: https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference,
+https://docs.github.com/en/copilot/reference/hooks-reference,
+https://docs.github.com/en/copilot/reference/custom-agents-configuration,
+https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference,
+https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills,
+https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions,
+https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers,
+https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace
+Note: docs.github.com fetches cleanly. The reference pages under /reference/ are denser and
+more authoritative than the /how-tos/ pages — prefer them when the two disagree.
+
+Agent Plugins 1.0 (Open Plugin Spec): https://github.com/agentplugins/agent-plugins-spec —
+raw spec at https://raw.githubusercontent.com/agentplugins/agent-plugins-spec/main/spec/1.0.0.md
 
 MCP Spec: https://modelcontextprotocol.io/specification/2025-03-26
 
@@ -23,6 +38,13 @@ Agent Skills: https://agentskills.io
 2. For docs sites that rate-limit: fetch index page first, then targeted sections
 3. Report fetch failures clearly — do not silently skip a vendor
 4. Structure output: vendor → artifact type → current content
+
+**Cross-vendor incompatibility watch:**
+When syncing, always re-check the marketplace `source` type tables in both Claude Code's
+plugin-marketplaces doc and Copilot's cli-plugin-reference. These two diverge and the
+divergence is fatal (one bad entry breaks a whole index). Upstream trackers worth checking:
+https://github.com/anthropics/claude-plugins-official/issues/1205 and
+https://github.com/github/copilot-cli/issues
 
 **When docs.cursor.com is unavailable:**
 Use this fallback order:
