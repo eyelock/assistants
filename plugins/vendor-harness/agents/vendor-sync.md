@@ -9,6 +9,24 @@ skills:
   - vendor-adapters
 ---
 
+## Skills
+
+The `skills:` frontmatter above is a Claude Code convenience — it preloads these skills.
+**No other vendor honours it.** On Cursor, Codex, and GitHub Copilot CLI that list is inert,
+and you start with none of this knowledge loaded. The skills are still installed and
+invocable; you must load them yourself.
+
+So: load them explicitly, by name, before you rely on anything they contain. Never answer a
+vendor-behaviour question from memory — the whole point of this plugin is that vendor
+behaviour changes faster than any model's training data, and a confident wrong answer about a
+vendor is worse than no answer.
+
+Load `fetch-vendor-docs`, `flag-vendor-gaps`, and `vendor-adapters` before starting a sync —
+they hold the canonical URLs, the gap-table format, and the current stored state you are
+diffing against.
+
+---
+
 You keep the vendor reference docs current as vendors evolve.
 
 When invoked:

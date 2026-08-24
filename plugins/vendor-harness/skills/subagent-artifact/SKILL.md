@@ -5,6 +5,15 @@ description: Validate, diagnose, and understand subagent definitions (agents/*.m
 
 Use this skill when working with agent definition files — validating frontmatter, diagnosing delegation failures, or understanding what each vendor supports.
 
+**Portability rule — Claude-only fields are silently inert elsewhere:**
+`skills`, `disallowedTools`, `maxTurns`, `effort`, `memory`, `background`, `isolation`, and
+`permissionMode` have no equivalent on Cursor, Codex, or Copilot CLI. They are ignored without
+warning. `skills` is the dangerous one: the agent still runs, just without the knowledge it was
+designed around, and answers from the base model — fluently and wrongly. Whenever an agent
+depends on a skill, say so in the prompt body as an explicit instruction *and* keep the
+frontmatter key. Model aliases (`model: sonnet`) do not port either; Copilot warns and falls
+back to `auto`.
+
 **Frontmatter fields (Claude Code — most complete support):**
 - `name`: required, agent identifier
 - `description`: required, used to route work to this agent
