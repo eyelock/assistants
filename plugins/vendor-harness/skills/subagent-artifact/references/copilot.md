@@ -103,9 +103,53 @@ which overrides an enterprise one.
 | `model` | `model` |
 | `tools` (space-delimited) | `tools` (list; aliases accepted) |
 | `disallowedTools` | no equivalent — enumerate the allowed set instead |
-| `skills` | no equivalent — reference skills from the prompt body |
+| `skills` | **no equivalent — inert, and silently so. See below.** |
 | `maxTurns`, `effort`, `memory`, `background`, `isolation`, `permissionMode` | no equivalent |
 | `mcpServers` (array) | `mcp-servers` (object) |
 | `hooks` in frontmatter | no equivalent — declare in `hooks.json` |
 
 The filename can stay `.md`; only a `skills:` list has to be re-expressed as prose.
+
+## The `skills:` frontmatter trap
+
+`skills:` is a Claude Code-only field that preloads named skills into an agent. Copilot parses
+the agent and ignores the key. There is no warning, no missing-agent error, nothing in the
+logs — the agent loads and runs, just without any of the knowledge it was built around, and
+answers from the base model instead.
+
+For a diagnostic or reference agent this is the worst possible failure mode: it produces a
+confident, fluent, wrong answer. Observed directly on v1.0.80 with this plugin's own
+`harness-advisor`, which claimed Copilot rejects `{"source":"github","repo":...}` object
+sources — the exact opposite of the truth, and contradicted by the marketplace it was
+installed from. The same question asked without the agent wrapper invoked `vendor-adapters`
+correctly and answered right.
+
+**Fix:** name the skills in the agent's prompt body as an explicit instruction, and say why.
+
+```markdown
+## Skills
+
+The `skills:` frontmatter above is a Claude Code convenience. No other vendor honours it —
+on Cursor, Codex, and Copilot CLI it is inert. The skills are installed and invocable; load
+them yourself, by name, before relying on what they contain.
+
+Load `vendor-adapters` for any question about how a vendor behaves.
+```
+
+Keep the `skills:` key as well — it still works on Claude, and the prose is harmless there.
+This is the portable pattern for every Claude-only frontmatter field with no vendor
+equivalent: state the intent in the body, keep the key for the vendor that honours it.
+
+## Model Aliases Do Not Port
+
+`model: sonnet` (a Claude alias) does not resolve:
+
+```
+Warning: Custom agent "vendor-harness:harness-advisor" specifies model "sonnet"
+which is not available; using "auto" instead
+```
+
+Non-fatal — Copilot warns and falls back to `auto`. Either drop `model` so each vendor picks
+its default, or accept a startup warning on non-Claude vendors. Copilot's own model names
+(e.g. `gpt-5.2`, `claude-sonnet-4.6`) would break the Claude side instead, so there is no
+single value that satisfies both.

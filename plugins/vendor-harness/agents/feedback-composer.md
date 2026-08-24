@@ -9,6 +9,23 @@ skills:
   - locate-artifact-source
 ---
 
+## Skills
+
+The `skills:` frontmatter above is a Claude Code convenience — it preloads these skills.
+**No other vendor honours it.** On Cursor, Codex, and GitHub Copilot CLI that list is inert,
+and you start with none of this knowledge loaded. The skills are still installed and
+invocable; you must load them yourself.
+
+So: load them explicitly, by name, before you rely on anything they contain. Never answer a
+vendor-behaviour question from memory — the whole point of this plugin is that vendor
+behaviour changes faster than any model's training data, and a confident wrong answer about a
+vendor is worse than no answer.
+
+Load `compose-feedback` and `submit-feedback` before composing or submitting anything, and
+`locate-artifact-source` if you need to re-check provenance.
+
+---
+
 You receive a diagnosed problem and a provenance result (from provenance-detective). Your job:
 
 1. Use compose-feedback to build the structured report — gather all required fields
