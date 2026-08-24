@@ -106,15 +106,17 @@ Copilot CLI will read `.claude-plugin/marketplace.json`, but the two vendors do 
 the same `source` discriminators. An unrecognised type fails **the whole index**, not just
 that entry, so one bad row makes every plugin in the marketplace uninstallable from Copilot.
 
-| `source` type | Claude Code | Copilot CLI |
-|---------------|-------------|-------------|
+| `source` type | Claude Code | Copilot CLI (tested, v1.0.80) |
+|---------------|-------------|-------------------------------|
 | relative path string | ✓ | ✓ |
 | `github` object | ✓ (no `path`) | ✓ (supports `path`) |
-| `url` object | ✓ (no `path`) | ✓ (supports `path`) |
+| `url` object | ✓ (no `path`) | ✓ |
 | `git-subdir` object | ✓ (only Claude type with `path`) | ✗ **rejected — fails whole file** |
-| `npm` object | ✓ | ✓ |
-| `archive` object | ✓ | ✗ not documented |
-| `command` object | ✓ | ✗ not documented |
+| `npm` object | ✓ | ✗ **rejected** |
+| `archive` object | ✓ | ✗ **rejected** |
+| `command` object | ✓ | ✗ **rejected** |
+
+Copilot accepts exactly three: relative path, `github`, `url`.
 
 Plugin names must be kebab-case for Copilot; a dot (e.g. `wordpress.com`) also fails the whole
 index unless the plugin opts into Open Plugin Spec via `$schema`.

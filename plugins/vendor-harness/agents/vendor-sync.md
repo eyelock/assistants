@@ -2,7 +2,11 @@
 name: vendor-sync
 description: Keeps vendor harness references current — fetches latest documentation from all vendor sources, compares against stored references, presents a diff of changes, and updates on confirmation.
 model: sonnet
-tools: Read, Write, WebFetch, Bash
+tools: Read, Write, WebFetch, Bash, view, edit, bash, web_fetch, web_search
+# Both vocabularies are listed deliberately. `tools` RESTRICTS an agent, and the two
+# vendors do not share a tool namespace: Claude reads Read/Write/WebFetch/Bash, Copilot
+# reads view/edit/bash/web_fetch/web_search. Listing only Claude's names leaves this agent
+# unable to fetch on Copilot — which is its entire job. Verified on Copilot CLI v1.0.80.
 skills:
   - fetch-vendor-docs
   - flag-vendor-gaps

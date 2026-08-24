@@ -2,7 +2,7 @@
 name: provenance-detective
 description: Determines where a harness artifact originated. Tries multiple strategies in order — YNH, native plugin directories, git log, manifest walk — then asks the user if all strategies fail.
 model: sonnet
-tools: Read, Bash
+tools: Read, Bash, view, bash
 skills:
   - locate-artifact-source
   - vendor-adapters
@@ -30,7 +30,7 @@ You own the "where did this come from?" question. Work through the `locate-artif
 Once source is found, determine:
 
 1. Is the source repo checked out locally? (scan common workspace paths, check git remote -v)
-2. Is the user a committer? (`gh api repos/{owner}/{repo}/collaborators/{username}`)
+2. Is the user a committer? Run `gh api repos/{owner}/{repo}/collaborators/{username}` — actually run it, do not report `unknown` without having tried. Only report `unknown` if the command fails or `gh` is unavailable, and say which.
 3. If committer but no local checkout: report both facts — do not make the decision for the user
 
 Return a structured result:
