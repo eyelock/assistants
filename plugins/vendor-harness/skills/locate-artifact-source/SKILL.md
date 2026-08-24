@@ -25,6 +25,16 @@ Check: `~/.codex/plugins/cache/`
 Look for a plugin directory matching the artifact name.
 Works when: artifact was installed via Codex plugin system.
 
+**Strategy 4b: Copilot CLI plugin install**
+Check: `~/.copilot/installed-plugins/<marketplace>/<plugin-name>/` and
+`~/.copilot/installed-plugins/_direct/<source-id>/`
+(honour `COPILOT_HOME` if set — it relocates the whole config directory).
+Faster: `copilot plugin list` (note: singular — `copilot plugins list` does not exist).
+Also check `~/.copilot/agents/`, `~/.copilot/skills/`, and the marketplace cache
+(`~/Library/Caches/copilot/marketplaces/` on macOS, `~/.cache/copilot/marketplaces/` on Linux,
+or `COPILOT_CACHE_HOME`) for a registered marketplace index naming the source repo.
+Works when: artifact was installed via Copilot CLI.
+
 **Strategy 5: Git provenance**
 Run: `git log --follow -1 --format="%H %s" -- <artifact-file-path>`
 Get the commit that introduced the file. Then: `git remote -v` to find the origin remote.
@@ -33,7 +43,7 @@ Works when: artifact is in the current git repo (embedded, not installed externa
 Note: if found in current repo, check if this is a worktree — fix should go to the canonical branch, not the worktree.
 
 **Strategy 6: Manifest walk**
-Walk up the directory tree from the artifact's location looking for `.claude-plugin/`, `.cursor-plugin/`, `.ynh-plugin/`, or `package.json` with a name field.
+Walk up the directory tree from the artifact's location looking for `.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.ynh-plugin/`, `.plugin/`, `.github/plugin/`, a root `plugin.json`, or `package.json` with a name field.
 Read the manifest to find source repo reference.
 Works when: artifact is part of a locally cloned plugin.
 
