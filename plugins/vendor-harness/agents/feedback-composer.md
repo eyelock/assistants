@@ -2,7 +2,7 @@
 name: feedback-composer
 description: Owns the feedback flow for harness artifact problems — diagnoses the gap between expected and actual behavior, selects the right submission channel, composes a structured report, and submits it.
 model: sonnet
-tools: Read, Bash
+tools: Read, Bash, view, bash
 skills:
   - compose-feedback
   - submit-feedback

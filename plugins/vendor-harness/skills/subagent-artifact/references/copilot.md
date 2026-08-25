@@ -56,9 +56,34 @@ Body prompt: max **30,000 characters**.
 
 `description` is the only required field — unlike Claude Code, `name` is optional.
 
-## Tool Names
+## Tool Names — two vocabularies, and the aliases do not work in `tools:`
 
-Copilot accepts case-insensitive aliases, including the Claude tool names:
+**`tools` restricts.** Omit it and the agent gets everything; list it and the agent gets only
+what resolves. Claude and Copilot do not share a tool namespace, so a Claude-authored `tools:`
+list silently strips capability on Copilot.
+
+Tested on v1.0.80 with one probe plugin, varying only the `tools:` line, asking the agent to
+fetch a URL:
+
+| `tools:` value | Fetch works? |
+|----------------|--------------|
+| *(field omitted)* | ✓ |
+| `Read, Write, WebFetch, Bash` (Claude names) | ✗ **blocked** |
+| `read, edit, execute, web` (GitHub's documented aliases) | ✗ **blocked** |
+| `view, edit, bash, web_fetch` (raw Copilot names) | ✓ |
+| `Read, Write, WebFetch, Bash, web_fetch, web_search` (union) | ✓ |
+
+Two things follow. First, GitHub's published alias table below is **not reliable for `tools:`**
+— `web` is documented as the alias for `WebFetch`/`WebSearch`, and neither `web` nor `WebFetch`
+grants fetch. Only the raw `web_fetch` does. Second, the portable fix is to **list both
+vocabularies**; extra names that a vendor does not recognise are ignored rather than fatal.
+
+This is what broke this plugin's own `vendor-sync` agent: `tools: Read, Write, WebFetch, Bash`
+left it unable to fetch vendor documentation on Copilot, which is the only thing it exists to
+do. It failed honestly — it reported what it could not verify rather than inventing a diff —
+but it could not do its job.
+
+The published alias table, which does apply to the model's own tool selection:
 
 | Alias | Also accepts | Purpose |
 |-------|--------------|---------|

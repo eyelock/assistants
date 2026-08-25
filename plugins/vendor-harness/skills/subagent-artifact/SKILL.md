@@ -5,6 +5,12 @@ description: Validate, diagnose, and understand subagent definitions (agents/*.m
 
 Use this skill when working with agent definition files — validating frontmatter, diagnosing delegation failures, or understanding what each vendor supports.
 
+**`tools` is restrictive and vendor-specific.** Claude reads `Read`/`Write`/`Bash`/`WebFetch`;
+Copilot reads `view`/`edit`/`bash`/`web_fetch`/`web_search`. A Claude-only list silently strips
+capability on Copilot — and GitHub's documented aliases (`web`, `read`, `execute`) do **not**
+work in `tools:` either; only the raw names do. List both vocabularies, or omit `tools`
+entirely. Unrecognised names are ignored, not fatal.
+
 **Portability rule — Claude-only fields are silently inert elsewhere:**
 `skills`, `disallowedTools`, `maxTurns`, `effort`, `memory`, `background`, `isolation`, and
 `permissionMode` have no equivalent on Cursor, Codex, or Copilot CLI. They are ignored without
