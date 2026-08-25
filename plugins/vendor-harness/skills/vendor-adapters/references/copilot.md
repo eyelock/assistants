@@ -99,15 +99,22 @@ relaxes validation, useful for legacy or direct installs.
 marketplace file format and Copilot will happily read `.claude-plugin/marketplace.json` —
 but their `source` discriminated unions are **not** the same set.
 
+All rows below are tested against Copilot CLI v1.0.80, not inferred from docs.
+
 | `source` type | Claude Code | Copilot CLI |
 |---------------|-------------|-------------|
-| relative path string (`"./plugins/x"`) | ✓ | ✓ |
-| `{"source": "github", "repo": …}` | ✓ (no `path`) | ✓ (**supports `path`**) |
-| `{"source": "url", "url": …}` | ✓ (no `path`) | ✓ (**supports `path`**) |
-| `{"source": "git-subdir", "url": …, "path": …}` | ✓ (only Claude type with `path`) | ✗ **rejected** |
-| `{"source": "npm", "package": …}` | ✓ | ✓ |
-| `{"source": "archive", "url": …, "sha256": …}` | ✓ | ✗ not documented |
-| `{"source": "command", "command": …}` | ✓ | ✗ not documented |
+| relative path string (`"./plugins/x"`) | ✓ | ✓ tested |
+| `{"source": "github", "repo": …}` | ✓ (no `path`) | ✓ tested (**`path` supported**, tested) |
+| `{"source": "url", "url": …}` | ✓ (no `path`) | ✓ tested |
+| `{"source": "git-subdir", "url": …, "path": …}` | ✓ (only Claude type with `path`) | ✗ **rejected** (tested) |
+| `{"source": "npm", "package": …}` | ✓ | ✗ **rejected** (tested) |
+| `{"source": "archive", "url": …, "sha256": …}` | ✓ | ✗ **rejected** (tested) |
+| `{"source": "command", "command": …}` | ✓ | ✗ **rejected** (tested) |
+
+Copilot's accepted set is exactly three: relative path, `github`, `url`. Every other Claude
+source type fails the whole index. Note `npm` in particular — it is widely repeated as
+Copilot-supported (including in anthropics/claude-plugins-official#1205), and it is not:
+`{"source":"npm","package":"@scope/x"}` yields `plugins.N.source: Invalid input` like the rest.
 
 Both vendors accept `ref` (branch/tag) and `sha` (full 40-char commit SHA) on git-backed
 object sources; `sha` overrides `ref` and pins against force-pushes and moved tags.
@@ -136,7 +143,8 @@ half of the same problem).
 **Portability rules:**
 
 1. Prefer relative-path sources for plugins living in the marketplace repo — universally supported.
-2. Never emit `git-subdir` in a file that Copilot may read. The capability is available to
+2. Never emit `git-subdir`, `npm`, `archive`, or `command` in a file that Copilot may read.
+   For `git-subdir` the capability is available to
    Copilot as `{"source": "github", "repo": "owner/repo", "path": "tools/plugin"}` — it is the
    `git-subdir` *discriminator* Copilot rejects, not the subdirectory concept. Claude Code does
    not accept `path` on its `github`/`url` types, so a single file cannot express a git

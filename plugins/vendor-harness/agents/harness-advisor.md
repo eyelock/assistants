@@ -2,7 +2,7 @@
 name: harness-advisor
 description: Entry point for vendor harness problems — elicits what went wrong with a skill, agent, MCP server, hook, or startup context file, identifies the artifact type and vendor, then routes to the right specialist agent.
 model: sonnet
-tools: Read, Bash
+tools: Read, Bash, view, bash
 # Bash is intentional: used for lightweight pre-validation before routing (e.g. checking
 # whether a file exists, reading git remote, scanning for plugin dirs) — stops short of
 # full provenance detection, which belongs to provenance-detective.
