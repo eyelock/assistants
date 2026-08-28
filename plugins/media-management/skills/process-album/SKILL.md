@@ -7,7 +7,7 @@ description: >-
 allowed-tools: Bash Read Skill
 metadata:
   author: eyelock
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 ## Delegation Rule
@@ -90,8 +90,11 @@ If either fails, ask user to move the file into the folder manually via Finder.
 - After splitting, update track count via manage-metadata
 
 **Step 6: Update metadata**
-→ Invoke: `Skill("media-management:manage-metadata", args="update $EXTRACTION_FOLDER genre=$GENRE clear-album-artist|set-album-artist=$ARTIST update-track-count")`
+→ Invoke: `Skill("media-management:manage-metadata", args="update $EXTRACTION_FOLDER genre=$GENRE clear-album-artist|set-album-artist=$ALBUM_ARTIST update-track-count")`
 - Pass user-confirmed values (genre, album artist, compilation flag)
+- Record `$ALBUM_ARTIST` for later steps: the track Artist for single-artist albums (Album Artist
+  cleared), the confirmed primary artist for collaborations, or "Various Artists" for
+  compilations — Steps 9, 12, and 13 all need this exact value, not the per-track Artist
 
 **Step 7: Import to Apple Music**
 → Invoke: `Skill("media-management:import-to-apple-music", args="$EXTRACTION_FOLDER")`
@@ -104,9 +107,13 @@ If either fails, ask user to move the file into the folder manually via Finder.
 ### Phase 2: NAS Staging
 
 **Step 9: Archive MP3s**
-→ Invoke: `Skill("media-management:archive-media", args="mp3 $ARTIST $ALBUM")`
-- Source: `$LIBRARY_STORAGE/Artist/Album/` (from Apple Music, captures edits)
-- Destination: `$ARCHIVE_WORKDIR/to_nas/mp3/Artist/Album/`
+→ Invoke: `Skill("media-management:archive-media", args="mp3 $ALBUM_ARTIST $ALBUM")`
+- `$ALBUM_ARTIST` is the value Apple Music actually filed the album under — the Album Artist tag
+  set in Step 6 (e.g. "Various Artists" for a compilation), falling back to the track Artist only
+  when Album Artist was cleared (single-artist case). **Do not use the track Artist for a
+  compilation or collaboration** — see [archive-media's SKILL.md](../archive-media/SKILL.md#mp3-archival) for why.
+- Source: `$LIBRARY_STORAGE/$ALBUM_ARTIST/Album/` (from Apple Music, captures edits)
+- Destination: `$ARCHIVE_WORKDIR/to_nas/mp3/$ALBUM_ARTIST/Album/`
 
 **Step 10: Verify MP3 archival**
 - Check the JSON output from archive-media: `verified` should be `true`
@@ -127,9 +134,38 @@ bash scripts/copy-file.sh "$WAV_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME-wav"
 ```
 
 **Step 12: Archive WAVs (SKIP Apple Music)**
-→ Invoke: `Skill("media-management:archive-media", args="wav $ARTIST $ALBUM $WAV_EXTRACTION_FOLDER")`
+→ Invoke: `Skill("media-management:archive-media", args="wav $ALBUM_ARTIST $ALBUM $WAV_EXTRACTION_FOLDER")`
+- Use the same `$ALBUM_ARTIST` as Step 9 so the mp3/ and wav/ trees under `to_nas/` mirror each other
 - WAVs NEVER go through Apple Music import
 
+### Batch Processing Multiple Releases
+
+**Trigger:** the user asks to process several releases in one go and explicitly asks for fewer
+interruptions — e.g. "process all of them, let me check once at the end" — rather than the
+default one-release-at-a-time flow with a confirmation per release.
+
+**What changes:**
+- Run Steps 1–6 for every release without stopping at Step 4's per-release confirmation. For
+  genre specifically, make your best inference from track titles/style/label context instead of
+  presenting a numbered list per release — note this is a judgment call, not free license: only
+  do it under this explicit trigger, and say so in the summary (see below).
+- After all releases have been imported (Step 7) and archived (Steps 9–13), present **one**
+  consolidated table covering every release: tracks, chosen genre, album type, Apple Music
+  destination, NAS archive status. Mark inferred genres clearly (e.g. "my pick — flag if wrong")
+  so the user knows which fields to double check.
+- This single table **is** the Step 4/8 confirmation for a batch run — it satisfies the mandatory
+  checkpoint rule by covering all releases at once instead of skipping it.
+
+**If the user corrects a genre (or other tag) after this point:** the files are usually already
+archived to NAS. Since `archive-media`'s MP3 mode re-copies from Apple Music (which captures
+whatever the user just edited there), simply re-run Step 9 for the affected release to sync the
+correction to NAS — no need to redo the whole pipeline. WAV archives don't carry genre and don't
+need re-syncing for a genre-only correction.
+
 **Step 13: Cleanup**
-→ Invoke: `Skill("media-management:cleanup", args="$ARTIST - $ALBUM")`
+→ Invoke: `Skill("media-management:cleanup", args="$DOWNLOADS \"$ARTIST - $ALBUM\" --zip $MP3_SOURCE_PATH --zip $WAV_SOURCE_PATH --folder $EXTRACTION_FOLDER --folder $WAV_EXTRACTION_FOLDER")`
+- Pass the exact paths tracked since Steps 1/2/11 rather than relying on cleanup's release-name
+  glob matching — a vendor ZIP's filename frequently doesn't match the clean release name used
+  for the extraction folder (e.g. a Various Artists compilation ZIP named after all contributing
+  artists), which glob matching alone would miss on one side or the other
 - Moves original ZIPs/loose audio files to processed/, cleans extraction folders
