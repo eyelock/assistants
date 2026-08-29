@@ -36,7 +36,7 @@ notably `process-album`, which tracked the original ZIP/file paths (Step 1) and 
 folder paths (Steps 2 and 11) all along. Glob matching by name alone is unreliable: a vendor
 ZIP's filename frequently does NOT match the clean release name used for the extraction folder
 — e.g. a Various Artists compilation ZIP named after all 10 contributing artists
-(`lovetrip- monovan- ... - keep it deep (pre-order).zip`), extracted into a folder simply called
+(`Artist One- Artist Two- ... - keep it deep (pre-order).zip`), extracted into a folder simply called
 `keep it deep`. Matching on `"keep it deep"` alone finds the folder but misses the ZIP (and vice
 versa for the vendor name). Passing the exact paths sidesteps this entirely. `release_name` can
 be `""` in that case — it's used only as a display label.
