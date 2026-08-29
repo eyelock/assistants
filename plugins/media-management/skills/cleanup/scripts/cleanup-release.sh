@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Move processed ZIPs/audio files to archive and remove extraction folders.
-# Usage: cleanup-release.sh <downloads_folder> <release_name>
+# Usage: cleanup-release.sh <downloads_folder> <release_name> [--zip <path>]... [--folder <path>]...
 # Output: JSON to stdout with cleanup results
 # Exit codes: 0=success, 1=bad args, 2=folder not found, 3=operation error
 
@@ -11,7 +11,7 @@ FIND_SCRIPT="$SCRIPT_DIR/find-release-artifacts.sh"
 
 show_help() {
   cat <<'HELP'
-Usage: cleanup-release.sh <downloads_folder> <release_name>
+Usage: cleanup-release.sh <downloads_folder> <release_name> [--zip <path>]... [--folder <path>]...
 
 Move processed ZIP files and loose audio files (single-track purchases with
 no ZIP) to a "processed/" subfolder, and remove extraction folders, for a
@@ -22,12 +22,21 @@ This script calls find-release-artifacts.sh to locate items, then:
     (or <downloads_folder>/processed/)
   - Removes all matching extraction folders
 
+Prefer --zip/--folder with exact paths whenever the caller already knows them
+(e.g. process-album, which tracked these paths since Steps 1/2/11) instead of
+relying on release_name glob matching — vendor ZIP filenames often don't match
+the clean extraction folder name (e.g. a Various Artists compilation ZIP named
+after all contributing artists). release_name may be "" when only explicit
+paths are given; it's then used purely as a display label in the output.
+
 Environment:
   MEDIA_MGMT_PROCESSED  Override processed destination (default: <downloads_folder>/processed/)
 
 Arguments:
   downloads_folder  Path to the downloads directory
-  release_name      Release name (e.g., "Artist - Album")
+  release_name      Release name for glob matching (e.g., "Artist - Album"), or ""
+  --zip <path>      Explicit ZIP or loose audio file path to include (repeatable)
+  --folder <path>   Explicit extraction folder path to include (repeatable)
   --help            Show this help
 
 Output: JSON to stdout
@@ -51,22 +60,36 @@ HELP
 
 DOWNLOADS=""
 RELEASE=""
+RELEASE_SET=false
+find_args=()
 
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --help) show_help; exit 0 ;;
+    --zip)
+      [[ $# -ge 2 ]] || { echo "Error: --zip requires a path argument" >&2; exit 1; }
+      find_args+=(--zip "$2")
+      shift 2
+      ;;
+    --folder)
+      [[ $# -ge 2 ]] || { echo "Error: --folder requires a path argument" >&2; exit 1; }
+      find_args+=(--folder "$2")
+      shift 2
+      ;;
     *)
       if [[ -z "$DOWNLOADS" ]]; then
-        DOWNLOADS="$arg"
-      elif [[ -z "$RELEASE" ]]; then
-        RELEASE="$arg"
+        DOWNLOADS="$1"
+      elif [[ "$RELEASE_SET" == false ]]; then
+        RELEASE="$1"
+        RELEASE_SET=true
       fi
+      shift
       ;;
   esac
 done
 
-if [[ -z "$DOWNLOADS" || -z "$RELEASE" ]]; then
-  echo "Error: both downloads_folder and release_name arguments required" >&2
+if [[ -z "$DOWNLOADS" || "$RELEASE_SET" == false ]]; then
+  echo "Error: both downloads_folder and release_name arguments required (release_name may be \"\")" >&2
   show_help >&2
   exit 1
 fi
@@ -82,7 +105,7 @@ if [[ ! -x "$FIND_SCRIPT" ]]; then
   exit 3
 fi
 
-artifacts=$("$FIND_SCRIPT" "$DOWNLOADS" "$RELEASE") || {
+artifacts=$("$FIND_SCRIPT" "$DOWNLOADS" "$RELEASE" "${find_args[@]+"${find_args[@]}"}") || {
   echo "Error: failed to find release artifacts" >&2
   exit 3
 }
