@@ -1,0 +1,19 @@
+{
+  "url": "https://api.github.com/repos/acme/widget/branches/main/protection",
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["Build", "Lint", "Format", "Test"],
+    "checks": [
+      { "context": "Build", "app_id": 15368 },
+      { "context": "Lint", "app_id": 15368 },
+      { "context": "Format", "app_id": 15368 },
+      { "context": "Test", "app_id": 15368 }
+    ]
+  },
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": false,
+    "required_approving_review_count": 0
+  },
+  "allow_force_pushes": { "enabled": false },
+  "allow_deletions": { "enabled": false }
+}

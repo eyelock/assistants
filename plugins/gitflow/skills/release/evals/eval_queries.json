@@ -1,0 +1,15 @@
+[
+  { "query": "cut the 1.4.0 release", "should_trigger": true },
+  { "query": "ship a beta of 0.8.0 so testers can try it", "should_trigger": true },
+  {
+    "query": "prod on v2.3.1 is crashing, I need a hotfix release out today",
+    "should_trigger": true
+  },
+  { "query": "is this a minor or a patch bump?", "should_trigger": true },
+  { "query": "release workflow failed after I pushed the tag, what now?", "should_trigger": true },
+  { "query": "write the tag-triggered release.yml workflow", "should_trigger": false },
+  { "query": "open a PR for this feature", "should_trigger": false },
+  { "query": "what's the base branch for my feature?", "should_trigger": false },
+  { "query": "write the commit message for the CHANGELOG update", "should_trigger": false },
+  { "query": "draft a blog post announcing our new version", "should_trigger": false }
+]

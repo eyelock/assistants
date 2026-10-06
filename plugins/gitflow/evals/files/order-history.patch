@@ -1,0 +1,30 @@
+diff --git a/internal/orders/history.go b/internal/orders/history.go
+index 7d2b0f4..e19a6c2 100644
+--- a/internal/orders/history.go
++++ b/internal/orders/history.go
+@@ -14,19 +14,24 @@ func (s *Service) History(ctx context.Context, customerID string) ([]OrderView, error) {
+ 	if err != nil {
+ 		return nil, fmt.Errorf("listing orders: %w", err)
+ 	}
+-	views := make([]OrderView, 0, len(orders))
+-	for _, o := range orders {
+-		items, err := s.store.ItemsForOrder(ctx, o.ID)
+-		if err != nil {
+-			return nil, fmt.Errorf("loading items for %s: %w", o.ID, err)
+-		}
+-		views = append(views, OrderView{Order: o, Items: items})
++	ids := make([]string, len(orders))
++	for i, o := range orders {
++		ids[i] = o.ID
++	}
++	// One query for every order's items instead of one query per order.
++	itemsByOrder, err := s.store.ItemsForOrders(ctx, ids)
++	if err != nil {
++		return nil, fmt.Errorf("loading items: %w", err)
++	}
++	views := make([]OrderView, 0, len(orders))
++	for _, o := range orders {
++		views = append(views, OrderView{Order: o, Items: itemsByOrder[o.ID]})
+ 	}
+ 	return views, nil
+ }

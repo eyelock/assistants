@@ -1,0 +1,22 @@
+diff --git a/cmd/report/flags.go b/cmd/report/flags.go
+index 4a1e2c7..9b3f0d5 100644
+--- a/cmd/report/flags.go
++++ b/cmd/report/flags.go
+@@ -9,16 +9,13 @@ import (
+ type options struct {
+ 	format  string
+ 	verbose bool
+-	noColor bool
+ }
+ 
+ func bindFlags(cmd *cobra.Command, o *options) {
+ 	cmd.Flags().StringVarP(&o.format, "format", "f", "table", "output format: table or json")
+ 	cmd.Flags().BoolVarP(&o.verbose, "verbose", "v", false, "print progress to stderr")
+-	cmd.Flags().BoolVar(&o.noColor, "no-color", false, "disable colored output")
+ }
+ 
+-func useColor(o *options) bool {
+-	return !o.noColor && term.IsTerminal(int(os.Stdout.Fd()))
++func useColor() bool {
++	return os.Getenv("NO_COLOR") == "" && term.IsTerminal(int(os.Stdout.Fd()))
+ }

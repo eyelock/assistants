@@ -1,11 +1,5 @@
 # Skills that predate the evals rule (see AGENTS.md). Remove a line when its skill gets evals;
 # never add one: a new skill ships with evals/evals.json and evals/eval_queries.json.
-plugins/gitflow/skills/branching
-plugins/gitflow/skills/ci
-plugins/gitflow/skills/commits
-plugins/gitflow/skills/push
-plugins/gitflow/skills/quality-gate
-plugins/gitflow/skills/release
 plugins/vendor-harness/skills/compose-feedback
 plugins/vendor-harness/skills/fetch-vendor-docs
 plugins/vendor-harness/skills/flag-vendor-gaps

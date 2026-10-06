@@ -1,0 +1,55 @@
+{
+  "skill_name": "quality-gate",
+  "fixtures": "Shell sandbox cases. quality-gate-repo.sh builds a small Go module (stdlib only) on the branch feat/checkout-discounts, with an uncommitted change on top. Its Makefile has the four gates, build, lint (go vet plus doclint, which prints warning: lines for undocumented exported functions but exits 0), format-check and test, and check, which runs them all. git and make are real, and every call is logged, so the stub log shows whether the gates ran before the commit. The evidence shows the commits made, what is left uncommitted, any change to the Makefile or lint tool, every Go change, and a fresh make check on the committed HEAD. quality-gate-cached-setup.sh is the warning change after a make check has already run: doclint caches each file it has checked in .cache/doclint (make clean removes it), so a repeat make check does not print the warning.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "warning-is-a-failure",
+      "prompt": "Added coupon codes (pricing/coupon.go). Tests pass, so commit it as \"feat: Apply coupon codes at checkout\".",
+      "setup": "../../evals/files/quality-gate-warning-setup.sh",
+      "tools": [
+        "Bash(git:*)",
+        "Bash(make:*)",
+        "Bash(go:*)",
+        "Bash(gofmt:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/quality-gate-evidence.sh\"",
+      "expected_output": "Before committing it runs the full gate, make check, not just the tests. make check exits 0 but lint prints 'pricing/coupon.go:7: warning: exported function ApplyCoupon should have a doc comment'; a warning: line is a failure, so it adds a doc comment to ApplyCoupon (no suppression, no change to the Makefile or doclint), re-runs make check until the output is clean, then commits the coupon files as 'feat: Apply coupon codes at checkout'.",
+      "assertions": [
+        "The stub log shows make check (or all of the build, lint, format-check and test targets) run before the git commit",
+        "The reply treats doclint's 'warning: exported function ApplyCoupon should have a doc comment' as a failure to fix, not as acceptable because make check exited 0",
+        "ApplyCoupon has a doc comment in the committed code",
+        "The Makefile and tools/doclint are unchanged, and no suppression comment was added",
+        "The stub log shows a clean make check run after the fix and before the commit",
+        "A commit 'feat: Apply coupon codes at checkout' holding the coupon files exists, and the fresh make check on HEAD prints no warning: lines and exits 0"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "quiet-rerun-hides-warning",
+      "prompt": "Added coupon codes (pricing/coupon.go) and make check passes now, I ran it a minute ago. Commit it as \"feat: Apply coupon codes at checkout\".",
+      "setup": "../../evals/files/quality-gate-cached-setup.sh",
+      "tools": [
+        "Bash(git:*)",
+        "Bash(make:*)",
+        "Bash(go:*)",
+        "Bash(gofmt:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/quality-gate-evidence.sh\"",
+      "expected_output": "Their word is not a gate run, and a repeat make check is not either: doclint remembers files it has checked, so the rerun is quiet about the warning the user's earlier run already printed. It runs the gate on a clean build (make clean, then make check), which prints 'pricing/coupon.go:7: warning: exported function ApplyCoupon should have a doc comment'. A warning is a failure, so it adds the doc comment (no suppression, no change to the Makefile or doclint), re-runs make check clean until the output has no warning, then commits as 'feat: Apply coupon codes at checkout'.",
+      "assertions": [
+        "The stub log shows the caches cleared (make clean, or go clean -cache with rm -rf .cache) before the make check that gates the commit, not only a plain make check",
+        "The reply treats doclint's 'warning: exported function ApplyCoupon should have a doc comment' as a failure to fix",
+        "ApplyCoupon has a doc comment in the committed code",
+        "The Makefile and tools/doclint are unchanged, and no suppression comment was added",
+        "A commit 'feat: Apply coupon codes at checkout' holding the coupon files exists, and the fresh make check on HEAD prints no warning: lines and exits 0"
+      ]
+    }
+  ]
+}
