@@ -1,0 +1,20 @@
+{
+  "skill_name": "voice-direct",
+  "fixtures": "Files are copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "direct-slack",
+      "prompt": "Reply to Sam in data/slack-thread.md. I'll review it at 2pm today.",
+      "files": ["../../evals/files/slack-thread.md"],
+      "expected_output": "One or two plain sentences that lead with the answer (reviewing at 2pm) without apologies, hedging or exclamation marks.",
+      "assertions": [
+        "Leads with when the review will happen (2pm)",
+        "The draft itself, not counting any To/On header or Check: note, is at most two sentences",
+        "Contains no apology or hedging ('sorry', 'I think maybe')",
+        "Contains no exclamation marks",
+        "Avoids 'just checking in' and 'circling back'"
+      ]
+    }
+  ]
+}

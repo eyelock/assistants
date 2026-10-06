@@ -1,0 +1,11 @@
+[
+  { "query": "who am I waiting on?", "should_trigger": true },
+  { "query": "which of my PRs still have no review", "should_trigger": true },
+  { "query": "who do I need to chase this week", "should_trigger": true },
+  { "query": "what's stuck on other people", "should_trigger": true },
+  { "query": "emails I sent that never got a reply", "should_trigger": true },
+  { "query": "what's waiting on me", "should_trigger": false },
+  { "query": "remind Lee about the runbook", "should_trigger": false },
+  { "query": "open a PR for this branch", "should_trigger": false },
+  { "query": "how long do PR reviews take on average in this repo", "should_trigger": false }
+]

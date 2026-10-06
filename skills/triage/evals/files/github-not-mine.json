@@ -1,0 +1,63 @@
+{
+  "snapshot": "Results of GitHub MCP tool calls, captured 2026-10-05T09:00:00Z (a Monday). Treat this time as now.",
+  "get_me": { "login": "dave-c", "name": "Dave Cole" },
+  "search_pull_requests": {
+    "review-requested:@me is:open": [
+      {
+        "repo": "acme/api",
+        "number": 61,
+        "title": "Bump pg driver to 8.13",
+        "author": "paula",
+        "draft": false,
+        "requested_reviewers": [],
+        "requested_teams": [
+          { "slug": "acme/backend", "members": 9, "requested_at": "2026-10-04T15:00:00Z" }
+        ],
+        "reviews": [],
+        "url": "https://github.com/acme/api/pull/61"
+      }
+    ],
+    "author:@me is:open": []
+  },
+  "search_issues": { "assignee:@me is:open": [] },
+  "list_notifications": [
+    {
+      "reason": "mention",
+      "repo": "acme/api",
+      "subject": "Issue #66: Cutoff date for the v1 export",
+      "updated_at": "2026-10-05T08:40:00Z",
+      "thread": [
+        {
+          "author": "rosa",
+          "at": "2026-10-05T08:00:00Z",
+          "body": "@dave-c @erin can one of you confirm the cutoff date for turning off the v1 export?"
+        },
+        {
+          "author": "erin",
+          "at": "2026-10-05T08:30:00Z",
+          "body": "It's 31 October, agreed in last week's planning. Notes: https://github.com/acme/api/wiki/Planning-2026-09-28"
+        },
+        { "author": "rosa", "at": "2026-10-05T08:40:00Z", "body": "Perfect, thanks!" }
+      ],
+      "url": "https://github.com/acme/api/issues/66"
+    },
+    {
+      "reason": "mention",
+      "repo": "acme/web",
+      "subject": "PR #93: Move the status page to the new host",
+      "updated_at": "2026-10-03T13:00:00Z",
+      "latest_comment": {
+        "author": "tom",
+        "body": "Done and deployed. cc @dave-c for visibility, no action needed."
+      },
+      "url": "https://github.com/acme/web/pull/93"
+    },
+    {
+      "reason": "subscribed",
+      "repo": "acme/api",
+      "subject": "Release v2.3.0 published",
+      "updated_at": "2026-10-04T18:00:00Z",
+      "url": "https://github.com/acme/api/releases/tag/v2.3.0"
+    }
+  ]
+}

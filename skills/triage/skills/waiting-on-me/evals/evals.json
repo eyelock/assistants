@@ -1,0 +1,55 @@
+{
+  "skill_name": "waiting-on-me",
+  "fixtures": "Each file is a snapshot of platform tool results, copied into the run's data/ folder. Its snapshot field gives the time to treat as now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "github-waiting-on-me",
+      "prompt": "data/github.json has what the GitHub tools returned for me this morning. What's waiting on me?",
+      "files": ["../../evals/files/github.json"],
+      "expected_output": "A table of items waiting on dave-c: review requests on acme/api#41 (alice) and acme/web#89 (ivan), the assigned issue acme/api#30 (carol), grace's question on acme/api#47, and the failing check on his own PR acme/web#90. Nothing that only informs, is already answered, merged or a draft.",
+      "assertions": [
+        "Lists acme/api#41 with alice as Who",
+        "Lists acme/web#89 with ivan as Who",
+        "Lists acme/api#30 (Login fails on Safari)",
+        "Lists grace's question on acme/api#47",
+        "Does not list acme/api#38, which is merged",
+        "Does not list the v2.3.0 release, which only informs",
+        "Does not list acme/api#44, which dave-c already answered",
+        "Does not list the draft acme/api#52",
+        "Every listed item has its github.com URL",
+        "The answer is a table with the columns Platform, What, Who, Since, Why now, Link"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "slack-unreplied",
+      "prompt": "anything in slack i haven't got back to people on? dump is in data/slack.json",
+      "files": ["../../evals/files/slack.json"],
+      "expected_output": "Jo's DM asking for the Q3 numbers, Omar's request to look at the onboarding mockups, and Quinn's request for the vendor contact. Not Kim's FYI, the @channel announcement, Max's question (already answered) or anything Dave sent.",
+      "assertions": [
+        "Lists Jo's request for the Q3 numbers",
+        "Lists Omar's request about the onboarding mockups",
+        "Lists Quinn's request for the vendor contact",
+        "Does not list Kim's FYI that v2.3 is deployed",
+        "Does not list the @channel office closure announcement",
+        "Does not list Max's offsite question, which Dave answered",
+        "Does not list messages Dave sent himself (to Lee, Nia or the design team)",
+        "Each item links to its Slack permalink"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "nothing-waiting",
+      "prompt": "Check data/github-not-mine.json and tell me what needs me on GitHub.",
+      "files": ["../../evals/files/github-not-mine.json"],
+      "expected_output": "Nothing waits on dave-c by name. The review request on acme/api#61 went to the acme/backend team, not to him. Rosa's question on acme/api#66 was asked of him and erin, and erin answered it fully (rosa thanked her). Tom's cc on acme/web#93 only informs, as does the v2.3.0 release. The answer says Nothing (in the waiting-on-me table) rather than listing any of them as owed.",
+      "assertions": [
+        "States that nothing is waiting on the user",
+        "Does not list acme/api#61 as waiting on dave-c, since the review was requested of the acme/backend team and not of him by name",
+        "Does not list Rosa's cutoff-date question on acme/api#66 as waiting on dave-c, since erin answered it",
+        "Does not list Tom's cc on acme/web#93 or the v2.3.0 release as items to act on"
+      ]
+    }
+  ]
+}

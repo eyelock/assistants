@@ -1,0 +1,105 @@
+{
+  "snapshot": "Results of Slack MCP tool calls, captured 2026-10-05T09:00:00Z (a Monday). Treat this time as now.",
+  "me": {
+    "id": "U001",
+    "name": "dave"
+  },
+  "messages": [
+    {
+      "channel": "DM with jo",
+      "id": "m1",
+      "from": "jo",
+      "at": "2026-10-05T08:30:00Z",
+      "text": "Can you send me the Q3 numbers before standup?",
+      "replies_after": [],
+      "permalink": "https://acme.slack.com/archives/D010/p1001"
+    },
+    {
+      "channel": "#eng",
+      "id": "m2",
+      "from": "kim",
+      "at": "2026-10-02T11:00:00Z",
+      "text": "<@U001> FYI, v2.3 is deployed to production.",
+      "replies_after": [],
+      "permalink": "https://acme.slack.com/archives/C100/p1002"
+    },
+    {
+      "channel": "#eng",
+      "id": "m3",
+      "from": "dave",
+      "at": "2026-10-01T10:00:00Z",
+      "text": "<@U020> could you review the incident runbook before Thursday's drill?",
+      "replies_after": [
+        {
+          "from": "dave",
+          "at": "2026-10-03T14:00:00Z",
+          "text": "<@U020> bump on this, the drill is Thursday."
+        }
+      ],
+      "to": "lee",
+      "permalink": "https://acme.slack.com/archives/C100/p1003"
+    },
+    {
+      "channel": "DM with max",
+      "id": "m4",
+      "from": "max",
+      "at": "2026-10-01T09:00:00Z",
+      "text": "quick q: are we still on for the offsite?",
+      "replies_after": [
+        {
+          "from": "dave",
+          "at": "2026-10-01T09:05:00Z",
+          "text": "Yes, Thursday."
+        }
+      ],
+      "permalink": "https://acme.slack.com/archives/D011/p1004"
+    },
+    {
+      "channel": "#announce",
+      "id": "m5",
+      "from": "ops",
+      "at": "2026-10-04T12:00:00Z",
+      "text": "@channel The office is closed on Friday.",
+      "replies_after": [],
+      "permalink": "https://acme.slack.com/archives/C200/p1005"
+    },
+    {
+      "channel": "DM with nia",
+      "id": "m6",
+      "from": "dave",
+      "at": "2026-10-02T17:00:00Z",
+      "text": "Thanks for the help today!",
+      "replies_after": [],
+      "to": "nia",
+      "permalink": "https://acme.slack.com/archives/D012/p1006"
+    },
+    {
+      "channel": "#design",
+      "id": "m7",
+      "from": "omar",
+      "at": "2026-10-02T15:00:00Z",
+      "text": "<@U001> could you look at the new onboarding mockups when you get a chance?",
+      "replies_after": [],
+      "permalink": "https://acme.slack.com/archives/C300/p1007"
+    },
+    {
+      "channel": "DM with quinn",
+      "id": "m8",
+      "from": "quinn",
+      "at": "2026-09-30T10:00:00Z",
+      "text": "Could you share the vendor contact when you have a sec? No rush.",
+      "replies_after": [],
+      "permalink": "https://acme.slack.com/archives/D013/p1008"
+    },
+    {
+      "channel": "#design",
+      "id": "m9",
+      "from": "dave",
+      "at": "2026-10-02T10:00:00Z",
+      "text": "<!subteam^S050|@design-team> could someone send me the final logo files for the partner deck?",
+      "replies_after": [],
+      "to": "@design-team",
+      "permalink": "https://acme.slack.com/archives/C300/p1009"
+    }
+  ]
+}

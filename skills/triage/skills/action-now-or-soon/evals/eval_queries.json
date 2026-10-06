@@ -1,0 +1,11 @@
+[
+  { "query": "what do I need to deal with today?", "should_trigger": true },
+  { "query": "what's urgent across my PRs and messages", "should_trigger": true },
+  { "query": "what should I do first this morning", "should_trigger": true },
+  { "query": "which of these can wait until next week", "should_trigger": true },
+  { "query": "who needs a reply from me right now", "should_trigger": true },
+  { "query": "who am I waiting on", "should_trigger": false },
+  { "query": "plan my sprint", "should_trigger": false },
+  { "query": "set a reminder for 3pm", "should_trigger": false },
+  { "query": "prioritise the backlog by business value", "should_trigger": false }
+]

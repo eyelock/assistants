@@ -1,0 +1,9 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "voice-skills",
+  "version": "0.1.0",
+  "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
+  "author": {
+    "name": "eyelock"
+  }
+}

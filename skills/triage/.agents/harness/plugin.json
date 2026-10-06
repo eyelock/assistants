@@ -1,0 +1,9 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "triage-skills",
+  "version": "0.1.0",
+  "description": "Triage skills: what is waiting on me, what am I waiting on, and what to act on now or soon, answered in one shape on any platform.",
+  "author": {
+    "name": "eyelock"
+  }
+}

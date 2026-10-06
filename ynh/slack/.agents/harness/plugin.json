@@ -1,0 +1,57 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "slack",
+  "version": "0.1.0",
+  "description": "Reads Slack for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only.",
+  "default_vendor": "claude",
+  "keywords": ["slack", "chat", "mentions", "messages", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    }
+  ],
+  "env_passthrough": ["SLACK_MCP_XOXP_TOKEN"],
+  "mcp_servers": {
+    "slack": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "SLACK_MCP_XOXP_TOKEN",
+        "-e",
+        "SLACK_MCP_ENABLED_TOOLS",
+        "ghcr.io/korotovsky/slack-mcp-server",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "SLACK_MCP_XOXP_TOKEN": "${SLACK_MCP_XOXP_TOKEN}",
+        "SLACK_MCP_ENABLED_TOOLS": "conversations_search_messages,conversations_history,conversations_replies,conversations_unreads,channels_list,users_search"
+      }
+    }
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on Slack."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on Slack."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on Slack."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Slack."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on Slack, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
+}

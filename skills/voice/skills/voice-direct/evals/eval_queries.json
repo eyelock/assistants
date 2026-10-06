@@ -1,0 +1,7 @@
+[
+  { "query": "reply to this in my direct voice", "should_trigger": true },
+  { "query": "use voice-direct for this answer", "should_trigger": true },
+  { "query": "draft this, direct please", "should_trigger": true },
+  { "query": "what does a direct tone mean in UX writing", "should_trigger": false },
+  { "query": "make the logging more direct", "should_trigger": false }
+]

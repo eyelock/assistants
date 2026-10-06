@@ -1,0 +1,12 @@
+[
+  { "query": "what's waiting on me on github?", "should_trigger": true },
+  { "query": "who have I not replied to in slack", "should_trigger": true },
+  { "query": "which PRs am I supposed to be reviewing", "should_trigger": true },
+  { "query": "what do I owe people this week", "should_trigger": true },
+  { "query": "any invites I haven't answered?", "should_trigger": true },
+  { "query": "review this PR for me", "should_trigger": false },
+  { "query": "who am I waiting on for my pull requests", "should_trigger": false },
+  { "query": "write a reply to Jo's message", "should_trigger": false },
+  { "query": "summarise the #eng channel from yesterday", "should_trigger": false },
+  { "query": "set up the GitHub MCP server", "should_trigger": false }
+]

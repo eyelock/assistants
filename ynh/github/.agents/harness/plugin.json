@@ -1,0 +1,45 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "github",
+  "version": "0.1.0",
+  "description": "Reads GitHub for what is waiting on you and what you are waiting on: review requests, your PRs' reviews and checks, mentions and assigned issues. Read-only.",
+  "default_vendor": "claude",
+  "keywords": ["github", "pull-requests", "reviews", "ci", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    }
+  ],
+  "env_passthrough": ["GITHUB_PERSONAL_ACCESS_TOKEN"],
+  "mcp_servers": {
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/readonly",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}",
+        "X-MCP-Toolsets": "context,issues,pull_requests,notifications"
+      }
+    }
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on GitHub."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on GitHub."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on GitHub."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on GitHub."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on GitHub, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
+}

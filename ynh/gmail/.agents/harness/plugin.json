@@ -1,0 +1,47 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "gmail",
+  "version": "0.1.0",
+  "description": "Reads Gmail for what is waiting on you and what you are waiting on: threads whose last message is to you, and threads where you sent last and got no reply. Read-only.",
+  "default_vendor": "claude",
+  "keywords": ["gmail", "mail", "email", "google", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    }
+  ],
+  "env_passthrough": ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "USER_GOOGLE_EMAIL"],
+  "mcp_servers": {
+    "gmail": {
+      "command": "uvx",
+      "args": ["workspace-mcp", "--single-user", "--read-only", "--tools", "gmail"],
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}",
+        "USER_GOOGLE_EMAIL": "${USER_GOOGLE_EMAIL}"
+      }
+    }
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on Gmail."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on Gmail."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on Gmail."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Gmail."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on Gmail, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
+}
