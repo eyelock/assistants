@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.10" # S3-native state locking (use_lockfile)
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -9,7 +11,7 @@ terraform {
 
 data "aws_region" "current" {}
 
-# S3 Bucket for Terraform State
+# S3 Bucket for Terraform State (and its lock files)
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket
   tags = merge(var.tags, {
@@ -36,16 +38,12 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-# DynamoDB Table for State Locking
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.dynamodb_table
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-  tags = merge(var.tags, {
-    Name = "{project}-terraform-locks"
-  })
+# State files must never be public
+resource "aws_s3_bucket_public_access_block" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }

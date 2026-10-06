@@ -1,0 +1,24 @@
+[
+  {
+    "query": "my Swift 6 build fails with 'non-Sendable type crossing actor boundary', how do I fix it",
+    "should_trigger": true
+  },
+  { "query": "should this cache be an actor or a class with a lock?", "should_trigger": true },
+  {
+    "query": "replace these DispatchQueue.main.asyncAfter calls with async/await",
+    "should_trigger": true
+  },
+  { "query": "turn on strict concurrency checking in Package.swift", "should_trigger": true },
+  {
+    "query": "how do I run xcodebuild tests for a macOS scheme from the command line",
+    "should_trigger": true
+  },
+  {
+    "query": "my SwiftUI view is 900 lines, how do I extract a ViewModel and test it",
+    "should_trigger": false
+  },
+  { "query": "my sheet shows up as a tiny blank white pill", "should_trigger": false },
+  { "query": "set up ViewInspector tests for my login screen", "should_trigger": false },
+  { "query": "convert this Objective-C class to Kotlin", "should_trigger": false },
+  { "query": "fix the goroutine leak in this Go worker pool", "should_trigger": false }
+]

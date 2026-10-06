@@ -1,0 +1,23 @@
+[
+  { "query": "take a moment", "should_trigger": true },
+  { "query": "wait, are we even talking about the same thing here?", "should_trigger": true },
+  {
+    "query": "we're going in circles with this migration, stop and let's realign",
+    "should_trigger": true
+  },
+  {
+    "query": "the rules file says always use make targets. why did you just run pytest directly?",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm really worried about the advice you just gave me, have I broken something?",
+    "should_trigger": true
+  },
+  {
+    "query": "help me think through the API design one question at a time",
+    "should_trigger": false
+  },
+  { "query": "summarize what we've done in this session so far", "should_trigger": false },
+  { "query": "take a moment to double check the SQL before I run it", "should_trigger": false },
+  { "query": "write a retro doc on why last week's deploy went wrong", "should_trigger": false }
+]

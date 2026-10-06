@@ -1,6 +1,6 @@
 ---
 name: swiftui-lang
-description: SwiftUI architecture and testing — ViewModel-first extraction, protocol-based DI, coverage targets by layer, ViewInspector, snapshot testing, how to safely pass closures to Apple SDK APIs inside @MainActor types, and common anti-patterns.
+description: SwiftUI architecture and testing - ViewModel-first extraction, protocol-based DI, coverage targets by layer, ViewInspector, snapshot testing, how to safely pass closures to Apple SDK APIs inside @MainActor types, and common anti-patterns. Use for SwiftUI views, view models and their tests, and for SwiftUI bugs such as a sheet that shows a blank pill before its data loads.
 ---
 
 # SwiftUI Architecture & Testing
@@ -23,7 +23,7 @@ If overall is under 40%, the problem is almost never the View layer — it is un
 
 ## ViewModel-first architecture
 
-Every screen or sheet has **one** `@Observable` (Swift 5.9+) or `@MainActor ObservableObject` ViewModel that owns all state and logic. The View is a declarative projection.
+Every screen or sheet has **one** `@Observable` (Swift 5.9+) or `@MainActor ObservableObject` ViewModel that owns all state and logic. The View is a declarative projection. Errors land in ViewModel state the View shows — never `try?` in a button action (see `swift-lang`).
 
 ```swift
 @Observable
@@ -32,24 +32,40 @@ final class CardEditorViewModel {
     var title: String = ""
     var selectedColumnId: UUID?
     var isSubmitting = false
+    var errorMessage: String?
 
     var isValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     func loadFrom(card: Card) { /* ... */ }
-    func saveChanges(to card: inout Card) throws { /* ... */ }
+
+    func save(to card: inout Card) {
+        do {
+            try applyChanges(to: &card)
+            errorMessage = nil
+        } catch {
+            errorMessage = "Couldn't save: \(error.localizedDescription)"  // surfaced, not swallowed
+        }
+    }
+
+    private func applyChanges(to card: inout Card) throws { /* ... */ }
 }
 
 struct CardEditorView: View {
+    @Binding var card: Card
     @State private var viewModel = CardEditorViewModel()
 
     var body: some View {
         Form {
             TextField("Title", text: $viewModel.title)
-            Button("Save") { try? viewModel.saveChanges(to: &card) }
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage).foregroundStyle(.red)
+            }
+            Button("Save") { viewModel.save(to: &card) }
                 .disabled(!viewModel.isValid)
         }
+        .onAppear { viewModel.loadFrom(card: card) }
     }
 }
 ```
@@ -78,8 +94,8 @@ Common categories:
 | URL / query parameter parsing | Struct with getters | `QueryItemExtractor` |
 | Filter / sort / search scoring | Stateless struct or `enum` namespace | `CardFilterEngine` |
 | String escaping (security-sensitive) | `enum` namespace | `ShellEscaper` |
-| Template / token substitution | Struct with `replace(...)` | `InitCommandTokenizer` |
-| Line / wire-format parser | `enum Event` + `struct Parser` returning events | `ControlModeLineParser` |
+| Template / token substitution | Struct with `replace(...)` | `CommandTemplateTokenizer` |
+| Line / wire-format parser | `enum Event` + `struct Parser` returning events | `LogLineParser` |
 | Alert / dialog builder | `enum` with config struct + `confirm(...)` | `AlertBuilder` |
 
 Signals the logic is ready for extraction:
@@ -111,7 +127,7 @@ Once pure extraction is exhausted, the remaining untestable code is usually hard
 
 ### Persistence singletons are a priority
 
-Persistence singletons (`RepoPersistence`, `YNHPersistence`, anything that writes to `Application Support`) are the single biggest risk. Without DI, tests that create repositories, settings, or harness assignments will write real files — test state leaks into the user's running app. If you ever see fake test data in a running debug build's `.json` files, you need a `PersistenceProtocol` injection before adding another test.
+Persistence singletons (`DocumentPersistence`, `PreferencesPersistence`, anything that writes to `Application Support`) are the single biggest risk. Without DI, tests that create documents, settings, or user preferences will write real files — test state leaks into the user's running app. If you ever see fake test data in a running debug build's `.json` files, you need a `PersistenceProtocol` injection before adding another test.
 
 ### Circular singleton chains
 
@@ -119,10 +135,10 @@ Watch for `A.shared` → `B.shared` → `A.shared`. Breaking one link often does
 
 ### Document known constraints after each DI pass
 
-One injection rarely unlocks the whole call path. After extracting `TmuxManagerProtocol`, for example, tests may still be blocked by direct `Process()` instantiation or an undocumented `SomeOtherManager.shared` reference deeper in the method. Record these explicitly:
+One injection rarely unlocks the whole call path. After extracting `SessionManagerProtocol`, for example, tests may still be blocked by direct `Process()` instantiation or an undocumented `SomeOtherManager.shared` reference deeper in the method. Record these explicitly:
 
 ```swift
-// TODO: testable after GlobalEnvironmentManager / ProcessRunner DI
+// TODO: testable after EnvironmentManager / ProcessRunner DI
 ```
 
 List them in the plan's "known constraints" section so the next phase has a clear target.
@@ -141,7 +157,7 @@ import XCTest
 @testable import MyApp
 
 final class LoginViewTests: XCTestCase {
-    func test_submitButton_disabled_whenInvalid() throws {
+    func testSubmitButton_WhenEmailEmpty_IsDisabled() throws {
         let view = LoginView(viewModel: LoginViewModel(email: ""))
         let button = try view.inspect().find(button: "Submit")
         XCTAssertTrue(try button.isDisabled())
@@ -155,7 +171,7 @@ Prefer ViewInspector over snapshot testing for logic assertions — it fails fas
 
 [PointFree's swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) renders views and diffs against committed reference images or text serializations. Use for:
 
-- Visual regression on layout-critical views (toolbars, sheets, kanban boards)
+- Visual regression on layout-critical views (toolbars, sheets, dense grids)
 - Detecting accidental dark/light mode breakage
 - Catching `.padding` / `.frame` changes that would otherwise slip through
 
@@ -168,7 +184,7 @@ Standard unit tests. ViewModels are `@MainActor`, so test classes that hold them
 ```swift
 @MainActor
 final class BoardViewModelTests: XCTestCase {
-    func test_deleteCard_updatesColumnCount() async throws {
+    func testDeleteCard_InPopulatedColumn_DecrementsCardCount() async throws {
         let mockPersistence = MockBoardPersistence()
         let vm = BoardViewModel(persistence: mockPersistence)
         try await vm.deleteCard(id: cardID)
@@ -236,15 +252,38 @@ pipe.fileHandleForReading.readabilityHandler = { @Sendable [weak self] handle in
 
 `@Sendable` opts the closure out of actor isolation inheritance. The closure then runs uncontested on whatever thread the API uses, and the `Task { @MainActor in }` hop re-enters the main actor for any state access.
 
-### Already-safe pattern: dispatch queue hop
+### Already-safe pattern: register the callback from a `nonisolated` function
 
-A closure defined inside `DispatchQueue.global(...).async { }` does not need `@Sendable` on inner callbacks — the dispatch hop is itself `@Sendable` in Swift 6 and breaks the chain. Only closures written *directly* in a `@MainActor` scope need the annotation.
+A closure written inside a `nonisolated` function does not inherit `@MainActor` — there is no actor context to inherit — so it does not need `@Sendable` to escape isolation. Only closures written *directly* in a `@MainActor` scope need the annotation.
+
+Bridging the callback into an `AsyncStream` from a `nonisolated` helper does both jobs: it breaks the inheritance, and it replaces the callback-plus-`Task` hop with a plain `for await` loop that runs on the main actor.
 
 ```swift
-// Safe — the @Sendable dispatch closure already broke @MainActor inheritance
-DispatchQueue.global(qos: .userInitiated).async {
-    handle.readabilityHandler = { fh in   // not @MainActor, no annotation needed
-        DispatchQueue.main.async { [weak self] in self?.update(fh.availableData) }
+@MainActor
+final class LogViewModel {
+    private(set) var output = ""
+
+    func startReading(_ handle: FileHandle) {
+        Task {  // inherits @MainActor
+            for await chunk in Self.chunks(from: handle) {
+                output += chunk  // on the main actor, no hop needed
+            }
+        }
+    }
+
+    // Safe — nonisolated, so the closures below do not inherit @MainActor
+    nonisolated private static func chunks(from handle: FileHandle) -> AsyncStream<String> {
+        AsyncStream { continuation in
+            handle.readabilityHandler = { fh in  // not @MainActor, no annotation needed
+                let data = fh.availableData
+                if data.isEmpty {
+                    continuation.finish()
+                } else {
+                    continuation.yield(String(decoding: data, as: UTF8.self))
+                }
+            }
+            continuation.onTermination = { _ in handle.readabilityHandler = nil }
+        }
     }
 }
 ```
@@ -265,14 +304,14 @@ enum LoadState<T> {
 
 @Observable
 @MainActor
-final class HarnessRepository {
-    private(set) var state: LoadState<[Harness]> = .idle
-    var harnesses: [Harness] { if case .loaded(let xs) = state { return xs } else { return [] } }
+final class ProjectRepository {
+    private(set) var state: LoadState<[Project]> = .idle
+    var projects: [Project] { if case .loaded(let xs) = state { return xs } else { return [] } }
     var isReady: Bool { if case .loaded = state { return true } else { return false } }
 }
 ```
 
-Consumers gate on `isReady`, not on `harnesses.isEmpty`. A sheet that depends on a record from the store should not present until `isReady` is true — see the sheet pattern rule below.
+Consumers gate on `isReady`, not on `projects.isEmpty`. A sheet that depends on a record from the store should not present until `isReady` is true — see the sheet pattern rule below.
 
 ## Sheet presentation: prefer `.sheet(item:)` over `.sheet(isPresented:)`
 
@@ -280,9 +319,9 @@ Consumers gate on `isReady`, not on `harnesses.isEmpty`. A sheet that depends on
 
 ```swift
 // Footgun — presents an unsized empty view as a tiny white "pill" if the lookup fails
-.sheet(isPresented: $showLaunchSheet) {
-    if let harness = repo.selectedHarness {
-        HarnessLaunchSheet(harness: harness)
+.sheet(isPresented: $showDetailSheet) {
+    if let project = repo.selectedProject {
+        ProjectDetailSheet(project: project)
     }
 }
 ```
@@ -292,12 +331,12 @@ If the lookup returns `nil` (e.g. the store has not finished loading), SwiftUI p
 Use `.sheet(item:)` with an `Identifiable` model. SwiftUI does not present at all while the item is `nil`:
 
 ```swift
-.sheet(item: $launchTarget) { harness in
-    HarnessLaunchSheet(harness: harness)
+.sheet(item: $detailTarget) { project in
+    ProjectDetailSheet(project: project)
 }
 ```
 
-Set `launchTarget` only once you know the data is ready (see `isReady` above). Apply this rule project-wide — mixing the two patterns guarantees the next sheet to be added will reproduce the bug.
+Set `detailTarget` only once you know the data is ready (see `isReady` above). Apply this rule project-wide — mixing the two patterns guarantees the next sheet to be added will reproduce the bug.
 
 ## One canonical identity per domain entity
 
@@ -307,7 +346,7 @@ Rules:
 
 - Pick one form as canonical. Almost always: the most-qualified form (`namespace/name`, full UUID).
 - Persistence, runtime keys, and view tags all use the canonical form. No exceptions.
-- The non-canonical form, if it must exist, is read-only and derived (`harness.shortName` as a computed property).
+- The non-canonical form, if it must exist, is read-only and derived (`project.shortName` as a computed property).
 - New code that lifts a string off a model and passes it across a seam is a review red flag — verify it is the canonical form.
 
 ## Settings need a single source of truth
@@ -324,12 +363,12 @@ The coverage targets above are necessary but not sufficient. A test suite can hi
 |---|---|
 | Type-only assertions (`XCTAssertEqual(pane.id, "1")` on a struct you just constructed) | Test passes if the struct compiles — proves nothing |
 | Mocks that record call arrays, tests assert the mock recorded a call | You are testing the mock, not the production type |
-| Subprocess/system services mocked at the top (`MockYNHDetector` never runs `ynh`) | Cannot detect arg errors, env misconfig, or output-parse drift — the seam where bugs actually live is bypassed |
+| Subprocess/system services mocked at the top (`MockToolDetector` never runs the real tool) | Cannot detect arg errors, env misconfig, or output-parse drift — the seam where bugs actually live is bypassed |
 | `Task.sleep(for: .milliseconds(50))` to "wait for debounce" | CI-load flake risk; use a clock abstraction or signal |
 | Codable round-trip tests (encode → decode → compare) | Passes whenever the codec is symmetric, regardless of whether the JSON shape matches what consumers actually emit |
 | No test reads a store *while* `isLoading == true` or *before* the first `refresh()` | Async/race coverage is zero — the load-bearing bug class is invisible to the suite |
 
-If recent hotfixes touched integration seams (subprocess, NSWorkspace, Sparkle, FileManager) and no existing test would have caught them, the suite is documenting current behaviour rather than preventing regressions. Add a thin integration-seam protocol (`YNHCommandRunner`, `WorkspaceProvider`, `UpdaterProvider`) and test through it with a fake that can return realistic outputs and errors.
+If recent hotfixes touched integration seams (subprocess, NSWorkspace, Sparkle, FileManager) and no existing test would have caught them, the suite is documenting current behaviour rather than preventing regressions. Add a thin integration-seam protocol (`CommandRunner`, `WorkspaceProvider`, `UpdaterProvider`) and test through it with a fake that can return realistic outputs and errors.
 
 ### Concurrent-access tests, not just state-transition tests
 
@@ -373,21 +412,21 @@ Symptom-only fixes (another fallback in the lookup, another guard in the consume
 Two complementary plan types — keep them separate.
 
 1. **Refactor plan** — structural changes that make code testable. Each phase is a self-contained PR. Commit types: `test:` for pure extract, `refactor:` for protocol/DI introduction. Example phases: extract `QueryItemExtractor`, extract `ShellEscaper`, introduce `GitServiceProtocol`.
-2. **Coverage plan** — adds tests to code that is already testable. Commit type: `test:`. Example: "write unit tests for `HarnessSearchService` filtering logic."
+2. **Coverage plan** — adds tests to code that is already testable. Commit type: `test:`. Example: "write unit tests for `ProjectSearchService` filtering logic."
 
 Do **not** mix them. A single PR should either restructure code *or* add tests, not both. Mixed PRs are hard to review because you cannot tell whether a change is structural or behavioural.
 
 ### Phase discipline
 
-Each phase is one PR into `develop`. A phase is complete when:
+Each phase is one PR into the integration branch. A phase is complete when:
 
 1. `make test` passes
 2. Build, lint, format-check all pass
 3. No observable behaviour changes for users
 4. PR is reviewed and merged
-5. Next phase rebases on updated `develop` before starting
+5. Next phase rebases on the updated integration branch before starting
 
-Use a dedicated worktree for the plan (`.worktrees/test/improve-testability-coverage` etc.) so in-flight work does not disturb the main checkout.
+Use a dedicated branch or worktree for the plan so in-flight work does not disturb the main checkout.
 
 ## Order of operations
 

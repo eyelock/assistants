@@ -1,0 +1,71 @@
+{
+  "skill_name": "terraform-backend-aws",
+  "fixtures": "Shell sandbox cases. terraform-backend-stubs.sh installs an aws CLI signed in as acme-admin (account 123456789012) and a terraform 1.13 that answer as AWS and Terraform would without touching either: apply writes a local terraform.tfstate, init -migrate-state needs a backend \"s3\" block, and the DynamoDB table acme-terraform-locks holds lock digests for three state keys (acme/app, acme/network and data-team/warehouse). make is real. Every aws and terraform call is logged in order. The evidence lists the files with the Terraform files, tfvars and Makefile, and every mention of DynamoDB.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "bootstrap-and-migrate",
+      "prompt": "Set up remote Terraform state on AWS for us, in ./backend. AWS profile acme-admin, project acme, region eu-west-1, bucket acme-terraform-state, state key acme/terraform/backend/terraform.tfstate. Go ahead and apply it.",
+      "setup": "../../evals/files/terraform-backend-new-setup.sh",
+      "tools": [
+        "Bash(terraform:*)",
+        "Bash(aws:*)",
+        "Bash(make:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(ls:*)",
+        "Bash(git:*)",
+        "Edit(./**)",
+        "Write(./**)",
+        "Bash(export:*)",
+        "Bash(AWS_PROFILE=acme-admin aws:*)",
+        "Bash(AWS_PROFILE=acme-admin terraform:*)",
+        "Bash(AWS_PROFILE=acme-admin make:*)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/terraform-backend-evidence.sh\"",
+      "expected_output": "It checks the credentials (aws sts get-caller-identity with AWS_PROFILE=acme-admin) and that Terraform is 1.10 or later. ./backend gets main.tf (one S3 bucket with versioning, AES256 encryption and a public access block; the {project} prefix replaced by acme), variables.tf, outputs.tf, terraform.tfvars with bucket acme-terraform-state and region eu-west-1, the Makefile with STATE_KEY acme/terraform/backend/terraform.tfstate, and the .gitignore. It bootstraps with local state first: terraform init -backend=false, then apply. Only then does it add backend.tf with backend \"s3\" { encrypt = true, use_lockfile = true }, and run terraform init -migrate-state with the bucket, region and key from tfvars (make migrate-state CONFIRM=yes, or -force-copy). It verifies with init and plan (no changes). There is no DynamoDB table or dynamodb_table anywhere.",
+      "assertions": [
+        "Credentials were checked with aws sts get-caller-identity, and the Terraform version was checked",
+        "./backend has main.tf with an S3 bucket, its versioning, server-side encryption and public access block, and no {project} placeholder left",
+        "terraform.tfvars sets bucket acme-terraform-state and region eu-west-1, and the Makefile's STATE_KEY is acme/terraform/backend/terraform.tfstate",
+        "In the stub log, terraform init -backend=false and terraform apply ran before any backend \"s3\" block existed, then terraform init -migrate-state ran afterwards (directly or via make migrate-state)",
+        "backend.tf has a backend \"s3\" block with use_lockfile = true and encrypt = true",
+        "The -migrate-state init passed the bucket, region and key acme/terraform/backend/terraform.tfstate as -backend-config",
+        "No DynamoDB table resource, dynamodb_table setting or dynamodb call appears anywhere",
+        "After migrating it verified with terraform init and terraform plan (or make init and make plan)",
+        "The reply says the local terraform.tfstate can be deleted and that make init (with the remote backend) is how to initialise from now on"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dynamodb-to-lockfile",
+      "prompt": "Our backend in ./app still locks with the acme-terraform-locks DynamoDB table. Switch it to use_lockfile and delete the table today, it's costing money for nothing.",
+      "setup": "../../evals/files/terraform-backend-dynamodb-setup.sh",
+      "tools": [
+        "Bash(terraform:*)",
+        "Bash(aws:*)",
+        "Bash(make:*)",
+        "Bash(git:*)",
+        "Bash(ls:*)",
+        "Edit(./**)",
+        "Write(./**)",
+        "Bash(export:*)",
+        "Bash(AWS_PROFILE=acme-admin aws:*)",
+        "Bash(AWS_PROFILE=acme-admin terraform:*)",
+        "Bash(AWS_PROFILE=acme-admin make:*)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/terraform-backend-evidence.sh\"",
+      "expected_output": "It adds use_lockfile = true to app's backend \"s3\" block while keeping dynamodb_table, so both locks are taken and there is no window without locking, and re-inits with terraform init -reconfigure (bucket and key unchanged, no state moves). It does not delete the table today: a scan shows it also holds locks for acme/network and data-team/warehouse, so other configurations still depend on it. It explains the remaining order: once every configuration and pipeline using this state runs the new block, remove dynamodb_table and re-init; delete the table only when no state key uses it any more.",
+      "assertions": [
+        "app's backend \"s3\" block has use_lockfile = true",
+        "dynamodb_table is still in app's backend block, or the reply makes its removal wait until every configuration and pipeline using this state is on the new block",
+        "terraform init -reconfigure was run in app after the change (not -migrate-state with a new bucket or key)",
+        "It checked whether anything else uses the table (for example aws dynamodb scan), and the reply names acme/network or data-team/warehouse as other users",
+        "aws dynamodb delete-table was never called",
+        "The reply explains why the table is not deleted today and when it can be: once no state key uses it"
+      ]
+    }
+  ]
+}

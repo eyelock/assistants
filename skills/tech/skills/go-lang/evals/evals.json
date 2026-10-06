@@ -1,0 +1,82 @@
+{
+  "skill_name": "go-lang",
+  "fixtures": "bootstrap-linkcheck is a shell sandbox: setup builds the go-linkcheck module (stdlib only, main.go at the module root, an internal/links package, no Makefile or lint config) as a committed git repo in the run's directory. make, go, gofmt, goimports and golangci-lint are real, wrapped so each direct call the agent makes (not one from inside make) is logged as a stub call. The code has an errcheck finding (defer f.Close() in main.go) that golangci-lint catches and go test does not. go-review is a package with convention problems, copied into data/.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "bootstrap-linkcheck",
+      "prompt": "This is my new Go CLI, linkcheck. Set the repo up properly for building, testing and linting, and make sure everything passes. No new tests or CI yet, and don't commit.",
+      "setup": "../../evals/files/go-linkcheck-setup.sh",
+      "tools": [
+        "Bash(make:*)",
+        "Bash(go:*)",
+        "Bash(gofmt:*)",
+        "Bash(goimports:*)",
+        "Bash(golangci-lint:*)",
+        "Bash(git:*)",
+        "Bash(mkdir:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ls:*)",
+        "Bash(cat:*)",
+        "Bash(find:*)",
+        "Bash(which:*)",
+        "Bash(head:*)",
+        "Bash(tail:*)",
+        "Bash(grep:*)",
+        "Bash(echo:*)",
+        "Bash(printf:*)",
+        "Bash(printenv:*)",
+        "Bash(sed:*)",
+        "Bash(./bin/linkcheck:*)",
+        "Bash(bin/linkcheck:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "evidence": "export EVAL_NOLOG=1; echo '$ git status --short --untracked-files=all'; git status --short --untracked-files=all; echo; git diff -M HEAD -- '*.go' | head -80; for f in Makefile .golangci.yml .gitignore; do echo \"--- $f\"; cat \"$f\" 2>/dev/null || echo '(missing)'; done; echo; echo '$ make check'; make check 2>&1 | tail -25",
+      "expected_output": "The repo is restructured the go-lang way: main moves from the module root to cmd/linkcheck/main.go. A Makefile provides build (to bin/linkcheck, version injected with -ldflags), test (-race and coverage), test-coverage, format (goimports then gofmt -s), lint (golangci-lint run ./...), clean, deps, install and check (deps, format, lint, test, build). A .golangci.yml enables errcheck, govet, ineffassign, staticcheck and unused and excludes testdata. bin/ is gitignored. The unchecked f.Close() error is fixed in code, and make check passes. Nothing is committed.",
+      "assertions": [
+        "A Makefile exists with build, test, format, lint and check targets, where check runs deps, format, lint, test and build",
+        "The Makefile's test target runs with -race and coverage",
+        "The Makefile's build target writes the binary to bin/ and injects the version with -ldflags",
+        "A .golangci.yml enables errcheck, govet, ineffassign, staticcheck and unused, and excludes testdata",
+        "The entry point moved to cmd/linkcheck/",
+        "The stub calls show the agent ran make check (or the make targets) to verify, and make check passes in the evidence",
+        "The f.Close errcheck finding was fixed in code (handled, or explicitly discarded with _ =), not silenced with //nolint, an exclusion preset or by disabling errcheck",
+        "Nothing was committed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "makefile-for-new-cli",
+      "prompt": "I'm starting a Go CLI called shipit, binary entry point in cmd/shipit. Write me the Makefile for it.",
+      "expected_output": "A Makefile with the standard targets: build (go build -v with -ldflags \"-X main.version=$(VERSION)\", VERSION from git describe --tags --always --dirty, output to bin/shipit from ./cmd/shipit), test (go test ./... -cover -race, with FILE=./path to target one package), test-coverage (coverprofile plus go tool cover -func), format (goimports -w . then gofmt -s -w .), lint (golangci-lint run ./...), clean, deps (install go, golangci-lint, goimports), install (build then copy to an install directory), and check running deps, format, lint, test and build in that order.",
+      "assertions": [
+        "Has build, test, test-coverage, format, lint, clean, deps, install and check targets",
+        "build writes to bin/ and injects the version with -ldflags -X main.version from git describe",
+        "test runs with both -race and coverage",
+        "test (or test-coverage) accepts a FILE= variable to target a single package",
+        "format runs goimports -w before gofmt -s -w",
+        "check runs deps, format, lint, test and build, in that order",
+        "test-coverage writes a coverage profile and prints the per-function report with go tool cover -func"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "review-store-package",
+      "prompt": "Review data/go-review/internal/utils/store.go and its test against our Go standards before I open the PR. List what has to change.",
+      "files": ["../../evals/files/go-review"],
+      "expected_output": "Flags: the package is named utils (organize by responsibility, e.g. internal/store); NewFileStore panics instead of returning an error; json.Unmarshal's error is silenced with //nolint:errcheck instead of handled; Get prints with fmt.Println from an internal package (internal packages return errors, main displays them); Sync wraps with %v and no context instead of fmt.Errorf(\"...: %w\", err), and takes context.Context last instead of first; Store is a large interface defined beside its producer instead of a small one at the consumer (internal/sync); the tests use testify instead of the standard testing package, and os.MkdirTemp instead of t.TempDir(); the tests are not table-driven.",
+      "assertions": [
+        "Says the tests must use the standard testing package instead of testify",
+        "Flags the package name utils and says to name the package by its responsibility",
+        "Flags the //nolint:errcheck on json.Unmarshal and says to handle the error rather than suppress it",
+        "Flags the panic in NewFileStore and says to return an error",
+        "Flags fmt.Println in Get: an internal package should return errors, not print",
+        "Says Sync should wrap the error with %w and context, and take context.Context as its first parameter",
+        "Says the Store interface should be small and defined at the consumer (internal/sync), not beside FileStore",
+        "Says the tests should use t.TempDir() instead of os.MkdirTemp, and be table-driven"
+      ]
+    }
+  ]
+}
