@@ -4,9 +4,6 @@ description: >-
   Split audio tracks exceeding 78 minutes at silence points with crossfades.
   Use when tracks are too long for Apple Music.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.2.0"
 ---
 
 ## Setup

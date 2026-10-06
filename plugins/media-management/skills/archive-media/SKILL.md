@@ -4,9 +4,6 @@ description: >-
   Copy processed MP3s and WAVs to NAS storage. Use after Apple Music import
   or when re-archiving corrected files.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.4.0"
 ---
 
 ## Setup

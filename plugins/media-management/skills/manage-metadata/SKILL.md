@@ -7,9 +7,6 @@ description: >-
   "is this folder's metadata consistent," not just explicit tag-editing
   requests.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.2.0"
 ---
 
 ## Setup

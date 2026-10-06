@@ -7,9 +7,6 @@ description: >-
   fails to resolve a path, when explicitly asked to set up/configure the
   plugin, or when asked where its config lives or how path resolution works.
 allowed-tools: Bash Read Write
-metadata:
-  author: eyelock
-  version: "0.1.0"
 ---
 
 ## Setup

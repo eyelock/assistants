@@ -5,9 +5,6 @@ description: >-
   loose single-track files), verify metadata, import to Apple Music, archive
   to NAS, clean up. Use when processing new music downloads.
 allowed-tools: Bash Read Skill
-metadata:
-  author: eyelock
-  version: "0.5.0"
 ---
 
 ## Delegation Rule

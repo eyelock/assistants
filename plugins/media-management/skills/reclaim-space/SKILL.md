@@ -5,9 +5,6 @@ description: >-
   iCloud status, build an offload playlist that protects your DJ crates and
   lossless files, then Remove Download. Use when the Mac is low on disk.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.1.0"
 ---
 
 ## Setup

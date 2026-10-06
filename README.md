@@ -6,7 +6,7 @@ Nothing here is guaranteed to be complete, stable, or suitable for any particula
 
 ## What This Repository Demonstrates
 
-- **Cross-vendor plugins** — Each plugin carries `.ynh-plugin/plugin.json`, `.claude-plugin/plugin.json`, and `.cursor-plugin/plugin.json` manifests, making it usable from Claude Code, Cursor, and YNH
+- **Cross-vendor plugins** — Each plugin carries `.agents/harness/plugin.json`, `.claude-plugin/plugin.json`, and `.cursor-plugin/plugin.json` manifests, making it usable from Claude Code, Cursor, and YNH
 - **Portable skills** — Skills follow the [agentskills.io specification](https://agentskills.io/specification), the open standard adopted by Claude Code, Cursor, Codex, GitHub Copilot, and others
 - **Quad marketplace** — The repo serves as a Claude Code, Cursor, YNH, and GitHub Copilot CLI marketplace from the same GitHub repository
 - **Vendor-neutral instructions** — `AGENTS.md` files provide project context for Codex and Cursor alongside `CLAUDE.md` for Claude Code
@@ -22,39 +22,39 @@ assistants/
 │   └── marketplace.json          # Cursor marketplace index
 ├── .github/plugin/
 │   └── marketplace.json          # GitHub Copilot CLI marketplace index
-├── .ynh-plugin/
+├── .agents/harness/
 │   └── marketplace.json          # YNH marketplace index
 ├── AGENTS.md                     # Codex/Cursor project instructions
 ├── plugins/
 │   ├── gitflow/                  # Gitflow workflow plugin (6 skills, 1 agent)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   ├── media-management/         # Music processing plugin (7 skills, 2 agents, hooks)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   └── vendor-harness/           # Vendor harness lifecycle plugin (11 skills, 4 agents)
 │       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
-│       └── .ynh-plugin/plugin.json
+│       └── .agents/harness/plugin.json
 ├── skills/
 │   ├── dev/                      # Development workflow plugin (9 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   ├── tech/                     # Language-specific plugin (4 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   ├── infra/                    # Infrastructure plugin (2 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   └── pause/                    # Conversational alignment plugin (2 skills)
 │       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
-│       └── .ynh-plugin/plugin.json
+│       └── .agents/harness/plugin.json
 └── ynh/                          # Personas (compose skills via includes)
     ├── david/
     ├── planner/
@@ -140,7 +140,7 @@ See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 |-------|-------------|--------|-------|--------------------|
 | **Skills (SKILL.md)** | Native | Native | Native | Native |
 | **Plugin manifest** | `.claude-plugin/plugin.json` | `.cursor-plugin/plugin.json` | `.codex-plugin/plugin.json` | `plugin.json` (falls back to `.claude-plugin/plugin.json`) |
-| **YNH manifest** | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` | not generated |
+| **YNH manifest** | `.agents/harness/plugin.json` | `.agents/harness/plugin.json` | `.agents/harness/plugin.json` | not generated |
 | **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | `.agents/plugins/marketplace.json` | `.github/plugin/marketplace.json` |
 | **Instructions** | `CLAUDE.md` (via `@AGENTS.md`) | `AGENTS.md`, `.cursor/rules/*.mdc` | `AGENTS.md` | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
 | **MCP servers** | `.mcp.json` | `mcp.json` (no dot) | `.mcp.json` | `.mcp.json` or `.github/mcp.json` |
