@@ -1,0 +1,15 @@
+[
+  { "query": "build a signup form component with validation", "should_trigger": true },
+  {
+    "query": "make this modal accessible to keyboard and screen reader users",
+    "should_trigger": true
+  },
+  { "query": "where should the filter state live on this React page?", "should_trigger": true },
+  { "query": "add loading and empty states to the results list", "should_trigger": true },
+  { "query": "this component takes 15 props, how do I split it?", "should_trigger": true },
+  { "query": "design the API that the dashboard calls", "should_trigger": false },
+  { "query": "escape user comments so they can't inject script", "should_trigger": false },
+  { "query": "review the React PR", "should_trigger": false },
+  { "query": "scaffold a new Vite app", "should_trigger": false },
+  { "query": "the button click handler never fires and I can't see why", "should_trigger": false }
+]

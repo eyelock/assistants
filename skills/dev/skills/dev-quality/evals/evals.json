@@ -1,0 +1,60 @@
+{
+  "skill_name": "dev-quality",
+  "fixtures": "Shell sandbox cases. dev-quality-repo.sh builds a small Go module (stdlib only) on the branch feat/checkout-discounts with an uncommitted change on top. Its Makefile has build, lint (go vet plus doclint, which prints warning: lines for undocumented exported functions but exits 0), format, format-check, test and check targets. git and make are real, and every call is logged. The evidence shows any commits, every Go change since main, any change to the Makefile or lint tool, a fresh run of each gate on the working tree, and per-function test coverage.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-code-needs-tests",
+      "prompt": "I added coupon codes (pricing/coupon.go). Run lint, format and tests and fix whatever fails.",
+      "setup": "../../evals/files/dev-quality-untested-setup.sh",
+      "tools": [
+        "Bash(git:*)",
+        "Bash(make:*)",
+        "Bash(go:*)",
+        "Bash(gofmt:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-quality-evidence.sh\"",
+      "expected_output": "It detects a Go project with a Makefile and runs the pipeline through its targets: build, format, lint, test. The format gate fails on pricing/coupon.go, so it formats it (gofmt -w or make format). Every gate then passes, but the new ApplyCoupon has no tests at all, which it treats as a failure of its own: it writes pricing/coupon_test.go covering a known code, an unknown code (error, subtotal unchanged) and the case-insensitive, trimmed code lookup. It re-runs every gate until all pass, and reports what it found and fixed, plus any remaining warnings.",
+      "assertions": [
+        "The stub log shows the Makefile's targets used for the build, lint, format and test gates (or make check, which runs them)",
+        "pricing/coupon.go was gofmt-formatted, and make format-check exits 0 in the evidence",
+        "A test for ApplyCoupon was added, and the evidence shows ApplyCoupon with non-zero coverage",
+        "The new tests check an unknown code (an error, with subtotal unchanged) as well as a valid one",
+        "The new tests check that codes are matched case-insensitively or with surrounding spaces trimmed",
+        "ApplyCoupon's behaviour was not changed to make tests pass",
+        "Every gate in the evidence (build, lint, format-check, test) exits 0",
+        "The reply says the missing tests were a problem it fixed, and summarises what it found and fixed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "red-pipeline",
+      "prompt": "Run lint, format and tests on my discount change and sort out whatever fails.",
+      "setup": "../../evals/files/dev-quality-red-setup.sh",
+      "tools": [
+        "Bash(git:*)",
+        "Bash(make:*)",
+        "Bash(go:*)",
+        "Bash(gofmt:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-quality-evidence.sh\"",
+      "expected_output": "It runs the pipeline through the Makefile and fixes each failure at its source: the go vet error in Summary (%d given a string), the gofmt violation in discount.go, and the real bug TestDiscount catches (subtotal * (percent / 100) is always 0; it should be subtotal * percent / 100). Lint also warns that the new Total has no doc comment, which it fixes rather than ignores. Total is new and untested, so it adds a test for it. Nothing is suppressed, no test is skipped or weakened, the Makefile is unchanged, and every gate passes. It reports what it fixed.",
+      "assertions": [
+        "The go vet error in Summary was fixed at the source (the %d verb gets an int), not suppressed",
+        "Discount was fixed so that Discount(2000, 15) is 300, and TestDiscount still asserts 300",
+        "discount.go was gofmt-formatted",
+        "Total has a doc comment, so lint prints no warning: lines in the evidence",
+        "A test for Total was added, and the evidence shows Total with non-zero coverage",
+        "The Makefile and tools/doclint are unchanged, and no test was skipped, deleted or weakened",
+        "Every gate in the evidence (build, lint, format-check, test) exits 0",
+        "The reply summarises each failure found and how it was fixed"
+      ]
+    }
+  ]
+}

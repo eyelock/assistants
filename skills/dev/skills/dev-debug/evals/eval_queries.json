@@ -1,0 +1,38 @@
+[
+  {
+    "query": "my debug logs aren't showing up and I can't tell if the handler even runs",
+    "should_trigger": true
+  },
+  {
+    "query": "help me debug this, my changes don't seem to take effect",
+    "should_trigger": true
+  },
+  {
+    "query": "let's pair on this crash together",
+    "should_trigger": true
+  },
+  {
+    "query": "I've tried five things and the webhook handler still never runs",
+    "should_trigger": true
+  },
+  {
+    "query": "review this diff for bugs",
+    "should_trigger": false
+  },
+  {
+    "query": "run the full test suite and fix the failures",
+    "should_trigger": false
+  },
+  {
+    "query": "open the PR with gh",
+    "should_trigger": false
+  },
+  {
+    "query": "add exponential backoff to the HTTP client",
+    "should_trigger": false
+  },
+  {
+    "query": "scaffold a new TypeScript project",
+    "should_trigger": false
+  }
+]

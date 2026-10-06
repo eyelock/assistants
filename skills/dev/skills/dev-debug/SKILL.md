@@ -1,6 +1,6 @@
 ---
 name: dev-debug
-description: Interactive debugging session discipline — visibility-first debugging, safe git workflow, and pair programming patterns.
+description: Debugging a bug that resists fixing - debug prints that never show, changes that don't take effect, a handler that never seems to run, fixes tried blind. Visibility-first debugging, a safe local git workflow (branch first, commit locally, ask before push or PR), and pairing with the user on the fix.
 ---
 
 # Interactive Debugging Session
@@ -47,10 +47,11 @@ These are fine without asking:
 
 ### 3. Implement Locally
 
-- Create feature branch
+- Before the first code change, create a local branch (`fix/<topic>`) from where you are. Never edit on `develop` or `main` directly; the user's uncommitted work comes along to the branch.
 - Make code changes
 - Build locally
 - Test manually with user
+- Remove every temporary debug print, log line or early exit, yours and the user's, once it has served its purpose
 
 ### 4. Verify Quality
 

@@ -1,0 +1,58 @@
+{
+  "skill_name": "dev-backend",
+  "fixtures": "Files are copied into the run's data/ folder; there is no shell. invoices-api.ts is an Express service with planted design problems; bakery-architecture.md describes a small team's monolith.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "invoices-api-design",
+      "prompt": "Review the design of data/invoices-api.ts before we build more on it. What should change?",
+      "files": ["../../evals/files/invoices-api.ts"],
+      "expected_output": "Routes become versioned plural resources with HTTP verbs (GET /v1/invoices, GET /v1/invoices/{id}, POST /v1/invoices, POST /v1/invoices/{id}/payments or similar) instead of /getInvoices, /invoice?id=, /invoice/create and /invoice/pay. Errors return the right status codes (404 not found instead of 200, 400 for the missing customerId instead of 500, 201 on create) and a structured body {error: {code, message, field}} instead of raw strings. The list is paginated with total_count, and the per-invoice customer query (N+1) becomes a join or batch. Paying is not idempotent while the mobile app retries timeouts: accept an idempotency key and return the cached result on a duplicate. The card charge (a network call with retries) runs inside the database transaction holding a row lock: keep the transaction to the writes. chargeWithRetry retries forever on every error, including declined cards and invalid amounts: retry only transient failures, with exponential backoff and jitter and a maximum count. PAYMENTS_URL is read per request and never checked: load and validate config at startup. The receipt email's empty catch swallows errors, and createInvoice logs then rethrows, logging twice: log where the error is handled.",
+      "assertions": [
+        "Recommends plural resource nouns with HTTP verbs in place of /getInvoices, /invoice?id=, /invoice/create and /invoice/pay (for example GET /invoices, GET /invoices/{id}, POST /invoices)",
+        "Recommends a version in the URL, such as /v1/invoices",
+        "Flags the wrong status codes: 200 for a missing invoice (should be 404) and 500 for a missing customerId (should be 400), and 201 for a create",
+        "Recommends a structured error body with a code and message (and the field, for validation) instead of raw strings",
+        "Recommends paginating the invoice list and returning a total count",
+        "Flags the per-invoice customer query in the list as an N+1 query, to be joined or batched",
+        "Says paying must be idempotent because the app retries: accept an idempotency key and return the stored result on a duplicate",
+        "Flags the payment charge running inside the database transaction (holding the row lock during a network call with retries), and says to keep the transaction to the writes",
+        "Flags chargeWithRetry: retry only transient failures (never declined or invalid requests), with exponential backoff and jitter and a maximum number of attempts",
+        "Says PAYMENTS_URL (and PORT) should be loaded and validated once at startup, failing fast when missing",
+        "Flags the empty catch around the receipt email as a swallowed error",
+        "Flags that createInvoice logs the error and rethrows, so it is logged twice, and says to log where the error is handled"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "microservices-split",
+      "prompt": "Our architecture is in data/bakery-architecture.md. Design the split into microservices for us: orders, menu, notifications and users as separate services, Kafka between them, an API gateway in front and service discovery. We want it to scale.",
+      "files": ["../../evals/files/bakery-architecture.md"],
+      "expected_output": "It pushes back before designing: three developers, one product, one deploy cadence and 400 orders a day give no reason to split (independent scaling, separate team ownership or different deploy cadence would). It keeps the monolith and fixes the real pains in place: move SMS sending out of the checkout request (a background job or in-process queue, not Kafka between modules of one process), and isolate menu failures from checkout. A gateway and service discovery are not needed with fewer than three services. If a service is ever extracted (notifications is the likeliest), it owns its own data and talks through a defined API or events, never the shared database.",
+      "assertions": [
+        "Recommends not splitting into microservices now, keeping the monolith",
+        "Grounds that in the reasons a split would be justified (independent scaling, separate team ownership, different deploy cadence) and shows none applies here",
+        "Addresses the slow SMS provider by taking notification sending out of the checkout request (a background job or async in-process work), without a network hop",
+        "Says a message queue such as Kafka is not needed between modules that run in the same process",
+        "Says an API gateway and service discovery are not needed at this size (fewer than three services)",
+        "If it suggests extracting any service, that service owns its own data instead of sharing the database",
+        "Does not produce the requested four-service Kafka, gateway and discovery design as the recommendation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "design-invoices-api",
+      "prompt": "Design the REST API for invoices in our billing service: endpoints, the list response shape, the error format, and paying an invoice (clients retry on timeouts). Customers own invoices.",
+      "expected_output": "Plural nouns with HTTP verbs under a URL version: GET /v1/invoices, POST /v1/invoices (201), GET /v1/invoices/{id} (404 when missing), and invoices nested under customers (GET /v1/customers/{id}/invoices). The list is paginated (page and per_page, or a cursor for large sets) and returns total_count. Errors are one structured shape, {\"error\": {\"code\": \"VALIDATION_FAILED\", \"message\": \"...\", \"field\": \"...\"}}, with 400, 404, 409 and 500 used correctly. Paying is non-idempotent, so the client sends an idempotency key and a repeated key returns the stored result rather than charging again; PUT and DELETE are idempotent.",
+      "assertions": [
+        "Uses plural resource nouns with HTTP verbs (GET /invoices, POST /invoices, GET /invoices/{id}), not verbs in the path",
+        "Puts the API version in the URL (for example /v1/invoices), not only in a header",
+        "Nests customer invoices as a sub-resource (for example GET /v1/customers/{id}/invoices)",
+        "The list response is paginated and includes a total count (total_count)",
+        "Errors use one structured shape with a code and a message, and the field for validation errors",
+        "Gives status codes: 201 for create, 404 for a missing invoice, 400 for invalid input, and 409 for a conflict such as paying an already paid invoice",
+        "Paying accepts a client idempotency key, and a repeated key returns the stored result instead of charging again"
+      ]
+    }
+  ]
+}

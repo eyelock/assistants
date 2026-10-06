@@ -1,6 +1,6 @@
 ---
 name: dev-quality
-description: Run the full code quality pipeline — lint, format, test, and build — with zero tolerance for errors.
+description: Run the full code quality pipeline - lint, format, test, and build - with zero tolerance for errors. Use after changing code, to make sure it builds, is formatted and linted, and has passing tests, including when asked to make sure a change has tests that pass.
 ---
 
 # Code Quality Pipeline
