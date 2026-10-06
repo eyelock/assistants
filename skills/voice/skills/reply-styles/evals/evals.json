@@ -1,0 +1,45 @@
+{
+  "skill_name": "reply-styles",
+  "fixtures": "Files are copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "github-review",
+      "prompt": "Write my review comments on the change in data/diff.patch, for acme/api#55. The retry keeps sleeping even after ctx is cancelled, which needs fixing. The hard-coded one-second sleep is optional, take it or leave it.",
+      "files": ["../../evals/files/diff.patch"],
+      "expected_output": "Two separate review comments tied to lines of sync/retry.go. The cancellation one says what is wrong, why it matters and gives a fix in a GitHub suggestion block selecting on ctx.Done(). The hard-coded sleep is optional polish and is marked nit:.",
+      "assertions": [
+        "Gives the two findings as separate comments",
+        "Ties each comment to a line or location in sync/retry.go",
+        "The cancellation comment explains why it matters",
+        "Offers the cancellation fix in a GitHub suggestion block (a ```suggestion fence)",
+        "Marks the hard-coded sleep comment as nit:"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "email-shape",
+      "prompt": "Draft a reply to data/customer-email.md. Facts are in data/facts.md.",
+      "files": ["../../evals/files/customer-email.md", "../../evals/files/facts.md"],
+      "expected_output": "An email reply: greets Priya by first name, answers in the first sentence, then detail, then the next step and who owns it, a short sign-off, and no new subject line because it continues a thread.",
+      "assertions": [
+        "Opens by greeting Priya by first name",
+        "The first sentence after the greeting answers whether it is fixed",
+        "Names the next step and who owns it",
+        "Has a short sign-off",
+        "Does not add a new Subject line"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "unclear-platform",
+      "prompt": "Write a reply to my teammate saying I can't make Thursday's planning session but can do Friday morning.",
+      "expected_output": "Asks which platform the reply is for (Slack, email or a calendar response) before drafting, or drafts for a platform it names and labels. Either way it does not silently produce a long email.",
+      "assertions": [
+        "Either asks which platform the reply is for before drafting, or labels its draft with the platform it chose",
+        "If it drafted a reply, the draft offers Friday morning and is at most three sentences",
+        "Does not produce an unlabelled long email"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+--- a/sync/retry.go
++++ b/sync/retry.go
+@@ -10,9 +10,12 @@ func withRetry(ctx context.Context, fn func() error) error {
+-	return fn()
++	var err error
++	for i := 0; i < 3; i++ {
++		if err = fn(); err == nil {
++			return nil
++		}
++		time.Sleep(time.Second)
++	}
++	return err
+ }

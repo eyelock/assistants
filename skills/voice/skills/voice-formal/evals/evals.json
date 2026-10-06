@@ -1,0 +1,20 @@
+{
+  "skill_name": "voice-formal",
+  "fixtures": "Files are copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "formal-customer",
+      "prompt": "Reply formally to Priya's email in data/customer-email.md. Facts: data/facts.md.",
+      "files": ["../../evals/files/customer-email.md", "../../evals/files/facts.md"],
+      "expected_output": "Complete, courteous sentences. States exactly what is confirmed: the cause, and that the fix is merged (not approved, tested or deployed) but not released. No release date and no guess about when it will be stable. Commits to a next step stated exactly: who does what, by when; since no date is confirmed, the by-when is a [placeholder] that a Check: line asks Dave to fill (or a date Dave gave), never an open-ended \"as soon as\". The email closes on that next step. No slang, abbreviations or emoji.",
+      "assertions": [
+        "States the cause and that the fix is merged, without calling it approved, tested or deployed",
+        "Gives no release date and does not guess when the exports will be stable",
+        "Commits to a next step that says who will do what and by when, where the by-when is a date or a [placeholder] that a Check: line asks Dave to fill, not an open-ended \"as soon as\" or \"once\"",
+        "The last paragraph before the sign-off names that next step",
+        "Contains no abbreviations such as ASAP or FYI, no slang and no emoji (a greeting by first name is fine)"
+      ]
+    }
+  ]
+}

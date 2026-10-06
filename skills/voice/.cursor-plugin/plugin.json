@@ -1,0 +1,8 @@
+{
+  "name": "voice-skills",
+  "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
+  "version": "0.1.0",
+  "author": {
+    "name": "eyelock"
+  }
+}

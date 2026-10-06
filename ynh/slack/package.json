@@ -1,0 +1,9 @@
+{
+  "name": "@eyelock-assistants/slack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reads Slack for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only.",
+  "dependencies": {
+    "@eyelock-assistants/triage-skills": "workspace:*"
+  }
+}
