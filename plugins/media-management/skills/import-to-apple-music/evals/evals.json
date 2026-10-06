@@ -1,28 +1,93 @@
 {
   "skill_name": "import-to-apple-music",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Use tests/fixtures/eval-sandbox/auto-import (empty) as the import destination instead of the real Apple Music auto-import folder. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "metadata's all set, can you get tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album into Apple Music now (use tests/fixtures/eval-sandbox/auto-import as the import folder for this test)",
-      "files": [
-        "tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album",
-        "tests/fixtures/eval-sandbox/auto-import"
+      "name": "import-and-stop",
+      "prompt": "metadata's all set on ./Downloads/Night Drive - Afterglow — add it to Apple Music",
+      "setup": "../../evals/files/import-ready.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Copies the 3 MP3s to the auto-import folder, reports the file count, then asks the user to open Apple Music and verify the album looks correct before proceeding further.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Copies the 4 MP3s (not cover.jpg) into Apple Music's auto-import folder (Music/Media.localized/Automatically Add to Music.localized), leaves the originals in place, then asks the user to check in Apple Music that it shows as one album with the right artist and track order, and stops: no archive to the NAS, no cleanup.",
       "assertions": [
-        "All 3 MP3 files are copied to the given auto-import folder",
-        "Explicitly asks the user to confirm the import looks correct (single album, correct artist/track order) before continuing",
-        "Does not proceed to archival or cleanup on its own"
+        "The evidence shows the 4 MP3s added to Music/Media.localized/Automatically Add to Music.localized/",
+        "cover.jpg was not copied into the auto-import folder",
+        "The 4 MP3s are still in Downloads/Night Drive - Afterglow (copied, not moved)",
+        "Nothing was added under NAS/ and nothing in Downloads was deleted",
+        "Asks the user to check in Apple Music that the tracks appear as one album with the right artist and order before going further"
       ]
     },
     {
       "id": 2,
-      "prompt": "I imported an album but it showed up as 8 separate tracks instead of one album, what happened",
-      "expected_output": "Identifies this as a likely Album/Album Artist metadata inconsistency, and offers to re-inspect and fix metadata before re-importing — rather than blindly re-copying the same files.",
+      "name": "refuses-wavs",
+      "prompt": "add ./Downloads/Night Drive - Afterglow-wav to Apple Music too, so I have the lossless versions in my library",
+      "setup": "../../evals/files/import-wav.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Does not import: WAVs never go through Apple Music (the library already has the MP3s, so they would be duplicates; lossless files belong on the NAS). Offers to archive the WAVs to the NAS instead. Nothing is copied into the auto-import folder.",
       "assertions": [
-        "Attributes the issue to inconsistent Album or Album Artist metadata rather than a generic 'try again'",
-        "Offers to fix metadata before re-attempting the import"
+        "The evidence shows no files added to the auto-import folder or anywhere else",
+        "Explains that WAVs are not imported into Apple Music in this workflow because the MP3s are already in the library (they would be duplicates)",
+        "Offers archiving the WAVs to the NAS as the place for the lossless files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "import-then-archive-gate",
+      "prompt": "metadata's all set on ./Downloads/Night Drive - Afterglow. Add it to Apple Music, and once it's in, send the folder to the NAS so I can clear it out of Downloads.",
+      "setup": "../../evals/files/import-ready.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Copies the 4 MP3s (not cover.jpg) into Apple Music's auto-import folder, then stops at the verification gate: it asks the user to open Apple Music and confirm the album shows as one album with the right artist and order, and says the archive to the NAS waits for that confirmation, since a bad import is fixed from the files in Downloads. Nothing is added under NAS/ and nothing is removed from Downloads.",
+      "assertions": [
+        "The evidence shows the 4 MP3s added to Music/Media.localized/Automatically Add to Music.localized/ and cover.jpg not copied there",
+        "The evidence shows nothing added under NAS/: the archive was not started",
+        "The evidence shows nothing removed from Downloads: the 4 MP3s are still in Downloads/Night Drive - Afterglow",
+        "Asks the user to check in Apple Music that the tracks appear as one album with the right artist and order",
+        "Says the archive to the NAS waits until the user confirms the import looks right, rather than just asking whether to proceed"
       ]
     }
   ]

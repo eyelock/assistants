@@ -11,9 +11,17 @@ allowed-tools: Bash Read
 
 ## Setup
 
-1. Check environment variable: MEDIA_MGMT_DOWNLOADS
-2. If unset, use the default Downloads path from CLAUDE.md
-3. If CLAUDE.md has no path, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+Resolve paths with the setup skill's checker, which applies the plugin's one
+resolution order (the `MEDIA_MGMT_*` env var first, then config.json at
+`$MEDIA_MGMT_CONFIG_PATH`, default `~/.config/media-management/config.json`):
+
+```bash
+bash ../setup/scripts/check-config.sh
+```
+
+This skill needs `downloads`: use each item's `value` from the JSON. If a key it
+needs is `missing`, stop and run the `setup` skill rather than guessing a path.
+When the user names a folder explicitly, use that folder.
 
 Scripts are in `scripts/` relative to this skill directory.
 
@@ -53,7 +61,22 @@ Parse the JSON output and present as a table:
 
 Note in the table (or a footnote) when a source is a loose file rather than a ZIP, since the calling skill needs to branch on `source_type` when extracting/copying it.
 
-If there are unmatched sources, list them separately.
+Then list, separately from the table:
+- **One-sided releases**: a release whose `wav_source` (or `mp3_source`) is
+  `null` was bought or downloaded in one format only. Say which side is
+  missing; never invent the other file.
+- **Duplicates** (`duplicates`): a second copy of a source, such as a ZIP
+  downloaded twice (`Album (1).zip`). Say which copy the release uses and that
+  the other is a duplicate.
+- **Unmatched** (`unmatched`): ZIPs mixing MP3s and WAVs, which need a look.
+
+The MP3/WAV label comes from what is inside each ZIP, never from its name: a
+store may well name the WAV ZIP `Album.zip` and the MP3 ZIP `Album-2.zip`.
+Count only the audio files. A ZIP packed by Finder carries a `__MACOSX/` tree
+of `._` forks named like the tracks (`._01 Song.mp3`) and a `.DS_Store`: they
+are not tracks, and `find-releases.sh` leaves them out, so its `tracks` is the
+real count. If you list a ZIP yourself, drop them before counting.
+Files already moved to `processed/` are finished releases and are not listed.
 
 ### Step 3: Ask user to select
 

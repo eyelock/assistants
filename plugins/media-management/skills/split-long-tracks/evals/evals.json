@@ -1,26 +1,91 @@
 {
   "skill_name": "split-long-tracks",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. The long-track.mp3 fixture is only 15s with silence gaps at ~5s and ~11s, so run the split script with a small max_minutes value (e.g. 0.1 = 6s) instead of the real 78-minute default to actually trigger a split. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "one of the tracks in tests/fixtures/eval-sandbox/extracted/DJ Mix - Live Set is way too long for Apple Music, can you check and split it (use a 6 second / 0.1 minute threshold since this is a test fixture, not a real 78-minute track)",
-      "files": ["tests/fixtures/eval-sandbox/extracted/DJ Mix - Live Set"],
-      "expected_output": "Scans the folder, finds long-track.mp3 exceeding the given threshold, confirms with the user before splitting, then splits at its two silence points (~5s, ~11s) with 2s crossfades into 3 sequentially-numbered files.",
+      "name": "long-mix-inside-album",
+      "prompt": "Apple Music won't take the live mix in ./Downloads/DJ Aster - Live at Dawn, it's 80 minutes long. Split it so it fits — go ahead, no need to check with me first.",
+      "setup": "../../evals/files/split-album.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Finds 02 Live at Dawn.mp3 at 80:02, over the 78-minute limit. Splits it at the 2-second silence at 39:00 into two parts of about 39:02 and 41:00, removing the original; no 'Part' in names or titles. The intro and outro are untouched. The folder is renumbered so the album reads Intro 1/4, the two parts 2/4 and 3/4, Outro 4/4.",
       "assertions": [
-        "Scans for tracks exceeding the given threshold rather than assuming which file is long",
-        "Asks for explicit confirmation before splitting",
-        "Splits into exactly 3 output files at the fixture's two silence gaps",
-        "Split output files are numbered sequentially starting from 1, with no 'Part X' in the name"
+        "The evidence shows '02 Live at Dawn.mp3' removed and two new MP3s in its place, each shorter than 78 minutes",
+        "The cut is at the silence: the first part is about 2340-2344 seconds long (39:00-39:04)",
+        "No new file name or title contains 'Part'",
+        "01 Intro.mp3 and 03 Outro.mp3 still exist and their audio is intact (still about 5 seconds each)",
+        "The evidence shows track numbers in album order: Intro 1/4, the first part 2/4, the second part 3/4, Outro 4/4"
       ]
     },
     {
       "id": 2,
-      "prompt": "check if any tracks in tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album are too long for apple music",
-      "files": ["tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"],
-      "expected_output": "Reports that no long tracks were found (using the real 78-minute default threshold, none of these ~3s tracks qualify) and stops without taking further action.",
+      "name": "asks-before-splitting",
+      "prompt": "is anything in ./Downloads/DJ Aster - Live at Dawn too long for Apple Music?",
+      "setup": "../../evals/files/split-album.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Scans the folder and reports that 02 Live at Dawn.mp3 is about 80 minutes (over the 78-minute limit) while the intro and outro are fine. Offers to split it at a quiet point and asks for confirmation; nothing is split or changed.",
       "assertions": [
-        "If no tracks exceed the threshold, reports this clearly and exits without splitting anything"
+        "Reports that '02 Live at Dawn' is about 80 minutes, over Apple Music's 78-minute limit",
+        "Reports that the intro and outro are within the limit",
+        "Offers to split the long track and asks for confirmation before doing it",
+        "The evidence shows no files added, removed or changed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "nothing-too-long",
+      "prompt": "check whether any tracks in ./Downloads/Night Drive - Afterglow are too long for Apple Music and split them if so",
+      "setup": "../../evals/files/split-none.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Scans the 4 tracks (a few seconds each), finds none over 78 minutes, says so, and changes nothing.",
+      "assertions": [
+        "Reports that no track exceeds the 78-minute limit",
+        "The evidence shows no files added, removed or changed"
       ]
     }
   ]

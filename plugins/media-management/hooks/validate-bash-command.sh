@@ -3,7 +3,9 @@
 # Receives hook input as JSON on stdin:
 # { "tool_name": "Bash", "tool_input": { "command": "..." }, ... }
 #
-# Exit 0 = allow, exit 2 = block (stderr message shown to Claude)
+# Exit 2 = block (stderr message shown to Claude). Exit 0 with an "allow"
+# decision = a single call to one of this plugin's scripts. Exit 0 with no
+# output = defer to the normal permission flow.
 
 # Safety: if jq is not available, block everything — a safety hook must not fail open
 if ! command -v jq &>/dev/null; then
@@ -52,12 +54,24 @@ for pattern in "${CRED_PATTERNS[@]}"; do
   fi
 done
 
-# All safety checks passed — auto-approve this command
-jq -n '{
-  "hookSpecificOutput": {
-    "hookEventName": "PreToolUse",
-    "permissionDecision": "allow",
-    "permissionDecisionReason": "Media management: command passed safety checks"
-  }
-}'
+# All safety checks passed. Auto-approve only a single call to one of this
+# plugin's own scripts; every other command (this hook runs in every session,
+# not just media work) goes through the normal permission flow. A command that
+# chains, pipes, redirects or substitutes could run something else, so it is
+# never auto-approved: quoted arguments are removed first, so "Artist & Band"
+# in a path does not count, but $( and backticks count even inside quotes.
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+unquoted=$(printf '%s' "$COMMAND" | sed -E "s/\"[^\"]*\"//g; s/'[^']*'//g")
+script_re="^(bash[[:space:]]+)?[\"']?$(printf '%s' "$PLUGIN_ROOT" | sed 's/[][\.*^$/]/\\&/g')/skills/[a-z0-9-]+/scripts/[a-z0-9-]+\.sh[\"']?([[:space:]]|$)"
+if echo "$COMMAND" | grep -qE "$script_re" &&
+  ! printf '%s' "$COMMAND" | grep -qE '\$\(|`' &&
+  ! printf '%s' "$unquoted" | grep -qE '[;&|<>]'; then
+  jq -n '{
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "allow",
+      "permissionDecisionReason": "Media management: runs one of the plugin'"'"'s own scripts"
+    }
+  }'
+fi
 exit 0

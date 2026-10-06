@@ -38,8 +38,9 @@ This creates a symlink in `~/.claude/plugins/repos/` so Claude Code picks up the
 The plugin needs to know where your files are. Paths are resolved in this order:
 
 1. **Environment variables** (highest priority)
-2. **CLAUDE.md defaults** (edit `.claude/CLAUDE.md` for your setup)
-3. **config.json**, a per-user file at `$MEDIA_MGMT_CONFIG_PATH` (lowest priority)
+2. **config.json**, a per-user file at `$MEDIA_MGMT_CONFIG_PATH`
+
+No default paths ship with the plugin.
 
 Run `/media-management:setup` to check which of these are missing and get help filling them in — it can write `config.json` for you.
 
@@ -49,10 +50,11 @@ Set any of these in your shell profile to override defaults:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MEDIA_MGMT_DOWNLOADS` | Where your ZIPs land | `~/Downloads` |
-| `MEDIA_MGMT_LIBRARY_IMPORT` | Apple Music auto-import folder | `~/Automatically Add to Music.localized` |
-| `MEDIA_MGMT_LIBRARY_STORAGE` | Apple Music library location | `~/Music` |
-| `MEDIA_MGMT_ARCHIVE_WORKDIR` | NAS staging directory | `~/Storage/Music` |
+| `MEDIA_MGMT_DOWNLOADS` | Where your ZIPs land | — (e.g. `~/Downloads`) |
+| `MEDIA_MGMT_LIBRARY_IMPORT` | Apple Music auto-import folder | — (e.g. `~/Music/Music/Media.localized/Automatically Add to Music.localized`) |
+| `MEDIA_MGMT_LIBRARY_STORAGE` | Apple Music library location | — (e.g. `~/Music/Music/Media.localized/Music`) |
+| `MEDIA_MGMT_ARCHIVE_WORKDIR` | NAS staging directory | — (any local folder that syncs to the NAS) |
+| `MEDIA_MGMT_PROCESSED` | Where cleanup moves finished ZIPs | `<downloads>/processed` (optional) |
 | `MEDIA_MGMT_REKORDBOX_MCP_PATH` | Local checkout of the [rekordbox-mcp](https://github.com/davehenke/rekordbox-mcp) server | — (no default; required for the `rekordbox-database` MCP server) |
 | `MEDIA_MGMT_CONFIG_PATH` | Location of the fallback config file | `~/.config/media-management/config.json` |
 
@@ -130,7 +132,7 @@ The plugin enforces several safety rules:
 - Genre is never auto-selected — you always choose from your existing library genres or type a custom one
 - MP3s go to Apple Music; WAVs are archived directly (no duplicates)
 - Original files are preserved until the entire workflow completes
-- A safety hook blocks dangerous commands (deleting critical directories, accessing credentials)
+- A safety hook blocks dangerous commands (deleting critical directories, accessing credentials). It auto-approves only single calls to the plugin's own scripts; every other command goes through Claude Code's normal permission prompts
 
 ## Uninstalling
 

@@ -1,16 +1,29 @@
 ---
 name: archive-media
 description: >-
-  Copy processed MP3s and WAVs to NAS storage. Use after Apple Music import
-  or when re-archiving corrected files.
+  Stage a processed release on the NAS: copy its MP3s from the Apple Music
+  library and its WAVs from the extraction folder into the NAS staging folder,
+  with clean WAV names and a verified count. Use once an Apple Music import
+  looks right ("stage it to the NAS", "archive the WAVs"), or to re-archive
+  files corrected after archiving. Not for renaming or converting files in
+  place outside an archive run.
 allowed-tools: Bash Read
 ---
 
 ## Setup
 
-1. Check environment variables: MEDIA_MGMT_LIBRARY_STORAGE, MEDIA_MGMT_ARCHIVE_WORKDIR
-2. If unset, use default paths from CLAUDE.md
-3. If CLAUDE.md has no paths, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+Resolve paths with the setup skill's checker, which applies the plugin's one
+resolution order (the `MEDIA_MGMT_*` env var first, then config.json at
+`$MEDIA_MGMT_CONFIG_PATH`, default `~/.config/media-management/config.json`):
+
+```bash
+bash ../setup/scripts/check-config.sh
+```
+
+This skill needs `library_storage` (the Apple Music library) and
+`archive_workdir` (the NAS staging folder): use each item's `value` from the
+JSON. If a key it needs is `missing`, stop and run the `setup` skill rather than
+guessing a path. When the user names a folder explicitly, use that folder.
 
 Scripts are in `scripts/` relative to this skill directory.
 

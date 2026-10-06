@@ -39,5 +39,6 @@ These rules are non-negotiable. Never bypass them.
 ## File Splitting
 
 - Split parts replace the original file
-- Name splits sequentially (01, 02, ...) — no "Part X" in filenames or titles
-- After splitting, re-run update-track-count.sh to renumber the entire folder
+- No "Part X" in filenames or titles: a lone track becomes a mini-album (01, 02, ...); a track
+  inside an album keeps its place ("03 Title 1", "03 Title 2")
+- After splitting, re-run update-track-count.sh to renumber the entire folder in album order

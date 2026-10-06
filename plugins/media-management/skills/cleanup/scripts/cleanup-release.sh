@@ -18,8 +18,8 @@ no ZIP) to a "processed/" subfolder, and remove extraction folders, for a
 given release.
 
 This script calls find-release-artifacts.sh to locate items, then:
-  - Moves all matching ZIPs and loose audio files to MEDIA_MGMT_PROCESSED
-    (or <downloads_folder>/processed/)
+  - Moves all matching ZIPs and loose audio files to the processed folder
+    (MEDIA_MGMT_PROCESSED, config.json "processed", or <downloads_folder>/processed/)
   - Removes all matching extraction folders
 
 Prefer --zip/--folder with exact paths whenever the caller already knows them
@@ -30,7 +30,9 @@ after all contributing artists). release_name may be "" when only explicit
 paths are given; it's then used purely as a display label in the output.
 
 Environment:
-  MEDIA_MGMT_PROCESSED  Override processed destination (default: <downloads_folder>/processed/)
+  MEDIA_MGMT_PROCESSED  Override processed destination; falls back to the
+                        "processed" key of config.json at $MEDIA_MGMT_CONFIG_PATH,
+                        then <downloads_folder>/processed/
 
 Arguments:
   downloads_folder  Path to the downloads directory
@@ -124,8 +126,13 @@ if [[ $zip_count -eq 0 && $audio_count -eq 0 && $folder_count -eq 0 ]]; then
   exit 0
 fi
 
-# Determine processed destination: env var > config > fallback to $DOWNLOADS/processed
-PROCESSED_DIR="${MEDIA_MGMT_PROCESSED:-$DOWNLOADS/processed}"
+# Determine processed destination: env var > config.json > $DOWNLOADS/processed
+PROCESSED_DIR="${MEDIA_MGMT_PROCESSED:-}"
+CONFIG_PATH="${MEDIA_MGMT_CONFIG_PATH:-$HOME/.config/media-management/config.json}"
+if [[ -z "$PROCESSED_DIR" && -f "$CONFIG_PATH" ]]; then
+  PROCESSED_DIR=$(jq -r '.processed // empty' "$CONFIG_PATH" 2>/dev/null || true)
+fi
+PROCESSED_DIR="${PROCESSED_DIR:-$DOWNLOADS/processed}"
 
 errors=0
 

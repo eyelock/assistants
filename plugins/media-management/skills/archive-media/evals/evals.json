@@ -1,32 +1,92 @@
 {
   "skill_name": "archive-media",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Use tests/fixtures/eval-sandbox/nas-archive (empty) as the NAS destination instead of a real archive_workdir. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "the apple music import for Test Artist - Test Album looked good, stage the mp3s to the NAS (source: tests/fixtures/eval-sandbox/library/Test Artist/Test Album, dest: tests/fixtures/eval-sandbox/nas-archive)",
-      "files": [
-        "tests/fixtures/eval-sandbox/library/Test Artist/Test Album",
-        "tests/fixtures/eval-sandbox/nas-archive"
+      "name": "mp3-from-library",
+      "prompt": "the Apple Music import for Night Drive - Afterglow looked good — stage the MP3s to the NAS",
+      "setup": "../../evals/files/archive-mp3.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Copies all 3 MP3s from the library source to the NAS destination, verifies the copied count matches (3), and reports the result.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Copies the 4 MP3s from the Apple Music library (Music/Media.localized/Music/Night Drive/Afterglow/, which carry the user's Apple Music edit, genre Synthwave) to NAS/to_nas/mp3/Night Drive/Afterglow/, verifies the count (4 = 4) and reports it. The Downloads copies (genre Electronic, vendor names) are not the source.",
       "assertions": [
-        "Sources the MP3s from the given Apple Music library-shaped path, not a Downloads path",
-        "Reports the copy as verified (3 files copied, count matches)"
+        "The evidence shows 4 MP3s added under NAS/to_nas/mp3/Night Drive/Afterglow/",
+        "The staged MP3s came from the Apple Music library: the evidence shows them named like '01 Dusk.mp3' with genre Synthwave, not the vendor-named Electronic copies from Downloads",
+        "Reports that the copied count was verified (4 files in, 4 files on the NAS)",
+        "The evidence shows nothing removed or changed in the library or Downloads"
       ]
     },
     {
       "id": 2,
-      "prompt": "archive the wav files for Test Artist - Test Album (source: tests/fixtures/eval-sandbox/wav-extraction/Test Artist - Test Album-wav, dest: tests/fixtures/eval-sandbox/nas-archive)",
-      "files": [
-        "tests/fixtures/eval-sandbox/wav-extraction/Test Artist - Test Album-wav",
-        "tests/fixtures/eval-sandbox/nas-archive"
+      "name": "compilation-path",
+      "prompt": "archive the mp3s for Summer Sampler to the NAS please, the import looked fine. It's the label comp with Kora Lune, Night Drive, Deep Room and Aster.",
+      "setup": "../../evals/files/archive-compilation.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Copies WAVs from the extraction folder (not Apple Music) to the NAS WAV destination, renames vendor-format filenames to clean format, verifies count, and reports results.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "A compilation is filed by Apple Music under its Album Artist, Various Artists, so the source is Music/Media.localized/Music/Various Artists/Summer Sampler/ and the destination NAS/to_nas/mp3/Various Artists/Summer Sampler/, all 4 tracks in one folder, verified.",
       "assertions": [
-        "All 3 WAV files are copied to the destination",
-        "Vendor filenames (e.g. 'Test Artist - Test Album - 01 Track 1.wav') are renamed to a cleaner format as part of the process",
-        "Reports the rename step's success or failure explicitly"
+        "The evidence shows all 4 MP3s added under NAS/to_nas/mp3/Various Artists/Summer Sampler/",
+        "Nothing was staged under a per-artist folder such as NAS/to_nas/mp3/Kora Lune/",
+        "Reports that the copied count was verified (4 = 4)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "wav-clean-names",
+      "prompt": "now archive the WAVs for Night Drive - Afterglow, they're in ./Downloads/Night Drive - Afterglow-wav",
+      "setup": "../../evals/files/archive-wav.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Copies the 4 WAVs from the extraction folder (never through Apple Music) to NAS/to_nas/wav/Night Drive/Afterglow/, mirroring the MP3 tree, renames vendor names to '01 Dusk.wav' style, verifies the count and reports the rename. The WAVs in Downloads stay where they are.",
+      "assertions": [
+        "The evidence shows 4 WAVs added under NAS/to_nas/wav/Night Drive/Afterglow/",
+        "The staged WAVs are named in the clean form '01 Dusk.wav', '02 Neon Rain.wav', '03 Overpass.wav', '04 Last Train.wav' (no 'Night Drive - Afterglow - ' prefix)",
+        "No WAV was added to the Apple Music auto-import folder or library",
+        "The WAVs in Downloads/Night Drive - Afterglow-wav are still there",
+        "Reports that the copy count was verified and the files were renamed"
       ]
     }
   ]

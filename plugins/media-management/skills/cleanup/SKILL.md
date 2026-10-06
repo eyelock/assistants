@@ -1,16 +1,28 @@
 ---
 name: cleanup
 description: >-
-  Move processed ZIPs and loose single-track audio files to archive and
-  clean up extraction folders. Use after album processing is complete.
+  Tidy Downloads after a release is fully processed: move its ZIPs (or loose
+  single-track files) to processed/ and delete its extraction folders, after
+  showing the list and getting confirmation. Use when the user is done with an
+  album and wants its leftovers cleared ("tidy up my downloads for X", "remove
+  the extracted folders"), not for general Downloads housekeeping.
 allowed-tools: Bash Read
 ---
 
 ## Setup
 
-1. Check environment variable: MEDIA_MGMT_DOWNLOADS
-2. If unset, use the default Downloads path from CLAUDE.md
-3. If CLAUDE.md has no path, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+Resolve paths with the setup skill's checker, which applies the plugin's one
+resolution order (the `MEDIA_MGMT_*` env var first, then config.json at
+`$MEDIA_MGMT_CONFIG_PATH`, default `~/.config/media-management/config.json`):
+
+```bash
+bash ../setup/scripts/check-config.sh
+```
+
+This skill needs `downloads`, plus `processed` if it is set (where archived ZIPs
+go; default `<downloads>/processed`): use each item's `value` from the JSON. If
+a key it needs is `missing`, stop and run the `setup` skill rather than guessing
+a path. When the user names a folder explicitly, use that folder.
 
 Scripts are in `scripts/` relative to this skill directory.
 
@@ -63,13 +75,27 @@ Parse the JSON output and present to user:
 > - `Artist - Album/`
 > - `Artist - Album-wav/`
 
-If nothing is found, report this and exit.
+Only items whose name is the release name plus a store or browser duplicate
+suffix (`-2`, `-wav`, ` (1)`, ` (pre-order)`) match. Anything else that merely
+starts with the same words, such as `Artist - Album (Remixes).zip`, is a
+different release: leave it alone, and mention it only so the user knows it was
+not touched.
+
+If nothing is found, report this and exit without moving or deleting anything.
+If nothing matches but similarly named items exist (the user said
+`Artist - Album` and Downloads holds `Artist - Album EP.zip`), list them and
+ask which release they meant. Never clean up a near match on your own, even
+when the request says to go ahead.
 
 ### Step 2: Ask for confirmation
 
 > **Shall I proceed with cleanup?** (This will move ZIPs/audio files to processed/ and delete extraction folders)
 
-**DO NOT PROCEED without explicit user confirmation.**
+**DO NOT PROCEED without explicit user confirmation.** Explicit means the user
+said yes to this cleanup: in a reply, or in the request itself when it plainly
+authorizes it without a further check ("go ahead, no need to confirm"). A
+request that only asks you to tidy up is not confirmation: present the list and
+stop.
 
 ### Step 3: Execute cleanup
 

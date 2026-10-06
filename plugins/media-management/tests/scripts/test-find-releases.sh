@@ -63,4 +63,31 @@ release_count=$(echo "$output" | jq '.releases | length')
 [[ "$total_sources" -eq 0 ]] || { echo "FAIL: expected total_sources 0, got $total_sources"; exit 1; }
 [[ "$release_count" -eq 0 ]] || { echo "FAIL: expected 0 releases for empty folder, got $release_count"; exit 1; }
 
+# Test: a ZIP downloaded twice is reported as a duplicate, not silently
+# dropped, and the release uses the original rather than the "(1)" copy
+DUPDIR="$TEST_TMPDIR/dups"
+mkdir -p "$DUPDIR"
+(cd "$FIXTURES_DIR" && zip -q "$DUPDIR/Band - Record.zip" track1.mp3)
+cp "$DUPDIR/Band - Record.zip" "$DUPDIR/Band - Record (1).zip"
+(cd "$FIXTURES_DIR" && zip -q "$DUPDIR/Band - Record-2.zip" "Test Artist - Test Album - 01 Track 1.wav")
+output=$(bash "$SCRIPT" "$DUPDIR")
+mp3_file=$(echo "$output" | jq -r '.releases[0].mp3_source.file')
+dup_file=$(echo "$output" | jq -r '.duplicates[0].file')
+[[ "$mp3_file" == "Band - Record.zip" ]] || { echo "FAIL: expected the original ZIP as mp3_source, got $mp3_file"; exit 1; }
+[[ "$dup_file" == "Band - Record (1).zip" ]] || { echo "FAIL: expected the (1) copy as duplicate, got $dup_file"; exit 1; }
+
+# Test 6: macOS packing junk (__MACOSX/._ forks, .DS_Store) is not counted as tracks
+MACDIR="$TEST_TMPDIR/mac"
+mkdir -p "$MACDIR/pack/Mac Band - Disc" "$MACDIR/pack/__MACOSX/Mac Band - Disc"
+cp "$FIXTURES_DIR/track1.mp3" "$MACDIR/pack/Mac Band - Disc/01 One.mp3"
+cp "$FIXTURES_DIR/track2.mp3" "$MACDIR/pack/Mac Band - Disc/02 Two.mp3"
+printf 'fork' >"$MACDIR/pack/__MACOSX/Mac Band - Disc/._01 One.mp3"
+printf 'fork' >"$MACDIR/pack/__MACOSX/Mac Band - Disc/._02 Two.mp3"
+printf 'ds' >"$MACDIR/pack/Mac Band - Disc/.DS_Store"
+(cd "$MACDIR/pack" && zip -q -r "$MACDIR/Mac Band - Disc.zip" .)
+rm -rf "$MACDIR/pack"
+output=$(bash "$SCRIPT" "$MACDIR")
+tracks=$(echo "$output" | jq -r '.releases[0].mp3_source.tracks')
+[[ "$tracks" -eq 2 ]] || { echo "FAIL: expected 2 tracks without macOS junk, got $tracks"; exit 1; }
+
 echo "All find-releases tests passed"

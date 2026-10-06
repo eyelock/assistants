@@ -48,16 +48,22 @@ bash scripts/audit-library.sh --keep-folder "Crates"
 ```
 
 Present the JSON: the cloud-status histogram, the `cloud_safe` total, and the
-keep-folder playlists. **Confirm with the user before going further:**
+keep-folder playlists. Then:
 
-- If `sync_library_likely_on` is `false` (or `cloud_safe` is 0), STOP — Sync
-  Library is off, nothing is in the cloud, and offloading would lose data.
+- If `sync_library_likely_on` is `false` (or `cloud_safe` is 0), STOP: do not
+  build a playlist. Sync Library is off or nothing is in iCloud, so removing
+  downloads would lose that music for good. Tell the user to turn on Sync
+  Library (and let it finish) or archive to the NAS first.
 - If `cloud_status.ineligible` is high, warn that those are local-only; they are
-  excluded by the Kind filter below but worth archiving to the NAS.
+  never added to the playlist (it takes only cloud-backed tracks) but are worth
+  archiving to the NAS.
+- Otherwise go on to Step 2.
 
 ### Step 2: Build the offload playlist
 
-Ask the user for their protections, then build it:
+Building the playlist is safe: it only collects tracks and removes nothing. If
+the user has named their protections (the keep folder, a Grouping prefix),
+build it straight away with those; if not, ask for them first. Then build it:
 
 ```bash
 bash scripts/build-offload-playlist.sh \

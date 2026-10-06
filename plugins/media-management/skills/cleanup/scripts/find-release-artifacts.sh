@@ -13,10 +13,13 @@ Usage: find-release-artifacts.sh <downloads_folder> <release_name> [--zip <path>
 Find all ZIP files, loose audio files, and extraction folders in the
 downloads directory that are related to the given release name.
 
-Glob matching (via release_name):
+Name matching (via release_name): the name, minus the extension and a
+vendor/browser duplicate suffix (-2, -wav, -flac, -mp3, (1), (pre-order)),
+must equal release_name exactly:
   ZIPs:        "Artist - Album.zip", "Artist - Album-2.zip", "Artist - Album (1).zip"
   Audio files: "Artist - Track.mp3", "Artist - Track.wav" (single-track purchases, no ZIP)
   Folders:     "Artist - Album/", "Artist - Album-wav/"
+  Not matched: "Artist - Album (Remixes).zip", "Artist - Album-Live/" (other releases)
 
 Explicit paths (--zip / --folder):
   Use these instead of (or alongside) glob matching whenever the caller already
@@ -101,8 +104,22 @@ if [[ ! -d "$DOWNLOADS" ]]; then
   exit 2
 fi
 
+# A file or folder belongs to the release when its name, minus the extension
+# and the duplicate suffixes vendors and browsers add, is exactly the release
+# name. Same rules as select-release's pairing: "-2", "-wav", "-flac", "-mp3",
+# " (1)", " (pre-order)". A different release that merely starts with the same
+# words ("Artist - Album (Remixes).zip", "Artist - Album-Live/") is not
+# matched, so cleanup never archives or deletes it.
+same_release() {
+  local name="$1"
+  name=$(echo "$name" | sed -E 's/\.([zZ][iI][pP]|[mM][pP]3|[wW][aA][vV]|[fF][lL][aA][cC])$//')
+  name=$(echo "$name" | sed -E 's/[-_]([0-9]+|wav|WAV|mp3|MP3|flac|FLAC)$//')
+  name=$(echo "$name" | sed -E 's/[[:space:]]*\([0-9]+\)$//')
+  name=$(echo "$name" | sed -E 's/[[:space:]]*\([pP]re-[oO]rder\)$//')
+  [[ "$name" == "$RELEASE" ]]
+}
+
 # Find matching ZIP files
-# Match patterns: exact name, -2 suffix, -wav suffix, (N) suffix, (pre-order) suffix
 zips="[]"
 while IFS= read -r f; do
   [[ -f "$f" ]] || continue
@@ -119,15 +136,9 @@ while IFS= read -r f; do
 done < <(
   {
     if [[ -n "$RELEASE" ]]; then
-      # Exact match
-      # `|| true` on every glob attempt: under `set -e`, a non-matching glob
-      # makes `ls` exit non-zero, which kills this process-substitution
-      # subshell immediately and silently drops every pattern tried after it.
-      ls "$DOWNLOADS/$RELEASE.zip" 2>/dev/null || true
-      # Bandcamp suffixes: -2, -wav, etc.
-      ls "$DOWNLOADS/$RELEASE-"*.zip 2>/dev/null || true
-      # Parenthesized suffixes: (1), (pre-order), etc.
-      ls "$DOWNLOADS/$RELEASE ("*.zip 2>/dev/null || true
+      for f in "$DOWNLOADS/$RELEASE"*.[zZ][iI][pP]; do
+        { [[ -f "$f" ]] && same_release "$(basename "$f")" && echo "$f"; } || true
+      done
     fi
     # Explicit paths — validated to exist and be regular files
     for p in "${explicit_zips[@]+"${explicit_zips[@]}"}"; do
@@ -153,10 +164,11 @@ while IFS= read -r f; do
 done < <(
   {
     if [[ -n "$RELEASE" ]]; then
-      for ext in mp3 wav flac; do
-        ls "$DOWNLOADS/$RELEASE.$ext" 2>/dev/null || true
-        ls "$DOWNLOADS/$RELEASE-"*".$ext" 2>/dev/null || true
-        ls "$DOWNLOADS/$RELEASE ("*").$ext" 2>/dev/null || true
+      for f in "$DOWNLOADS/$RELEASE"*; do
+        [[ -f "$f" ]] || continue
+        case "$(echo "${f##*.}" | tr '[:upper:]' '[:lower:]')" in
+          mp3|wav|flac) { same_release "$(basename "$f")" && echo "$f"; } || true ;;
+        esac
       done
     fi
     # Explicit --zip paths that are actually loose audio files (mp3/wav/flac), not ZIPs
@@ -188,16 +200,9 @@ while IFS= read -r d; do
 done < <(
   {
     if [[ -n "$RELEASE" ]]; then
-      # Same `|| true` reasoning as the ZIP/audio-file globs above: under
-      # `set -e`, a false `[[ -d ]] && echo` (folder doesn't exist) exits
-      # non-zero and kills this subshell before later checks run.
-      # Exact match folder
-      { [[ -d "$DOWNLOADS/$RELEASE" ]] && echo "$DOWNLOADS/$RELEASE"; } || true
-      # WAV extraction folder
-      { [[ -d "$DOWNLOADS/$RELEASE-wav" ]] && echo "$DOWNLOADS/$RELEASE-wav"; } || true
-      # Other variant folders
-      for d in "$DOWNLOADS/$RELEASE-"*/; do
-        { [[ -d "$d" ]] && echo "${d%/}"; } || true
+      for d in "$DOWNLOADS/$RELEASE"*/; do
+        d="${d%/}"
+        { [[ -d "$d" ]] && same_release "$(basename "$d")" && echo "$d"; } || true
       done
     fi
     # Explicit paths — validated to exist and be directories

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck disable=SC2034  # the runner passes it to every test
 FIXTURES_DIR="${1:-tests/fixtures}"
 PROJECT_ROOT="${2:-.}"
 SCRIPT="$PROJECT_ROOT/skills/cleanup/scripts/cleanup-release.sh"

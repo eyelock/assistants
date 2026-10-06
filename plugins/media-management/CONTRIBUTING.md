@@ -39,14 +39,15 @@ Portability to other AI clients is not a priority.
 
 ```
 media-management/
-├── harness.json                   # Harness manifest (name, version, author)
-├── .claude/
-│   ├── CLAUDE.md                  # Project instructions, config, safety rules
-│   └── settings.json              # Permissions, env vars, announcements
+├── .claude-plugin/plugin.json     # Plugin manifest (name, version, author)
+├── AGENTS.md                      # Instructions, config, safety rules
 ├── (no config.json here — per-user file at ~/.config/media-management/config.json)
 ├── hooks/
-│   ├── hooks.json                 # Hook registration (PreToolUse on Bash)
-│   └── validate-bash-command.sh   # Safety hook — blocks dangerous commands
+│   ├── hooks.json                 # Hook registration (SessionStart, PreToolUse)
+│   ├── validate-bash-command.sh   # Safety hook — blocks dangerous commands
+│   ├── gate-config-required-skills.sh  # Blocks path-dependent scripts until configured
+│   ├── check-config-session.sh    # Nudges toward /setup when config is missing
+│   └── auto-approve-tools.sh      # Approves reads inside the configured folders
 ├── skills/
 │   ├── process-album/             # Main orchestrator — delegates to all others
 │   │   ├── SKILL.md
@@ -59,7 +60,8 @@ media-management/
 │   ├── import-to-apple-music/     # Copy to Apple Music auto-import
 │   ├── archive-media/             # Stage to NAS storage
 │   │   └── scripts/
-│   └── cleanup/                   # Archive ZIPs, remove temp folders
+│   ├── cleanup/                   # Archive ZIPs, remove temp folders
+│   └── */evals/                   # Each skill's output evals and trigger queries
 ├── agents/
 │   ├── media-analyst.md           # File analysis subagent (Haiku)
 │   └── metadata-checker.md        # Metadata consistency subagent (Haiku)
@@ -67,8 +69,8 @@ media-management/
 │   ├── run-tests.sh               # Test runner
 │   ├── fixtures/                  # Generated test audio (gitignored)
 │   ├── scripts/                   # Unit tests for each script
-│   ├── hooks/                     # Hook tests
-│   └── evals/                     # Manual skill evaluation scenarios
+│   └── hooks/                     # Hook tests
+├── evals/files/                   # Eval sandbox builders shared by every skill's evals
 ├── Makefile
 ├── README.md
 └── CONTRIBUTING.md
@@ -117,6 +119,7 @@ make test           # Run full test suite
 make test-scripts   # Script tests only
 make test-hooks     # Hook tests only
 make fixtures       # Generate test audio fixtures
+make evals          # Run every skill's evals (sandboxed; costs money)
 make install        # Symlink plugin for local use
 make uninstall      # Remove plugin symlink
 make clean          # Remove fixtures + uninstall
@@ -128,7 +131,7 @@ make clean          # Remove fixtures + uninstall
 make check
 ```
 
-This runs shellcheck, validates the plugin structure, generates test fixtures (short audio files via ffmpeg), and runs all 10 test scripts. Tests use temp directories and clean up after themselves.
+This runs shellcheck, validates the plugin structure, generates test fixtures (short audio files via ffmpeg), and runs every test script. Tests use temp directories, clean up after themselves, and never read your real config (`run-tests.sh` clears the `MEDIA_MGMT_*` variables).
 
 Test fixtures are generated audio files (silent MP3s/WAVs with known metadata). They are gitignored and regenerated on each test run if missing.
 
@@ -148,7 +151,8 @@ Every script follows these rules:
 
 Following the [Agent Skills Specification](https://agentskills.io/specification):
 
-- YAML frontmatter with `name`, `description`, `compatibility`, `allowed-tools`, `metadata`
+- YAML frontmatter with `name`, `description`, `allowed-tools`. No `metadata` key: Claude Code's
+  plugin loader demotes a skill that has one to a stub that never fires (`ynd lint` checks this)
 - `name` must match the directory name (validated by `make validate`)
 - `description` in third person, includes trigger keywords
 - Body under 500 lines — detailed rules go in `references/`
@@ -170,7 +174,8 @@ Following [Claude Code Sub-agents docs](https://code.claude.com/docs/en/sub-agen
 2. Add scripts (if any) to `skills/your-skill/scripts/`
 3. Make scripts executable: `chmod +x skills/your-skill/scripts/*.sh`
 4. Add tests to `tests/scripts/test-your-script.sh`
-5. Run `make check` to validate everything
+5. Add evals: `skills/your-skill/evals/evals.json` (sandboxed cases, see below) and `eval_queries.json`
+6. Run `make check` to validate everything
 
 ### Adding a new script
 
@@ -194,10 +199,12 @@ The hook handles command chaining (`&&`, `||`, `;`) — patterns match anywhere 
 
 ### Permissions model
 
-`.claude/settings.json` defines what commands are auto-approved. The principle is:
+The hooks run in every Claude Code session once the plugin is installed, not only during media work, so they approve as little as possible:
 
-- **Allow** all commands the skills actually need (ffmpeg, ffprobe, unzip, cp, mv, etc.)
-- **Deny** reads of sensitive files (.ssh, .aws, .env, private keys)
-- **Scope narrowly** where possible (e.g., `rm` is scoped to test fixtures and Downloads subfolders)
+- `validate-bash-command.sh` auto-approves a single call to one of the plugin's own scripts (no chaining, pipes, redirects or command substitution). Every other command goes through the normal permission flow.
+- `auto-approve-tools.sh` approves this plugin's own skills, and reads inside the configured folders.
+- Each skill's `allowed-tools` grants what it needs while it runs.
 
-Deny rules take precedence over allow rules.
+### Evals
+
+Every skill has `evals/evals.json` (output evals) and `evals/eval_queries.json` (trigger evals), run by the repository's `scripts/skill-evals.mjs` (`make evals` here, or `make eval P=plugins/media-management` at the root). Each output case is a shell sandbox: its setup script in `evals/files/` builds a world in the run's directory with `sandbox.sh` — Downloads, the Apple Music auto-import folder and library, a NAS staging folder, real tagged audio made by ffmpeg, and a config.json the session points `MEDIA_MGMT_CONFIG_PATH` at — and `osascript` is a stub (`osascript-stub.sh`) standing in for the Music app. `evidence.sh` then shows the judge every file the run added, removed or changed, and the tags of every MP3.

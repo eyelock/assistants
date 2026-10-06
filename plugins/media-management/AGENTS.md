@@ -54,6 +54,7 @@ Set any of these to override the defaults above:
 ## File Splitting Rules
 
 - Splits replace the original file
-- Treat split output as a mini-album: sequential track numbers starting from 1
+- A track alone in its folder becomes a mini-album: "01 Title.mp3", "02 Title.mp3", tracks 1/N
+- A track inside an album keeps its place: "03 Title 1.mp3", "03 Title 2.mp3", keeping its track number
 - No "Part X" in filenames or titles
-- After splitting, re-run update-track-count.sh to renumber the whole folder
+- After splitting, re-run update-track-count.sh, which renumbers the whole folder in album order (existing track number, then filename)

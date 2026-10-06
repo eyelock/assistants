@@ -1,42 +1,94 @@
 {
   "skill_name": "select-release",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first, then point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads for these runs. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "hey what music did I just buy, I think there's something in my downloads folder",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      "name": "mixed-downloads",
+      "prompt": "what music did I just buy? it's all sitting in ./Downloads/",
+      "setup": "../../evals/files/select-release-downloads.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "A table of detected releases (artist/album, MP3 ZIP, WAV ZIP, track counts per side), followed by a question asking which release to process. Classification is based on inspecting ZIP contents, not filenames.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Two releases found by inspecting contents: Night Drive - Afterglow (MP3 ZIP 'Night Drive - Afterglow.zip', WAV ZIP 'Night Drive - Afterglow-2.zip', 4 tracks each) and Kora Lune - Tidal (a single track bought as loose files, Kora Lune - Tidal.mp3 and .wav, no ZIP). report.zip and the invoice are not music; Old Band - Old Album.zip in Downloads/processed/ is already processed and is not listed as new. Nothing is extracted, moved or deleted. Ends by asking which release to process.",
       "assertions": [
-        "Output lists at least one release with both an MP3 ZIP and a WAV ZIP identified",
-        "The classification method inspects archive contents rather than trusting filename suffixes",
-        "Ends by asking the user which release to process, or confirms the single release found"
+        "Lists Night Drive - Afterglow with 'Night Drive - Afterglow.zip' as the MP3 source and 'Night Drive - Afterglow-2.zip' as the WAV source, 4 tracks on each side",
+        "Lists Kora Lune - Tidal as a single-track release whose MP3 and WAV are loose files (not ZIPs)",
+        "Does not present report.zip or the invoice PDF as a music release",
+        "Does not present 'Old Band - Old Album' (in Downloads/processed/) as a new purchase to process",
+        "The evidence shows no files added, removed or changed (nothing was extracted or moved)",
+        "Ends by asking which release to process"
       ]
     },
     {
       "id": 2,
-      "prompt": "Check ~/Downloads for any new album purchases I can start processing",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      "name": "mislabelled-zips",
+      "prompt": "I bought the Deep Room album and the Aster EP last night. Which of the zips in ./Downloads/ is the MP3 one for Deep Room - Signals? And I think the WAV download for the Aster EP failed, can you check?",
+      "setup": "../../evals/files/select-release-mislabelled.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Same as above: a table of matched MP3/WAV release pairs found in the given Downloads path.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Classified by contents, not names: 'Deep Room - Signals-2.zip' holds the 3 MP3s and 'Deep Room - Signals.zip' holds the 3 WAVs (the reverse of the usual order). 'Deep Room - Signals (1).zip' is a second copy of the WAV ZIP (a duplicate download). 'Aster - Glasshouse EP (pre-order).zip' holds 2 MP3s and there is no WAV ZIP for it in Downloads; no WAV counterpart is invented. Nothing is extracted, moved or deleted.",
       "assertions": [
-        "Resolves the Downloads path from the user's message, env var, or config rather than asking unnecessarily",
-        "Presents results as a table with release name, ZIP filenames, and track counts"
+        "Says 'Deep Room - Signals-2.zip' is the MP3 ZIP (3 MP3s) and 'Deep Room - Signals.zip' holds the WAVs",
+        "Identifies 'Deep Room - Signals (1).zip' as a duplicate of the WAV ZIP rather than a separate release or the MP3 download",
+        "Says there is no WAV download for the Aster Glasshouse EP in Downloads (only the MP3 pre-order ZIP), without naming or inventing a WAV file for it",
+        "The evidence shows no files added, removed or changed"
       ]
     },
     {
       "id": 3,
-      "prompt": "I downloaded a Bandcamp order but only see one zip — did the WAV one fail to download or something?",
-      "files": ["tests/fixtures/eval-sandbox/downloads/Solo Artist - Lonely EP.zip"],
-      "expected_output": "Reports the unmatched ZIP separately from any matched pairs, without inventing a WAV pair that doesn't exist.",
+      "name": "finder-zipped-order",
+      "prompt": "I bought Night Drive - Afterglow last night and the store said 4 tracks in each download. Of the two zips ./Downloads/Night Drive - Afterglow.zip and ./Downloads/Night Drive - Afterglow-2.zip, which is the MP3 one, and are they both complete?",
+      "setup": "../../evals/files/select-release-macos.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Classified by contents, not names: 'Night Drive - Afterglow-2.zip' holds the 4 MP3s and 'Night Drive - Afterglow.zip' holds the 4 WAVs (the reverse of the usual order). Both ZIPs were packed by macOS Finder, so each also holds a __MACOSX/ tree of ._ forks and a .DS_Store: those are not tracks, so each ZIP is complete with 4 tracks, not 8. Nothing is extracted, moved or deleted.",
       "assertions": [
-        "Unmatched ZIPs are listed separately from matched MP3/WAV pairs",
-        "Does not fabricate a missing counterpart file"
+        "Says 'Night Drive - Afterglow-2.zip' is the MP3 ZIP and 'Night Drive - Afterglow.zip' holds the WAVs",
+        "Says both ZIPs are complete with 4 tracks each (matching the store's count)",
+        "Does not report 8 tracks in either ZIP, and does not count the __MACOSX / ._ files or .DS_Store as tracks",
+        "The evidence shows no files added, removed or changed"
       ]
     }
   ]
