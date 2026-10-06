@@ -1,0 +1,43 @@
+{
+  "skill_name": "dev-security",
+  "fixtures": "Files are copied into the run's data/ folder. There is no git in the sandbox, so a change is given as a patch. Line numbers are new-file line numbers.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "account-routes-audit",
+      "prompt": "Security check on data/account.patch before it goes out? New login, invoice, billing webhook and avatar upload routes.",
+      "files": ["../../evals/files/account.patch"],
+      "expected_output": "In src/account/routes.ts: line 12 logs the whole request body, including the password; line 17 hashes passwords with SHA-256 instead of bcrypt, scrypt or argon2; the login route has no rate limiting; lines 18 and 32 compare a hash and a token with !== instead of a constant-time comparison; lines 25-29 return any invoice by id without checking it belongs to the requesting user (IDOR); line 41 checks the upload type by file extension instead of content (magic bytes); line 42 stores the upload under the client-provided filename, which also allows path traversal. Also absent: failed logins and authorization failures (an invoice that is not the caller's, a bad webhook token) are not logged as security events, while the one thing that is logged is the password. Line numbers are lines of src/account/routes.ts counted from the hunk header (the body logging is line 12, not patch line 17). Not issues: the parameterized queries, the session id from crypto.randomBytes, the cookie flags, and .env.example (placeholders only, with .env added to .gitignore).",
+      "assertions": [
+        "Flags that the login route logs req.body, which contains the password (line 12)",
+        "Flags SHA-256 password hashing (line 17) and says to use bcrypt, scrypt or argon2",
+        "Flags at least one of the !== comparisons (password hash on line 18, webhook token on line 32) and says to use a constant-time comparison",
+        "Flags that GET /invoices/:id does not check the invoice belongs to the requesting user (IDOR)",
+        "Flags that the avatar upload validates type by extension and says to check the content (magic bytes)",
+        "Flags that the upload is stored under the client-provided filename (path traversal or overwrite) and says to generate a new filename",
+        "Flags that the login endpoint has no rate limiting",
+        "Flags that failed logins or authorization failures are not logged as security events (beyond saying the password must not be logged)",
+        "Line references are lines of src/account/routes.ts, not of the patch file: the req.body logging is cited at line 12 (not 17) and the SHA-256 hash at line 17 (not 22)",
+        "Does not report .env.example as a committed secret",
+        "Does not report the parameterized queries ($1, $2 with values passed separately) as SQL injection",
+        "Does not report the session cookie flags or crypto.randomBytes session id as weaknesses"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "write-password-reset",
+      "prompt": "Write the password reset flow for our Express + Postgres app: POST /password-reset/request takes an email and emails a reset link, POST /password-reset/confirm takes the token and the new password. bcrypt is already a dependency, and data/session-store.ts shows how sessions are stored.",
+      "files": ["../../evals/files/session-store.ts"],
+      "expected_output": "Two handlers. The reset token comes from a cryptographically secure generator (crypto.randomBytes) and expires on the server. Input is validated at the handler (email format, new password length or complexity). The new password is hashed with bcrypt. Tokens are never compared with === / !==. On a successful reset it calls deleteSessionsForUser to invalidate every session. It logs the request and the password change as authentication events but never logs the token or password.",
+      "assertions": [
+        "Generates the reset token with a cryptographically secure generator (e.g. crypto.randomBytes), not Math.random or a UUID v1",
+        "Validates the email and the new password (format, length or complexity) in the handlers",
+        "Hashes the new password with bcrypt, not MD5 or SHA",
+        "Does not compare the reset token with === or !== against a stored value",
+        "Invalidates all of the user's sessions after the password changes (deleteSessionsForUser)",
+        "Logs the reset request and the completed password change as authentication events, with the user and the outcome",
+        "Never logs the token, the reset link or the password"
+      ]
+    }
+  ]
+}

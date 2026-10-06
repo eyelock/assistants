@@ -1,0 +1,12 @@
+[
+  { "query": "review my changes before I commit", "should_trigger": true },
+  { "query": "can you look over this PR for problems?", "should_trigger": true },
+  { "query": "do a proper code review of the diff on this branch", "should_trigger": true },
+  { "query": "anything wrong with what I've changed here?", "should_trigger": true },
+  { "query": "is this PR good to approve or should I request changes?", "should_trigger": true },
+  { "query": "audit the login handler for OWASP top 10 issues", "should_trigger": false },
+  { "query": "run lint, format and the tests and fix what fails", "should_trigger": false },
+  { "query": "this endpoint returns 500 and my logs never show up, help", "should_trigger": false },
+  { "query": "list the open PRs that are waiting on review", "should_trigger": false },
+  { "query": "write a skill that reviews code", "should_trigger": false }
+]

@@ -1,0 +1,50 @@
+{
+  "skill_name": "skill-creator",
+  "fixtures": "Files are copied into the run's data/ folder. Runs cannot write files, so the skill is given as file contents in the answer.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "unlinked-references",
+      "prompt": "We're about to ship the skill in data/http-api. Can you review it and tell me what to change?",
+      "files": ["../../evals/files/.trees/http-api"],
+      "expected_output": "The main problem: references/ files are not loaded automatically, and SKILL.md only links errors.md. pagination.md and webhooks.md are never named (\"see the references folder\" does not count), so the agent will never read them and their rules will not be followed. Fix: link each from SKILL.md with a relative path and say when to read it (before designing a list endpoint, read references/pagination.md; before adding or changing a webhook event, read references/webhooks.md), and say when to read errors.md too. Second: the description says what the skill is but not when to load it; rewrite it to name the trigger (designing, building or reviewing an endpoint in Acme's public HTTP API). Not a fix: pasting the references into SKILL.md.",
+      "assertions": [
+        "Flags that pagination.md and webhooks.md are not linked from SKILL.md, so the agent will never read them, because reference files are not loaded automatically",
+        "Says the line \"see the references folder\" is not enough: each file needs its own link",
+        "Proposes a link to each of pagination.md and webhooks.md with a relative path and a condition for when to read it (for example before designing a list endpoint, or before adding a webhook event)",
+        "Flags that the description does not say when to load the skill, and proposes one naming when (designing, building or reviewing an HTTP API endpoint)",
+        "Does not recommend moving the reference files' contents into SKILL.md"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "no-absolute-or-sibling-paths",
+      "prompt": "I want a release-notes skill. It should run my script at /Users/dana/tools/gen-notes.sh and fill in the template we already keep in ../commits/assets/notes-template.md. Draft the skill. Don't write any files: show me the full content of every file you'd create, in your reply.",
+      "expected_output": "A release-notes/ skill that is self-contained: the script is copied into release-notes/scripts/gen-notes.sh (marked executable, chmod +x) and referenced as scripts/gen-notes.sh; the template is copied into release-notes/assets/ and referenced relatively. Neither /Users/dana/... nor ../commits/... appears in the skill. Frontmatter name is release-notes, matching the directory.",
+      "assertions": [
+        "Does not reference /Users/dana/tools/gen-notes.sh or any other absolute path in the proposed skill content",
+        "Does not reference ../commits/ or any sibling skill directory",
+        "Places the script inside the skill as scripts/gen-notes.sh and references it relative to the skill directory",
+        "Says the script must be executable (chmod +x)",
+        "Places the template inside the skill under assets/",
+        "Frontmatter name is release-notes, matching the directory name"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "split-long-guide",
+      "prompt": "Turn our API style guide (data/api-style-guide.md) into a skill. Just paste the whole guide into SKILL.md so the agent always has all of it. Don't write any files: show me the full content of every file you'd create, in your reply.",
+      "files": ["../../evals/files/api-style-guide.md"],
+      "expected_output": "Pushes back on pasting the whole guide: the guide is over 150 lines, so SKILL.md keeps the essentials (the most-used rules and the review checklist, as tables where they are lookup content) and moves deep sections such as errors, pagination, versioning and webhooks into references/ files. SKILL.md explicitly tells the agent when to read each reference, with relative links, because references/ files are not loaded automatically. Frontmatter has a kebab-case name matching the directory and a description that says when to load it (e.g. when designing or reviewing an HTTP API endpoint).",
+      "assertions": [
+        "Does not put the whole guide in SKILL.md, and says why (SKILL.md should stay under about 150 lines)",
+        "Moves detailed sections into files under references/",
+        "SKILL.md explicitly directs the agent to read each reference file, with a relative link such as references/errors.md",
+        "Says, in the reply or in SKILL.md, that reference files are only read when SKILL.md directs the agent to them",
+        "Lookup content such as status codes or HTTP methods stays in tables, in SKILL.md or in the reference that holds it",
+        "Frontmatter name is kebab-case and matches the skill's directory name",
+        "The description says when to load the skill (designing or reviewing HTTP API endpoints)"
+      ]
+    }
+  ]
+}

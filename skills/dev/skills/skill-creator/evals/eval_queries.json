@@ -1,0 +1,18 @@
+[
+  { "query": "write a new skill for formatting changelogs", "should_trigger": true },
+  { "query": "turn our deploy runbook into an agent skill", "should_trigger": true },
+  { "query": "what frontmatter does a SKILL.md need?", "should_trigger": true },
+  {
+    "query": "my skill's references never get read, how should SKILL.md point to them?",
+    "should_trigger": true
+  },
+  {
+    "query": "is this skill description good enough for agents to pick it up?",
+    "should_trigger": true
+  },
+  { "query": "scaffold a new npm package", "should_trigger": false },
+  { "query": "write the README for this repo", "should_trigger": false },
+  { "query": "build an MCP server for our billing API", "should_trigger": false },
+  { "query": "review this TypeScript diff for bugs", "should_trigger": false },
+  { "query": "add a GitHub Actions workflow that runs our tests", "should_trigger": false }
+]

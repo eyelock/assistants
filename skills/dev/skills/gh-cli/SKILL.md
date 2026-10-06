@@ -9,6 +9,27 @@ description: GitHub operations via gh CLI — use this instead of GitHub MCP ser
 
 The `gh` CLI is always available, scriptable, and produces predictable output. MCP server tools introduce unnecessary indirection and cause confusion when their side effects (push, create, close) occur even if you later reject the agent's response.
 
+## Read Freely, Write Only When Asked
+
+Reads change nothing: `list`, `view`, `checks`, `diff`, `status`, `search`, `run view`, and `gh api` GETs. Run as many as the question needs.
+
+Writes change what other people see: `create`, `comment`, `edit`, `merge`, `close`, `review`, `run rerun`, `release delete`, and `gh api` with `-X POST`, `PATCH`, `PUT` or `DELETE`. Run one only when the user asked for that change. When a read turns up something worth doing (a rerun, a comment, a merge), report it and offer; don't do it.
+
+For scripting, ask for `--json <fields>` and filter with `--jq` rather than parsing the table output.
+
+## What's Waiting on Me
+
+`gh pr list` only covers the current repository; review requests and assigned issues can live anywhere.
+
+```bash
+gh status                                            # assigned issues and PRs, review requests, mentions, across repos
+gh pr list --author @me                              # my open PRs here
+gh search prs --review-requested=@me --state=open    # PRs waiting on my review, every repo
+gh issue list --assignee @me
+```
+
+Report each PR with what blocks it: failing checks, review required, draft, or ready to merge.
+
 ## Pull Requests
 
 ```bash
@@ -44,6 +65,19 @@ gh run watch <run-id> --exit-status    # blocks until complete; exits non-zero o
 gh run list --branch <branch> --workflow=ci.yml --limit 1
 gh run list --commit <sha> --workflow=ci.yml
 ```
+
+### Why Did CI Fail?
+
+Go from the PR to the failing step's output, then read the code it points at:
+
+```bash
+gh pr checks <number>                  # which check failed; its link holds the run and job IDs
+gh run view <run-id>                   # the run's jobs and the failed step
+gh run view <run-id> --log-failed      # only the failed steps' log
+gh run view <run-id> --job <job-id> --log   # one job's full log, when the failed lines need context
+```
+
+An aggregate check (such as All Clear) fails because another job did: report the job that actually failed. Rerunning is a write: suggest it for a failure that looks flaky, and run it only when asked.
 
 ## Releases
 

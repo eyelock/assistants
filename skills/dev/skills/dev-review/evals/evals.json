@@ -1,0 +1,53 @@
+{
+  "skill_name": "dev-review",
+  "fixtures": "Files are copied into the run's data/ folder. There is no git in the sandbox, so the change under review is given as a patch. Line numbers are new-file line numbers.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "planted-defects",
+      "prompt": "Can you review data/orders-api.patch before I merge it? It adds the orders repo and handlers and points config at the refunds service.",
+      "files": ["../../evals/files/orders-api.patch"],
+      "expected_output": "Findings grouped by file, critical first, each with file, new-file line and severity (critical / warning / nit). Critical: SQL injection in src/orders/repo.ts findOrdersByStatus (status concatenated into the SQL, lines 13-15, reachable from the status query parameter); a live refunds API key hard-coded in src/config.ts line 9. Warning or critical: the swallowed error in cancelOrder (repo.ts lines 33-35) that returns true even when the update or refund failed; the off-by-one loop in exportOrders (handler.ts line 14) that skips the first order and reads past the end; the unvalidated, uncapped ids query parameter in exportOrders (handler.ts line 11) that is not limited to the requesting customer's orders. Line numbers are new-file lines from the hunk headers (config.ts line 9, not patch line 93; handler.ts line 14, not patch line 70). Not defects: the generated $1..$n placeholders in findOrdersByIds, and the catch in cancel that rethrows with context. The verdict, request changes, is the last thing in the review.",
+      "assertions": [
+        "Flags SQL injection in findOrdersByStatus (src/orders/repo.ts, status concatenated into the query) as critical",
+        "Flags the hard-coded refunds API key in src/config.ts as critical, with the fix of reading it from the environment or a secrets manager",
+        "Flags the empty catch in cancelOrder (src/orders/repo.ts) as a swallowed error, at warning or critical, noting it reports success even when the cancel or refund failed",
+        "Flags the loop in exportOrders (src/orders/handler.ts) as off by one: it starts at 1 and runs to i <= orders.length, skipping the first order and reading past the end, at warning or critical",
+        "Flags that exportOrders takes ids from the query string without validating or capping them, or without restricting them to the requesting customer",
+        "Line references are new-file line numbers, not lines of the patch file: the API key is cited at src/config.ts line 9 (not 93) and the export loop at src/orders/handler.ts line 14 (not 70)",
+        "Does not report findOrdersByIds (the generated $1, $2 placeholders with ids passed as parameters) as SQL injection",
+        "Does not report the catch in the cancel handler, which rethrows with context, as a swallowed error",
+        "Findings are grouped under their files, and within each file critical findings come before warnings and nits",
+        "The review closes with the verdict, request changes, as its final statement (not only stated up front)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "refactor-changes-behavior",
+      "prompt": "Review data/retry-refactor.patch? It's a pure refactor, the PR description is data/retry-refactor-pr.md.",
+      "files": ["../../evals/files/retry-refactor.patch", "../../evals/files/retry-refactor-pr.md"],
+      "expected_output": "The PR claims no behaviour change, but the diff changes behaviour in three ways it does not mention: Capture and Refund now make up to 5 attempts instead of 3; the fixed 200 ms sleep becomes a doubling backoff (and now respects ctx cancellation); and Void, which never retried, now retries. Each unannounced behaviour change is a finding at warning level (more retries on Refund and a newly retried Void also widen the window for duplicate side effects if the provider does not deduplicate). Fix: keep 3 attempts and leave Void alone in this PR, or say in the description that behaviour changes and why. Refund being retried at all without an idempotency key is pre-existing and listed separately, not counted toward the verdict. Findings cite new-file lines (client.go lines around 38-56, retry.go 10-25). Verdict, last: request changes.",
+      "assertions": [
+        "Says the change is not the pure refactor it claims, because it changes behaviour",
+        "Flags the attempt count going from 3 to 5 for Capture and Refund",
+        "Flags that Void did not retry before and now does",
+        "Rates the unannounced behaviour changes as warning (or critical), not as nits or questions",
+        "Does not approve as-is: the verdict is request changes, or needs discussion, given as the review's final statement"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "clean-rename",
+      "prompt": "Review data/late-fee.patch please, it's just renames and a named constant.",
+      "files": ["../../evals/files/late-fee.patch"],
+      "expected_output": "No critical or warning findings: the change only renames parameters, extracts graceDays and adds doc comments; behaviour is unchanged and the test is updated to match. Naming or comment suggestions, if any, are nits that do not block. Overall: approve.",
+      "assertions": [
+        "Reports no critical findings",
+        "Reports no warning findings",
+        "Recognises that behaviour is unchanged (same threshold of 30 days, same 2% fee)",
+        "Does not claim the tests are missing or need to change behaviour",
+        "The overall assessment is approve"
+      ]
+    }
+  ]
+}

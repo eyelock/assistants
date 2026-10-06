@@ -1,0 +1,95 @@
+diff --git a/src/orders/repo.ts b/src/orders/repo.ts
+new file mode 100644
+--- /dev/null
++++ b/src/orders/repo.ts
+@@ -0,0 +1,46 @@
++import { db } from "../db";
++import { refunds } from "../refunds";
++
++export interface Order {
++  id: string;
++  customerId: string;
++  status: string;
++  totalCents: number;
++}
++
++export async function findOrdersByStatus(customerId: string, status: string): Promise<Order[]> {
++  const sql =
++    "SELECT id, customer_id, status, total_cents FROM orders WHERE customer_id = $1 AND status = '" +
++    status +
++    "'";
++  const { rows } = await db.query(sql, [customerId]);
++  return rows.map(toOrder);
++}
++
++export async function findOrdersByIds(ids: string[]): Promise<Order[]> {
++  const placeholders = ids.map((_, i) => "$" + (i + 1)).join(", ");
++  const { rows } = await db.query(
++    `SELECT id, customer_id, status, total_cents FROM orders WHERE id IN (${placeholders})`,
++    ids,
++  );
++  return rows.map(toOrder);
++}
++
++export async function cancelOrder(id: string): Promise<boolean> {
++  try {
++    await db.query("UPDATE orders SET status = 'cancelled' WHERE id = $1", [id]);
++    await refunds.issue(id);
++  } catch (err) {
++    // refunds provider is flaky, don't fail the request
++  }
++  return true;
++}
++
++function toOrder(row: Record<string, unknown>): Order {
++  return {
++    id: String(row.id),
++    customerId: String(row.customer_id),
++    status: String(row.status),
++    totalCents: Number(row.total_cents),
++  };
++}
+diff --git a/src/orders/handler.ts b/src/orders/handler.ts
+new file mode 100644
+--- /dev/null
++++ b/src/orders/handler.ts
+@@ -0,0 +1,27 @@
++import type { Request, Response } from "express";
++import { cancelOrder, findOrdersByIds, findOrdersByStatus } from "./repo";
++
++export async function listOrders(req: Request, res: Response) {
++  const status = String(req.query.status ?? "open");
++  const orders = await findOrdersByStatus(req.user.id, status);
++  res.json(orders);
++}
++
++export async function exportOrders(req: Request, res: Response) {
++  const ids = String(req.query.ids).split(",");
++  const orders = await findOrdersByIds(ids);
++  const lines: string[] = [];
++  for (let i = 1; i <= orders.length; i++) {
++    lines.push(`${orders[i].id},${orders[i].status},${orders[i].totalCents}`);
++  }
++  res.type("text/csv").send(lines.join("\n"));
++}
++
++export async function cancel(req: Request, res: Response) {
++  try {
++    const ok = await cancelOrder(req.params.id);
++    res.json({ ok });
++  } catch (err) {
++    throw new Error(`cancelling order ${req.params.id}: ${(err as Error).message}`, { cause: err });
++  }
++}
+diff --git a/src/config.ts b/src/config.ts
+index 41ac0d2..9be7310 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -6,6 +6,7 @@ function required(name: string): string {
+ export const config = {
+   port: Number(process.env.PORT ?? 3000),
+   databaseUrl: required("DATABASE_URL"),
+-  refundsApiKey: required("REFUNDS_API_KEY"),
++  refundsApiKey: "refunds_live_9f8c2e7a41b04d6aa3e5",
++  refundsTimeoutMs: 5_000,
+ };

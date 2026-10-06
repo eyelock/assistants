@@ -1,0 +1,80 @@
+{
+  "skill_name": "dev-project",
+  "fixtures": "Shell sandbox cases in an empty directory (for the Go case, ./tally is an empty git repository made by the setup): the agent may write files and run mkdir, git, go and make (golangci-lint is installed; there is no network, so no packages can be installed, and the OS sandbox may refuse git init because it cannot write .git/config). The evidence lists every file created, prints the small config files, each new repository's commits, and for a Go project runs make build, make test and make lint fresh.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "go-cli",
+      "prompt": "Start a new Go CLI project called tally. I've made ./tally for it (empty, already git init'd). Module github.com/acme/tally; it will count words in the files you give it. Go modules, golangci-lint for lint.",
+      "tools": [
+        "Write(./**)",
+        "Edit(./**)",
+        "Bash(mkdir:*)",
+        "Bash(git:*)",
+        "Bash(go:*)",
+        "Bash(make:*)",
+        "Bash(gofmt:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-project-evidence.sh\"",
+      "expected_output": "Everything needed was given, so it scaffolds without asking. tally/ has the standard Go layout: cmd/tally/main.go, internal/ (the counting logic, with a test), go.mod for github.com/acme/tally; a Makefile with build, test, lint and fmt targets (lint runs golangci-lint), a .golangci.yml with minimal config, a Go .gitignore and a minimal README. It makes an initial commit in the existing repository, then runs make build, make test and make lint and reports the results.",
+      "assertions": [
+        "tally/ has cmd/tally/main.go and an internal/ package holding the counting logic, and go.mod declares module github.com/acme/tally",
+        "tally/Makefile has build, test, lint and fmt targets, and lint runs golangci-lint",
+        "There is a golangci-lint config file (.golangci.yml or .golangci.yaml) in tally/",
+        "tally/ has a .gitignore suited to Go and a README.md",
+        "tally/ has an initial commit holding the scaffold",
+        "make build, make test and make lint in the evidence all exit 0",
+        "The reply reports running the build and test targets, and what it says about them matches the evidence"
+      ],
+      "setup": "../../evals/files/dev-project-tally-setup.sh"
+    },
+    {
+      "id": 2,
+      "name": "typescript-library",
+      "prompt": "Scaffold a TypeScript library, slugify-lite, in ./slugify-lite. npm, vitest for tests.",
+      "tools": [
+        "Write(./**)",
+        "Edit(./**)",
+        "Bash(mkdir:*)",
+        "Bash(git:*)",
+        "Bash(make:*)",
+        "Bash(npm:*)",
+        "Bash(npx:*)",
+        "Bash(node:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-project-evidence.sh\"",
+      "expected_output": "It scaffolds the TypeScript layout: src/ (with the library entry), tests/ (a vitest test), package.json with build, test, lint and format scripts, tsconfig.json; eslint and prettier config with minimal settings; a task runner with the standard build, test, lint and fmt targets (a Makefile, or the package.json scripts); a Node .gitignore covering node_modules and dist; a minimal README. It initialises git with an initial commit. There is no network, so npm install fails: it says so and does not claim the build or tests passed.",
+      "assertions": [
+        "slugify-lite/ has src/ with the library code and tests/ with a vitest test",
+        "package.json has scripts for build, test, lint and format, and vitest, typescript, eslint and prettier as devDependencies",
+        "slugify-lite/ has a tsconfig.json",
+        "slugify-lite/ has eslint and prettier config files",
+        "slugify-lite/ has a Makefile with build, test, lint and fmt targets",
+        "slugify-lite/.gitignore ignores node_modules and dist, and there is a README.md",
+        "slugify-lite/ is a git repository with an initial commit, or the reply says git init or the commit was blocked",
+        "The reply says dependencies could not be installed (no network) and does not claim the build or tests passed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "underspecified",
+      "prompt": "Set up a new project for me in ./scratch.",
+      "tools": [
+        "Write(./**)",
+        "Edit(./**)",
+        "Bash(mkdir:*)",
+        "Bash(git:*)",
+        "Bash(go:*)",
+        "Bash(make:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-project-evidence.sh\"",
+      "expected_output": "It asks before scaffolding anything: what language or framework, what kind of project (CLI, library, web service), and which package manager. It does not guess a stack and create files.",
+      "assertions": [
+        "The reply asks which language or framework to use",
+        "The reply asks what type of project it is (for example CLI, library or web service)",
+        "The reply asks about the package manager or tooling preference",
+        "No source files, Makefile or package manifest were created (an empty scratch/ directory at most)"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Author agent skills conforming to the agentskills.io spec — SKILL.md format, frontmatter fields, directory layout, reference docs, and progressive disclosure patterns.
+description: Author agent skills conforming to the agentskills.io spec - SKILL.md format, frontmatter fields, directory layout, reference docs, and progressive disclosure patterns. Use when writing, reviewing or improving a skill, including whether its description will make agents load it.
 ---
 
 # Skill Creator
@@ -20,9 +20,6 @@ Every skill entry point is a `SKILL.md` file with YAML frontmatter followed by M
 name: my-skill
 description: One sentence — what this skill does and when to use it.
 allowed-tools: Bash Read Grep
-metadata:
-  author: eyelock
-  version: "0.1.0"
 ---
 
 # Skill Title
@@ -36,8 +33,8 @@ Skill content here.
 
 **Optional frontmatter fields:**
 - `allowed-tools` — space-separated list of tools this skill may use
-- `metadata.version` — semver string
-- `metadata.author` — author identifier
+
+Leave out `metadata` and `license` in a skill that ships in a plugin: Claude Code's plugin loader demotes a skill with either key to a ~10-token stub, so it installs and never fires (`ynd lint` flags this). Keep version and authorship in the plugin manifest instead.
 
 ## Directory Layout
 
@@ -63,17 +60,21 @@ my-skill/
 
 **Lead with the job, not the theory.** The first section should tell the agent what to do, not explain background.
 
-**Use progressive disclosure.** Put the 20% of guidance that covers 80% of cases in `SKILL.md`. Move deep reference material into `references/`. Direct the agent explicitly:
+**Use progressive disclosure.** Put the 20% of guidance that covers 80% of cases in `SKILL.md`. Move deep reference material into `references/`, one file per topic. `references/` files are never loaded automatically, so link each one from `SKILL.md` with a relative path and say when to read it:
 
 ```markdown
-For detailed concurrency patterns, see [concurrency.md](references/concurrency.md).
+Before designing a retry loop, read [concurrency.md](references/concurrency.md).
 ```
+
+A reference that `SKILL.md` never names is invisible to the agent.
 
 **Be prescriptive, not descriptive.** Skills tell agents what to do. Avoid phrasing like "you might consider" — write "do X" or "never do Y".
 
-**Tables for lookup content.** Mapping tables (commands, flags, format rules) are faster to scan than prose.
+**Tables for lookup content.** Mapping tables (commands, flags, status codes, format rules) are faster to scan than prose.
 
-**Short SKILL.md.** If the entry point exceeds ~150 lines, split into references. Agents load the full file; keep it dense with the essentials.
+**Keep SKILL.md under ~150 lines.** The whole file enters the context every time the skill loads, so length there costs on every use and buries the rules that matter. Keep the essentials (the steps, the most-used rules, the checklist) and split the rest into references.
+
+**When asked to paste a long document whole into SKILL.md,** do not comply silently. Say what it costs (every line loads on every use, and the key rules get lost in it), and how the agent still gets the rest (it reads a reference when `SKILL.md` points to it, and only then, so each link says when), then propose the split and draft it: a short `SKILL.md` with the essentials and a link to each reference, plus the `references/` files holding the rest of the document, nothing dropped. If the user still wants one file after hearing that, it is their call.
 
 ## Assembly Behaviour (ynh)
 
@@ -89,6 +90,7 @@ When a harness is resolved, ynh copies skill directories into the vendor's confi
 - [ ] `name` in frontmatter matches the directory name
 - [ ] `description` answers "when should an agent load this?"
 - [ ] All referenced files exist at the correct relative paths
+- [ ] Every `references/` file is linked from `SKILL.md`, with when to read it
 - [ ] Scripts are executable (`chmod +x`)
 - [ ] No absolute paths anywhere in the skill content
 - [ ] `SKILL.md` is under ~150 lines; deep content is in `references/`

@@ -1,0 +1,42 @@
+{
+  "skill_name": "dev-ui",
+  "fixtures": "Files are copied into the run's data/ folder; there is no shell. OrdersPage.tsx is a React admin page with planted UI problems; the second case needs no files.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "orders-page-review",
+      "prompt": "Help me get the UI of data/OrdersPage.tsx right before we ship it: accessibility, loading, empty and error states, the note form, and where its state should live.",
+      "files": ["../../evals/files/OrdersPage.tsx"],
+      "expected_output": "Accessibility: the clickable divs (Add note, Next, Send, the close X) become buttons, reachable by keyboard; the thumbnail img needs alt text (alt=\"\" if decorative); the email input and note textarea need labels, not just placeholders; the paid/failed status is shown by dot colour alone and needs text or an icon; the modal needs focus moved into it on open and back to the trigger on close; the page title should be a heading (h1), not a div. States: the page renders nothing (null) while loading, a blank screen, so show a skeleton; a fetch error is only console.logged, so show it with a retry; an empty list is shown as 'Error: no orders' but is an empty state, not an error. State: status and page belong in the URL; selectedFullName is derived from selected and should not be stored; server data should go through a data-fetching library (React Query, SWR). Form: on failure it clears what the user typed and shows a generic banner at the top: keep the input, show errors inline by the field, disable Send while submitting. Structure: split into a container (fetching, state) and presentational parts (table, note modal).",
+      "assertions": [
+        "Says the clickable divs (Add note, Next, Send, the close button) should be real buttons, reachable and operable by keyboard",
+        "Flags the img with no alt text",
+        "Flags the email input and note textarea as having no labels (placeholders are not labels)",
+        "Flags the payment status shown by colour alone and asks for text or an icon too",
+        "Flags the modal's focus management: focus should move into it when it opens and return to the trigger when it closes",
+        "Flags the blank screen while loading (return null) and asks for a loading state such as a skeleton",
+        "Flags that a fetch error is only logged to the console and asks for an error state with a retry",
+        "Says an empty list is an empty state, not an error ('Error: no orders')",
+        "Says status and page should live in the URL so they survive refresh and can be shared",
+        "Says selectedFullName is derived from the selected order and should not be stored in state",
+        "Flags that a failed note submission clears the user's input, and asks to keep the input and show errors inline by the field",
+        "Suggests disabling Send (with a loading indicator) while the note is submitting"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "signup-form",
+      "prompt": "Write a SignupForm React component (email, password, display name) that posts to /api/signup and calls onSignedUp(user) on success. Just give me the code and a short note on the choices.",
+      "expected_output": "A component with a label element tied to each input; validation of each field on blur and of the whole form on submit; errors shown inline next to the relevant field (announced with aria-live or aria-describedby), not only in a banner; the user's input kept when validation or the request fails; the submit button disabled with a loading indicator while submitting; the full lifecycle handled: idle, submitting, success, and a server error with a way to retry. It uses a real button and form element.",
+      "assertions": [
+        "Every input has an associated label element (htmlFor/id or wrapping), not just a placeholder",
+        "Fields are validated when they lose focus (on blur), and the whole form is validated on submit",
+        "Validation errors are shown inline next to their field, not only in a banner at the top",
+        "Errors are announced to screen readers (aria-live, role=alert, or aria-describedby with aria-invalid)",
+        "On a failed request the user's input is kept, and the server error is shown with a way to try again",
+        "The submit button is disabled while submitting and shows a loading indicator",
+        "It uses a form element with a real submit button, not clickable divs"
+      ]
+    }
+  ]
+}

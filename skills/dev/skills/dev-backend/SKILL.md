@@ -1,6 +1,6 @@
 ---
 name: dev-backend
-description: Backend development approach — API design, data flow, error handling, and service architecture patterns.
+description: Backend development approach - API design, data flow, error handling, and service architecture patterns. Use when designing or reviewing an API, a data model or flow, error handling, or how to split a system into services or keep it a monolith.
 ---
 
 # Backend Development

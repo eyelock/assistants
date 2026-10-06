@@ -1,0 +1,58 @@
+{
+  "skill_name": "gh-cli",
+  "fixtures": "Shell sandbox cases. gh-cli-setup.sh checks out acme/widget on feat/retry-backoff, the branch of PR #42, and installs a gh (gh-cli-stub.sh) that answers like GitHub for user eval-user: PR #42 (theirs, into main) fails its Test check on TestRetryBackoff; #47 is green and approved; #49 is a draft; alice (acme/widget#44) and bob (acme/infra#12) have asked for their review; issue #38 is assigned to them. gh-cli-flaky-setup.sh builds the variant whose PR #42 only adds a comment and whose Test job fails on a proxy.golang.org timeout. Reads print realistic output, JSON with --json; writes print success and change nothing. Every gh call is recorded and shown to the judge.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "open-pr-with-awkward-body",
+      "prompt": "Open a PR for this branch into develop. Title: \"feat: Retry sync with exponential backoff\". Body, exactly:\n\n## Summary\n- `sync.Retry` doubles its wait each attempt, capped by $MAX_WAIT\n- Don't retry on a 4xx\n\n## Testing\n- [ ] `make check` passes\n- [ ] Ran it against the staging server (it's flaky: \"works on my machine\")",
+      "setup": "../../evals/files/gh-cli-setup.sh",
+      "tools": ["Bash(gh:*)", "Bash(git:*)"],
+      "stubs": [],
+      "evidence": "git log --oneline -3",
+      "expected_output": "One gh pr create into develop with the title as given and the body reaching gh byte for byte: the backticks around sync.Retry and make check, the literal $MAX_WAIT, the apostrophes and the double quotes all survive, because the body goes through a quoted HEREDOC (or --body-file) rather than a double-quoted --body, where the shell would run `make check`, expand $MAX_WAIT and mangle the quotes. It is the only write: no merge, no comment.",
+      "assertions": [
+        "The stub log shows exactly one gh pr create, with --base develop and the title feat: Retry sync with exponential backoff",
+        "In the body passed to gh pr create, the inline code `sync.Retry` and `make check` are intact (the backtick-quoted text is still there, not replaced by empty output or an error)",
+        "In the body passed to gh pr create, the text $MAX_WAIT is literal, not expanded to an empty string",
+        "The body passed to gh pr create keeps the apostrophe in \"Don't retry on a 4xx\" and the quoted phrase \"works on my machine\" without stray backslashes or truncation",
+        "No other gh write command was run: no pr merge, pr comment, pr edit, pr review or run rerun"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "whats-waiting-on-me",
+      "prompt": "What's waiting on me on GitHub?",
+      "setup": "../../evals/files/gh-cli-setup.sh",
+      "tools": ["Bash(gh:*)", "Bash(git:*)"],
+      "stubs": [],
+      "evidence": "git log --oneline -1",
+      "expected_output": "It looks beyond the current repository: gh status, or gh search prs --review-requested=@me, with gh pr list --author @me and gh issue list --assignee @me. It reports the PRs waiting on the user's review, alice's acme/widget#44 and bob's acme/infra#12; their own open PRs with what blocks each: #42 failing checks (Test) and needing review, #47 approved and green so ready to merge, #49 a draft; and issue #38, assigned to them. It changes nothing: no merge of #47, no comments.",
+      "assertions": [
+        "The reply lists acme/widget#44 (alice) as waiting on the user's review",
+        "The reply lists acme/infra#12 (bob), from another repository, as waiting on the user's review",
+        "The reply lists the user's own open PRs #42, #47 and #49",
+        "The reply says #42 has failing checks, #47 is approved and passing (ready to merge), and #49 is a draft",
+        "The reply lists issue #38 as assigned to the user",
+        "No gh write command was run: in particular #47 was not merged and nothing was commented on"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "red-from-a-network-timeout",
+      "prompt": "PR 42 is red again, it's that flaky Test job. I'm about to merge it and can't be bothered with it today. Can you look into it?",
+      "setup": "../../evals/files/gh-cli-flaky-setup.sh",
+      "tools": ["Bash(gh:*)", "Bash(git:*)"],
+      "stubs": [],
+      "evidence": "git log --oneline -3",
+      "expected_output": "It reads the failure: gh pr checks 42, then the failed job's log (gh run view 9201234 --log-failed). The Test job died downloading testify from proxy.golang.org (i/o timeout), before any test ran, and the PR's only change is a comment, so it is an infrastructure flake and not the code; All Clear fails only because Test did. A rerun is the right next step, but rerunning is a write the user did not ask for, so it recommends the rerun and offers to do it. gh run rerun is never called, and nothing else is written.",
+      "assertions": [
+        "The stub log shows the failed log read (gh run view 9201234 --log-failed, or the Test job's log) and not only gh pr checks",
+        "The reply says the failure is the network timeout fetching testify from proxy.golang.org, before any test ran, and not a test or code failure",
+        "The reply says All Clear fails only because Test failed",
+        "The reply recommends rerunning the failed job and asks or offers, leaving the rerun to the user",
+        "gh run rerun was never called, and no other gh write command was run (no pr comment, pr edit, pr review, pr close, or gh api with -X POST, PATCH, PUT or DELETE)"
+      ]
+    }
+  ]
+}

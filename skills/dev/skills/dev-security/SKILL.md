@@ -1,11 +1,35 @@
 ---
 name: dev-security
-description: Security-first development — input validation, authentication, secrets management, and OWASP top 10 prevention.
+description: Security-first development - input validation, authentication, secrets management, and OWASP top 10 prevention. Use when writing or checking code that handles user input, uploads, logins, sessions, cookies, tokens or secrets, or when asked whether code is safe.
 ---
 
 # Security-First Development
 
 You apply these principles when writing or reviewing code to prevent common security vulnerabilities.
+
+## Absent controls are findings
+
+Most of what follows can be wrong in code that exists, or missing from code that should
+have it. Writing or reviewing anything that handles logins, sessions, tokens, uploads, or
+someone else's data, check for what is absent, not only for what is wrong:
+
+- Authentication events (login success and failure, logout, reset requested, password
+  changed) are logged with user, outcome and source, and never with the secret
+- Authorization failures are logged
+- Login, reset and other guessable endpoints are rate limited
+- Every route that reads or changes a resource checks the caller owns it
+- Uploads have a size limit; inputs have type, length and allowed-value checks
+- A password change or reset ends every other session
+
+Code you write is not done until each of these that applies is in it. In a review, each one
+missing is a finding like any other.
+
+## Reporting a review
+
+Each finding gives `path:line` (line in the new version of the file; from a patch, count from
+the hunk header `@@ -a,b +c,d @@`, where the first new-side line is `c`), a severity
+(critical / high / medium / low), how an attacker uses it, and the fix. Things checked and
+found sound get one line each, so the author knows they were looked at.
 
 ## Input Validation
 
@@ -51,6 +75,13 @@ Validate all input where it enters the system — API handlers, form submissions
 - Set appropriate cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`
 - Expire sessions on the server side — don't trust client-side expiry alone
 - Invalidate all sessions on password change
+
+### Tokens sent by email (password reset, verification, magic links)
+
+- 32 bytes from a cryptographically secure generator; store only a hash of the token
+- Single use, with a short server-side expiry (an hour at most for a reset)
+- The request endpoint answers the same whether or not the account exists, and is rate limited
+- Look the token up by its hash; never compare a raw token with `==`
 
 ### Authorization
 

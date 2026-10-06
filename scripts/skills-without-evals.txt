@@ -1,14 +1,5 @@
 # Skills that predate the evals rule (see AGENTS.md). Remove a line when its skill gets evals;
 # never add one: a new skill ships with evals/evals.json and evals/eval_queries.json.
-skills/dev/skills/dev-backend
-skills/dev/skills/dev-debug
-skills/dev/skills/dev-project
-skills/dev/skills/dev-quality
-skills/dev/skills/dev-review
-skills/dev/skills/dev-security
-skills/dev/skills/dev-ui
-skills/dev/skills/gh-cli
-skills/dev/skills/skill-creator
 skills/infra/skills/gh-os-repo
 skills/infra/skills/terraform-backend-aws
 skills/pause/skills/help-me-answer
