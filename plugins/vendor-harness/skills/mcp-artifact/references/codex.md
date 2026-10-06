@@ -23,7 +23,7 @@ stdio only. HTTP/SSE not supported.
   }
 }
 
-## Known ynh Discrepancy
+## ynh Export
 
-ynh writes MCP config as TOML to .codex/config.toml — should be JSON .mcp.json.
-This is a known HIGH priority gap.
+ynh writes plugin MCP config as JSON `.mcp.json` at the plugin root (the old TOML
+`.codex/config.toml` output was fixed in eyelock/ynh#186; see known-gaps in vendor-adapters).

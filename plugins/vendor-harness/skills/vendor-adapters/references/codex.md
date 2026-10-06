@@ -17,7 +17,7 @@ Optional: `author`, `homepage`, `repository`, `license`, `keywords`, `skills`, `
 `developerName`, `capabilities`, `websiteURL`, `privacyPolicyURL`, `termsOfServiceURL`, `composerIcon`, `defaultPrompt`.
 
 Component pointers in manifest:
-- `skills` — path to skills directory (e.g. `"./skills/"`)
+- `skills` — path to skills directory (e.g. `"./skills/"`); optional, root `skills/` is discovered by default
 - `mcpServers` — path to MCP config (e.g. `"./.mcp.json"`)
 - `apps` — path to app config (e.g. `"./.app.json"`) — Codex-specific, no equivalent in Claude/Cursor
 - `interface` — display metadata for marketplace (displayName, shortDescription, category, brandColor, logos, screenshots)

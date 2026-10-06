@@ -7,8 +7,8 @@ Docs: https://code.claude.com/docs/en/sub-agents
 name: agent-name           # required
 description: What it does  # required; used for routing
 model: sonnet              # optional; override model
-tools: Read, Bash, Grep    # optional; space-delimited
-disallowedTools: Write     # optional; space-delimited
+tools: Read, Bash, Grep    # optional; comma-separated string or YAML list
+disallowedTools: Write     # optional; same format as tools
 skills:                    # optional; array
   - skill-name
 maxTurns: 10               # optional

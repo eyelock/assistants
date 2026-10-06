@@ -1,0 +1,48 @@
+{
+  "skill_name": "subagent-artifact",
+  "fixtures": "Each file is an agents/*.md definition, copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "claude-agent-to-copilot",
+      "prompt": "We wrote data/release-captain.md for Claude Code. We're now publishing the plugin for Copilot CLI and Cursor too. What will break?",
+      "files": ["../../evals/files/release-captain.md"],
+      "expected_output": "skills: is Claude-only and silently ignored elsewhere, so on Copilot and Cursor the agent runs without changelog-writer and semver-check; name them in the prompt body as an explicit instruction and keep the frontmatter key. tools lists only Claude names, which strips Bash and WebFetch on Copilot; list Copilot's raw names too (bash, view, web_fetch) or drop tools. GitHub's aliases (web, execute, read) do not work in tools. model: sonnet does not resolve on Copilot, which warns and falls back to auto. maxTurns is Claude-only. The file does not need renaming to .agent.md.",
+      "assertions": [
+        "Says the skills: key is ignored on Copilot CLI and Cursor, so the agent runs without changelog-writer and semver-check",
+        "Recommends naming the skills in the agent's prompt body as an explicit instruction",
+        "Recommends keeping the skills: frontmatter key for Claude Code rather than removing it",
+        "Says the Claude-only tools list strips capability on Copilot and recommends adding Copilot's raw tool names (such as bash, view, web_fetch) or omitting tools",
+        "Does not recommend GitHub's tool aliases (web, execute, read) as the fix in tools:",
+        "Says model: sonnet does not resolve on Copilot CLI, which warns and falls back to auto",
+        "Does not say the file must be renamed to .agent.md for Copilot"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "codex-no-agents",
+      "prompt": "Can I ship data/triager.md as an agent in our Codex plugin? What frontmatter does Codex want?",
+      "files": ["../../evals/files/triager.md"],
+      "expected_output": "Not in the plugin: Codex plugins carry skills, MCP servers, apps and hooks, never agents, so data/triager.md in the plugin would be ignored. Two ways to get it to Codex users: ship the triage flow as a skill (or in AGENTS.md), which the plugin can carry, or have users add a standalone Codex agent, which is a TOML file in .codex/agents/ (or ~/.codex/agents/) with name, description and developer_instructions, not Markdown frontmatter. The file is fine as-is for Claude Code.",
+      "assertions": [
+        "States that Codex plugins cannot ship agents, so the file would not load from the plugin",
+        "Offers carrying the triage flow in a skill (or AGENTS.md) that the plugin can ship",
+        "If it describes Codex's own custom agents, places them outside the plugin in .codex/agents/ (or ~/.codex/agents/) as TOML with name, description and developer_instructions, not Markdown frontmatter",
+        "Does not report problems with the agent's frontmatter for Claude Code"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "copilot-empty-tools",
+      "prompt": "In Copilot CLI, `copilot --agent docs-bot -p \"update the docs\"` fails, and when I did get it running it couldn't read or edit anything. It's agents/docs-bot.md in our docs-kit plugin, copy in data/docs-bot.md. I put tools: [] so it gets everything.",
+      "files": ["../../evals/files/docs-bot.md"],
+      "expected_output": "Three problems. description is missing, and Copilot requires it (Claude requires it too). tools: [] disables all tools in Copilot; it does not mean all allowed, so omit tools to get everything. Plugin agents are addressed as plugin-name:agent-name, so the bare name docs-bot is rejected; use docs-kit:docs-bot.",
+      "assertions": [
+        "Flags the missing description as required by Copilot CLI",
+        "Explains that tools: [] disables every tool in Copilot rather than allowing all",
+        "Recommends omitting tools (or listing the tools) to give the agent its tools",
+        "Says Copilot plugin agents must be addressed as plugin-name:agent-name, e.g. docs-kit:docs-bot"
+      ]
+    }
+  ]
+}

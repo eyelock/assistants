@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "code-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@acme/code-search-mcp"],
+      "tools": ["*"]
+    }
+  }
+}

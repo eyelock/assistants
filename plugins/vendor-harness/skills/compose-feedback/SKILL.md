@@ -30,4 +30,4 @@ Example: `[hooks-artifact] PreToolUse hook not firing in Cursor plugin format`
 - Fix: what was changed and why
 - Testing: how to verify the fix
 
-Gather missing fields by asking the user one question at a time before composing the final report. Do not submit with unknown or vague fields — a weak report is worse than no report.
+Gather missing fields by asking the user one question at a time before composing the final report: ask about the first missing field only, and do not list or preview the questions that will follow. Do not submit with unknown or vague fields — a weak report is worse than no report. A draft with `TBD`, `unknown` or a guessed value in a required field is that weak report: ask for the field instead. The **Source** matters most, since without it the report cannot reach the right maintainer.

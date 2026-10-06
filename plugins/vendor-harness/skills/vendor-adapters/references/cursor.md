@@ -35,28 +35,24 @@ plugin-root/
 
 ## Hook Config Paths
 
-- Plugin: `hooks/hooks.json` (inside plugin dir)
-- Project: `.cursor/settings.json` (committable)
-- Project-local: `.cursor/settings.local.json` (gitignored)
-- User: `~/.cursor/settings.json`
+- Plugin: `hooks/hooks.json` (at plugin root)
+- Project: `.cursor/hooks.json`
+- User: `~/.cursor/hooks.json`
+- Enterprise: OS-specific `hooks.json` (e.g. `/Library/Application Support/Cursor/hooks.json`)
 
-## Hook Events (25 — same as Claude Code)
-
-SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PermissionDenied,
-PostToolUse, PostToolUseFailure, Notification, SubagentStart, SubagentStop,
-TaskCreated, TaskCompleted, Stop, StopFailure, TeammateIdle, InstructionsLoaded,
-ConfigChange, CwdChanged, FileChanged, WorktreeCreate, WorktreeRemove,
-PreCompact, PostCompact, Elicitation, ElicitationResult, SessionEnd
+There is no `.cursor/settings.json` for hooks. Cursor can also load Claude Code hooks from
+`.claude/settings*.json` when third-party configs are enabled (cursor.com/docs/reference/third-party-hooks);
+see hooks-artifact's Cursor reference for the event mapping.
 
 ## Hook Types
 
-command, http, prompt, agent (same as Claude Code)
+command (default), prompt. No http, agent, or mcp_tool type.
 
-## Hook Formats (TWO different formats)
+## Hook Format — flat, camelCase, one format everywhere
 
-**Plugin hooks/hooks.json** — flat/legacy format with lowercase event names:
 ```json
 {
+  "version": 1,
   "hooks": {
     "beforeShellExecution": [
       {"command": "./scripts/validate-shell.sh", "matcher": "rm|curl|wget"}
@@ -71,28 +67,14 @@ command, http, prompt, agent (same as Claude Code)
 }
 ```
 
-**Settings.json** — three-level format with PascalCase event names (same as Claude):
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {"type": "command", "command": "/path/to/script.sh", "timeout": 60}
-        ]
-      }
-    ]
-  }
-}
-```
+The hooks docs require `"version": 1`; the plugin reference's example omits it.
 
-CONFIRMED (cursor.com/docs/hooks, cursor.com/docs/reference/plugins): both locations
-use the SAME flat/lowercase-camelCase format and event names — only the path differs.
-Project-level `.cursor/hooks.json` (also `.cursor/hooks.json` gitignored-local,
-`~/.cursor/hooks.json` user, and OS-specific enterprise paths) vs plugin-format
-`hooks/hooks.json` at plugin root. ynh's Cursor adapter (`Cursor.GenerateHookConfig`)
-now writes both paths with identical content.
+CONFIRMED (cursor.com/docs/hooks, cursor.com/docs/reference/plugins): plugin and project
+locations use the SAME flat/lowercase-camelCase format and event names — only the path
+differs. ynh's Cursor adapter (`Cursor.GenerateHookConfig`) writes both
+`.cursor/hooks.json` and plugin-root `hooks/hooks.json` with identical content.
+
+## Hook Events (21: 18 agent, 2 Tab, 1 app lifecycle)
 
 Full supported event list confirmed via docs: `sessionStart`, `sessionEnd`,
 `preToolUse`, `postToolUse`, `postToolUseFailure`, `subagentStart`, `subagentStop`,
@@ -100,7 +82,7 @@ Full supported event list confirmed via docs: `sessionStart`, `sessionEnd`,
 `afterMCPExecution`, `beforeReadFile`, `afterFileEdit`, `beforeSubmitPrompt`,
 `preCompact`, `stop`, `afterAgentResponse`, `afterAgentThought` (plus Tab hooks
 `beforeTabFileRead`/`afterTabFileEdit` and app-lifecycle `workspaceOpen`, not
-currently mapped by ynh). ynh's canonical map only covers 4 events today — SessionStart
+currently mapped by ynh). ynh's canonical map covers 5 events — SessionStart
 was added as `on_session_start` in eyelock/ynh#204; the rest remain unmapped.
 
 ## MCP Format

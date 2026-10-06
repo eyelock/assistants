@@ -1,0 +1,86 @@
+{
+  "skill_name": "locate-artifact-source",
+  "fixtures": "Shell sandbox cases. Each setup builds the world in the run's directory with git, and installs a ynh stub that prints a fixed state and logs its calls (gh, copilot and codex are recorders). Read, Glob and Grep work as usual; nothing reaches a real home directory's installs.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ynh-harness-skill",
+      "prompt": "Where did the push skill at ynh-home/harnesses/github.com--eyelock--assistants--gitflow/skills/push/SKILL.md come from? I want to send a fix to wherever it really lives.",
+      "setup": "../../evals/files/locate-ynh-setup.sh",
+      "tools": [
+        "Bash(ynh:*)",
+        "Bash(git:*)",
+        "Bash(ls:*)",
+        "Bash(cat:*)",
+        "Bash(find:*)",
+        "Bash(which:*)",
+        "Bash(copilot:*)",
+        "Bash(codex:*)"
+      ],
+      "stubs": ["gh", "copilot", "codex"],
+      "expected_output": "Runs ynh ls --format json first and matches the harness whose path holds the file. Reports source_repo github.com/eyelock/assistants, source_path plugins/gitflow/skills/push/SKILL.md, source_ref develop at a4968ff7363ae68709cca8bce1c2fbb44677f2fe, strategy_used YNH (strategy 1), confidence high. Does not name acme/website (the project's own origin) or a guessed eyelock/gitflow repo.",
+      "assertions": [
+        "The stub calls show ynh ls --format json was run",
+        "Names github.com/eyelock/assistants as the source repo",
+        "Gives the source path as plugins/gitflow/skills/push/SKILL.md (the harness path plugins/gitflow plus the file's path inside it)",
+        "Gives the ref as develop and/or the commit a4968ff",
+        "Says the YNH strategy found it",
+        "States a confidence level, and it is high",
+        "Does not name github.com/acme/website as the source"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "vendored-plugin",
+      "prompt": "Where did the style-check skill in this repo (tools/plugins/lint-kit/skills/style-check/SKILL.md) originally come from? I want to report a bug in it to the right people.",
+      "setup": "../../evals/files/locate-vendored-setup.sh",
+      "tools": [
+        "Bash(ynh:*)",
+        "Bash(git:*)",
+        "Bash(ls:*)",
+        "Bash(cat:*)",
+        "Bash(find:*)",
+        "Bash(which:*)",
+        "Bash(copilot:*)",
+        "Bash(codex:*)"
+      ],
+      "stubs": ["gh", "copilot", "codex"],
+      "expected_output": "Git history shows the file was committed into acme/shop-web ('Vendor lint-kit plugin for CI'), but that only proves it was vendored: the file sits under tools/plugins/lint-kit, whose .claude-plugin/plugin.json names repository https://github.com/tools-co/lint-kit at version 1.4.0. Reports source_repo github.com/tools-co/lint-kit, source_path skills/style-check/SKILL.md, source_ref 1.4.0 (or v1.4.0, the vendored version), strategy_used manifest walk, with medium or high confidence, and says acme/shop-web is not where the bug belongs.",
+      "assertions": [
+        "Names github.com/tools-co/lint-kit as the source repo",
+        "Does not give github.com/acme/shop-web as the source repo",
+        "Gives the source path as skills/style-check/SKILL.md, relative to the lint-kit repo",
+        "Gives 1.4.0 (the manifest's version) as the ref, or as the version the copy was taken from",
+        "Explains that the git history only shows the plugin being vendored into acme/shop-web",
+        "Says the manifest walk (the plugin's .claude-plugin/plugin.json) found the source",
+        "Reports source_repo, source_path, source_ref, strategy_used and confidence"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "worktree-skill",
+      "prompt": "The deploy skill at skills/deploy/SKILL.md has a bug. Where does it come from, so I know where the fix goes?",
+      "setup": "../../evals/files/locate-worktree-setup.sh",
+      "tools": [
+        "Bash(ynh:*)",
+        "Bash(git:*)",
+        "Bash(ls:*)",
+        "Bash(cat:*)",
+        "Bash(find:*)",
+        "Bash(which:*)",
+        "Bash(copilot:*)",
+        "Bash(codex:*)"
+      ],
+      "stubs": ["gh", "copilot", "codex"],
+      "expected_output": "ynh has no harnesses, and no native plugin install matches. Git provenance: the file was introduced in this repo ('feat: Add deploy skill'), origin is github.com/acme/agent-tools. The current directory is a linked worktree on feat/faster-deploy, so the fix should target the canonical branch (main) rather than the worktree's feature branch. Reports source_repo github.com/acme/agent-tools, source_path skills/deploy/SKILL.md, source_ref main (introduced at the deploy commit), strategy_used git provenance, confidence high.",
+      "assertions": [
+        "Names github.com/acme/agent-tools as the source repo",
+        "Gives the source path as skills/deploy/SKILL.md",
+        "Says git provenance found it",
+        "Notices the current checkout is a worktree on feat/faster-deploy",
+        "Says the fix should go to the canonical branch (main), not the worktree's feature branch",
+        "Reports source_repo, source_path, source_ref, strategy_used and confidence"
+      ]
+    }
+  ]
+}

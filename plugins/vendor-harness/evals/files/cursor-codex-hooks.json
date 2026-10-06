@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/guard-rm.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/format.sh" }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize what changed in this session in one line." }
+        ]
+      }
+    ]
+  }
+}

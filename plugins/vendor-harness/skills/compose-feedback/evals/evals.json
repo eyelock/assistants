@@ -1,0 +1,46 @@
+{
+  "skill_name": "compose-feedback",
+  "fixtures": "Files are the user's own notes about a problem or a fix, copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "issue-from-notes",
+      "prompt": "Turn my notes in data/bug-notes.md into a GitHub issue for the acme-tools maintainers. Don't file it, just give me the title and body.",
+      "files": ["../../evals/files/bug-notes.md"],
+      "expected_output": "An issue titled in the form [hooks-artifact] <brief description>, e.g. [hooks-artifact] PostToolUse format hook never fires in Cursor. The body has Artifact (the format-on-edit hook, a hook, Cursor), Source (github.com/acme/acme-tools, hooks/hooks.json, v1.4.0), Expected behavior, Actual behavior, Reproduction (the steps from the notes, with Cursor 1.9.2), and Impact (red CI builds for Cursor users). It also carries the optional details the notes give: Cursor and Claude Code versions and that it is consistent.",
+      "assertions": [
+        "The title starts with [hooks-artifact]",
+        "The body has separate parts for Artifact, Source, Expected behavior, Actual behavior, Reproduction and Impact",
+        "Source names github.com/acme/acme-tools, hooks/hooks.json and v1.4.0",
+        "Reproduction gives the steps from the notes (install v1.4.0 in Cursor, ask the agent to edit a .ts file, check formatting)",
+        "Includes Cursor 1.9.2 as the vendor version",
+        "Says the behavior is consistent, not intermittent",
+        "Impact mentions the failing CI builds for Cursor users"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "vague-report",
+      "prompt": "the deploy skill from our plugin does nothing in copilot cli. write up an issue for it",
+      "expected_output": "Does not produce a finished issue: source, expected and actual behavior, reproduction and impact are all unknown. Asks the user one question to fill the first missing field, and waits.",
+      "assertions": [
+        "Does not present a finished issue whose fields are unknown, TBD or invented",
+        "Asks the user a question about a missing field (such as the plugin's repo, what deploy should do, or how to reproduce)",
+        "Asks one question, not a list of several questions at once"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "notes-missing-source",
+      "prompt": "Turn my notes in data/bug-notes-no-source.md into a GitHub issue I can file.",
+      "files": ["../../evals/files/bug-notes-no-source.md"],
+      "expected_output": "The notes give the artifact (the lint-fix skill), expected and actual behavior, versions, reproduction and impact, but not the source: which plugin, repo and version the skill comes from. That is a required field, and without it the issue cannot go to the right maintainer, so the reply does not compose a finished issue with the source left blank, TBD or guessed. It asks one question, for the source (which plugin or repo, and version), and does not re-ask anything the notes already give.",
+      "assertions": [
+        "Identifies the source (which plugin or repo the skill comes from, and its version) as the missing field",
+        "Does not present a finished issue with the source left blank, TBD, unknown or guessed",
+        "Asks one question, about the source, without listing further questions",
+        "Does not ask about anything the notes already give (versions, what happens, how to reproduce, impact)"
+      ]
+    }
+  ]
+}

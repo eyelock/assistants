@@ -1,0 +1,21 @@
+[
+  {
+    "query": "my MCP server shows as failed in Claude Code after installing the plugin",
+    "should_trigger": true
+  },
+  { "query": "does Codex support remote http MCP servers?", "should_trigger": true },
+  { "query": "validate my .mcp.json for cursor", "should_trigger": true },
+  { "query": "should the type be local or stdio in .mcp.json", "should_trigger": true },
+  {
+    "query": "two plugins both declare a server called github, which one wins in copilot",
+    "should_trigger": true
+  },
+  {
+    "query": "my copilot agent can't call the github MCP tools, here's its frontmatter",
+    "should_trigger": false
+  },
+  { "query": "the language server in .lsp.json isn't starting", "should_trigger": false },
+  { "query": "where did this .mcp.json come from? which repo", "should_trigger": false },
+  { "query": "will my plugin as a whole work in Copilot CLI?", "should_trigger": false },
+  { "query": "fetch the latest Cursor MCP docs page", "should_trigger": false }
+]

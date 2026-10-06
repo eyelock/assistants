@@ -198,7 +198,7 @@ Artifact skills each carry per-vendor reference docs. Cross-cutting skills are c
   │                                                            │
   │  fetch-vendor-docs                                         │
   │    ├── GET code.claude.com/docs/en/hooks-guide             │
-  │    ├── GET docs.cursor.com/advanced/mcp                    │
+  │    ├── GET cursor.com/docs/context/mcp                     │
   │    ├── GET developers.openai.com/codex/plugins             │
   │    └── GET docs.github.com/.../cli-plugin-reference        │
   │                                                            │
@@ -206,7 +206,7 @@ Artifact skills each carry per-vendor reference docs. Cross-cutting skills are c
   │    ├── anthropic.md ──► no changes                         │
   │    ├── cursor.md    ──► OAuth section added to MCP         │
   │    ├── codex.md     ──► hooks now GA (was experimental)    │
-  │    └── copilot.md   ──► npm source type now documented     │
+  │    └── copilot.md   ──► hook timeout semantics documented  │
   │                                                            │
   │  present diff to user                                      │
   │    "3 changes found. Confirm to update?"                   │
@@ -336,8 +336,8 @@ overlapping paths, but accept different `source` discriminators:
         │
         ├──► Claude Code   accepts: "./path", github, url, git-subdir, npm, archive, command
         │
-        └──► Copilot CLI   accepts: "./path", github, url, npm
-                           rejects: git-subdir, archive, command
+        └──► Copilot CLI   accepts: "./path", github, url
+                           rejects: git-subdir, npm, archive, command
                                     ↓
                    Failed to add marketplace: Invalid marketplace.json:
                      plugins.2.source: Invalid input, plugins.5.source: ...

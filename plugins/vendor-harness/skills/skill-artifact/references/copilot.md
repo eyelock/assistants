@@ -34,9 +34,11 @@ warning: pre-approving `shell`/`bash` removes the confirmation step and lets an
 attacker-controlled skill run arbitrary commands. Treat it as a security decision, not a
 convenience.
 
-Claude-only extensions (`disable-model-invocation`, `user-invocable`, `model`, `context`,
-`agent`, `argument-hint`) are not documented for Copilot skills — the equivalents live in
-`.agent.md` / `.md` custom agents instead.
+Claude Code extensions (`disable-model-invocation`, `user-invocable`, `model`, `context`,
+`agent`, `argument-hint`) are not documented for Copilot CLI skills. VS Code's Copilot does
+document `disable-model-invocation`, `user-invocable`, `argument-hint` and `context`, but that
+is not a promise for the CLI: a skill that must never run on its own needs a guard that does
+not depend on the field. Agent-level equivalents live in `.agent.md` custom agents.
 
 ## Invocation
 

@@ -118,7 +118,7 @@ copilot plugin marketplace add eyelock/assistants
 ```
 
 This resolves `.github/plugin/marketplace.json`, a Copilot-safe mirror of the Claude index.
-It exists because Copilot rejects the `git-subdir`, `archive`, and `command` source types
+It exists because Copilot rejects the `git-subdir`, `npm`, `archive`, and `command` source types
 Claude allows — and rejects the *whole* index over one unsupported entry, not just that row.
 See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 

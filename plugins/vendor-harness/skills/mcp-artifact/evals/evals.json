@@ -1,0 +1,46 @@
+{
+  "skill_name": "mcp-artifact",
+  "fixtures": "Files are MCP declaration snapshots, copied into the run's data/ folder. notes-plugin is a small plugin directory.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "three-vendor-mcp-json",
+      "prompt": "This is the .mcp.json our plugin ships to Claude Code, Codex and Copilot CLI: data/team-tools.mcp.json. Anything wrong with it?",
+      "files": ["../../evals/files/team-tools.mcp.json"],
+      "expected_output": "docs-search is a URL entry with no type: Claude Code needs type to tell url entries (http/sse) apart from stdio, and Copilot needs it on remote servers, so add \"type\": \"http\". It also cannot work on Codex, which supports stdio only. fs uses \"type\": \"local\", Copilot's alias; use \"type\": \"stdio\", which every vendor understands. git has no type, which is fine for a command-based stdio server.",
+      "assertions": [
+        "Flags that docs-search has no type field, which Claude Code needs for url-based entries",
+        "Recommends adding an explicit type (http or sse) to docs-search",
+        "Says docs-search will not work on Codex because Codex supports stdio servers only",
+        "Flags \"type\": \"local\" on fs as Copilot-only and recommends \"type\": \"stdio\"",
+        "Does not flag the git server's missing type as an error"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "cursor-plugin-path",
+      "prompt": "My notes MCP server works when I install the plugin in Claude Code, but when I install the same plugin in Cursor the server never shows up. The plugin is in data/notes-plugin (it has a .mcp.json at the root). What am I missing?",
+      "files": ["../../evals/files/.trees/vendor/notes-plugin"],
+      "expected_output": "Cursor's plugin format reads mcp.json at the plugin root, with no leading dot; Claude Code reads .mcp.json. The plugin only has .mcp.json, so Cursor finds no servers. Add a mcp.json (same content) at the plugin root and keep .mcp.json for Claude. The server declaration itself is fine.",
+      "assertions": [
+        "Says Cursor's plugin format expects mcp.json at the plugin root with no leading dot",
+        "Recommends adding mcp.json while keeping .mcp.json for Claude Code",
+        "Does not blame the server's command, args or the stdio transport",
+        "Does not tell the user to move the declaration into .cursor/mcp.json as the plugin fix"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "portable-clean",
+      "prompt": "Is data/search.mcp.json portable to Claude Code, Cursor, Codex and Copilot CLI as-is?",
+      "files": ["../../evals/files/search.mcp.json"],
+      "expected_output": "Yes. It is a stdio server with \"type\": \"stdio\", the spelling every vendor understands, so it also works on Codex. The tools key is Copilot-only and the other vendors ignore it, so it is harmless.",
+      "assertions": [
+        "Says the file is portable to all four vendors",
+        "Says \"type\": \"stdio\" is the right, portable spelling and does not suggest \"local\"",
+        "Says the tools key is Copilot-specific and ignored by the other vendors, rather than an error to remove",
+        "Does not say Codex cannot run this server"
+      ]
+    }
+  ]
+}
