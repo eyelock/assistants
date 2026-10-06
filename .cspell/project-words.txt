@@ -52,6 +52,7 @@ infra
 inout
 itemise
 JSONC
+korotovsky
 launchservices
 ldflags
 LOCALAPPDATA
@@ -75,11 +76,13 @@ osascript
 overcomplicating
 pnpm
 pnpmjs
+Priya
 pyproject
 pytest
 PYTHONPATH
 recognise
 Rekordbox
+sandboxed
 scriptable
 shellcheck
 silencedetect
@@ -94,6 +97,7 @@ subfolders
 Subtests
 swiftlint
 swiftui
+taylorwilsdon
 TCMP
 termq
 testdata
@@ -101,6 +105,7 @@ tfstate
 tfvars
 toplevel
 turborepo
+unreads
 unrecognised
 USERPROFILE
 virtualisation

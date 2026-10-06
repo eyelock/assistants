@@ -16,3 +16,6 @@ Thumbs.db
 
 # Node / pnpm
 node_modules/
+
+# Skill eval runs (scripts/skill-evals.mjs)
+.evals/
