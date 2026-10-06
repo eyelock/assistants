@@ -1,0 +1,45 @@
+{
+  "skill_name": "ci",
+  "fixtures": "File sandbox cases: ci-setup.sh writes the acme/widget Go repository (Gitflow branches, v* tags publish releases) with a Makefile holding its gates (build, lint, format-check, test) and dist, and the agent may write and edit files in it. The second case starts from an existing per-gate CI workflow behind a paths filter, with data/ci-branch-protection.json as GitHub's report of main's branch protection. The evidence prints every file under .github/ and whether each workflow parses as YAML.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "gitflow-workflows",
+      "prompt": "Set up GitHub Actions for this repo. We do Gitflow: main and develop, release/* and hotfix/* branches, and a release is published by pushing a v* tag. The gates are in the Makefile.",
+      "setup": "../../evals/files/ci-setup.sh",
+      "tools": ["Write(./**)", "Edit(./**)"],
+      "evidence": "bash \"$EVAL_FIXTURES/ci-evidence.sh\"",
+      "expected_output": "Three workflows under .github/workflows. ci.yml runs on push and pull_request for main, develop, release/** and hotfix/** (plus workflow_dispatch), with one job per gate running the Makefile targets, skipped by a paths filter when only docs change, and an All Clear job that needs every gate job, runs with if: always(), and fails if any needed job failed or was cancelled. A protect-main workflow on pull requests into main fails unless the head branch is release/* or hotfix/*. release.yml runs on v* tags: a verify-ci job first confirms CI passed on the tagged commit (skipped for alpha, beta and rc tags), then the build job publishes the release, marked as a pre-release for those suffixes. The reply says branch protection on main and develop should require only All Clear (plus the source-branch check on main), not the individual gate jobs.",
+      "assertions": [
+        "ci.yml runs on push and on pull_request for main, develop, release/** and hotfix/**",
+        "ci.yml runs the gates as separate jobs that call the Makefile targets (make build, make lint, make format-check, make test)",
+        "ci.yml has an All Clear job that needs every gate job, has if: always(), and exits non-zero when any needed job's result is failure or cancelled",
+        "The gate jobs are skipped when only docs or other non-code files change (a paths filter or changes job), while All Clear still runs",
+        "A workflow on pull requests into main fails unless the head branch (github.head_ref) starts with release/ or hotfix/",
+        "release.yml runs on push of v* tags, and a job before the build checks that CI passed on the tagged commit",
+        "The CI check in release.yml is skipped for alpha, beta and rc tags, and those releases are marked as pre-releases",
+        "release.yml publishes the release from the workflow (for example action-gh-release with the tag), not by asking anyone to run gh release create",
+        "The reply says branch protection should require only the All Clear check (and the source-branch check on main), not the individual gate jobs",
+        "Every workflow file parses as YAML"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "docs-pr-stuck-pending",
+      "prompt": "PRs that only touch docs/ never become mergeable: Build, Lint, Format and Test just sit at \"Expected — Waiting for status to be reported\". Branch protection is in data/ci-branch-protection.json. Fix it without making docs PRs run the whole suite.",
+      "setup": "../../evals/files/ci-pending-setup.sh",
+      "files": ["../../evals/files/ci-branch-protection.json"],
+      "tools": ["Write(./**)", "Edit(./**)"],
+      "evidence": "bash \"$EVAL_FIXTURES/ci-evidence.sh\"",
+      "expected_output": "The cause: required checks Build, Lint, Format and Test are skipped by the paths filter on docs-only PRs, and a required check that never reports blocks the PR. The fix keeps the paths filter and adds an All Clear aggregator job to ci.yml that needs changes and every gate job, runs with if: always(), treats skipped as fine and fails only when a needed job failed or was cancelled. Branch protection then requires only All Clear instead of the four job checks; it says to change that (in Settings or with the API), since a file edit cannot.",
+      "assertions": [
+        "The reply explains that the required jobs are skipped by the paths filter on docs-only PRs, so the required checks never report",
+        "ci.yml keeps the paths filter, so docs-only PRs still skip the gate jobs",
+        "ci.yml gains an All Clear job that needs every gate job (and changes), with if: always()",
+        "All Clear exits non-zero when any needed job's result is failure or cancelled, and passes when they are skipped",
+        "The reply says branch protection must require only All Clear, replacing Build, Lint, Format and Test as required checks",
+        "Every workflow file parses as YAML"
+      ]
+    }
+  ]
+}

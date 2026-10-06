@@ -8,7 +8,7 @@ description: GitHub Actions workflows that implement the Gitflow model — CI ga
 Three workflows wire up Gitflow in GitHub Actions. See references for annotated examples:
 
 - [ci.md](references/ci.md) — quality gate on every push and PR
-- [protect-main.md](references/protect-main.md) — enforce that only `develop` and `hotfix/*` can PR into `main`
+- [protect-main.md](references/protect-main.md) — enforce that only `release/*` and `hotfix/*` can PR into `main`
 - [release.md](references/release.md) — tag-triggered release with CI verification gate
 
 ## Branch Protection Settings

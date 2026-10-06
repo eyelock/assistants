@@ -1,6 +1,6 @@
 # CI Workflow
 
-Runs on every push to `main`, `develop`, and `hotfix/*`, and on every PR targeting those branches.
+Runs on every push to `main`, `develop`, `release/**` and `hotfix/**`, and on every PR targeting those branches.
 
 ## Key Patterns
 
@@ -45,9 +45,9 @@ Why an aggregator? When jobs are skipped (paths filter), GitHub marks them as "s
 ```yaml
 on:
   push:
-    branches: [main, develop, 'hotfix/*']
+    branches: [main, develop, 'hotfix/**', 'release/**']
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'hotfix/**', 'release/**']
   workflow_dispatch:
 ```
 

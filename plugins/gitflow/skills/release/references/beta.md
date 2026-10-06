@@ -51,8 +51,8 @@ The short version:
 ```bash
 git checkout -b release/v0.7.0 develop
 # Update CHANGELOG, push
-gh pr create --base main --head release/v0.7.0 --title "release: v0.7.0"
-# After merge: tag on main, back-merge release branch to develop
+gh pr create --base main --head release/v0.7.0 --title "chore(release): v0.7.0"
+# Merge with gh pr merge --merge, then tag on main and back-merge the release branch to develop
 ```
 
 ## Version Progression

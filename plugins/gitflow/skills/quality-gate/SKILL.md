@@ -1,6 +1,6 @@
 ---
 name: quality-gate
-description: Four-gate quality model — build, lint, format, test — that must all pass before any commit.
+description: Four-gate quality model - build, lint, format, test - that must all pass before any commit. Use whenever you are about to commit, including when the user says to commit it, or says the tests already pass (their word is not a gate run), and when lint, format or test tools disagree or fail.
 ---
 
 # Quality Gate
@@ -34,10 +34,14 @@ If the check passes locally but CI fails, that is a bug — investigate and file
 
 Always run the full check command on a **clean build** before declaring the gate passed. Incremental compilation caches object files — repeat check runs will not regenerate warnings for already-compiled files. Only a clean build guarantees the full warning picture.
 
+Clean with the project's own clean target (`make clean`, `swift package clean`, `cargo clean`), not a cache or two picked by hand: linters, formatters and test runners keep caches of their own, and a repeat run stays quiet about files they have already checked. The project's target knows every one of them; when it is not obvious, read what the target removes.
+
 For Swift/Make projects:
 ```bash
 swift package clean && make check
 ```
+
+Their earlier run, or yours a minute ago, does not count: a rerun that is quiet proves nothing until the caches are gone.
 
 **Never declare success from an incremental build.** Test targets compile separately from the main target — warnings in test files only surface when tests are compiled.
 

@@ -1,0 +1,51 @@
+{
+  "skill_name": "branching",
+  "fixtures": "Files are copied into the run's data/ folder. There is no git in the sandbox, so branch state is given as captured command output.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-feature-branch",
+      "prompt": "Starting on CSV export for the reports page (issue #41). I was going to do feature/csv-export off main. That right? Where does the PR go and how does it get merged?",
+      "expected_output": "No: branch from develop, not main, with the feat/ prefix rather than feature/, e.g. feat/csv-export. The PR goes back into develop, and once CI passes, review comments are resolved and the branch is up to date, it is squash-merged (gh pr merge --squash), never with --admin.",
+      "assertions": [
+        "Says to branch from develop, not main",
+        "Proposes a branch name starting with feat/ (e.g. feat/csv-export), not feature/csv-export",
+        "Says the PR targets develop",
+        "Says the PR is squash-merged (gh pr merge --squash)",
+        "Says to merge only when CI passes, review comments are resolved and the branch is up to date with develop"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "hotfix-from-tag",
+      "prompt": "v2.4.1 is live and the payment webhook crashes on refunds. develop already has a pile of unreleased stuff on it. Fastest way to get a fix out? Can I just commit it on main?",
+      "expected_output": "No direct commit to main. Branch hotfix/v2.4.2 from the v2.4.1 release tag, make the fix there, open a PR into main and merge it with --merge once CI passes, then tag the merge commit on main, which fires the automated release. Finally bring the fix to develop with a forward-port PR.",
+      "assertions": [
+        "Refuses to commit the fix directly to main",
+        "Says to branch from the v2.4.1 tag, not from develop or main",
+        "If it names the hotfix branch, the name has the form hotfix/vX.Y.Z (e.g. hotfix/v2.4.2)",
+        "Says CI must pass on the hotfix PR before it is merged and tagged",
+        "Says to PR the hotfix into main (merged with --merge) and tag the merge commit on main, not the hotfix branch",
+        "Says pushing the tag fires the release, rather than creating the release by hand",
+        "Says the fix reaches develop through a forward-port PR after it ships",
+        "Does not suggest promoting develop to main to ship the fix"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "tidy-merge-and-clean-up",
+      "prompt": "data/branch-log.txt is where my branch is at. Can I open the PR as it is? After it squash-merges, what do I clean up? Then I want to ship 3.2.0: I'll open a PR from develop into main and squash it like the others, yeah?",
+      "files": ["../../evals/files/branch-log.txt"],
+      "expected_output": "Not as it is: squash the seven commits down to 1-3 meaningful ones (drop wip, format, lint and typo commits, e.g. keep the token refresh change and its test), and merge origin/develop first since develop has a commit the branch lacks. After the squash merge: confirm the PR is merged on GitHub (gh pr view shows MERGED), since git branch --merged cannot see a squash-merged branch, then delete the branch locally with git branch -D (-d refuses after a squash merge) and on origin with git push origin --delete. For 3.2.0: develop never opens a PR into main. Cut release/v3.2.0 from develop and PR that into main, merged with gh pr merge --merge, never --squash, because squash loses ancestry and history since the last release would look unreleased.",
+      "assertions": [
+        "Says to squash the branch to about 1-3 meaningful commits before opening the PR, dropping the wip, formatter, lint and typo commits",
+        "Notices develop has a commit (4be19d0) the branch lacks and says to merge origin/develop first",
+        "For cleanup, confirms the merge through the PR (e.g. gh pr view showing MERGED) rather than git branch --merged, which does not list a squash-merged branch",
+        "For cleanup, deletes the local branch with git branch -D (noting -d refuses after a squash merge) and the remote branch with git push origin --delete",
+        "Says not to open a PR from develop into main: cut release/v3.2.0 from develop and PR that into main instead",
+        "Says the release PR into main is merged with --merge, not squashed, because squash loses ancestry",
+        "Does not suggest gh pr merge --admin"
+      ]
+    }
+  ]
+}

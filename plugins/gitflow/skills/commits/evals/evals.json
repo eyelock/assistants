@@ -1,0 +1,63 @@
+{
+  "skill_name": "commits",
+  "fixtures": "Files are copied into the run's data/ folder. There is no git in the sandbox, so a change is given as a patch and its context in the prompt.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fix-that-adds-a-helper",
+      "prompt": "I added a new safeReturnTo helper, the change is in data/login-redirect.patch. Context: since the SSO switch, anyone who opened the login link without ?returnTo= ended up on /undefined after signing in (issue #212). Write me the commit message.",
+      "files": ["../../evals/files/login-redirect.patch"],
+      "expected_output": "A Conventional Commit whose header is fix(auth): <Capitalized imperative subject, no trailing period> (fix, not feat: the helper exists to repair a bug), a blank line, and a body explaining why (users landed on /undefined after login when returnTo was missing). Any attribution trailer is the one the AI tool provides, not a hard-coded model name. If it shows a git commit command, the message is passed in a HEREDOC.",
+      "assertions": [
+        "The header's type is fix, not feat, even though the change adds a new function",
+        "The header has the form <type>(<scope>): <subject> or <type>: <subject>, and any scope is a short noun for the area such as auth",
+        "The subject is a capitalized imperative with no trailing period (e.g. 'Add pagination to list endpoints')",
+        "A blank line separates the header from a body",
+        "The body explains why the change was needed (users landing on /undefined after login), rather than only listing what changed",
+        "If it gives a git commit command, the message is passed via a HEREDOC (cat <<'EOF'), not an inline quoted -m string"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ci-change-pr",
+      "prompt": "About to open the PR for data/ci-lint.patch, it closes #88. Give me the PR title and description.",
+      "files": ["../../evals/files/ci-lint.patch"],
+      "expected_output": "A PR title in commit format with type ci, e.g. ci: Add lint job to the CI workflow (not chore, build or feat). A description using the skill's template: ## Summary, ## Changes (bullets), ## Testing with the two checkboxes (Quality gate passes, Manual testing completed), ## Related Issues with Fixes #88 (or Closes #88). Any attribution line comes from the AI tool, not a hard-coded model or product line.",
+      "assertions": [
+        "The PR title uses type ci, not chore, build or feat",
+        "The PR title has the commit header form <type>(<scope>): <description> or <type>: <description>",
+        "The description has the sections Summary, Changes, Testing and Related Issues, in that order",
+        "The Testing section has checkboxes for the quality gate passing and for manual testing",
+        "The Related Issues section links #88 with a closing keyword (Fixes #88 or Closes #88)",
+        "The Changes section mentions both the new lint job and adding it to the All Clear job's needs"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "speedup-is-perf",
+      "prompt": "Made the order history page way faster, see data/order-history.patch. Commit message and PR title please.",
+      "files": ["../../evals/files/order-history.patch"],
+      "expected_output": "Commit header perf(orders): <Capitalized imperative subject> (perf: the change only removes an N+1 query, behavior is unchanged; not feat, fix or refactor), a body saying why (one query per order made the page slow for customers with many orders), and any attribution trailer the AI tool provides. The PR title uses the same header format.",
+      "assertions": [
+        "The commit header's type is perf, not feat, fix or refactor",
+        "The commit header has the form <type>(<scope>): <subject> or <type>: <subject>",
+        "The body explains why: one query per order (an N+1 pattern) made the page slow",
+        "The PR title uses the same <type>(<scope>): <description> format with type perf"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "removed-flag-is-breaking",
+      "prompt": "Dropping our own --no-color flag from the report command in favor of the standard NO_COLOR environment variable, see data/no-color-flag.patch. It's the cli area. Commit message please.",
+      "files": ["../../evals/files/no-color-flag.patch"],
+      "expected_output": "A breaking-change Conventional Commit: header feat(cli)!: <Capitalized imperative subject> (or refactor(cli)!:), with ! after the scope, a body saying why (NO_COLOR is the standard way to turn color off, so the flag duplicated it), and a BREAKING CHANGE: footer saying --no-color is gone and to set NO_COLOR instead. It says to pair the commit with a major changeset (or a major version bump).",
+      "assertions": [
+        "The header marks the change as breaking with ! right before the colon, e.g. feat(cli)!: <subject>",
+        "The subject is a capitalized imperative with no trailing period",
+        "The message has a footer starting with BREAKING CHANGE: ",
+        "The BREAKING CHANGE footer says the --no-color flag is removed and tells users to set the NO_COLOR environment variable instead",
+        "Says to pair the commit with a major changeset or a major version bump"
+      ]
+    }
+  ]
+}
