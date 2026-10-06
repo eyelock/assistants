@@ -152,7 +152,7 @@ function syncVendorPluginManifests(p) {
   for (const rel of [
     ".claude-plugin/plugin.json",
     ".cursor-plugin/plugin.json",
-    ".ynh-plugin/plugin.json",
+    ".agents/harness/plugin.json",
     ".codex-plugin/plugin.json",
   ]) {
     const target = join(p.dir, rel);
@@ -249,7 +249,7 @@ function cmdCheck(pkgs) {
     for (const rel of [
       ".claude-plugin/plugin.json",
       ".cursor-plugin/plugin.json",
-      ".ynh-plugin/plugin.json",
+      ".agents/harness/plugin.json",
       ".codex-plugin/plugin.json",
     ]) {
       const target = join(p.dir, rel);

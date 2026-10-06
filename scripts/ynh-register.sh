@@ -11,7 +11,7 @@
 #   1. verifies <harness-dir> is covered by a pnpm-workspace.yaml glob
 #      (it never edits workspace topology — that is a reviewed decision)
 #   2. generates/refreshes <harness-dir>/package.json from
-#      <harness-dir>/.ynh-plugin/plugin.json, mapping same-repo includes to
+#      <harness-dir>/.agents/harness/plugin.json, mapping same-repo includes to
 #      @eyelock-assistants workspace:* dependencies (hand-added keys are kept)
 #   3. runs `pnpm install --lockfile-only` so pnpm-lock.yaml stays green in CI
 #
@@ -78,9 +78,9 @@ if [ ! -d "$harness_dir" ]; then
   fail "harness directory \"$harness_dir\" does not exist under $PWD — publish the harness files first" 2
 fi
 
-manifest="$harness_dir/.ynh-plugin/plugin.json"
+manifest="$harness_dir/.agents/harness/plugin.json"
 if [ ! -f "$manifest" ]; then
-  fail "\"$manifest\" not found — a harness entry must carry its .ynh-plugin/plugin.json manifest" 2
+  fail "\"$manifest\" not found — a harness entry must carry its .agents/harness/plugin.json manifest" 2
 fi
 
 command -v node >/dev/null 2>&1 ||
