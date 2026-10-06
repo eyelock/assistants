@@ -1,6 +1,6 @@
 ---
 name: java-lang
-description: Java development workflow — build tooling, testing, code style, and common patterns.
+description: Java development workflow - build tooling, testing, code style, and common patterns such as Optional versus null, exceptions, and how to structure packages in a Spring or plain Java app. Use for writing, reviewing or testing Java code.
 ---
 
 # Java Development

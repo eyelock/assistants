@@ -1,0 +1,24 @@
+[
+  { "query": "I'm open sourcing this repo, set it up properly on GitHub", "should_trigger": true },
+  {
+    "query": "harden my public GitHub repo: secret scanning, push protection, dependabot",
+    "should_trigger": true
+  },
+  {
+    "query": "add branch protection on main with required checks and a ruleset",
+    "should_trigger": true
+  },
+  {
+    "query": "we need issue templates, a PR template, CODEOWNERS and discussions for the project",
+    "should_trigger": true
+  },
+  { "query": "how do I undo my last commit before pushing", "should_trigger": false },
+  { "query": "what's waiting on me on GitHub?", "should_trigger": false },
+  { "query": "review this pull request", "should_trigger": false },
+  {
+    "query": "create an S3 bucket and DynamoDB table for terraform state",
+    "should_trigger": false
+  },
+  { "query": "which open source license is most popular on GitHub", "should_trigger": false },
+  { "query": "set up a Makefile and CI for my Go project", "should_trigger": false }
+]

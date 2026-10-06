@@ -1,30 +1,19 @@
 # Branch Protection Configuration
 
-## Main Branch Required Checks
+`main` is protected by one repository ruleset, "Main Branch Protection". There is no classic
+branch protection: the ruleset is the single source of truth.
 
-The following CI checks must pass before merging to `main`:
+## Required check
 
-- **Build**: Verify code compiles successfully
-- **Test**: Run all unit tests
-- **Lint**: Code quality checks
-- **Format Check**: Code style verification
+One status check must pass before merging to `main`: **All Clear**. It is the last job of the
+CI workflow, depends on every other job (build, test, lint, format check) and fails if any of
+them failed or was cancelled. Add or rename CI jobs freely; only All Clear is required.
 
-All checks are configured to run via GitHub Actions on every pull request.
+## Rules
 
-## Configuration
-
-Branch protection is configured via GitHub API and applies to the `main` branch.
-
-Settings:
-- Required status checks must pass (strict — branch must be up to date)
+- Changes reach `main` through a pull request
 - All review conversations must be resolved
+- The branch must be up to date with `main` before merging
 - Force pushes blocked
 - Branch deletion blocked
-- Admins can bypass in emergencies
-
-## Rulesets
-
-A "Main Branch Protection" ruleset provides defense-in-depth:
-- Blocks non-fast-forward pushes
-- Blocks branch deletion
-- Requires "All Clear" status check (aggregates all CI jobs)
+- Repository admins can bypass in emergencies

@@ -1,10 +1,2 @@
 # Skills that predate the evals rule (see AGENTS.md). Remove a line when its skill gets evals;
 # never add one: a new skill ships with evals/evals.json and evals/eval_queries.json.
-skills/infra/skills/gh-os-repo
-skills/infra/skills/terraform-backend-aws
-skills/pause/skills/help-me-answer
-skills/pause/skills/take-a-moment
-skills/tech/skills/go-lang
-skills/tech/skills/java-lang
-skills/tech/skills/swift-lang
-skills/tech/skills/swiftui-lang

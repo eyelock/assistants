@@ -1,0 +1,21 @@
+[
+  {
+    "query": "set up a Makefile for my new Go CLI with build, test, lint and format targets",
+    "should_trigger": true
+  },
+  {
+    "query": "how should I lay out packages in a Go service? cmd, internal, that kind of thing",
+    "should_trigger": true
+  },
+  { "query": "write table-driven tests for this golang parser", "should_trigger": true },
+  { "query": "configure goreleaser to cross-compile for darwin and linux", "should_trigger": true },
+  {
+    "query": "golangci-lint is complaining about unchecked errors, how do I fix them",
+    "should_trigger": true
+  },
+  { "query": "set up a Gradle build with JUnit 5 for my service", "should_trigger": false },
+  { "query": "my Swift actor isn't Sendable and won't compile", "should_trigger": false },
+  { "query": "add branch protection and dependabot to my GitHub repo", "should_trigger": false },
+  { "query": "what's the difference between Go and Rust for a CLI tool", "should_trigger": false },
+  { "query": "write the GitHub Actions workflow for this Python project", "should_trigger": false }
+]

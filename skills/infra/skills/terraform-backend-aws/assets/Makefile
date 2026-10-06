@@ -1,10 +1,11 @@
 # =============================================================================
 # Terraform Backend Makefile
 # =============================================================================
-# Manages S3 + DynamoDB backend for Terraform remote state.
+# Manages an S3 backend (S3-native locking) for Terraform remote state.
 #
 # Workflow:
 #   First time:  make bootstrap-init && make bootstrap-apply && make migrate-state
+#                (non-interactive: make migrate-state CONFIRM=yes)
 #   After that:  make init && make plan && make apply
 # =============================================================================
 
@@ -18,7 +19,6 @@ STATE_KEY = terraform/backend/terraform.tfstate
 # (Terraform doesn't support variables in backend blocks)
 BACKEND_BUCKET = $(shell grep '^\s*bucket\s*=' $(CONFIG_FILE) | cut -d'"' -f2)
 BACKEND_REGION = $(shell grep '^\s*region\s*=' $(CONFIG_FILE) | cut -d'"' -f2)
-BACKEND_TABLE  = $(shell grep '^\s*dynamodb_table\s*=' $(CONFIG_FILE) | cut -d'"' -f2)
 
 .PHONY: init plan apply destroy output validate fmt bootstrap-init bootstrap-apply migrate-state verify help
 
@@ -65,7 +65,9 @@ bootstrap-apply:
 	@echo "  make migrate-state"
 	@echo ""
 
-# Migrate state from local to remote backend (run after bootstrap)
+# Migrate state from local to remote backend (run after bootstrap).
+# Asks before migrating; CONFIRM=yes skips both questions (-force-copy), for
+# non-interactive runs.
 migrate-state:
 	@echo "==============================================================================="
 	@echo "Migrating State: Local -> Remote (S3)"
@@ -84,19 +86,21 @@ migrate-state:
 	@echo ""
 	@echo "This will:"
 	@echo "  - Move terraform.tfstate to S3: $(BACKEND_BUCKET)"
-	@echo "  - Enable state locking with DynamoDB: $(BACKEND_TABLE)"
+	@echo "  - Lock state with a lock file in the same bucket (use_lockfile)"
 	@echo ""
-	@read -p "Continue with migration? (yes/no): " confirm; \
+	@confirm="$(CONFIRM)"; force=""; \
+	if [ "$$confirm" = "yes" ]; then force="-force-copy"; else read -p "Continue with migration? (yes/no): " confirm; fi; \
 	if [ "$$confirm" = "yes" ]; then \
 		echo ""; \
-		echo "Terraform will ask: 'Do you want to copy existing state to the new backend?'"; \
-		echo "Answer: yes"; \
-		echo ""; \
-		if terraform init -migrate-state \
+		if [ -z "$$force" ]; then \
+			echo "Terraform will ask: 'Do you want to copy existing state to the new backend?'"; \
+			echo "Answer: yes"; \
+			echo ""; \
+		fi; \
+		if terraform init -migrate-state $$force \
 			-backend-config="bucket=$(BACKEND_BUCKET)" \
 			-backend-config="region=$(BACKEND_REGION)" \
-			-backend-config="key=$(STATE_KEY)" \
-			-backend-config="dynamodb_table=$(BACKEND_TABLE)"; then \
+			-backend-config="key=$(STATE_KEY)"; then \
 			echo ""; \
 			echo "==============================================================================="; \
 			echo "State Migration Complete!"; \
@@ -117,8 +121,9 @@ migrate-state:
 			echo ""; \
 			echo "Common issues:"; \
 			echo "  1. AWS credentials expired or invalid"; \
-			echo "  2. S3 bucket or DynamoDB table doesn't exist"; \
+			echo "  2. S3 bucket doesn't exist"; \
 			echo "     Run 'make bootstrap-apply' first"; \
+			echo "  3. No backend \"s3\" block in the configuration (see backend.tf)"; \
 			echo ""; \
 			exit 1; \
 		fi; \
@@ -136,8 +141,7 @@ init:
 	terraform init \
 		-backend-config="bucket=$(BACKEND_BUCKET)" \
 		-backend-config="region=$(BACKEND_REGION)" \
-		-backend-config="key=$(STATE_KEY)" \
-		-backend-config="dynamodb_table=$(BACKEND_TABLE)"
+		-backend-config="key=$(STATE_KEY)"
 
 # Validate Terraform configuration
 validate:
@@ -182,8 +186,8 @@ help:
 	@echo ""
 	@echo "Bootstrap (first-time setup):"
 	@echo "  bootstrap-init   - Initialize with local state"
-	@echo "  bootstrap-apply  - Create S3 + DynamoDB with local state"
-	@echo "  migrate-state    - Migrate local state to remote backend"
+	@echo "  bootstrap-apply  - Create the S3 state bucket with local state"
+	@echo "  migrate-state    - Migrate local state to remote backend (CONFIRM=yes: no prompts)"
 	@echo ""
 	@echo "Normal operations:"
 	@echo "  init      - Initialize with remote backend"

@@ -1,0 +1,23 @@
+[
+  {
+    "query": "write JUnit 5 tests for this UserService with nested classes",
+    "should_trigger": true
+  },
+  { "query": "should this Java method return Optional or null?", "should_trigger": true },
+  { "query": "set up Spotless and Error Prone in my gradle build", "should_trigger": true },
+  { "query": "convert these DTO classes to records, we're on Java 21", "should_trigger": true },
+  {
+    "query": "how should I structure packages in a spring boot app, by layer or by feature",
+    "should_trigger": true
+  },
+  { "query": "write table-driven tests in Go for this handler", "should_trigger": false },
+  { "query": "my Kotlin coroutine is leaking, help", "should_trigger": false },
+  {
+    "query": "is JavaScript's Promise.all the same as Java's CompletableFuture.allOf",
+    "should_trigger": false
+  },
+  {
+    "query": "set up the CI ruleset on GitHub so only All Clear is required",
+    "should_trigger": false
+  }
+]
