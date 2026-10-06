@@ -12,9 +12,18 @@ allowed-tools: Bash Read
 
 ## Setup
 
-1. Check environment variable: MEDIA_MGMT_LIBRARY_IMPORT
-2. If unset, use the default Apple Music import path from CLAUDE.md
-3. If CLAUDE.md has no path, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+Resolve paths with the setup skill's checker, which applies the plugin's one
+resolution order (the `MEDIA_MGMT_*` env var first, then config.json at
+`$MEDIA_MGMT_CONFIG_PATH`, default `~/.config/media-management/config.json`):
+
+```bash
+bash ../setup/scripts/check-config.sh
+```
+
+This skill needs `library_import` (the Apple Music auto-import folder): use each
+item's `value` from the JSON. If a key it needs is `missing`, stop and run the
+`setup` skill rather than guessing a path. When the user names a folder
+explicitly, use that folder.
 
 Scripts are in `scripts/` relative to this skill directory.
 
@@ -23,6 +32,18 @@ Scripts are in `scripts/` relative to this skill directory.
 - **`import-mp3s.sh <source_folder> <import_folder>`** — Validate source and import folders, copy all MP3s, output JSON with results. Run `--help` for details.
 
 ## Workflow
+
+### Step 0: Check what is being imported
+
+Only MP3s go to Apple Music. If the folder holds only WAVs (or FLACs), or the
+user asks to import the lossless files, do not copy them: explain that WAVs
+never go through Apple Music (the library already gets the MP3s, so they would
+be duplicates, and lossless copies belong on the NAS) and offer the
+`archive-media` skill's WAV mode instead. Other files in the folder (cover.jpg,
+PDFs) are never copied.
+
+If the user reports a bad import rather than asking for one, go to Step 3: do
+not copy the same files again before the metadata is fixed.
 
 ### Step 1: Import MP3s
 
@@ -49,7 +70,12 @@ Tell the user:
 ### Step 3: Handle issues
 
 If the user reports problems:
-- **Tracks appear as separate items:** Album or Album Artist metadata may be inconsistent. Offer to re-inspect and fix metadata, then re-import.
+- **Tracks appear as separate items or albums:** Album or Album Artist metadata is
+  inconsistent. Inspect the folder with the `manage-metadata` skill: a
+  multi-artist release with no Album Artist is filed under each track's artist
+  (a compilation needs Album Artist "Various Artists" and the compilation flag).
+  Offer to fix the metadata, then remove the stray copies from Apple Music and
+  re-import. Do not re-copy the files until the metadata is fixed.
 - **Wrong genre/artist:** Offer to update metadata and re-import.
 - **Files not appearing:** Check if files are still in the auto-import folder (they get moved after import). If still there, Apple Music may need a restart.
 

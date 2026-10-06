@@ -1,8 +1,10 @@
 ---
 name: split-long-tracks
 description: >-
-  Split audio tracks exceeding 78 minutes at silence points with crossfades.
-  Use when tracks are too long for Apple Music.
+  Find and split audio tracks longer than Apple Music's 78-minute limit at
+  natural quiet points, keeping album order. Use when a DJ mix, live set or
+  other long track is too long for Apple Music, or to check a folder for
+  tracks over the limit.
 allowed-tools: Bash Read
 ---
 
@@ -31,7 +33,9 @@ If no long tracks are found (`long_tracks` array is empty), report this and exit
 Present the long tracks and their durations from the JSON output.
 Explain: "Files will be split at natural quiet points with 2-second fade transitions."
 
-**DO NOT PROCEED without user confirmation.**
+**DO NOT PROCEED without user confirmation.** The request itself counts only
+when it plainly authorizes the split ("split it, no need to check with me");
+a question such as "is anything too long?" is not confirmation.
 
 ### Step 3: Split
 
@@ -43,14 +47,21 @@ bash scripts/split-long-tracks.sh "$FOLDER" 78
 The script:
 - Uses `silencedetect` to find quiet sections
 - Splits at the silence point closest to even division
-- Applies 2s fade in/out at each split boundary
-- Names output files sequentially (01, 02, ...)
-- Removes the original file after successful split
+- Applies a 2s fade out and fade in at each cut it makes (the track's own start
+  and end are untouched)
+- Removes the original file after a successful split
+- Names the parts without "Part X": a track alone in its folder becomes a
+  mini-album (`01 Title.mp3`, `02 Title.mp3`, tagged 1/N); a track inside an
+  album keeps its place (`03 Title 1.mp3`, `03 Title 2.mp3`, keeping its track
+  number) so the album's order survives
 
 ### Step 4: Update track count
 
-After splitting, the folder has new files. Delegate to the manage-metadata
-skill to re-run track count update on the folder.
+After splitting, the folder has new files. Renumber the whole folder with
+manage-metadata's track-count update (`update-track-count.sh` in that skill's
+`scripts/`), which keeps the album's order: by existing track number, then by
+filename. Every track ends up `N/total`, the parts in sequence where the
+original was.
 
 ### Step 5: Report
 

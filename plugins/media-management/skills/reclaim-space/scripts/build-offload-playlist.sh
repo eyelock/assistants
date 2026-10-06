@@ -71,8 +71,9 @@ if ! command -v osascript >/dev/null 2>&1; then
   exit 2
 fi
 
-tmp=$(mktemp -t reclaim-build) || { echo "Error: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$tmp"' EXIT
+tmp=$(mktemp "${TMPDIR:-/tmp}/reclaim-build.XXXXXX") || { echo "Error: mktemp failed" >&2; exit 2; }
+err=$(mktemp "${TMPDIR:-/tmp}/reclaim-build-err.XXXXXX") || { echo "Error: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$tmp" "$err"' EXIT
 
 cat > "$tmp" <<'OSA'
 on run argv
@@ -165,14 +166,12 @@ on run argv
 end run
 OSA
 
-raw=$(osascript "$tmp" "$PLAYLIST" "$KEEP_FOLDER" "$EXCLUDE_GROUPING" "$EXCLUDE_KIND" "$REPLACE" 2>/tmp/reclaim-build-err-$$) || {
+raw=$(osascript "$tmp" "$PLAYLIST" "$KEEP_FOLDER" "$EXCLUDE_GROUPING" "$EXCLUDE_KIND" "$REPLACE" 2>"$err") || {
   echo "Error: Music is not scriptable. Open Apple Music and grant Automation" >&2
   echo "permission to your terminal, then retry. Details:" >&2
-  sed 's/^/  /' "/tmp/reclaim-build-err-$$" >&2 2>/dev/null || true
-  rm -f "/tmp/reclaim-build-err-$$"
+  sed 's/^/  /' "$err" >&2 2>/dev/null || true
   exit 2
 }
-rm -f "/tmp/reclaim-build-err-$$"
 
 if [[ "$raw" == "EXISTS" ]]; then
   echo "Error: a playlist named \"$PLAYLIST\" already exists. Pass --replace to overwrite it." >&2

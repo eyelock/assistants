@@ -6,6 +6,7 @@ description: >-
   fix any that are missing. Use when paths seem not configured, when a skill
   fails to resolve a path, when explicitly asked to set up/configure the
   plugin, or when asked where its config lives or how path resolution works.
+  Not for checking whether a drive, NAS or folder is online or reachable.
 allowed-tools: Bash Read Write
 ---
 

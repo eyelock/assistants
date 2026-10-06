@@ -65,7 +65,6 @@ wav_count=0
 flac_count=0
 other_audio=0
 total_files=0
-extensions=()
 
 while IFS= read -r line; do
   # unzip -l lines with files have the format: <size> <date> <time> <name>
@@ -76,6 +75,11 @@ while IFS= read -r line; do
 
     # Skip directory entries (end with /)
     [[ "$fname" == */ ]] && continue
+
+    # Skip macOS packing junk: Finder adds a __MACOSX/ tree of "._" resource
+    # forks (named like the tracks they shadow) and .DS_Store files. They are
+    # not audio, whatever their extension says.
+    [[ "$fname" == __MACOSX/* || "$(basename "$fname")" == ._* || "$(basename "$fname")" == .DS_Store ]] && continue
 
     total_files=$((total_files + 1))
 

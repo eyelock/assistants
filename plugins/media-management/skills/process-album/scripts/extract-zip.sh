@@ -67,7 +67,6 @@ fi
 
 # Safety check: dest must be a named subfolder, not a root directory
 dest_basename=$(basename "$DEST")
-dest_parent=$(dirname "$DEST")
 
 if [[ -z "$dest_basename" || "$dest_basename" == "/" ]]; then
   echo "Error: destination must be a named subfolder, not a root directory" >&2
@@ -102,6 +101,17 @@ if command -v ditto >/dev/null 2>&1; then
 elif ! unzip -o "$ZIP_FILE" -d "$DEST" >&2 2>&1; then
   echo "Error: extraction failed (unzip)" >&2
   exit 3
+fi
+
+# Every later step reads the audio straight from the destination folder, so
+# drop macOS resource-fork debris and, when the ZIP wraps everything in a
+# single top-level folder, lift that folder's contents up into the destination.
+rm -rf "$DEST/__MACOSX"
+top_entries=$(find "$DEST" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
+wrapper=$(find "$DEST" -mindepth 1 -maxdepth 1 -type d)
+if [[ "$top_entries" -eq 1 && -n "$wrapper" ]]; then
+  find "$wrapper" -mindepth 1 -maxdepth 1 -exec mv {} "$DEST/" \;
+  rmdir "$wrapper"
 fi
 
 # Count and list extracted files

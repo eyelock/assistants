@@ -1,32 +1,129 @@
 {
   "skill_name": "setup",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
+      "name": "nothing-configured",
       "prompt": "is this plugin actually set up? I don't think I've configured any paths",
-      "expected_output": "Runs check-config.sh, reports that no config.json exists and lists which required paths are missing, then asks for each missing path one at a time (mentioning where to find the Apple Music auto-import folder if needed) before writing config.json.",
+      "setup": "../../evals/files/setup-missing.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)",
+        "Write(./**)",
+        "Edit(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Runs the config check, reports that config.json does not exist yet and that the four required paths (downloads, library_import, library_storage, archive_workdir) are missing, then asks for the first one only. It writes no config with guessed values.",
       "assertions": [
-        "Runs the config check before making any claims about what is or isn't configured",
-        "Lists the specific missing required keys, not just a generic 'not configured'",
-        "Asks for missing values one at a time rather than dumping all questions at once",
-        "Writes the collected values to config.json at the resolved config path"
+        "Reports that config.json does not exist (or nothing is configured) based on actually checking, not assumption",
+        "Names the missing required keys: downloads, library_import, library_storage and archive_workdir",
+        "Asks for one missing path (not all four at once) and waits",
+        "The evidence shows config.json still does not exist (nothing written with guessed values)"
       ]
     },
     {
       "id": 2,
+      "name": "mixed-sources",
       "prompt": "check my media-management config",
-      "expected_output": "If everything resolves via env vars or config.json, reports a status table showing each key's value and exact source (the env var name, or the config file path) — not just the bare word 'env' or 'config'.",
+      "setup": "../../evals/files/setup-mixed.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)",
+        "Write(./**)",
+        "Edit(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "All four required paths resolve. A status table shows each key's value and its exact source: downloads from the env var MEDIA_MGMT_DOWNLOADS, the other three from the config file at its path. rekordbox_mcp_path is mentioned as optional and unset, not as a problem.",
       "assertions": [
-        "Source column names the actual env var (e.g. 'env: MEDIA_MGMT_DOWNLOADS') or the config file path, not a bare 'env'/'config' label",
-        "Mentions that rekordbox_mcp_path is optional and doesn't treat its absence as a problem"
+        "Reports that all required paths are configured",
+        "Shows downloads as coming from the env var by name (MEDIA_MGMT_DOWNLOADS)",
+        "Shows library_import, library_storage and archive_workdir as coming from the config file, giving its path",
+        "Mentions rekordbox_mcp_path as optional and does not treat it being unset as a problem",
+        "The evidence shows no files added, removed or changed"
       ]
     },
     {
       "id": 3,
-      "prompt": "I want the rekordbox tools to work — do I need to do anything besides setting rekordbox_mcp_path in config.json?",
-      "expected_output": "Explains that config.json alone isn't sufficient for rekordbox_mcp_path specifically, because .mcp.json only substitutes environment variables — the user must also export MEDIA_MGMT_REKORDBOX_MCP_PATH in their shell profile.",
+      "name": "finish-without-paths",
+      "prompt": "Finish setting up media-management for me.",
+      "setup": "../../evals/files/setup-fill.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)",
+        "Write(./**)",
+        "Edit(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Runs the config check: downloads and library_storage are set, library_import and archive_workdir are missing. It does not hunt the disk and save what it finds: it asks the user for the missing paths one at a time, starting with library_import (suggesting the find command for the Apple Music auto-import folder if they are unsure), and writes nothing until it has a value from the user.",
       "assertions": [
-        "Explicitly states that rekordbox_mcp_path must also be set as a real shell environment variable, not just in config.json, because .mcp.json can't read config.json"
+        "The evidence shows config.json unchanged: no library_import or archive_workdir was written, so nothing was saved from a guess or a disk search",
+        "Reports that library_import and archive_workdir are the missing paths, and that downloads and library_storage are already set",
+        "Asks the user for one missing path (library_import first) rather than listing four questions or asking for both at once",
+        "Does not announce paths it found by searching as the user's settings, and does not ask the user to confirm several guessed paths in one go"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "rekordbox-env",
+      "prompt": "I want the rekordbox tools to work — do I need to do anything besides setting rekordbox_mcp_path in config.json?",
+      "setup": "../../evals/files/setup-mixed.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)",
+        "Write(./**)",
+        "Edit(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Yes: the rekordbox-database MCP server is launched from the plugin's .mcp.json, which can only substitute environment variables, not config.json values. So the user must also export MEDIA_MGMT_REKORDBOX_MCP_PATH in their shell profile and restart Claude Code.",
+      "assertions": [
+        "States that MEDIA_MGMT_REKORDBOX_MCP_PATH must be set as an environment variable (e.g. exported in the shell profile)",
+        "Explains why: the MCP server config (.mcp.json) reads environment variables, not config.json",
+        "Says the session (or terminal / Claude Code) must be restarted for it to take effect"
       ]
     }
   ]

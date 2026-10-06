@@ -123,7 +123,8 @@ if [[ "$MODE" == "wav" ]]; then
   rename_script="$SCRIPT_DIR/rename-wav-files.sh"
   if [[ -x "$rename_script" ]]; then
     echo "Renaming WAV files..." >&2
-    if bash "$rename_script" "$DEST"; then
+    # Its JSON goes to stderr: this script prints exactly one JSON document.
+    if bash "$rename_script" "$DEST" >&2; then
       renamed=true
       echo "Rename complete" >&2
     else

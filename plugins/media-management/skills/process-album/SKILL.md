@@ -19,15 +19,24 @@ Skill("media-management:<skill-name>", args="<arguments>")
 **DO NOT** re-implement sub-skill logic inline.
 When a step says `→ Invoke:`, use the Skill tool exactly as shown.
 
-The ONLY exception is Step 2 and Step 11 (getting the MP3/WAV source into a
-working folder), which use this skill's own scripts.
+The ONLY exceptions are the path check in Setup, and Step 2 and Step 11
+(getting the MP3/WAV source into a working folder), which use this skill's own
+scripts.
 
 ## Setup
 
-1. Check environment variables: MEDIA_MGMT_DOWNLOADS, MEDIA_MGMT_LIBRARY_IMPORT,
-   MEDIA_MGMT_LIBRARY_STORAGE, MEDIA_MGMT_ARCHIVE_WORKDIR
-2. For any unset variables, use the default paths from CLAUDE.md
-3. If CLAUDE.md has no paths, read config.json from $MEDIA_MGMT_CONFIG_PATH (defaults to ~/.config/media-management/config.json)
+Resolve paths with the setup skill's checker, which applies the plugin's one
+resolution order (the `MEDIA_MGMT_*` env var first, then config.json at
+`$MEDIA_MGMT_CONFIG_PATH`, default `~/.config/media-management/config.json`):
+
+```bash
+bash ../setup/scripts/check-config.sh
+```
+
+This skill needs `downloads`, `library_import`, `library_storage` and
+`archive_workdir`: use each item's `value` from the JSON. If a key it needs is
+`missing`, stop and run the `setup` skill rather than guessing a path. When the
+user names a folder explicitly, use that folder.
 
 Scripts are in `scripts/` relative to this skill directory.
 
@@ -72,8 +81,10 @@ If either fails, ask user to move the file into the folder manually via Finder.
 - Review the output for missing/inconsistent fields
 
 **Step 4: MANDATORY metadata verification — STOP AND ASK USER**
-- Present: track count, detected artist, album title
-- Present numbered genre list from the inspect results, ask user to select or type custom
+- Present: track count, detected artist, album title, and the genre currently tagged
+- Ask the user to choose the genre: present it as numbered options (the current tag, plus the
+  genres in their library, which manage-metadata's update mode lists) or let them type one.
+  Never pick it for them
 - Ask user to verify artist name
 - Ask user to verify album title
 - Check for multiple artists — if found, ask: "Is this a compilation?"
@@ -135,6 +146,15 @@ bash scripts/copy-file.sh "$WAV_SOURCE_PATH" "$DOWNLOADS/$RELEASE_NAME-wav"
 - Use the same `$ALBUM_ARTIST` as Step 9 so the mp3/ and wav/ trees under `to_nas/` mirror each other
 - WAVs NEVER go through Apple Music import
 
+**Step 13: Cleanup**
+→ Invoke: `Skill("media-management:cleanup", args="\"$RELEASE_NAME\" --zip \"$MP3_SOURCE_PATH\" --zip \"$WAV_SOURCE_PATH\" --folder \"$EXTRACTION_FOLDER\" --folder \"$WAV_EXTRACTION_FOLDER\"")`
+- Pass the exact paths tracked since Steps 1/2/11 rather than relying on cleanup's release-name
+  matching — a vendor ZIP's filename frequently doesn't match the clean release name used for
+  the extraction folder (e.g. a Various Artists compilation ZIP named after all contributing
+  artists), which name matching alone would miss on one side or the other
+- Moves original ZIPs/loose audio files to processed/, cleans extraction folders
+- Cleanup asks before it moves or deletes anything, like every other destructive step
+
 ### Batch Processing Multiple Releases
 
 **Trigger:** the user asks to process several releases in one go and explicitly asks for fewer
@@ -158,11 +178,3 @@ archived to NAS. Since `archive-media`'s MP3 mode re-copies from Apple Music (wh
 whatever the user just edited there), simply re-run Step 9 for the affected release to sync the
 correction to NAS — no need to redo the whole pipeline. WAV archives don't carry genre and don't
 need re-syncing for a genre-only correction.
-
-**Step 13: Cleanup**
-→ Invoke: `Skill("media-management:cleanup", args="$DOWNLOADS \"$ARTIST - $ALBUM\" --zip $MP3_SOURCE_PATH --zip $WAV_SOURCE_PATH --folder $EXTRACTION_FOLDER --folder $WAV_EXTRACTION_FOLDER")`
-- Pass the exact paths tracked since Steps 1/2/11 rather than relying on cleanup's release-name
-  glob matching — a vendor ZIP's filename frequently doesn't match the clean release name used
-  for the extraction folder (e.g. a Various Artists compilation ZIP named after all contributing
-  artists), which glob matching alone would miss on one side or the other
-- Moves original ZIPs/loose audio files to processed/, cleans extraction folders

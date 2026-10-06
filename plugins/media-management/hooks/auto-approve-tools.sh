@@ -10,8 +10,11 @@ fi
 INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 
-# --- Skill calls: always auto-approve (plugin-scoped orchestration) ---
+# --- Skill calls: auto-approve this plugin's own skills (orchestration) ---
+# Other plugins' skills go through the normal permission flow.
 if [[ "$TOOL_NAME" == "Skill" ]]; then
+  SKILL=$(echo "$INPUT" | jq -r '.tool_input.skill // .tool_input.command // empty')
+  [[ "$SKILL" == media-management:* ]] || exit 0
   jq -n '{
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",

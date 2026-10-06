@@ -55,6 +55,9 @@ fi
 
 # Approach 3: AppleScript track iteration (slowest, 60s timeout)
 # Use background process + wait for timeout (stock macOS has no timeout command)
+out=$(mktemp "${TMPDIR:-/tmp}/genre-extract.XXXXXX") || out=""
+[[ -n "$out" ]] || { echo '{"genres": [], "source": "none"}'; exit 0; }
+trap 'rm -f "$out"' EXIT
 osascript -e '
 tell application "Music"
   set genreList to {}
@@ -66,7 +69,7 @@ tell application "Music"
   end repeat
   return genreList
 end tell
-' > /tmp/genre-extract-$$ 2>/dev/null &
+' > "$out" 2>/dev/null &
 bg_pid=$!
 # Wait up to 60 seconds
 for _i in $(seq 1 60); do
@@ -78,8 +81,7 @@ if kill -0 "$bg_pid" 2>/dev/null; then
   kill "$bg_pid" 2>/dev/null
   wait "$bg_pid" 2>/dev/null || true
 fi
-track_genres=$(cat /tmp/genre-extract-$$ 2>/dev/null || echo "")
-rm -f /tmp/genre-extract-$$
+track_genres=$(cat "$out" 2>/dev/null || echo "")
 
 if [[ -n "$track_genres" ]]; then
   echo "$track_genres" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' | output_genres "applescript-tracks"

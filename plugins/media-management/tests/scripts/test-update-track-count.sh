@@ -43,4 +43,15 @@ if [[ $(echo "$output" | jq '.total') -ne 0 ]]; then
   exit 1
 fi
 
+# Test 5: Order follows the existing track numbers, not the filenames
+order_dir="$TEST_TMPDIR/order"
+mkdir -p "$order_dir"
+cp "$FIXTURES_DIR/track3.mp3" "$order_dir/Band - Alpha.mp3"
+cp "$FIXTURES_DIR/track1.mp3" "$order_dir/Band - Zulu.mp3"
+cp "$FIXTURES_DIR/track2.mp3" "$order_dir/Band - Mike.mp3"
+bash "$SCRIPT" "$order_dir" >/dev/null
+zulu=$(ffprobe -v quiet -show_entries format_tags=track -of csv=p=0 "$order_dir/Band - Zulu.mp3")
+alpha=$(ffprobe -v quiet -show_entries format_tags=track -of csv=p=0 "$order_dir/Band - Alpha.mp3")
+[[ "$zulu" == "1/3" && "$alpha" == "3/3" ]] || { echo "FAIL: expected Zulu 1/3 and Alpha 3/3, got $zulu and $alpha"; exit 1; }
+
 echo "All update-track-count tests passed"
