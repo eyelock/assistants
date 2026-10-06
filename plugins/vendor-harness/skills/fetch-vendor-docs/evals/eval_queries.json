@@ -1,0 +1,17 @@
+[
+  { "query": "pull the latest Codex hooks docs", "should_trigger": true },
+  {
+    "query": "get the current Copilot CLI plugin reference so we can compare it with our notes",
+    "should_trigger": true
+  },
+  { "query": "has cursor's MCP doc changed? grab it", "should_trigger": true },
+  {
+    "query": "fetch the claude code sub-agents documentation as it is today",
+    "should_trigger": true
+  },
+  { "query": "what hook events does Claude Code support", "should_trigger": false },
+  { "query": "mark the codex hooks gap as resolved", "should_trigger": false },
+  { "query": "what's the docs URL for copilot custom agents", "should_trigger": false },
+  { "query": "fetch the README of the zod npm package", "should_trigger": false },
+  { "query": "explain the sampling section of the MCP spec", "should_trigger": false }
+]

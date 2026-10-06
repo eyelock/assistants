@@ -7,10 +7,10 @@ Use this skill when you need current vendor documentation — during a vendor sy
 
 **Canonical URLs by vendor:**
 
-Claude Code: https://code.claude.com/docs/en/plugins, https://code.claude.com/docs/en/hooks-guide, https://code.claude.com/docs/en/mcp, https://code.claude.com/docs/en/sub-agents, https://code.claude.com/docs/en/settings
+Claude Code: https://code.claude.com/docs/en/plugins, https://code.claude.com/docs/en/plugin-marketplaces, https://code.claude.com/docs/en/hooks-guide, https://code.claude.com/docs/en/mcp, https://code.claude.com/docs/en/sub-agents, https://code.claude.com/docs/en/settings
 
-Cursor: https://github.com/cursor/plugin-template (README), https://docs.cursor.com/advanced/mcp, https://docs.cursor.com/advanced/rules
-Note: docs.cursor.com aggressively rate-limits. Try GitHub sources first. Manual browsing may be needed.
+Cursor: https://github.com/cursor/plugin-template (README), https://cursor.com/docs/reference/plugins, https://cursor.com/docs/context/mcp, https://cursor.com/docs/context/rules, https://cursor.com/docs/hooks, https://cursor.com/docs/subagents
+Note: the old docs.cursor.com/advanced/* URLs redirect to cursor.com/docs/*, and Cursor's docs rate-limit programmatic access. Try GitHub sources first. Manual browsing may be needed.
 
 Codex: https://developers.openai.com/codex/plugins, https://developers.openai.com/codex/plugins/build, https://developers.openai.com/codex/hooks, https://github.com/openai/codex (README)
 Note: developers.openai.com/codex/* redirects to learn.chatgpt.com/docs/*.
@@ -38,6 +38,7 @@ Agent Skills: https://agentskills.io
 2. For docs sites that rate-limit: fetch index page first, then targeted sections
 3. Report fetch failures clearly — do not silently skip a vendor
 4. Structure output: vendor → artifact type → current content
+5. Use only the vendor sources above and the vendors' own repos and trackers. Third-party blogs, tutorials and mirrors go stale and are never a reference.
 
 **Cross-vendor incompatibility watch:**
 When syncing, always re-check the marketplace `source` type tables in both Claude Code's
@@ -46,7 +47,7 @@ divergence is fatal (one bad entry breaks a whole index). Upstream trackers wort
 https://github.com/anthropics/claude-plugins-official/issues/1205 and
 https://github.com/github/copilot-cli/issues
 
-**When docs.cursor.com is unavailable:**
+**When Cursor's docs are unavailable:**
 Use this fallback order:
 1. `https://github.com/cursor/plugin-template` (README + example files)
 2. `https://github.com/cursor/plugins` (official plugin examples)

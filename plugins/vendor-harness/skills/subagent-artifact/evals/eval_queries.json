@@ -1,0 +1,21 @@
+[
+  {
+    "query": "my agents/reviewer.md works in claude but copilot says No such agent",
+    "should_trigger": true
+  },
+  { "query": "what frontmatter fields does a Cursor subagent support", "should_trigger": true },
+  { "query": "can I ship agents in a Codex plugin?", "should_trigger": true },
+  { "query": "the agent ignores its skills when it runs in copilot cli", "should_trigger": true },
+  {
+    "query": "is tools: [] the same as allowing all tools for a custom agent",
+    "should_trigger": true
+  },
+  { "query": "spawn a subagent to search the codebase for TODOs", "should_trigger": false },
+  { "query": "check the frontmatter in my SKILL.md", "should_trigger": false },
+  {
+    "query": "go through every agent, skill and hook in this plugin and tell me what breaks on each vendor",
+    "should_trigger": false
+  },
+  { "query": "which repo did harness-advisor.md come from", "should_trigger": false },
+  { "query": "codex isn't following the instructions in AGENTS.md", "should_trigger": false }
+]

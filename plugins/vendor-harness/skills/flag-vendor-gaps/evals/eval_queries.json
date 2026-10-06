@@ -1,0 +1,14 @@
+[
+  { "query": "add a gap: codex doesn't support http mcp servers", "should_trigger": true },
+  { "query": "mark the copilot git-subdir gap as resolved", "should_trigger": true },
+  {
+    "query": "update the known gaps table, cursor now reads .agents/rules",
+    "should_trigger": true
+  },
+  { "query": "what priority should this vendor gap get?", "should_trigger": true },
+  { "query": "what known gaps are still open for copilot cli?", "should_trigger": false },
+  { "query": "file an issue with github about this copilot gap", "should_trigger": false },
+  { "query": "fetch the latest docs to see if the cursor gap is fixed", "should_trigger": false },
+  { "query": "draft a bug report for the codex matcher problem", "should_trigger": false },
+  { "query": "add a row to the CHANGELOG for this fix", "should_trigger": false }
+]

@@ -1,17 +1,5 @@
 # Skills that predate the evals rule (see AGENTS.md). Remove a line when its skill gets evals;
 # never add one: a new skill ships with evals/evals.json and evals/eval_queries.json.
-plugins/vendor-harness/skills/compose-feedback
-plugins/vendor-harness/skills/fetch-vendor-docs
-plugins/vendor-harness/skills/flag-vendor-gaps
-plugins/vendor-harness/skills/hooks-artifact
-plugins/vendor-harness/skills/locate-artifact-source
-plugins/vendor-harness/skills/mcp-artifact
-plugins/vendor-harness/skills/plugin-audit
-plugins/vendor-harness/skills/skill-artifact
-plugins/vendor-harness/skills/startup-context
-plugins/vendor-harness/skills/subagent-artifact
-plugins/vendor-harness/skills/submit-feedback
-plugins/vendor-harness/skills/vendor-adapters
 skills/dev/skills/dev-backend
 skills/dev/skills/dev-debug
 skills/dev/skills/dev-project

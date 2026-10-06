@@ -1,0 +1,18 @@
+[
+  {
+    "query": "how do plugin manifests map across claude, cursor, codex and copilot?",
+    "should_trigger": true
+  },
+  { "query": "which marketplace source types does copilot accept", "should_trigger": true },
+  { "query": "show me the vendor support matrix for harness artifacts", "should_trigger": true },
+  {
+    "query": "what's the docs URL for copilot custom agents configuration",
+    "should_trigger": true
+  },
+  { "query": "which known vendor gaps are still open?", "should_trigger": true },
+  { "query": "validate this hooks.json for copilot", "should_trigger": false },
+  { "query": "audit my plugin for every vendor", "should_trigger": false },
+  { "query": "fetch the latest vendor docs", "should_trigger": false },
+  { "query": "mark this gap as resolved", "should_trigger": false },
+  { "query": "my CLAUDE.md isn't being loaded", "should_trigger": false }
+]

@@ -1,0 +1,47 @@
+{
+  "skill_name": "startup-context",
+  "fixtures": "Each case copies a small repo or plugin directory into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "four-vendor-repo",
+      "prompt": "We want the instructions in data/web-app to reach Claude Code, Cursor, Codex and Copilot CLI. The files are AGENTS.md, CLAUDE.md, .cursor/rules/testing.md and .github/instructions/python.instructions.md. What isn't going to load?",
+      "files": ["../../evals/files/.trees/vendor/web-app"],
+      "expected_output": "Cursor ignores .cursor/rules/testing.md: rules must be .mdc with description/globs/alwaysApply frontmatter. python.instructions.md uses Cursor's globs key; Copilot path-scoped files need applyTo. CLAUDE.md's @~/team/standards.md import is not loaded by Copilot, which skips absolute and ~/ paths. AGENTS.md already covers Codex, and the @AGENTS.md bridge is correct for Claude (redundant but harmless in Copilot).",
+      "assertions": [
+        "Says Cursor ignores .cursor/rules/testing.md because rules must be .mdc files",
+        "Says the Cursor rule needs frontmatter with description, globs and alwaysApply",
+        "Says python.instructions.md must use applyTo, not globs, for Copilot",
+        "Says Copilot will not load the @~/team/standards.md import because ~/ paths are not loaded",
+        "Says AGENTS.md is enough for Codex and does not ask for a Codex-specific file",
+        "Does not call the @AGENTS.md line in CLAUDE.md broken"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "codex-plugin-rules",
+      "prompt": "Our Codex plugin ships a house style in rules/style.md but Codex never follows it. Plugin is in data/lint-plugin. Why?",
+      "files": ["../../evals/files/.trees/vendor/lint-plugin"],
+      "expected_output": "Codex does not support rules in the plugin format, so rules/style.md is never loaded. Move the style rules into the plugin's AGENTS.md, which is Codex's single source of startup instructions.",
+      "assertions": [
+        "States that Codex does not support rules in plugins",
+        "Recommends moving the style rules into AGENTS.md",
+        "Does not suggest converting the file to .mdc or *.instructions.md as the Codex fix"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "copilot-conflict",
+      "prompt": "data/api-repo has an AGENTS.md that says tabs and a .github/copilot-instructions.md that says 2 spaces. Which one wins in Copilot CLI?",
+      "files": ["../../evals/files/.trees/vendor/api-repo"],
+      "expected_output": "Neither. Copilot combines every applicable instruction file and defines no precedence between them, so both contradictory rules reach the model. Remove the conflict so the indentation rule lives in one file. /instructions shows which files loaded.",
+      "assertions": [
+        "States that Copilot has no defined precedence between AGENTS.md and copilot-instructions.md",
+        "Says both files are combined, so both indentation rules reach the model",
+        "Does not claim either file overrides the other",
+        "Recommends removing the contradiction so only one file states the rule",
+        "Mentions /instructions as the way to see which instruction files loaded"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "skill_name": "fetch-vendor-docs",
+  "fixtures": "No files and no network: web tools are disabled in eval runs, so each case asks for the fetch plan (which sources, in what order, and why) rather than the fetched content.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "cursor-docs-rate-limited",
+      "prompt": "I'm doing the vendor sync and cursor.com/docs keeps returning 429 to the fetcher. Where do I get current Cursor plugin format info instead? I can't fetch anything from this session, so just tell me the sources in order and what to do if they fail too.",
+      "expected_output": "Cursor's docs rate-limit programmatic access, so use the fallback order: 1) https://github.com/cursor/plugin-template (README and example files), 2) https://github.com/cursor/plugins (official plugin examples), 3) the forum thread https://forum.cursor.com/t/support-for-agent-folder-compatibility/154167 on agents/ folder support. Prefer GitHub raw content. If all three fail or are incomplete, flag the gap explicitly in the sync report; do not silently leave Cursor out.",
+      "assertions": [
+        "Gives github.com/cursor/plugin-template as the first source",
+        "Gives github.com/cursor/plugins as the second source",
+        "Gives the forum thread forum.cursor.com/t/support-for-agent-folder-compatibility/154167 as the third source",
+        "Says that if all of them fail, the gap is flagged explicitly in the report rather than Cursor being silently skipped",
+        "Does not recommend third-party blogs, tutorials or community mirrors as a source"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "marketplace-source-recheck",
+      "prompt": "Vendor sync time. Before I fetch anything: which doc pages and trackers should I pull to see whether Claude Code and Copilot CLI still disagree on marketplace source types? Give me the URLs in order; I'll fetch them myself.",
+      "expected_output": "The marketplace source-type tables in both Claude Code's plugin-marketplaces doc (https://code.claude.com/docs/en/plugin-marketplaces) and Copilot's CLI plugin reference (https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference). The /reference/ pages beat the /how-tos/ pages when they disagree. Plus the upstream trackers: https://github.com/anthropics/claude-plugins-official/issues/1205 and https://github.com/github/copilot-cli/issues. Explains why: the divergence is fatal, because one unsupported source entry breaks a whole index.",
+      "assertions": [
+        "Names Copilot's cli-plugin-reference page under docs.github.com/en/copilot/reference/",
+        "Names Claude Code's plugin-marketplaces doc on code.claude.com",
+        "Names the upstream issue anthropics/claude-plugins-official#1205",
+        "Names the github/copilot-cli repository (its issues) as a tracker to check",
+        "Says to prefer Copilot's /reference/ pages over its /how-tos/ pages when they disagree",
+        "Explains that one unsupported source entry breaks the whole marketplace index"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "codex-hooks-redirect",
+      "prompt": "Fetching developers.openai.com/codex/hooks bounced me to learn.chatgpt.com. Is that legit, and which sources should the Codex part of the sync use? No network here, just the plan.",
+      "expected_output": "The redirect is expected: developers.openai.com/codex/* now redirects to learn.chatgpt.com/docs/*. The Codex sources are https://developers.openai.com/codex/plugins, https://developers.openai.com/codex/plugins/build, https://developers.openai.com/codex/hooks and the https://github.com/openai/codex README, preferring GitHub raw content where it exists. Report any fetch failure clearly instead of skipping Codex, and structure the output vendor, then artifact type, then current content.",
+      "assertions": [
+        "Says the developers.openai.com/codex to learn.chatgpt.com redirect is expected",
+        "Lists the Codex plugins, plugins/build and hooks pages on developers.openai.com",
+        "Lists the github.com/openai/codex repository",
+        "Says to prefer GitHub raw content where available",
+        "Says fetch failures are reported, not silently skipped",
+        "Structures the output by vendor, then artifact type, then content"
+      ]
+    }
+  ]
+}

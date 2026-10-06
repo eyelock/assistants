@@ -126,7 +126,7 @@ which overrides an enterprise one.
 | `name` | `name` (optional here) |
 | `description` | `description` (required here) |
 | `model` | `model` |
-| `tools` (space-delimited) | `tools` (list; aliases accepted) |
+| `tools` (comma-separated or list) | `tools` (comma-separated or list; list the raw names — Claude names and aliases did not work when tested) |
 | `disallowedTools` | no equivalent — enumerate the allowed set instead |
 | `skills` | **no equivalent — inert, and silently so. See below.** |
 | `maxTurns`, `effort`, `memory`, `background`, `isolation`, `permissionMode` | no equivalent |

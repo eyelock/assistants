@@ -1,0 +1,48 @@
+{
+  "skill_name": "flag-vendor-gaps",
+  "fixtures": "known-gaps.md is a snapshot of the gap table, copied into the run's data/ folder. Runs are read-only, so the answer shows the change rather than writing it.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "mitigated-and-withdrawn",
+      "prompt": "Two updates for data/known-gaps.md. 1) On 2026-09-02 we started publishing a Copilot-safe .github/plugin/marketplace.json next to the main one, so Copilot users can install again; Copilot itself still rejects git-subdir. 2) The model alias one was never real: Copilot CLI v1.0.80 resolves model: sonnet fine, our test agent had a typo (sonet). Show me the updated rows.",
+      "files": ["../../evals/files/known-gaps.md"],
+      "expected_output": "The git-subdir row becomes MITIGATED, not RESOLVED: the cause upstream is still open and only our side works around it; the note says what (a Copilot-safe .github/plugin/marketplace.json published alongside) and when (2026-09-02). The model alias row becomes WITHDRAWN, not RESOLVED and not deleted: the gap was wrong, and the note says what disproved it (v1.0.80 resolves sonnet; the test agent had a typo). Both rows stay in the table, and no new rows are added.",
+      "assertions": [
+        "Marks the git-subdir row MITIGATED, not RESOLVED, because Copilot still rejects git-subdir",
+        "The git-subdir note says what the workaround is (a Copilot-safe .github/plugin/marketplace.json published alongside) and when (2026-09-02)",
+        "Marks the model alias row WITHDRAWN (the gap was wrong), not RESOLVED, OPEN or deleted",
+        "The model alias note says what disproved it: v1.0.80 resolves model: sonnet, and the test agent had a typo",
+        "Keeps both rows in the table and adds no new rows"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "resolve-gap",
+      "prompt": "Good news: Copilot CLI v1.2.0 (released 2026-09-30) fixed it so the web, read and execute aliases now work in an agent's tools: list. Update data/known-gaps.md and tell me what else needs touching.",
+      "files": ["../../evals/files/known-gaps.md"],
+      "expected_output": "The MED row about GitHub's tool aliases not working in tools: becomes RESOLVED, with a resolution note saying what changed (the aliases now grant the capability in tools:) and when (Copilot CLI v1.2.0, 2026-09-30). The row stays in the table. The reference files that describe the old behavior, the subagent-artifact skill's Copilot reference and its tools guidance, must be updated to match.",
+      "assertions": [
+        "Changes the status of the tool-aliases row to RESOLVED",
+        "The resolution note says what changed: web, read and execute now work in tools:",
+        "The resolution note says when: Copilot CLI v1.2.0 or 2026-09-30",
+        "Keeps the row in the table rather than deleting it",
+        "Says the reference file describing Copilot agent tools (the subagent-artifact skill's Copilot reference) also needs updating"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "new-gaps-priority",
+      "prompt": "Three new ones for data/known-gaps.md. 1) Codex never runs a PreToolUse hook whose matcher uses | alternation, so our rm guard silently doesn't run there. 2) Copilot CLI's hook docs say a hook can set timeoutSec, but the shipped binary ignores it: hooks still run, always with the 30-second default. 3) Copilot CLI's /skills info cuts long descriptions off at 80 characters in its display; the skill itself works fine. Give me the rows.",
+      "files": ["../../evals/files/known-gaps.md"],
+      "expected_output": "Three new OPEN rows. The Codex matcher gap is HIGH: a guard hook silently not running is incorrect behavior. The Copilot timeoutSec gap is MED: hooks still work, but the docs disagree with the shipped binary. The /skills info truncation is LOW: cosmetic. Vendors are spelled as in the table (Codex, Copilot CLI). Each description says what goes wrong and what should happen instead (the hook should run for every tool the alternation names; timeoutSec should set the hook timeout, as documented; /skills info should show the whole description), with any workaround in the Status note rather than as the correct behavior.",
+      "assertions": [
+        "Adds the Codex matcher gap as HIGH, with Vendor Codex and status OPEN",
+        "Adds the timeoutSec gap as MED (docs disagree with the shipped binary, but hooks still run), with Vendor Copilot CLI",
+        "Adds the /skills info truncation as LOW, with Vendor Copilot CLI",
+        "Each new row's description says what should happen instead, not only what goes wrong or a workaround",
+        "The new rows use the table's Priority | Description | Vendor | Status columns"
+      ]
+    }
+  ]
+}

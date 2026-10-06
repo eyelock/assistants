@@ -1,0 +1,35 @@
+{
+  "name": "acme-plugins",
+  "owner": { "name": "Acme" },
+  "plugins": [
+    {
+      "name": "acme-review",
+      "source": "./plugins/acme-review",
+      "description": "Code review helpers."
+    },
+    {
+      "name": "acme-deploy",
+      "source": { "source": "github", "repo": "acme/deploy-tools", "path": "plugin" },
+      "description": "Deploy and rollback skills."
+    },
+    {
+      "name": "acme-infra",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/acme/infra.git",
+        "path": "tools/claude-plugin"
+      },
+      "description": "Terraform and Kubernetes helpers."
+    },
+    {
+      "name": "acme-lint",
+      "source": { "source": "npm", "package": "@acme/lint-plugin" },
+      "description": "Lint rules as skills."
+    },
+    {
+      "name": "docs.helper",
+      "source": "./plugins/docs-helper",
+      "description": "Docs writing helpers."
+    }
+  ]
+}
