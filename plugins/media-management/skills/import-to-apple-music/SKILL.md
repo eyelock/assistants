@@ -8,9 +8,6 @@ description: >-
   Also use to diagnose a bad import, e.g. "it showed up as separate tracks
   instead of one album."
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.2.0"
 ---
 
 ## Setup

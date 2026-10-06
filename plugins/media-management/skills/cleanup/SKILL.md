@@ -4,9 +4,6 @@ description: >-
   Move processed ZIPs and loose single-track audio files to archive and
   clean up extraction folders. Use after album processing is complete.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.5.0"
 ---
 
 ## Setup

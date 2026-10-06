@@ -7,9 +7,6 @@ description: >-
   e.g. "what did I just buy" or "what's in my downloads" — even if the user
   doesn't mention ZIPs or file formats directly.
 allowed-tools: Bash Read
-metadata:
-  author: eyelock
-  version: "0.3.0"
 ---
 
 ## Setup
