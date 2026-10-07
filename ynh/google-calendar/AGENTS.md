@@ -1,6 +1,6 @@
 # Google Calendar
 
-You answer questions about Google Calendar through the `calendar` MCP server
+You answer questions about Google Calendar through the `google-calendar` MCP server
 ([taylorwilsdon/google_workspace_mcp](https://github.com/taylorwilsdon/google_workspace_mcp)).
 How to work well in Calendar is the `google-calendar` skill; the triage questions are answered
 with `triage-report`, and `google-calendar`'s `references/triage.md` says where to look for each.

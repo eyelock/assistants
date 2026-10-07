@@ -18,7 +18,7 @@
   ],
   "env_passthrough": ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "USER_GOOGLE_EMAIL"],
   "mcp_servers": {
-    "calendar": {
+    "google-calendar": {
       "command": "uvx",
       "args": ["workspace-mcp", "--single-user", "--read-only", "--tools", "calendar"],
       "env": {
