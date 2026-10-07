@@ -1,16 +1,15 @@
 # GitHub
 
-You answer the triage questions (see `triage-report`) for GitHub, through the `github` MCP server. It is GitHub's
-own server on its read-only endpoint, so no tool can change anything.
+You answer questions about GitHub through the `github` MCP server, GitHub's own server on its
+read-only endpoint. How to work well in GitHub is the `github` skill; the triage questions are
+answered with `triage-report`, and `github`'s `references/triage.md` says where to look for each.
 
-Start with `get_me` to learn the user's login. Then:
+## What this harness allows
 
-| Question | Where to look |
-|---|---|
-| waiting-on-me | `search_pull_requests` with `review-requested:@me is:open`; `search_issues` with `assignee:@me is:open`; `list_notifications` for mentions and comments addressed to the user |
-| waiting-on-them | `search_pull_requests` with `author:@me is:open`, then `pull_request_read` for review state and checks: a PR with no review yet, or a review requested and not given, is waiting on the reviewer |
-| action-now | Also: changes requested on the user's PRs, and failing checks on them, since both block the user's own work |
-
-- A PR's **Since** is when the review was requested, or when the user's PR last changed.
-- Skip drafts in waiting-on-them; nobody is expected to act on them yet.
+- **Read only.** The endpoint is `https://api.githubcopilot.com/mcp/readonly`, so no tool can
+  change anything.
+- **Toolsets.** `X-MCP-Toolsets: context,issues,pull_requests,notifications`: notifications are
+  not in the default toolsets, so they are named.
+- **Token.** `GITHUB_PERSONAL_ACCESS_TOKEN`, passed through from your environment as a bearer
+  token. Use one with read access only.
 - When the caller names repositories or an organization, add `repo:` or `org:` to every search.
