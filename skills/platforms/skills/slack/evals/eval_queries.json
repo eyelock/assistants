@@ -1,0 +1,24 @@
+[
+  {
+    "query": "search slack for what kim said about the rollout window last week",
+    "should_trigger": true
+  },
+  { "query": "do I have any unread DMs in slack?", "should_trigger": true },
+  {
+    "query": "find the slack thread where we decided on the migration plan and link it",
+    "should_trigger": true
+  },
+  { "query": "has anyone @-mentioned me in slack today?", "should_trigger": true },
+  {
+    "query": "turn this slack ts 1700000000.000200 into a permalink for channel C100",
+    "should_trigger": true
+  },
+  { "query": "who said we'd ship on Friday in #eng?", "should_trigger": true },
+  {
+    "query": "draft a slack message to the team announcing the outage is over",
+    "should_trigger": false
+  },
+  { "query": "check my Microsoft Teams chats for anything unread", "should_trigger": false },
+  { "query": "summarise this meeting-notes document", "should_trigger": false },
+  { "query": "set up a Slack app with a bot token and webhook", "should_trigger": false }
+]

@@ -1,0 +1,6 @@
+{
+  "name": "@eyelock-assistants/platform-skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack."
+}

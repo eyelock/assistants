@@ -65,6 +65,12 @@
       "version": "0.1.0"
     },
     {
+      "name": "platform-skills",
+      "source": "./skills/platforms",
+      "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack.",
+      "version": "0.1.0"
+    },
+    {
       "name": "voice-skills",
       "source": "./skills/voice",
       "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",

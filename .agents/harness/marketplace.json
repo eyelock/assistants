@@ -184,6 +184,17 @@
       "keywords": ["skills"]
     },
     {
+      "name": "platform-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/platforms"
+      },
+      "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack.",
+      "version": "0.1.0",
+      "keywords": ["skills"]
+    },
+    {
       "name": "voice-skills",
       "source": {
         "type": "github",

@@ -1,0 +1,8 @@
+{
+  "name": "platform-skills",
+  "version": "0.1.0",
+  "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack.",
+  "author": {
+    "name": "eyelock"
+  }
+}

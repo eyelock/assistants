@@ -33,6 +33,8 @@ importers:
 
   skills/pause: {}
 
+  skills/platforms: {}
+
   skills/tech: {}
 
   skills/triage: {}
@@ -95,6 +97,9 @@ importers:
 
   ynh/slack:
     dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
       '@eyelock-assistants/triage-skills':
         specifier: workspace:*
         version: link:../../skills/triage
