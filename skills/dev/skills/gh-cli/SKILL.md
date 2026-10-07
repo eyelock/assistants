@@ -9,6 +9,8 @@ description: GitHub operations via gh CLI — use this instead of GitHub MCP ser
 
 The `gh` CLI is always available, scriptable, and produces predictable output. MCP server tools introduce unnecessary indirection and cause confusion when their side effects (push, create, close) occur even if you later reject the agent's response.
 
+When a read-only GitHub MCP server is what the harness provides (no shell), the `github` skill covers reading through it; writes still go through `gh` here, and only when asked.
+
 ## Read Freely, Write Only When Asked
 
 Reads change nothing: `list`, `view`, `checks`, `diff`, `status`, `search`, `run view`, and `gh api` GETs. Run as many as the question needs.

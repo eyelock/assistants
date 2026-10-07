@@ -1,5 +1,5 @@
 {
-  "name": "@eyelock-assistants/calendar",
+  "name": "@eyelock-assistants/google-calendar",
   "version": "0.1.0",
   "private": true,
   "description": "Reads Google Calendar for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read-only.",
