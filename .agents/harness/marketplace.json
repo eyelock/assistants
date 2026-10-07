@@ -59,7 +59,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "ynh/ynh-dev"
       },
-      "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
+      "description": "Development harness for the ynh project \u2014 Gitflow workflow with Go language support",
       "version": "0.1.0",
       "keywords": ["ynh", "go", "development", "gitflow"]
     },
@@ -70,7 +70,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "ynh/termq-dev"
       },
-      "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
+      "description": "Development harness for the TermQ project \u2014 Gitflow workflow with Swift/SwiftUI language support",
       "version": "0.1.0",
       "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
     },
@@ -103,7 +103,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "plugins/vendor-harness"
       },
-      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
+      "description": "Lifecycle management for LLM vendor harness artifacts \u2014 validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
       "version": "0.1.0",
       "keywords": [
         "vendor",
@@ -171,6 +171,17 @@
       "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
       "version": "0.1.0",
       "keywords": ["drive", "docs", "comments", "google", "triage", "read-only"]
+    },
+    {
+      "name": "imessage",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/imessage"
+      },
+      "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only; shows only as much text as the job needs.",
+      "version": "0.1.0",
+      "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"]
     },
     {
       "name": "triage-skills",

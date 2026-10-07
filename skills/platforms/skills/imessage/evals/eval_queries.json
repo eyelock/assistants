@@ -1,0 +1,42 @@
+[
+  {
+    "query": "who is waiting on a reply from me in my iMessages?",
+    "should_trigger": true
+  },
+  {
+    "query": "catch me up on my iMessage thread with Jo from the weekend",
+    "should_trigger": true
+  },
+  {
+    "query": "find the text where Tom said when the electricity bill is due",
+    "should_trigger": true
+  },
+  {
+    "query": "what did I promise people in my texts this week?",
+    "should_trigger": true
+  },
+  {
+    "query": "which of my SMS conversations have I not answered yet?",
+    "should_trigger": true
+  },
+  {
+    "query": "search my Messages for the address Ana sent last month",
+    "should_trigger": true
+  },
+  {
+    "query": "send a text to Jo saying I'll be ten minutes late",
+    "should_trigger": false
+  },
+  {
+    "query": "what did Kim say in our WhatsApp chat?",
+    "should_trigger": false
+  },
+  {
+    "query": "how do I turn off read receipts and message previews in macOS Messages settings?",
+    "should_trigger": false
+  },
+  {
+    "query": "check my Slack DMs for anything unanswered",
+    "should_trigger": false
+  }
+]
