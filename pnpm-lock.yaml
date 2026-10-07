@@ -92,6 +92,15 @@ importers:
         specifier: workspace:*
         version: link:../../skills/triage
 
+  ynh/imessage:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
   ynh/planner:
     dependencies:
       '@eyelock-assistants/dev-skills':

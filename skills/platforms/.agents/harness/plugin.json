@@ -2,7 +2,7 @@
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "platform-skills",
   "version": "0.1.0",
-  "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar and Google Drive.",
+  "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar, Google Drive and iMessage.",
   "author": {
     "name": "eyelock"
   }

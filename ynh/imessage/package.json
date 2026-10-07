@@ -1,0 +1,10 @@
+{
+  "name": "@eyelock-assistants/imessage",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only; shows only as much text as the job needs.",
+  "dependencies": {
+    "@eyelock-assistants/platform-skills": "workspace:*",
+    "@eyelock-assistants/triage-skills": "workspace:*"
+  }
+}
