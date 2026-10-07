@@ -15,6 +15,8 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
 
 - A message is answered when the user replied after it in the same DM or thread, or reacted to
   it with an acknowledgement. Then skip it.
+- Check the replier's or reactor's user ID: someone with a similar name, or another person's
+  check mark, does not answer for the user.
 - A thread reply is not in channel history: read the thread before calling a parent unanswered.
 - An FYI, an `@channel` announcement, or something the user sent to others does not wait on the
   user. A message is waiting-on-them only if the user asked for something and nobody answered.

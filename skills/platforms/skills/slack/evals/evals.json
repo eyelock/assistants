@@ -1,19 +1,19 @@
 {
   "skill_name": "slack",
-  "fixtures": "slack-raw.json is a snapshot of raw Slack MCP tool results (epoch ts values, thread replies kept apart, reactions). Its snapshot field gives the time to treat as now.",
+  "fixtures": "slack-raw.json is a snapshot of raw Slack MCP tool results (epoch ts values, thread replies kept apart, reactions, a London user). Its snapshot field gives the time to treat as now and the user's timezone.",
   "evals": [
     {
       "id": 1,
-      "name": "raw-waiting-on-me",
-      "prompt": "data/slack-raw.json is what the Slack tools returned for me this morning. What is waiting on me? Give dates, not raw timestamps.",
+      "name": "raw-waiting-on-me-traps",
+      "prompt": "data/slack-raw.json is what the Slack tools returned for me this morning. What is waiting on me? Give dates in my timezone, not raw timestamps.",
       "files": ["../../evals/files/slack-raw.json"],
-      "expected_output": "Waiting on dave: jo's DM asking for the Q3 numbers (5 Oct), pia's request to look at the migration plan (3 Oct; lee replied in the thread but dave did not) and sam's request to review the vendor contract (4 Oct). Not kim's rollout question (dave answered in the thread), max's budget request (dave reacted with a check mark), the channel join or the @channel announcement.",
+      "expected_output": "Waiting on dave (U001, London time): jo's DM asking for the Q3 numbers (5 Oct), ana's DM asking for release-note sign-off (sent 23:30 UTC on 4 Oct, which is 5 Oct 00:30 in London), tom's on-call swap request in #eng (3 Oct; the only reply is from dave.r, a different person), priya's access request (3 Oct; the check mark is lee's, not dave's), pia's migration plan request (3 Oct; only lee replied) and sam's vendor contract review (4 Oct). Not kim's rollout question (dave answered), max's budget request (dave reacted), the channel join or the @channel announcement.",
       "assertions": [
-        "Lists jo's request for the Q3 numbers with a Since date of 5 Oct 2026 (2026-10-05)",
-        "Lists pia's request about the migration plan with a Since date of 3 Oct 2026, and is not treated as answered because only lee replied in the thread",
-        "Lists sam's request to review the vendor contract with a Since date of 4 Oct 2026",
-        "Does not list kim's rollout window question, which dave answered in the thread",
-        "Does not list max's budget approval request, which dave acknowledged with a check-mark reaction",
+        "Lists ana's request to sign off the release notes with a Since date of 5 Oct 2026 (London time), not 4 Oct, because 23:30 UTC on 4 Oct is 00:30 on 5 Oct in London",
+        "Lists tom's on-call swap request, and does not treat it as answered because the only reply is from dave.r, a different user from dave (U001)",
+        "Lists priya's access request, and does not treat it as acknowledged because the check-mark reaction is by U006 (lee), not by dave",
+        "Lists jo's Q3 numbers request (5 Oct), pia's migration plan request (3 Oct; only lee replied) and sam's vendor contract review (4 Oct)",
+        "Does not list kim's rollout window question (dave answered in the thread) or max's budget request (dave reacted with a check mark)",
         "Does not list the channel join or the @channel office closure announcement",
         "No raw epoch timestamp such as 1791189000 is shown as the date"
       ]
