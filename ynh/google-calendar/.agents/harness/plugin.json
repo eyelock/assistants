@@ -9,6 +9,11 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/google-calendar"]
     }
   ],
   "env_passthrough": ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "USER_GOOGLE_EMAIL"],
