@@ -9,6 +9,11 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/slack"]
     }
   ],
   "env_passthrough": ["SLACK_MCP_XOXP_TOKEN"],

@@ -4,6 +4,7 @@
   "private": true,
   "description": "Reads GitHub for what is waiting on you and what you are waiting on: review requests, your PRs' reviews and checks, mentions and assigned issues. Read-only.",
   "dependencies": {
+    "@eyelock-assistants/platform-skills": "workspace:*",
     "@eyelock-assistants/triage-skills": "workspace:*"
   }
 }

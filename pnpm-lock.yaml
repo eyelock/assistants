@@ -33,17 +33,13 @@ importers:
 
   skills/pause: {}
 
+  skills/platforms: {}
+
   skills/tech: {}
 
   skills/triage: {}
 
   skills/voice: {}
-
-  ynh/calendar:
-    dependencies:
-      '@eyelock-assistants/triage-skills':
-        specifier: workspace:*
-        version: link:../../skills/triage
 
   ynh/david:
     dependencies:
@@ -60,20 +56,38 @@ importers:
         specifier: workspace:*
         version: link:../../skills/tech
 
-  ynh/drive:
-    dependencies:
-      '@eyelock-assistants/triage-skills':
-        specifier: workspace:*
-        version: link:../../skills/triage
-
   ynh/github:
     dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
       '@eyelock-assistants/triage-skills':
         specifier: workspace:*
         version: link:../../skills/triage
 
   ynh/gmail:
     dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/google-calendar:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/google-drive:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
       '@eyelock-assistants/triage-skills':
         specifier: workspace:*
         version: link:../../skills/triage
@@ -95,6 +109,9 @@ importers:
 
   ynh/slack:
     dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
       '@eyelock-assistants/triage-skills':
         specifier: workspace:*
         version: link:../../skills/triage

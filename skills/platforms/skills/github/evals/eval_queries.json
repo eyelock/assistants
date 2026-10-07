@@ -1,0 +1,24 @@
+[
+  { "query": "what pull requests are waiting on my review on github?", "should_trigger": true },
+  {
+    "query": "check my open PRs on github for failing checks or requested changes",
+    "should_trigger": true
+  },
+  {
+    "query": "do I have any github notifications where someone mentioned me?",
+    "should_trigger": true
+  },
+  { "query": "list the github issues assigned to me in the acme org", "should_trigger": true },
+  {
+    "query": "why does list_notifications not exist on the github read-only MCP endpoint?",
+    "should_trigger": true
+  },
+  {
+    "query": "has anyone approved my PR yet, through the GitHub MCP tools?",
+    "should_trigger": true
+  },
+  { "query": "merge pull request 425 and comment that it shipped", "should_trigger": false },
+  { "query": "check my gmail for unanswered threads", "should_trigger": false },
+  { "query": "write a github actions workflow that runs go test", "should_trigger": false },
+  { "query": "set up a GitHub personal access token for my CI", "should_trigger": false }
+]

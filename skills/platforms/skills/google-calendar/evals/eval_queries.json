@@ -1,0 +1,18 @@
+[
+  { "query": "which calendar invites have I not responded to yet?", "should_trigger": true },
+  {
+    "query": "who still hasn't answered the invite to the meeting I organised?",
+    "should_trigger": true
+  },
+  { "query": "what's on my google calendar tomorrow, in my timezone?", "should_trigger": true },
+  { "query": "do I have any clashing meetings this week?", "should_trigger": true },
+  { "query": "when are kim and I both free on Thursday, using free/busy?", "should_trigger": true },
+  { "query": "link me to the event for next week's offsite planning", "should_trigger": true },
+  { "query": "accept the design review invite and decline the retro", "should_trigger": false },
+  { "query": "check my gmail for unanswered threads", "should_trigger": false },
+  { "query": "create a recurring weekly meeting called standup", "should_trigger": false },
+  {
+    "query": "how do I share my calendar with my team and set working hours",
+    "should_trigger": false
+  }
+]

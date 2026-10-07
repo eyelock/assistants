@@ -151,22 +151,22 @@
       "keywords": ["gmail", "mail", "email", "google", "triage", "read-only"]
     },
     {
-      "name": "calendar",
+      "name": "google-calendar",
       "source": {
         "type": "github",
         "repo": "github.com/eyelock/assistants",
-        "path": "ynh/calendar"
+        "path": "ynh/google-calendar"
       },
       "description": "Reads Google Calendar for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read-only.",
       "version": "0.1.0",
       "keywords": ["calendar", "meetings", "invites", "google", "triage", "read-only"]
     },
     {
-      "name": "drive",
+      "name": "google-drive",
       "source": {
         "type": "github",
         "repo": "github.com/eyelock/assistants",
-        "path": "ynh/drive"
+        "path": "ynh/google-drive"
       },
       "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
       "version": "0.1.0",
@@ -180,6 +180,17 @@
         "path": "skills/triage"
       },
       "description": "Triage skills: what is waiting on me, what am I waiting on, and what to act on now or soon, answered in one shape on any platform.",
+      "version": "0.1.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "platform-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/platforms"
+      },
+      "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar and Google Drive.",
       "version": "0.1.0",
       "keywords": ["skills"]
     },

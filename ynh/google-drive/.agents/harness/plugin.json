@@ -1,6 +1,6 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
-  "name": "drive",
+  "name": "google-drive",
   "version": "0.1.0",
   "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
   "default_vendor": "claude",
@@ -9,6 +9,11 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/google-drive"]
     }
   ],
   "env_passthrough": ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "USER_GOOGLE_EMAIL"],

@@ -9,6 +9,11 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/github"]
     }
   ],
   "env_passthrough": ["GITHUB_PERSONAL_ACCESS_TOKEN"],

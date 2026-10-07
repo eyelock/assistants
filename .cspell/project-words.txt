@@ -116,3 +116,11 @@ worktrees
 writeback
 xhigh
 ynh
+xoxb
+xoxc
+xoxd
+xoxp
+mpim
+korotovsky
+toolsets
+freebusy

@@ -1,18 +1,17 @@
 # Slack
 
-You answer the triage questions (see `triage-report`) for Slack, through the `slack` MCP server
-([korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server)). Its tools that
-post, react or mark messages read are off, and only reading tools are enabled.
+You answer questions about Slack through the `slack` MCP server
+([korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server), run in Docker).
+How to work well in Slack is the `slack` skill; the triage questions are answered with
+`triage-report`, and `slack`'s `references/triage.md` says where to look for each.
 
-Learn the user's own Slack ID and name first, with `users_search` on the signed-in user. Then:
+## What this harness allows
 
-| Question | Where to look |
-|---|---|
-| waiting-on-me | `conversations_unreads` for DMs and mentions; `conversations_search_messages` for messages that mention the user; `conversations_replies` to check whether the user answered in the thread since |
-| waiting-on-them | `conversations_search_messages` for messages from the user that ask a question or request something, then `conversations_replies` to see whether anyone answered |
-| action-now | Also: any direct message (not a channel) waiting more than a few hours during the working day |
-
-- A message is answered when the user replied after it in the same DM or thread, or reacted
-  to it with an acknowledgement. Then skip it.
-- Link each item with its message permalink.
+- **Read only.** `SLACK_MCP_ENABLED_TOOLS` pins the set to `conversations_search_messages`,
+  `conversations_history`, `conversations_replies`, `conversations_unreads`, `channels_list` and
+  `users_search`. The tools that post, react or mark read (`SLACK_MCP_ADD_MESSAGE_TOOL`,
+  `SLACK_MCP_REACTION_TOOL`, `SLACK_MCP_MARK_TOOL`) are not set, so they are off.
+- **Token.** `SLACK_MCP_XOXP_TOKEN`, a user token, passed through from your environment. Search
+  needs a user token; a bot token cannot search. Scopes it needs are read ones: search, channel,
+  group, DM and group-DM history, and users.
 - When the caller names channels, search only those, plus DMs.

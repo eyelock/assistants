@@ -1,0 +1,24 @@
+[
+  { "query": "which google doc comments are waiting on me?", "should_trigger": true },
+  {
+    "query": "has anyone replied to the comment I left on the launch checklist sheet?",
+    "should_trigger": true
+  },
+  { "query": "find open comments that mention me in my shared drive docs", "should_trigger": true },
+  {
+    "query": "is there a way to search comments across all my google drive files?",
+    "should_trigger": true
+  },
+  { "query": "list the unresolved comments on the Q4 plan document", "should_trigger": true },
+  {
+    "query": "which docs did I share recently asking for feedback, and did anyone comment?",
+    "should_trigger": true
+  },
+  {
+    "query": "resolve all the comments on the pitch deck and share it with hana",
+    "should_trigger": false
+  },
+  { "query": "check my calendar for meetings with unanswered invites", "should_trigger": false },
+  { "query": "write a project brief document for the new launch", "should_trigger": false },
+  { "query": "how do I set up a shared drive and change its permissions", "should_trigger": false }
+]

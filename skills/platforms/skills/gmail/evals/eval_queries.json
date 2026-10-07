@@ -1,0 +1,15 @@
+[
+  { "query": "which of my gmail threads are waiting on a reply from me?", "should_trigger": true },
+  { "query": "did the vendor ever answer the email I sent last week?", "should_trigger": true },
+  { "query": "search my inbox for anything starred from the last 14 days", "should_trigger": true },
+  {
+    "query": "find the email thread about the office move quote and link it",
+    "should_trigger": true
+  },
+  { "query": "do I have unread mail from legal?", "should_trigger": true },
+  { "query": "what do I still owe people by email?", "should_trigger": true },
+  { "query": "reply to Ravi that I approve the budget", "should_trigger": false },
+  { "query": "check my slack DMs for unanswered messages", "should_trigger": false },
+  { "query": "draft a polite email declining the meeting", "should_trigger": false },
+  { "query": "how do I set up gmail filters and a forwarding address", "should_trigger": false }
+]

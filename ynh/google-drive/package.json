@@ -1,9 +1,10 @@
 {
-  "name": "@eyelock-assistants/drive",
+  "name": "@eyelock-assistants/google-drive",
   "version": "0.1.0",
   "private": true,
   "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
   "dependencies": {
+    "@eyelock-assistants/platform-skills": "workspace:*",
     "@eyelock-assistants/triage-skills": "workspace:*"
   }
 }
