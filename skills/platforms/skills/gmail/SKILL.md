@@ -54,7 +54,9 @@ scopes and removes the write tools (sending, drafting, labelling). Credentials a
 
 Operators you can rely on: `in:inbox`, `in:sent`, `-from:me`, `newer_than:14d`, `is:unread`,
 `is:starred`, `from:`, `to:`, `label:`. For anything else check the tool's own description.
-Keep searches narrow (`newer_than:` and a folder); widen only if the question needs it.
+Keep searches narrow (`newer_than:` and a folder); widen only if the question needs it. Mail has
+only recency to go on, so the window is a practical bound: state it in one line ("looked back
+14 days") and offer to widen it. Collapse notification and bot mail into one line per sender.
 
 ## Links
 

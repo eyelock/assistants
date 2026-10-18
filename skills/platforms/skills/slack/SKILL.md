@@ -84,6 +84,9 @@ Modifiers you can rely on: `from:`, `in:`, `with:`, `before:`, `after:`, `on:`, 
 `has:`, `is:thread`, `is:saved`. For anything else check the tool's own description. Narrow by
 `in:` and `after:` first: broad searches burn the shared quota and return noise.
 
+Slack has only recency to go on, so the `after:` window is a practical bound: state it in one
+line ("looked back 14 days") and offer to widen it. Collapse bot messages into one line per bot.
+
 ## Answering
 
 Triage answers follow `triage-report` (one line per item, with a link). Always include the link for every item or message you describe, also when answering a narrower question. Otherwise: say what you

@@ -27,7 +27,10 @@ The `github` harness uses GitHub's official server on its read-only endpoint
 (`https://api.githubcopilot.com/mcp/readonly`), so no tool can change anything. It sends
 `X-MCP-Toolsets: context,issues,pull_requests,notifications` because the default toolsets do
 **not** include notifications: without that header there is no `list_notifications`. The token
-is `GITHUB_PERSONAL_ACCESS_TOKEN` as a bearer token. If a tool you need is missing, say which
+is `GITHUB_PERSONAL_ACCESS_TOKEN` as a bearer token. `list_notifications` needs a personal
+access token with the `notifications` scope: an OAuth token from `gh auth token` lacks it. When
+it fails for that reason, report that notifications could not be read and carry on with
+searches; do not guess. If a tool you need is missing, say which
 toolset it belongs to rather than guessing another tool.
 
 ## MCP or gh
@@ -65,11 +68,42 @@ on it. Match logins exactly, not by similar name.
 
 ## Searching
 
-`search_pull_requests` and `search_issues` take GitHub qualifiers: `review-requested:@me`,
+**Write queries as qualifiers, never as sentences.** `assignee:eyelock is:open` finds assigned
+issues; "assigned to eyelock open issues" is a semantic guess that misses items. Run assigned
+issues with `search_issues` and assigned PRs with `search_pull_requests`, both with `is:open`.
+
+**Standing items take no date.** Open review requests, open assignments and your own open PRs
+are queried by state (`is:open`) with no `updated:` or `created:` qualifier: they wait however
+old they are. Show their age in **Since**. Use a date window only for mentions and
+notifications (`mentions:` with `updated:>=`, or `list_notifications` with `since`), and state it.
+
+`search_pull_requests` and `search_issues` take GitHub qualifiers: `review-requested:@me` (if the tool rejects `@me`, use the login from `get_me`; check the
+tool's description),
 `author:@me`, `assignee:@me`, `mentions:@me`, `is:open`, `repo:`, `org:`. When the caller
 names repositories or an organization, add `repo:` or `org:` to every search. For anything else
 check the tool's own description. Search results are summaries: read the PR for reviews and
 checks.
+
+## Paging
+
+Search results carry `total_count`. Report counts from it, never from the rows seen. Set
+`perPage` to the tool's maximum (check its description), then request `page` 2, 3... until the
+rows read equal `total_count`. If you cannot, say the list is partial and give the total; do not
+state a repo count or oldest date from a partial page without saying so.
+
+## Order
+
+People's items first, then the user's own standing items (self-assigned, old assignments), then
+the collapsed automated rows last.
+
+## Bots
+
+Dependency bots (`dependabot[bot]`, `renovate[bot]`) can send dozens of review requests. List
+requests from people first, then give the bot ones as ONE row or line ("33 automated Dependabot
+review requests across 6 repos, oldest 2026-09-17") with a search link. Row text and link must
+describe the same set: a row that says Dependabot links to a search with
+`author%3Aapp%2Fdependabot` (template in `references/triage.md`); a broader link is wrong. Do not list each PR
+unless asked, and do not doubt that a request by login is the user's.
 
 ## Links
 

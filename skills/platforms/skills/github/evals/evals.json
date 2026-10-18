@@ -59,6 +59,39 @@
         "Uses review-requested:@me (and optionally assignee:@me, mentions:@me) with is:open",
         "Plans only read tools: nothing that comments, reviews or merges"
       ]
+    },
+    {
+      "id": 5,
+      "name": "standing-old-and-bots",
+      "prompt": "data/github-raw-standing.json is what the GitHub tools returned for me (dcollie) today, searched with no date filter. What on GitHub is waiting on me? Dates, links, people first.",
+      "files": ["../../evals/files/github-raw-standing.json"],
+      "expected_output": "Both older than 14 days and still reported with their age: acme/api#412 review requested by alex (since 2 Sep 2026, about 6 weeks) and the assigned issue acme/docs#391 (since 10 Sep 2026). The 33 Dependabot review requests are collapsed into one row (count 33, 6 repos, oldest 17 Sep), listed after the people. Notifications could not be read (missing scope).",
+      "assertions": [
+        "Lists acme/api#412 as waiting on dcollie for review, requested by alex, dated 2 Sep 2026, although it is older than 14 days",
+        "Lists the assigned issue acme/docs#391 with a date of 10 Sep 2026, although it is older than 14 days",
+        "The alex row and the #391 row come before the Dependabot row",
+        "The 33 Dependabot review requests appear as ONE row or line that gives the count 33, not as 33 separate rows",
+        "The Dependabot row gives the oldest date (2026-09-17) or says how many repositories",
+        "Says notifications could not be read because the token lacks the notifications scope",
+        "Does not say that nothing is waiting, and does not claim it filtered by a 14-day window for review requests or assignments",
+        "Links items to github.com URLs such as https://github.com/acme/api/pull/412"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "paged-and-ordered",
+      "prompt": "data/github-raw-paged.json is what the GitHub tools returned for me (dcollie) today. The review-requested search has two pages. What on GitHub is waiting on me? Dates, links.",
+      "files": ["../../evals/files/github-raw-paged.json"],
+      "expected_output": "alex's #412 first, then dcollie's own standing items (issue acme/docs#391, self-assigned PR acme/docs#77), then ONE automated row last counting all 33 Dependabot requests (both pages), oldest 2026-09-17, with a real search link.",
+      "assertions": [
+        "The Dependabot row says 33 (from both pages), not 29 or 30",
+        "The Dependabot row gives the oldest date 2026-09-17 and 6 repos, which come from all pages",
+        "Order: acme/api#412 (alex) appears before acme/docs#391 and acme/docs#77, and the Dependabot row comes last",
+        "Lists acme/docs#391 and acme/docs#77 as the user's own standing items with their ages",
+        "The Dependabot row links to a github.com/pulls?q= search URL containing review-requested and dependabot",
+        "Does not list the Dependabot PRs individually",
+        "The Dependabot row's link includes the author qualifier for dependabot (author%3Aapp%2Fdependabot or author:app/dependabot), not only review-requested"
+      ]
     }
   ]
 }

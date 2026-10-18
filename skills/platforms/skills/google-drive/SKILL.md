@@ -42,8 +42,9 @@ Drive has no search across files for comments. Work in two steps:
    (Docs), `list_spreadsheet_comments` (Sheets) or `list_presentation_comments` (Slides).
 
 A folder has no comments, and a file type without a comments tool (a PDF) cannot be checked:
-say which files you could not check. State the window you searched; older files with open
-comments are missed.
+say which files you could not check. Unresolved comments are standing items, but Drive cannot
+list them without a file, so the 14-day window on candidates is only a practical bound. State
+it in one line and offer to widen it; older files with open comments are missed.
 
 ## Reading comments correctly
 

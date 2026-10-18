@@ -36,6 +36,9 @@ the user is `USER_GOOGLE_EMAIL`. In another setup, list the tools you actually h
   be flagged as the user's own). Only `needsAction` is unanswered: `tentative` is an answer.
 - **Invites waiting on the user**: their own status is `needsAction`, the event is not
   cancelled, and it has not ended.
+- **Invites are standing.** Apply no look-back window to them: an invite with `needsAction`
+  waits however long ago it was sent, as long as the event has not ended. Query upcoming events
+  only. Ignore past events explicitly and say so; do not report a past `needsAction` invite.
 - **Organizer side**: on events the user organizes, other attendees still `needsAction` are
   replies pending. `declined` is an answer.
 - **Cancelled and finished events** wait on nobody. Check the event's `status`.

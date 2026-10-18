@@ -15,6 +15,9 @@ An item waits on the user when **all** of these hold:
 - it calls for an action from the user: a review, a reply, a decision, a response to an invite;
 - the user has not done it since: no reply after it, no review submitted, no response given.
 
+An open assignment counts even when the user assigned it to themselves: it is still theirs to
+do. Say "self-assigned" in **What**.
+
 It does **not** wait on the user when:
 - it only informs them: an announcement, a notification of something done, a newsletter, a
   receipt, anything sent by a machine;
@@ -28,5 +31,11 @@ It does **not** wait on the user when:
    The platform harness's instructions name the tools and queries.
 3. For each, read enough of the thread to check whether the user acted after it. When unsure,
    keep it, and say in **What** what is unclear.
+
+Standing asks (an open review request, an open assignment, an invite not yet answered) are
+looked up by state with no date filter: they wait however old they are, and their age shows in
+**Since**. Only new asks with no state to query (mentions, messages, mail) use a window, which
+the answer states. List people before automated senders and collapse the automated ones, as
+`triage-report` says.
 
 **Since** is when the ask was made: the request, the message or the invite.
