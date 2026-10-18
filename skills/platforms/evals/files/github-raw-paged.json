@@ -1,0 +1,535 @@
+{
+  "snapshot": "Raw results of GitHub MCP tool calls (read-only endpoint) captured 2026-10-18T09:00:00Z (a Sunday). Treat this time as now. All timestamps are UTC ISO 8601. The user is in UTC. The searches were run with no date qualifier. The tool returns at most 30 rows per page; a search returns page 1 unless page is given.",
+  "get_me": {
+    "login": "dcollie",
+    "id": 4711,
+    "name": "David Collie",
+    "teams": ["acme/platform"]
+  },
+  "list_notifications": {
+    "error": "403 Resource not accessible: the token lacks the notifications scope"
+  },
+  "search_pull_requests": {
+    "review-requested:@me is:open": {
+      "page 1 (perPage 30)": {
+        "total_count": 34,
+        "items": [
+          {
+            "number": 412,
+            "title": "Add retry to ingest client",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "alex"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/412",
+            "created_at": "2026-09-02T10:00:00Z",
+            "updated_at": "2026-09-03T09:00:00Z"
+          },
+          {
+            "number": 500,
+            "title": "Bump dependency-0 from 1.0 to 2.0",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/500",
+            "created_at": "2026-09-17T06:00:00Z",
+            "updated_at": "2026-09-17T06:00:00Z"
+          },
+          {
+            "number": 501,
+            "title": "Bump dependency-1 from 1.1 to 2.1",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/501",
+            "created_at": "2026-09-18T06:00:00Z",
+            "updated_at": "2026-09-18T06:00:00Z"
+          },
+          {
+            "number": 502,
+            "title": "Bump dependency-2 from 1.2 to 2.2",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/502",
+            "created_at": "2026-09-19T06:00:00Z",
+            "updated_at": "2026-09-19T06:00:00Z"
+          },
+          {
+            "number": 503,
+            "title": "Bump dependency-3 from 1.3 to 2.3",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/infra",
+            "html_url": "https://github.com/acme/infra/pull/503",
+            "created_at": "2026-09-20T06:00:00Z",
+            "updated_at": "2026-09-20T06:00:00Z"
+          },
+          {
+            "number": 504,
+            "title": "Bump dependency-4 from 1.4 to 2.4",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/cli",
+            "html_url": "https://github.com/acme/cli/pull/504",
+            "created_at": "2026-09-21T06:00:00Z",
+            "updated_at": "2026-09-21T06:00:00Z"
+          },
+          {
+            "number": 505,
+            "title": "Bump dependency-5 from 1.5 to 2.5",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/sdk",
+            "html_url": "https://github.com/acme/sdk/pull/505",
+            "created_at": "2026-09-22T06:00:00Z",
+            "updated_at": "2026-09-22T06:00:00Z"
+          },
+          {
+            "number": 506,
+            "title": "Bump dependency-6 from 1.6 to 2.6",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/506",
+            "created_at": "2026-09-23T06:00:00Z",
+            "updated_at": "2026-09-23T06:00:00Z"
+          },
+          {
+            "number": 507,
+            "title": "Bump dependency-7 from 1.7 to 2.7",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/507",
+            "created_at": "2026-09-24T06:00:00Z",
+            "updated_at": "2026-09-24T06:00:00Z"
+          },
+          {
+            "number": 508,
+            "title": "Bump dependency-8 from 1.8 to 2.8",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/508",
+            "created_at": "2026-09-25T06:00:00Z",
+            "updated_at": "2026-09-25T06:00:00Z"
+          },
+          {
+            "number": 509,
+            "title": "Bump dependency-9 from 1.9 to 2.9",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/infra",
+            "html_url": "https://github.com/acme/infra/pull/509",
+            "created_at": "2026-09-26T06:00:00Z",
+            "updated_at": "2026-09-26T06:00:00Z"
+          },
+          {
+            "number": 510,
+            "title": "Bump dependency-10 from 1.10 to 2.10",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/cli",
+            "html_url": "https://github.com/acme/cli/pull/510",
+            "created_at": "2026-09-17T06:00:00Z",
+            "updated_at": "2026-09-17T06:00:00Z"
+          },
+          {
+            "number": 511,
+            "title": "Bump dependency-11 from 1.11 to 2.11",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/sdk",
+            "html_url": "https://github.com/acme/sdk/pull/511",
+            "created_at": "2026-09-18T06:00:00Z",
+            "updated_at": "2026-09-18T06:00:00Z"
+          },
+          {
+            "number": 512,
+            "title": "Bump dependency-12 from 1.12 to 2.12",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/512",
+            "created_at": "2026-09-19T06:00:00Z",
+            "updated_at": "2026-09-19T06:00:00Z"
+          },
+          {
+            "number": 513,
+            "title": "Bump dependency-13 from 1.13 to 2.13",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/513",
+            "created_at": "2026-09-20T06:00:00Z",
+            "updated_at": "2026-09-20T06:00:00Z"
+          },
+          {
+            "number": 514,
+            "title": "Bump dependency-14 from 1.14 to 2.14",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/514",
+            "created_at": "2026-09-21T06:00:00Z",
+            "updated_at": "2026-09-21T06:00:00Z"
+          },
+          {
+            "number": 515,
+            "title": "Bump dependency-15 from 1.15 to 2.15",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/infra",
+            "html_url": "https://github.com/acme/infra/pull/515",
+            "created_at": "2026-09-22T06:00:00Z",
+            "updated_at": "2026-09-22T06:00:00Z"
+          },
+          {
+            "number": 516,
+            "title": "Bump dependency-16 from 1.16 to 2.16",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/cli",
+            "html_url": "https://github.com/acme/cli/pull/516",
+            "created_at": "2026-09-23T06:00:00Z",
+            "updated_at": "2026-09-23T06:00:00Z"
+          },
+          {
+            "number": 517,
+            "title": "Bump dependency-17 from 1.17 to 2.17",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/sdk",
+            "html_url": "https://github.com/acme/sdk/pull/517",
+            "created_at": "2026-09-24T06:00:00Z",
+            "updated_at": "2026-09-24T06:00:00Z"
+          },
+          {
+            "number": 518,
+            "title": "Bump dependency-18 from 1.18 to 2.18",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/518",
+            "created_at": "2026-09-25T06:00:00Z",
+            "updated_at": "2026-09-25T06:00:00Z"
+          },
+          {
+            "number": 519,
+            "title": "Bump dependency-19 from 1.19 to 2.19",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/519",
+            "created_at": "2026-09-26T06:00:00Z",
+            "updated_at": "2026-09-26T06:00:00Z"
+          },
+          {
+            "number": 520,
+            "title": "Bump dependency-20 from 1.20 to 2.20",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/520",
+            "created_at": "2026-09-17T06:00:00Z",
+            "updated_at": "2026-09-17T06:00:00Z"
+          },
+          {
+            "number": 521,
+            "title": "Bump dependency-21 from 1.21 to 2.21",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/infra",
+            "html_url": "https://github.com/acme/infra/pull/521",
+            "created_at": "2026-09-18T06:00:00Z",
+            "updated_at": "2026-09-18T06:00:00Z"
+          },
+          {
+            "number": 522,
+            "title": "Bump dependency-22 from 1.22 to 2.22",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/cli",
+            "html_url": "https://github.com/acme/cli/pull/522",
+            "created_at": "2026-09-19T06:00:00Z",
+            "updated_at": "2026-09-19T06:00:00Z"
+          },
+          {
+            "number": 523,
+            "title": "Bump dependency-23 from 1.23 to 2.23",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/sdk",
+            "html_url": "https://github.com/acme/sdk/pull/523",
+            "created_at": "2026-09-20T06:00:00Z",
+            "updated_at": "2026-09-20T06:00:00Z"
+          },
+          {
+            "number": 524,
+            "title": "Bump dependency-24 from 1.24 to 2.24",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/524",
+            "created_at": "2026-09-21T06:00:00Z",
+            "updated_at": "2026-09-21T06:00:00Z"
+          },
+          {
+            "number": 525,
+            "title": "Bump dependency-25 from 1.25 to 2.25",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/525",
+            "created_at": "2026-09-22T06:00:00Z",
+            "updated_at": "2026-09-22T06:00:00Z"
+          },
+          {
+            "number": 526,
+            "title": "Bump dependency-26 from 1.26 to 2.26",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/526",
+            "created_at": "2026-09-23T06:00:00Z",
+            "updated_at": "2026-09-23T06:00:00Z"
+          },
+          {
+            "number": 527,
+            "title": "Bump dependency-27 from 1.27 to 2.27",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/infra",
+            "html_url": "https://github.com/acme/infra/pull/527",
+            "created_at": "2026-09-24T06:00:00Z",
+            "updated_at": "2026-09-24T06:00:00Z"
+          },
+          {
+            "number": 528,
+            "title": "Bump dependency-28 from 1.28 to 2.28",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/cli",
+            "html_url": "https://github.com/acme/cli/pull/528",
+            "created_at": "2026-09-25T06:00:00Z",
+            "updated_at": "2026-09-25T06:00:00Z"
+          }
+        ]
+      },
+      "page 2": {
+        "total_count": 34,
+        "items": [
+          {
+            "number": 529,
+            "title": "Bump dependency-29 from 1.29 to 2.29",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/sdk",
+            "html_url": "https://github.com/acme/sdk/pull/529",
+            "created_at": "2026-09-26T06:00:00Z",
+            "updated_at": "2026-09-26T06:00:00Z"
+          },
+          {
+            "number": 530,
+            "title": "Bump dependency-30 from 1.30 to 2.30",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/api",
+            "html_url": "https://github.com/acme/api/pull/530",
+            "created_at": "2026-09-17T06:00:00Z",
+            "updated_at": "2026-09-17T06:00:00Z"
+          },
+          {
+            "number": 531,
+            "title": "Bump dependency-31 from 1.31 to 2.31",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/web",
+            "html_url": "https://github.com/acme/web/pull/531",
+            "created_at": "2026-09-18T06:00:00Z",
+            "updated_at": "2026-09-18T06:00:00Z"
+          },
+          {
+            "number": 532,
+            "title": "Bump dependency-32 from 1.32 to 2.32",
+            "state": "open",
+            "draft": false,
+            "user": {
+              "login": "dependabot[bot]"
+            },
+            "repository_url": "https://api.github.com/repos/acme/docs",
+            "html_url": "https://github.com/acme/docs/pull/532",
+            "created_at": "2026-09-19T06:00:00Z",
+            "updated_at": "2026-09-19T06:00:00Z"
+          }
+        ]
+      }
+    },
+    "assignee:@me is:open": {
+      "total_count": 1,
+      "items": [
+        {
+          "number": 77,
+          "title": "Tidy release notes",
+          "state": "open",
+          "draft": false,
+          "user": {
+            "login": "dcollie"
+          },
+          "repository_url": "https://api.github.com/repos/acme/docs",
+          "html_url": "https://github.com/acme/docs/pull/77",
+          "created_at": "2026-08-01T10:00:00Z",
+          "updated_at": "2026-08-02T10:00:00Z"
+        }
+      ]
+    }
+  },
+  "search_issues": {
+    "assignee:@me is:open": {
+      "total_count": 1,
+      "items": [
+        {
+          "number": 391,
+          "title": "Docs: fix install steps",
+          "state": "open",
+          "user": {
+            "login": "sam"
+          },
+          "repository_url": "https://api.github.com/repos/acme/docs",
+          "html_url": "https://github.com/acme/docs/issues/391",
+          "assignees": [
+            {
+              "login": "dcollie"
+            }
+          ],
+          "created_at": "2026-09-10T11:00:00Z",
+          "updated_at": "2026-09-11T08:00:00Z"
+        }
+      ]
+    }
+  },
+  "pull_request_read": {
+    "acme/api#412": {
+      "state": "open",
+      "draft": false,
+      "requested_reviewers": [
+        {
+          "login": "dcollie"
+        }
+      ],
+      "requested_teams": [],
+      "reviews": [],
+      "checks": "success"
+    }
+  },
+  "issue_read": {
+    "acme/docs#391": {
+      "state": "open",
+      "assignees": [
+        {
+          "login": "dcollie"
+        }
+      ],
+      "comments": []
+    }
+  }
+}

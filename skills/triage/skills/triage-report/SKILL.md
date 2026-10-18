@@ -69,6 +69,14 @@ sender, unless the caller asks for them listed: "33 automated Dependabot review 
 repos, oldest 2026-10-07" with a search link as **Link**. Count the collapsed items in the counts
 line.
 
+**Order:** people's items first, then the user's own standing items (self-assigned, old
+assignments), then automated rows last: they carry the least signal.
+
+**Complete pages only.** A search that returns fewer rows than its total is a partial page. Take
+counts from the total, not from the rows seen, and read further pages with the tool's own paging
+parameters until all rows are read. If paging is not possible, say the list is partial and give
+the total. Never state "N repos" or "oldest date" from a partial page without saying so.
+
 Put the window line (rule 5) just before the counts line; it is the only line allowed there.
 
 The counts line ends the answer. Do not follow it with what you checked or how: the caller

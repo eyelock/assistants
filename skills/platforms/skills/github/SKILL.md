@@ -84,6 +84,18 @@ names repositories or an organization, add `repo:` or `org:` to every search. Fo
 check the tool's own description. Search results are summaries: read the PR for reviews and
 checks.
 
+## Paging
+
+Search results carry `total_count`. Report counts from it, never from the rows seen. Set
+`perPage` to the tool's maximum (check its description), then request `page` 2, 3... until the
+rows read equal `total_count`. If you cannot, say the list is partial and give the total; do not
+state a repo count or oldest date from a partial page without saying so.
+
+## Order
+
+People's items first, then the user's own standing items (self-assigned, old assignments), then
+the collapsed automated rows last.
+
 ## Bots
 
 Dependency bots (`dependabot[bot]`, `renovate[bot]`) can send dozens of review requests. List

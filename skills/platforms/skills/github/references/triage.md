@@ -17,6 +17,12 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
 - **Qualifiers, not sentences.** Every search is `qualifier:value` terms only, for example
   `assignee:@me is:open`. Run it on issues (`search_issues`) and again on PRs
   (`search_pull_requests`): assigned PRs are not in the issue search.
+- **Page through.** Take counts from `total_count`; use `perPage` at the tool's maximum and
+  `page` 2, 3... until all rows are read, or say the list is partial and give the total.
+- **Order.** People, then the user's own standing items, then automated rows last.
+- **Collapsed-row link** is a real search. Template, with the login from `get_me`:
+  `https://github.com/pulls?q=is%3Apr+is%3Aopen+review-requested%3A<login>+author%3Aapp%2Fdependabot`
+  (for renovate, `author%3Aapp%2Frenovate`; for assigned items use `assignee%3A<login>`).
 - **People first.** Dependency bots (dependabot, renovate) can send dozens of review requests.
   List requests from people, then collapse the bot ones into one row ("33 automated Dependabot
   review requests across 6 repos, oldest 2026-10-07") linking the search, unless asked to list
