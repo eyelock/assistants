@@ -100,7 +100,9 @@ the collapsed automated rows last.
 
 Dependency bots (`dependabot[bot]`, `renovate[bot]`) can send dozens of review requests. List
 requests from people first, then give the bot ones as ONE row or line ("33 automated Dependabot
-review requests across 6 repos, oldest 2026-09-17") with a search link. Do not list each PR
+review requests across 6 repos, oldest 2026-09-17") with a search link. Row text and link must
+describe the same set: a row that says Dependabot links to a search with
+`author%3Aapp%2Fdependabot` (template in `references/triage.md`); a broader link is wrong. Do not list each PR
 unless asked, and do not doubt that a request by login is the user's.
 
 ## Links
