@@ -29,4 +29,10 @@ It does **not** wait on the user when:
 3. For each, read enough of the thread to check whether the user acted after it. When unsure,
    keep it, and say in **What** what is unclear.
 
+Standing asks (an open review request, an open assignment, an invite not yet answered) are
+looked up by state with no date filter: they wait however old they are, and their age shows in
+**Since**. Only new asks with no state to query (mentions, messages, mail) use a window, which
+the answer states. List people before automated senders and collapse the automated ones, as
+`triage-report` says.
+
 **Since** is when the ask was made: the request, the message or the invite.

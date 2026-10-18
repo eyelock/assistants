@@ -20,6 +20,10 @@ An item is **now** when any of these holds:
 Fill **Why now** with the rule that applied, in a few words: "key person", "due today",
 "blocks @sam", "waited 3 days". When several apply, name the strongest.
 
+A standing item is not dropped for being old: age is a reason to act now, not to skip it.
+Automated senders go to **soon**, collapsed into one row per kind (see `triage-report`), unless
+one blocks something.
+
 ## Soon
 
 Everything else waiting on the user is **soon**. Leave **Why now** empty.

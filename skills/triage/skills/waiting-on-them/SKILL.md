@@ -30,4 +30,8 @@ It does **not** count when:
 3. For each, check whether the other side acted since. **Who** is the person being waited on;
    when it is a group, name the group.
 
+Open asks are looked up by state with no date filter (a PR still awaiting review is waiting
+however old it is). Only recency-only platforms (mail, chat, messages) use a window, which the
+answer states, as `triage-report` says.
+
 **Since** is when the user asked, or last nudged.

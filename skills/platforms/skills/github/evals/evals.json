@@ -59,6 +59,23 @@
         "Uses review-requested:@me (and optionally assignee:@me, mentions:@me) with is:open",
         "Plans only read tools: nothing that comments, reviews or merges"
       ]
+    },
+    {
+      "id": 5,
+      "name": "standing-old-and-bots",
+      "prompt": "data/github-raw-standing.json is what the GitHub tools returned for me (dcollie) today, searched with no date filter. What on GitHub is waiting on me? Dates, links, people first.",
+      "files": ["../../evals/files/github-raw-standing.json"],
+      "expected_output": "Both older than 14 days and still reported with their age: acme/api#412 review requested by alex (since 2 Sep 2026, about 6 weeks) and the assigned issue acme/docs#391 (since 10 Sep 2026). The 33 Dependabot review requests are collapsed into one row (count 33, 6 repos, oldest 17 Sep), listed after the people. Notifications could not be read (missing scope).",
+      "assertions": [
+        "Lists acme/api#412 as waiting on dcollie for review, requested by alex, dated 2 Sep 2026, although it is older than 14 days",
+        "Lists the assigned issue acme/docs#391 with a date of 10 Sep 2026, although it is older than 14 days",
+        "The alex row and the #391 row come before the Dependabot row",
+        "The 33 Dependabot review requests appear as ONE row or line that gives the count 33, not as 33 separate rows",
+        "The Dependabot row gives the oldest date (2026-09-17) or says how many repositories",
+        "Says notifications could not be read because the token lacks the notifications scope",
+        "Does not say that nothing is waiting, and does not claim it filtered by a 14-day window for review requests or assignments",
+        "Links items to github.com URLs such as https://github.com/acme/api/pull/412"
+      ]
     }
   ]
 }

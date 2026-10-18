@@ -69,6 +69,9 @@ or `find` focus) for that thread. Never guess what a message said from its sende
 - **Waiting on them:** my last real message asked something or needed an answer, and nothing but
   a tapback or nothing at all came back. A statement from me ("I'll send it tonight") waits on no one.
 
+Messages has only recency to go on, so the date range is a practical bound: state it in one line
+and offer to widen it.
+
 ## Answering
 
 Triage answers follow `triage-report` (one line per item). Messages has no permalinks, so name the
