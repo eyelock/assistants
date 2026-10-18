@@ -21,6 +21,8 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
   List requests from people, then collapse the bot ones into one row ("33 automated Dependabot
   review requests across 6 repos, oldest 2026-10-07") linking the search, unless asked to list
   them.
+- **Assigned items count, self-assigned too** (say so in **What**). Always try
+  `list_notifications` once, even if searches already answered the question.
 - **Notifications need a token scope.** `list_notifications` needs a PAT with the `notifications`
   scope. If it fails, say notifications could not be read, and carry on.
 

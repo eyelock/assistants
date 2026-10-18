@@ -15,6 +15,9 @@ An item waits on the user when **all** of these hold:
 - it calls for an action from the user: a review, a reply, a decision, a response to an invite;
 - the user has not done it since: no reply after it, no review submitted, no response given.
 
+An open assignment counts even when the user assigned it to themselves: it is still theirs to
+do. Say "self-assigned" in **What**.
+
 It does **not** wait on the user when:
 - it only informs them: an announcement, a notification of something done, a newsletter, a
   receipt, anything sent by a machine;
