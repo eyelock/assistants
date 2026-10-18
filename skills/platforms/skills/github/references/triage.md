@@ -14,6 +14,9 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
 
 - **Never add a date to a standing query.** A review request from 40 days ago still waits. Use
   `@me`; if the tool rejects it, use the login from `get_me`.
+- **Qualifiers, not sentences.** Every search is `qualifier:value` terms only, for example
+  `assignee:@me is:open`. Run it on issues (`search_issues`) and again on PRs
+  (`search_pull_requests`): assigned PRs are not in the issue search.
 - **People first.** Dependency bots (dependabot, renovate) can send dozens of review requests.
   List requests from people, then collapse the bot ones into one row ("33 automated Dependabot
   review requests across 6 repos, oldest 2026-10-07") linking the search, unless asked to list

@@ -68,6 +68,10 @@ on it. Match logins exactly, not by similar name.
 
 ## Searching
 
+**Write queries as qualifiers, never as sentences.** `assignee:eyelock is:open` finds assigned
+issues; "assigned to eyelock open issues" is a semantic guess that misses items. Run assigned
+issues with `search_issues` and assigned PRs with `search_pull_requests`, both with `is:open`.
+
 **Standing items take no date.** Open review requests, open assignments and your own open PRs
 are queried by state (`is:open`) with no `updated:` or `created:` qualifier: they wait however
 old they are. Show their age in **Since**. Use a date window only for mentions and
