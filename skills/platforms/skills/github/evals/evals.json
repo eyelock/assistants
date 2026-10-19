@@ -92,6 +92,45 @@
         "Does not list the Dependabot PRs individually",
         "The Dependabot row's link includes the author qualifier for dependabot (author%3Aapp%2Fdependabot or author:app/dependabot), not only review-requested"
       ]
+    },
+    {
+      "name": "commitments-from-comments",
+      "prompt": "data/github-raw-commitments.json is what the GitHub tools returned for me (dcollie) this morning. What have I promised on GitHub and not done? Give dates and link each item.",
+      "files": ["../../evals/files/github-raw-commitments.json"],
+      "expected_output": "Two rows. acme/api#450: dcollie said 'I'll take a look at this on Monday' on 2026-10-16, due Monday 2026-10-19, nothing since. acme/api#455: dcollie's review of 2026-10-13 said he would re-review once the tests are green; the checks now pass and there is no later review. Not acme/docs#402 (he fixed it on 10-14 and the issue is closed), not the 'we should probably split this' hedge on acme/web#120. Links are the html_url values.",
+      "assertions": [
+        "Lists acme/api#450 with the promise to take a look, Since 2026-10-16, due 2026-10-19",
+        "Lists acme/api#455 as a promise to re-review, Since 2026-10-13, and notes the checks now pass or that no later review exists",
+        "Does not list acme/docs#402, since the later comment and the closed state show it was done",
+        "Does not list the 'we should probably split this at some point' comment on acme/web#120 as a commitment",
+        "Links each row with the item's html_url",
+        "States the window it looked back, or that it used comments updated since 2026-10-05"
+      ],
+      "id": 7
+    },
+    {
+      "name": "find-in-comments",
+      "prompt": "data/github-raw-commitments.json is what the GitHub tools returned for me. What retry limit did Sam say, and where?",
+      "files": ["../../evals/files/github-raw-commitments.json"],
+      "expected_output": "Sam said the retry limit is 5, set in ingest.yaml, in a comment on acme/api#450 on 2026-10-15, with the issue's link, and a Searched line saying it searched issue and pull request comments.",
+      "assertions": [
+        "Gives 5 and ingest.yaml as the answer",
+        "Names acme/api#450, sam and 2026-10-15, with the link https://github.com/acme/api/issues/450",
+        "Has a Searched line naming issues and pull request comments"
+      ],
+      "id": 8
+    },
+    {
+      "name": "find-code-is-out-of-reach",
+      "prompt": "With only the GitHub tools in data/github-raw-commitments.json, find where in the code the retry limit is set.",
+      "files": ["../../evals/files/github-raw-commitments.json"],
+      "expected_output": "It says these tools search issues, pull requests and their comments, not code, so it cannot find the line; it may point to Sam's comment naming ingest.yaml, and does not invent a file path or line number.",
+      "assertions": [
+        "Says the tools do not search code",
+        "Does not give a line number or invent a code location",
+        "May point to Sam's comment that names ingest.yaml"
+      ],
+      "id": 9
     }
   ]
 }
