@@ -19,8 +19,8 @@ carries `get_me`. The default toolsets do not include notifications, so it is na
 
 ## Qualifiers
 
-`review-requested:@me`, `author:@me`, `assignee:@me`, `mentions:@me`, `is:open`, `repo:`,
-`org:`.
+`review-requested:@me`, `author:@me`, `assignee:@me`, `mentions:@me`, `commenter:@me`,
+`involves:<login>`, `in:comments`, `is:open`, `repo:`, `org:`.
 
 ## Write tools: none
 
