@@ -2,7 +2,7 @@
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "imessage",
   "version": "0.1.0",
-  "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only; shows only as much text as the job needs.",
+  "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
   "default_vendor": "claude",
   "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"],
   "includes": [
@@ -19,7 +19,7 @@
   "mcp_servers": {
     "imessage": {
       "command": "npx",
-      "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "redacted", "--contacts", "live"],
+      "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "full", "--contacts", "live"],
       "env": {
         "IMESSAGE_UPDATE_CHECK": "0",
         "IMESSAGE_CACHE": "0"
@@ -27,11 +27,11 @@
     }
   },
   "profiles": {
-    "full": {
+    "redacted": {
       "mcp_servers": {
         "imessage": {
           "command": "npx",
-          "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "full", "--contacts", "live"]
+          "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "redacted", "--contacts", "live"]
         }
       }
     },
@@ -50,28 +50,25 @@
   },
   "focuses": {
     "waiting-on-me": {
-      "prompt": "Use the waiting-on-me skill to find who is waiting on a reply from me in Messages. Message text is redacted in this mode: say who and when, and say what you cannot tell."
+      "prompt": "Use the waiting-on-me skill to find who is waiting on a reply from me in Messages."
     },
     "waiting-on-them": {
-      "prompt": "Use the waiting-on-them skill to find who I am waiting on a reply from in Messages. Message text is redacted in this mode: say who and when, and say what you cannot tell."
+      "prompt": "Use the waiting-on-them skill to find who I am waiting on a reply from in Messages."
     },
     "action-now": {
-      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today in Messages. Message text is redacted in this mode: say who and when, and say what you cannot tell."
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today in Messages."
     },
     "action-soon": {
-      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon in Messages. Message text is redacted in this mode: say who and when, and say what you cannot tell."
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon in Messages."
     },
     "catch-up": {
-      "prompt": "Catch me up on one conversation in Messages: summarize it, who said what, what is open and what is next. Take the contact or group from the caller; if none is named, ask for one. Do not quote the whole thread.",
-      "profile": "full"
+      "prompt": "Catch me up on one conversation in Messages: summarize it, who said what, what is open and what is next. Take the contact or group from the caller; if none is named, ask for one. Do not quote the whole thread."
     },
     "commitments": {
-      "prompt": "Find the promises I made in Messages (things I said I would do, send or decide), with who I promised, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days.",
-      "profile": "full"
+      "prompt": "Find the promises I made in Messages (things I said I would do, send or decide), with who I promised, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days."
     },
     "find": {
-      "prompt": "Find what the caller asks for in Messages (something someone said, a number, an address, a plan) and name the conversation and date. Take the search from the caller; if none is given, ask for one.",
-      "profile": "full"
+      "prompt": "Find what the caller asks for in Messages (something someone said, a number, an address, a plan) and name the conversation and date. Take the search from the caller; if none is given, ask for one."
     }
   }
 }

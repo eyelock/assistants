@@ -20,7 +20,7 @@ The server also offers a `catch_up` prompt that asks who is waiting on a reply.
 ## Modes and options
 
 - `--privacy full|redacted|aggregate` (env `IMESSAGE_PRIVACY`). `redacted` drops text and
-  filenames; `aggregate` returns counts only. A call can ask for stricter, never looser.
+  filenames (the harness default is `full`); `aggregate` returns counts only. A call can ask for stricter, never looser.
 - `--contacts live|none`: whether names come from Contacts. With `none`, expect handles only.
 - `--database <path>`: read a copy of `chat.db` instead of the live one. Safer for a first trial.
 - `IMESSAGE_UPDATE_CHECK=0` and `IMESSAGE_CACHE=0` are set by the harness.
