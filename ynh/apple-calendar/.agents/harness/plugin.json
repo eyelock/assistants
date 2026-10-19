@@ -33,5 +33,27 @@
     "max_turns": 25,
     "effort": "low"
   },
-  "focuses": {}
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on Apple Calendar."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on Apple Calendar."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on Apple Calendar."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Apple Calendar."
+    },
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic on Apple Calendar: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
+    },
+    "find": {
+      "prompt": "Use the find skill to find what the caller asks for on Apple Calendar (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on Apple Calendar, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
 }

@@ -151,6 +151,17 @@
       "keywords": ["gmail", "mail", "email", "google", "triage", "read-only"]
     },
     {
+      "name": "apple-calendar",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/apple-calendar"
+      },
+      "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
+      "version": "0.1.0",
+      "keywords": ["calendar", "apple", "icloud", "meetings", "invites", "triage", "read-only"]
+    },
+    {
       "name": "google-calendar",
       "source": {
         "type": "github",

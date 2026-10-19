@@ -41,6 +41,15 @@ importers:
 
   skills/voice: {}
 
+  ynh/apple-calendar:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
   ynh/david:
     dependencies:
       '@eyelock-assistants/dev-skills':
