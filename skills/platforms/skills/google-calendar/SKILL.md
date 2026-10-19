@@ -1,6 +1,6 @@
 ---
 name: google-calendar
-description: How to read Google Calendar well through the Google Workspace MCP server - events, invites and responses, recurring meetings, all-day events, time zones, free/busy and clashes. Use when a task needs Google Calendar read, when judging which invites are unanswered or which replies are pending, or when answering what is on someone's calendar. Not for accepting, declining or creating events.
+description: How to read Google Calendar well through the Google Workspace MCP server - events, invites and responses, recurring meetings, all-day events, time zones, free/busy and clashes. Use when a task needs Google Calendar read, when judging which invites are unanswered or which replies are pending, when answering what is on someone's calendar, when catching up on one meeting (who has answered, where, what it asks), or when finding when or where a meeting is and how to join it. Not for accepting, declining or creating events.
 ---
 
 # Google Calendar
@@ -20,6 +20,8 @@ Operating knowledge for reading Google Calendar through its MCP server. Tool det
    paraphrase and the event's link.
 4. **Never invent a tool, field or parameter.** If something is not covered here, check the
    tool's own description.
+5. **An event is its current state.** The calendar shows an event as it is now (time, place,
+   description, who has answered), not what changed. When asked to catch up on one, say so.
 
 ## What the harness allows
 

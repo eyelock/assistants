@@ -45,6 +45,12 @@
     "action-soon": {
       "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Google Calendar."
     },
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic on Google Calendar: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
+    },
+    "find": {
+      "prompt": "Use the find skill to find what the caller asks for on Google Calendar (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
+    },
     "all": {
       "prompt": "Answer all four triage questions on Google Calendar, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
     }

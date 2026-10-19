@@ -58,6 +58,32 @@
         "Places Late call with SF on Wednesday 7 Oct at 07:30 London time (it is stored as Tuesday 23:30 -07:00)",
         "Does not claim to have declined, moved or changed any event"
       ]
+    },
+    {
+      "name": "catch-up-on-an-event",
+      "prompt": "data/calendar-raw-lookup.json is what the Google Calendar tools returned for me (dave@acme.example, in London) this morning. Catch me up on the offsite planning meeting.",
+      "files": ["../../evals/files/calendar-raw-lookup.json"],
+      "expected_output": "Offsite planning, organized by kim, Thursday 2026-10-22 14:00 to 15:00 London time, in Room 4, Floor 2. Lee has accepted, Priya has declined and dave has not answered. The description asks attendees to bring a venue shortlist of three options. The event link is https://www.google.com/calendar/event?eid=e10. It says the calendar shows the event as it is now, not what changed.",
+      "assertions": [
+        "Gives Thursday 22 October 14:00 (London time) and Room 4, Floor 2",
+        "Says kim organizes it, lee accepted, priya declined and dave has not yet answered",
+        "Says the description asks for a venue shortlist of three options",
+        "Links the event with https://www.google.com/calendar/event?eid=e10",
+        "Says the calendar shows the current state and not the history of changes, or that it cannot say what changed"
+      ],
+      "id": 5
+    },
+    {
+      "name": "find-a-meeting-detail",
+      "prompt": "data/calendar-raw-lookup.json is what the Google Calendar tools returned. When is the board call, and how do I join it?",
+      "files": ["../../evals/files/calendar-raw-lookup.json"],
+      "expected_output": "The board call is Wednesday 2026-10-21 at 16:00 London time. Join at https://meet.example.test/board-xyz. Link https://www.google.com/calendar/event?eid=e11.",
+      "assertions": [
+        "Gives Wednesday 21 October at 16:00 London time",
+        "Gives the join link https://meet.example.test/board-xyz",
+        "Links the event with https://www.google.com/calendar/event?eid=e11"
+      ],
+      "id": 6
     }
   ]
 }

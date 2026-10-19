@@ -1,7 +1,7 @@
 # Triage in Google Calendar
 
-Answer the four questions with `triage-report` (shape and rules), using `waiting-on-me`,
-`waiting-on-them` and `action-now-or-soon`. The user is `USER_GOOGLE_EMAIL`. Use `get_events`
+Answer the questions with `triage-report` (shape and rules), using `waiting-on-me`,
+`waiting-on-them`, `action-now-or-soon`, `catch-up` and `find`. The user is `USER_GOOGLE_EMAIL`. Use `get_events`
 on the primary calendar, from now to 7 days ahead.
 
 | Question | Where to look |
@@ -10,6 +10,8 @@ on the primary calendar, from now to 7 days ahead.
 | waiting-on-them | Events the user organizes where other attendees are still `needsAction` |
 | action-now | Also: meetings in the next 4 hours whose description or attachments ask for preparation, and clashes between events the user has accepted |
 | action-soon | As waiting-on-me, for invites to later meetings, and preparation asked for later meetings |
+| catch-up | A named event or series: `get_events` over a window around it, then read the event's organizer, time, location, description and each attendee's `responseStatus`: who has accepted, declined or not answered. The calendar holds the event's current state, not its history, so say what changed is not shown. A person: events that list them as an attendee in the window. A topic: events whose title or description match its words, and say that it is a match on those |
+| find | `get_events` over the window the caller names (default: from now to 7 days ahead; widen on request) and match the title, attendees, location and description: when a meeting is, where, the link or dial-in in its description. Free/busy is not event detail: use `query_freebusy` only for availability |
 
 ## Rules
 
