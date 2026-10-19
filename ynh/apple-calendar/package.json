@@ -1,0 +1,10 @@
+{
+  "name": "@eyelock-assistants/apple-calendar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
+  "dependencies": {
+    "@eyelock-assistants/platform-skills": "workspace:*",
+    "@eyelock-assistants/triage-skills": "workspace:*"
+  }
+}
