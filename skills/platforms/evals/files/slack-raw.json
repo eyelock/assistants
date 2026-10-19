@@ -4,9 +4,7 @@
     {
       "tool": "slack_search_users",
       "arguments": {
-        "keywords": [
-          "dave"
-        ],
+        "keywords": ["dave"],
         "natural_language_query": "me"
       },
       "result": {
@@ -17,9 +15,7 @@
     {
       "tool": "slack_search_public_and_private",
       "arguments": {
-        "keywords": [
-          "<@U001>"
-        ],
+        "keywords": ["<@U001>"],
         "filters": "after:2026-09-21",
         "natural_language_query": "",
         "sort": "timestamp",

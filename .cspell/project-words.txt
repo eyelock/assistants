@@ -47,6 +47,7 @@ golangci
 goreleaser
 govet
 gradlew
+hasmy
 hotfixed
 hotfixes
 HSTS

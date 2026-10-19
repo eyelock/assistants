@@ -4,14 +4,7 @@
   "version": "0.1.0",
   "description": "Reads Slack through Slack's official MCP server for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only by the scopes granted to your token.",
   "default_vendor": "claude",
-  "keywords": [
-    "slack",
-    "chat",
-    "mentions",
-    "messages",
-    "triage",
-    "read-only"
-  ],
+  "keywords": ["slack", "chat", "mentions", "messages", "triage", "read-only"],
   "includes": [
     {
       "git": "https://github.com/eyelock/assistants",
@@ -20,14 +13,10 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/platforms",
-      "pick": [
-        "skills/slack"
-      ]
+      "pick": ["skills/slack"]
     }
   ],
-  "env_passthrough": [
-    "SLACK_USER_TOKEN"
-  ],
+  "env_passthrough": ["SLACK_USER_TOKEN"],
   "mcp_servers": {
     "slack": {
       "url": "https://mcp.slack.com/mcp",
