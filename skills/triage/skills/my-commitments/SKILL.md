@@ -1,6 +1,6 @@
 ---
 name: my-commitments
-description: Find the promises I made in my own words - things I said I would send, do, decide or look at - with who I promised, when, and whether I appear to have done it. Use when asked what I promised, what I said I would do, what I committed to, or what I still owe from things I said, on any platform.
+description: Find the promises I made in my own words - things I said I would send, do, decide or look at - with who I promised, when, and whether I appear to have done it. Use when asked what I promised, what I said I would do, what I committed to, or what I still owe from things I said, on any platform, including whether one particular promise was kept.
 ---
 
 # My Commitments

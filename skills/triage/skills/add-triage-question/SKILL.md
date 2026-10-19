@@ -1,6 +1,6 @@
 ---
 name: add-triage-question
-description: Decide whether a new question belongs on the common triage list, and if so add it and keep every platform harness in step. Use when someone wants a new triage, inbox or "what needs me" question across platforms, or asks whether something should be a common question or just a platform feature.
+description: Decide whether a new question belongs on the common triage list, and if so add it and keep every platform harness in step. Use when someone wants a new triage, inbox or "what needs me" question across platforms, asks whether something is a platform feature or something for all the triage skills, or asks whether it should be a common question.
 ---
 
 # Add A Triage Question
