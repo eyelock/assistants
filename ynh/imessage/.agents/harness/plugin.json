@@ -50,10 +50,10 @@
   },
   "focuses": {
     "waiting-on-me": {
-      "prompt": "Use the waiting-on-me skill to find who is waiting on a reply from me in Messages."
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me in Messages."
     },
     "waiting-on-them": {
-      "prompt": "Use the waiting-on-them skill to find who I am waiting on a reply from in Messages."
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for in Messages."
     },
     "action-now": {
       "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today in Messages."
@@ -61,14 +61,14 @@
     "action-soon": {
       "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon in Messages."
     },
-    "catch-up": {
-      "prompt": "Catch me up on one conversation in Messages: summarize it, who said what, what is open and what is next. Take the contact or group from the caller; if none is named, ask for one. Do not quote the whole thread."
+    "my-commitments": {
+      "prompt": "Use the my-commitments skill to find the promises I made in Messages: what I said I would do, to whom, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days."
     },
-    "commitments": {
-      "prompt": "Find the promises I made in Messages (things I said I would do, send or decide), with who I promised, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days."
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic in Messages: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
     },
     "find": {
-      "prompt": "Find what the caller asks for in Messages (something someone said, a number, an address, a plan) and name the conversation and date. Take the search from the caller; if none is given, ask for one."
+      "prompt": "Use the find skill to find what the caller asks for in Messages (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
     }
   }
 }

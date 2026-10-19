@@ -1,0 +1,64 @@
+{
+  "snapshot": "Everything the tools returned for the pitch deck, captured 2026-10-19T09:00:00Z (a Monday). Treat this time as now.",
+  "me": {
+    "name": "dave"
+  },
+  "events": [
+    {
+      "platform": "slack",
+      "where": "#sales",
+      "from": "sam",
+      "at": "2026-10-08T09:00:00Z",
+      "text": "Pitch deck v1 is in the shared drive, thoughts?",
+      "permalink": "https://acme.slack.com/archives/C200/p3001"
+    },
+    {
+      "platform": "slack",
+      "where": "#sales",
+      "from": "dave",
+      "at": "2026-10-08T09:20:00Z",
+      "text": "Looking now",
+      "permalink": "https://acme.slack.com/archives/C200/p3002"
+    },
+    {
+      "platform": "slack",
+      "where": "#sales",
+      "from": "dave",
+      "at": "2026-10-08T09:21:00Z",
+      "text": "Slide 4 numbers look off",
+      "permalink": "https://acme.slack.com/archives/C200/p3003"
+    },
+    {
+      "platform": "gmail",
+      "where": "Pitch deck numbers",
+      "from": "priya",
+      "at": "2026-10-10T13:00:00Z",
+      "text": "Corrected figures attached, slide 4 should use the Q3 actuals.",
+      "permalink": "https://mail.example.test/#inbox/p1"
+    },
+    {
+      "platform": "github",
+      "where": "acme/decks#7",
+      "from": "sam",
+      "at": "2026-10-14T10:00:00Z",
+      "text": "Updated the deck with Priya's figures",
+      "permalink": "https://github.com/acme/decks/pull/7"
+    },
+    {
+      "platform": "slack",
+      "where": "DM with sam",
+      "from": "sam",
+      "at": "2026-10-18T19:40:00Z",
+      "text": "Need your yes or no on the final deck by tonight if you can",
+      "permalink": "https://acme.slack.com/archives/D011/p3004"
+    },
+    {
+      "platform": "gmail",
+      "where": "Pitch deck numbers",
+      "from": "dave",
+      "at": "2026-10-10T16:00:00Z",
+      "text": "Thanks, can you also send the Q2 comparison?",
+      "permalink": "https://mail.example.test/#sent/p2"
+    }
+  ]
+}

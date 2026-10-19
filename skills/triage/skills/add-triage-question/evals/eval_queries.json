@@ -1,0 +1,42 @@
+[
+  {
+    "query": "should this be a common triage question?",
+    "should_trigger": true
+  },
+  {
+    "query": "add a new question to the common triage list",
+    "should_trigger": true
+  },
+  {
+    "query": "I want every inbox harness to answer 'what am I blocking'",
+    "should_trigger": true
+  },
+  {
+    "query": "is this a platform feature or something for all the triage skills",
+    "should_trigger": true
+  },
+  {
+    "query": "how do I add a question that all the platform harnesses answer",
+    "should_trigger": true
+  },
+  {
+    "query": "what's waiting on me?",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new MCP server to the slack harness",
+    "should_trigger": false
+  },
+  {
+    "query": "write a terraform module for an s3 bucket",
+    "should_trigger": false
+  },
+  {
+    "query": "write a new skill for code review",
+    "should_trigger": false
+  },
+  {
+    "query": "catch me up on the pitch deck",
+    "should_trigger": false
+  }
+]
