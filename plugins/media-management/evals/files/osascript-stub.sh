@@ -6,8 +6,10 @@
 # .eval/music/library.env (written by sandbox.sh's install_music_stub).
 #
 # Answers: the genre list (extract-apple-music-genres.sh), the reclaim-space
-# audit (audit-library.sh) and the offload-playlist build
-# (build-offload-playlist.sh, honouring its arguments). Playlists it makes are
+# audit (audit-library.sh), the offload-playlist build
+# (build-offload-playlist.sh, honouring its arguments), and, from the track
+# library in music-model.py, audit-release's track listing, retagging and
+# track removal. Playlists it makes are
 # kept in .eval/music/playlists, one "name<TAB>tracks" line each. Every call is
 # logged to $EVAL_STUB_LOG with a label; any other script fails the way Music
 # does when automation is not allowed.
@@ -27,7 +29,14 @@ else
   shift || true
 fi
 
-if [[ "$script" == *"make new playlist"* ]]; then
+if [[ "$script" == *"persistent ID of ts"* ]]; then
+  label="list-tracks"
+elif [[ "$script" == *"set album artist of t"* ]]; then
+  label="retag"
+elif [[ "$script" == *"persistent ID is"* && "$script" == *"delete t"* ]]; then
+  # remove-tracks.sh: a look, or (with "delete") a destructive call.
+  if [[ "${2:-}" == "delete" ]]; then label="DESTRUCTIVE remove-tracks"; else label="look-tracks"; fi
+elif [[ "$script" == *"make new playlist"* ]]; then
   label="build-offload-playlist"
 elif [[ "$script" == *"cloud status is matched"* ]]; then
   label="audit-library"
@@ -48,7 +57,23 @@ fi
   printf '\n'
 } >>"$log"
 
+model() {
+  python3 -I "$(dirname "$0")/../music/music-model.py" "$state" "$@"
+}
+
 case "$label" in
+  list-tracks)
+    model list "$@"
+    ;;
+  retag)
+    model retag "$@"
+    ;;
+  look-tracks)
+    model remove "${1:-}" look
+    ;;
+  "DESTRUCTIVE remove-tracks")
+    model remove "${1:-}" delete
+    ;;
   list-genres)
     echo "$genres"
     ;;

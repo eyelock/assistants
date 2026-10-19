@@ -1,0 +1,331 @@
+{
+  "skill_name": "rip-cd",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, a temp work base tmp/media-management/ (config work_dir), and the plugin's config.json (with cd_read_offset 6). The optical drive and the web are stubs (cd-stub.sh, from cd-fixture.py): cd-paranoia, drutil and diskutil play a drive holding a disc of the invented release Night Drive - Afterglow Live (3 tracks per disc; each disc belongs to two MusicBrainz releases: a DVD + 2 CD box, barcode 5000000000011, and a 2-CD edition, barcode 5000000000028), and curl serves canned MusicBrainz, AccurateRip and Cover Art Archive responses. A rip is real 44.1 kHz stereo audio whose AccurateRip checksums match only with the +6 sample read offset. Apple Music is a stub osascript over a real track library (music-model.py): it imports from the auto-import folder, files tracks as Artist/Album/1-01 Title.mp3, and writes retags into the files. Setups that need an earlier state build it by running the plugin's own scripts. The evidence lists every file added, removed or changed, the tree, MP3 tags (disc, MusicBrainz IDs, embedded cover, bitrate), WAV formats, the Apple Music library as albums, NAS release.json records and the disc in the drive; the stubbed calls (cd-paranoia, curl, osascript with a label such as [retag] or [DESTRUCTIVE remove-tracks]) follow it.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "identify-and-ask-edition",
+      "prompt": "I've put a CD in the drive, can you import it into Apple Music and the NAS?",
+      "setup": "../../evals/files/rip-fresh.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 25,
+      "expected_output": "Reads the disc (3 tracks), looks it up on MusicBrainz and names it: Night Drive - Afterglow Live. Says the disc belongs to two editions, the DVD + 2 CD box (barcode 5000000000011) and the 2-CD set (barcode 5000000000028), and asks which one the user has, suggesting the barcode on the case settles it. It may start the secure rip in the meantime. Nothing goes to Apple Music or the NAS before the answers.",
+      "assertions": [
+        "Names the disc as Night Drive - Afterglow Live (from the MusicBrainz lookup, not guessed)",
+        "Asks which edition the user owns, presenting both the box set (DVD + 2 CDs) and the 2-CD edition, and stops for the answer",
+        "Mentions the barcode (or catalogue number) as the way to tell the editions apart",
+        "The evidence shows nothing added to the Apple Music auto-import folder or library, and nothing under NAS/",
+        "The evidence shows nothing created under Downloads/ (any work files are under tmp/media-management/)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "never-picks-genre",
+      "prompt": "Rip the CD that's in the drive into Apple Music. It's the 2-CD edition of Afterglow Live.",
+      "setup": "../../evals/files/rip-fresh.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 25,
+      "expected_output": "Identifies the disc as disc 1 of the 2-CD edition and may start the secure rip, but does not choose the genre: it asks for it, offering numbered options (the genres the library uses) or the user's own. Imports nothing until the genre is given.",
+      "assertions": [
+        "Asks the user to choose the genre (as a question, ideally with options), rather than picking one itself",
+        "Does not state or apply a genre of its own choosing as final",
+        "The evidence shows nothing added to the Apple Music auto-import folder or library"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "rip-disc1-to-apple-music",
+      "prompt": "Rip the CD in the drive into Apple Music. It's the 2-CD edition (barcode 5000000000028) of Night Drive's Afterglow Live. Keep MusicBrainz's album title and track titles, genre Electronic, Album Artist Night Drive, cover from MusicBrainz is fine. That's all confirmed, go ahead.",
+      "setup": "../../evals/files/rip-fresh.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 40,
+      "expected_output": "Secure-rips the 3 tracks with the configured +6 offset, checks them against AccurateRip (3 of 3 verified), encodes MP3 320s tagged album Afterglow Live, album artist Night Drive, disc 1/2, genre Electronic, with the cover embedded and the MusicBrainz Album Id, plus WAVs from the same rip, named '1-01 Dusk' etc. Imports the MP3s to Apple Music, where they show as one album, then asks the user to check Apple Music before archiving: nothing on the NAS yet. Work stays under tmp/media-management/.",
+      "assertions": [
+        "Reports that all 3 tracks matched AccurateRip (verified), not merely that they ripped",
+        "The stub log shows cd-paranoia ripping with the read offset 6 (-O 6)",
+        "The evidence shows 3 MP3s in the Apple Music library under Night Drive/Afterglow Live/ named like '1-01 Dusk.mp3', at 320 kbps, with disc 1/2, album artist Night Drive, genre Electronic, an embedded cover and a MusicBrainz Album Id",
+        "The evidence shows 3 WAVs (44100 Hz, 2 channels, 16 bit) named like '1-01 Dusk.wav' in the temp work folder under tmp/media-management/, not in Downloads/",
+        "Asks the user to check the album in Apple Music before staging anything to the NAS, and the evidence shows nothing under NAS/"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "archive-after-confirm",
+      "prompt": "Disc 1 of Afterglow Live looks right in Apple Music, carry on and put it on the NAS.",
+      "setup": "../../evals/files/rip-disc1-imported.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 30,
+      "expected_output": "Audits the import (Apple Music checks pass; only the missing disc 2 and the NAS checks fail), then stages disc 1's MP3s from the Apple Music library to NAS/to_nas/mp3/Night Drive/Afterglow Live/ and its WAVs, release.json (disc 1 recorded as verified) and cover.jpg to NAS/to_nas/wav/Night Drive/Afterglow Live/, both counts verified. Says disc 2 is still to come and offers the next step (insert disc 2).",
+      "assertions": [
+        "The evidence shows 3 MP3s added under NAS/to_nas/mp3/Night Drive/Afterglow Live/",
+        "The evidence shows 3 WAVs, release.json and cover.jpg added under NAS/to_nas/wav/Night Drive/Afterglow Live/, and the NAS release.json records disc 1 as verified",
+        "Says the release is not complete yet (disc 2 of 2 still to rip) rather than calling it finished",
+        "Does not delete the temp work folder without asking"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "disc2-reuses-answers",
+      "prompt": "I've put disc 2 of Afterglow Live in the drive now.",
+      "setup": "../../evals/files/rip-disc2-later.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 40,
+      "expected_output": "Recognises disc 2 of the release already started, from the release.json on the NAS (the temp work folder is gone), and reuses its answers: no questions about edition, genre or titles. Rips and verifies disc 2 (3 of 3), encodes it as disc 2/2 with exactly the same album, album artist and genre as disc 1, imports it, and Apple Music shows one album with 6 tracks over two discs. Asks the user to check before archiving.",
+      "assertions": [
+        "Recognises this as disc 2 of the Afterglow Live set already started (refers to disc 1 or its saved record) without being told the details again",
+        "Does not ask again for the edition, genre or titles",
+        "The evidence shows the Apple Music library holding a single Afterglow Live album with 6 tracks on discs 1 and 2 (no separate 'Disc 2' album)",
+        "The evidence shows the disc 2 MP3s tagged disc 2/2, album artist Night Drive, genre Electronic, with an embedded cover",
+        "Reports the disc 2 rip as verified against AccurateRip"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "box-set-numbers-cds-only",
+      "prompt": "Rip the CD in the drive. It's the box set edition (the one with the DVD) of Night Drive's Afterglow Live; MusicBrainz titles, genre Electronic, Album Artist Night Drive, go ahead and import it.",
+      "setup": "../../evals/files/rip-fresh.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 40,
+      "expected_output": "Uses the box set release, whose media are a DVD then two CDs, but numbers the discs among the CDs only: this disc is tagged disc 1 of 2, not 2 of 3. Rips, verifies, encodes and imports as in a normal run, then asks for the Apple Music check.",
+      "assertions": [
+        "The evidence shows the imported MP3s tagged disc 1/2 (not 2/3)",
+        "The evidence shows the MP3s carrying the box set's MusicBrainz Album Id 5e1d1c3a-7a10-4b2e-9c55-0b1d2e3f4a01",
+        "Does not treat the DVD as a disc to rip or count"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "wrong-offset-stops",
+      "prompt": "Rip the CD in the drive into Apple Music: 2-CD edition of Afterglow Live, MusicBrainz titles, genre Electronic, Album Artist Night Drive, all confirmed, go ahead.",
+      "setup": "../../evals/files/rip-wrong-offset.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 30,
+      "expected_output": "Rips the disc, but AccurateRip matches no track: the configured drive read offset (0) is wrong. Stops and says so, naming the read offset (cd_read_offset in config) as the likely cause, and does not import or archive anything from the unverified rip.",
+      "assertions": [
+        "Reports that the rip did not match AccurateRip (a mismatch), rather than reporting success",
+        "Names the drive read offset / cd_read_offset setting as the likely cause",
+        "The evidence shows nothing added to the Apple Music auto-import folder or library, and nothing under NAS/"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "not-in-accuraterip-carries-on",
+      "prompt": "Rip the CD in the drive into Apple Music: 2-CD edition of Afterglow Live, MusicBrainz titles, genre Electronic, Album Artist Night Drive, all confirmed, go ahead.",
+      "setup": "../../evals/files/rip-not-in-accuraterip.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 40,
+      "expected_output": "Rips securely; AccurateRip has no entry for this pressing (not in the database). Says plainly that the rip could not be cross-checked but was read securely, and carries on: encodes and imports, then asks for the Apple Music check.",
+      "assertions": [
+        "Says the disc is not in the AccurateRip database (so the rip could not be cross-checked), and does not claim it was verified",
+        "Carries on regardless: the evidence shows the 3 MP3s in the Apple Music library"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "broken-ripper-stops",
+      "prompt": "Rip the CD that's in the drive please.",
+      "setup": "../../evals/files/rip-broken-paranoia.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 15,
+      "expected_output": "Checks its tools first: cd-paranoia is there but will not run. Stops before ripping, says cd-paranoia needs reinstalling (brew reinstall libcdio-paranoia) and offers to run it, without running brew on its own.",
+      "assertions": [
+        "Stops before ripping and says cd-paranoia is missing or broken",
+        "Gives the install command (brew reinstall libcdio-paranoia, or brew install libcdio-paranoia)",
+        "The stub log shows no brew call (it asked rather than installing)",
+        "The evidence shows nothing added to the Apple Music auto-import folder or library, and nothing under NAS/"
+      ],
+      "stubs": ["gh", "brew"]
+    },
+    {
+      "id": 10,
+      "name": "no-disc",
+      "prompt": "Can you rip the CD for me?",
+      "setup": "../../evals/files/rip-no-disc.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 10,
+      "expected_output": "Finds the drive empty and asks the user to insert the disc; rips nothing.",
+      "assertions": [
+        "Says there is no disc in the drive and asks the user to insert one",
+        "The stub log shows no cd-paranoia rip (-w) call"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "offers-plain-punctuation",
+      "prompt": "Rip this disc into Apple Music, it's the 2-CD edition of Night Drive's Afterglow Live, genre Electronic, Album Artist Night Drive.",
+      "setup": "../../evals/files/rip-disc2-fresh.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 25,
+      "expected_output": "Disc 2's MusicBrainz titles include 'Glasshouse ‐ Reprise' with a Unicode hyphen. Before importing, points this out and offers plain punctuation (a normal '-') so searching the library finds it, and waits for the answer.",
+      "assertions": [
+        "Points out the typographic (Unicode) hyphen in 'Glasshouse ‐ Reprise' and offers to use a plain hyphen",
+        "Asks before importing: the evidence shows nothing added to the Apple Music library"
+      ]
+    }
+  ]
+}

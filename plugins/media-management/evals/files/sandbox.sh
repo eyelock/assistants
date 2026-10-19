@@ -262,6 +262,8 @@ install_music_stub() {
     echo "wav_tracks=350"
     echo "dj_grouping_tracks=900"
     echo "genres='Ambient, Electronic, House, Techno'"
+    echo "library_import='$LIBRARY_IMPORT'"
+    echo "library_storage='$LIBRARY_STORAGE'"
     local kv
     for kv in "$@"; do
       [[ -n "$kv" ]] || continue
@@ -269,7 +271,143 @@ install_music_stub() {
     done
   } >"$MUSIC_STATE/library.env"
   cp "$EVAL_FIXTURES/osascript-stub.sh" "$EVAL_BIN/osascript"
+  cp "$EVAL_FIXTURES/music-model.py" "$MUSIC_STATE/music-model.py"
   chmod +x "$EVAL_BIN/osascript"
+  # Apple Music imports from the auto-import folder while something waits
+  # for it: a sleep (import-mp3s.sh --wait) gives it the moment to.
+  cat >"$EVAL_BIN/sleep" <<STUB
+#!/usr/bin/env bash
+python3 -I "$MUSIC_STATE/music-model.py" "$MUSIC_STATE" ingest 2>/dev/null
+exec /bin/sleep 0.1
+STUB
+  chmod +x "$EVAL_BIN/sleep"
+}
+
+# --- The optical drive -----------------------------------------------------------
+
+CD_STATE="$SANDBOX/.eval/cd"
+
+# install_cd_stubs <disc|none>: the drive (cd-paranoia, drutil, diskutil) and
+# the web (curl: MusicBrainz, AccurateRip, Cover Art Archive), all played by
+# cd-stub.sh from cd-fixture.py's release, Night Drive - Afterglow Live (a
+# DVD + 2 CD box, and the same CDs as a 2-CD edition). The drive's read offset
+# is +6 samples, set in config as cd_read_offset.
+install_cd_stubs() {
+  mkdir -p "$CD_STATE" "$SANDBOX/.eval/web"
+  cp "$EVAL_FIXTURES/cd-fixture.py" "$CD_STATE/cd-fixture.py"
+  echo "${1:-1}" >"$CD_STATE/disc"
+  local tool
+  for tool in cd-paranoia drutil diskutil curl; do
+    cp "$EVAL_FIXTURES/cd-stub.sh" "$EVAL_BIN/$tool"
+    chmod +x "$EVAL_BIN/$tool"
+  done
+  python3 -I "$CD_STATE/cd-fixture.py" web "$SANDBOX/.eval/web" "$EVAL_FIXTURES/../../skills/rip-cd/scripts/lib" || exit 3
+  local id
+  for id in 5e1d1c3a-7a10-4b2e-9c55-0b1d2e3f4a01 5e1d1c3a-7a10-4b2e-9c55-0b1d2e3f4a02; do
+    ffmpeg -v error -f lavfi -i "color=c=0x1d3557:s=600x600" -frames:v 1 -y \
+      "$SANDBOX/.eval/web/cover-$id.jpg" || exit 3
+  done
+  echo '{"count": 0, "releases": []}' >"$SANDBOX/.eval/web/mb-search-empty.json"
+  # Work folders go to the run's own temp folder (the only place a command may
+  # write), as a real run's go to $TMPDIR: never Downloads.
+  mkdir -p "$WORK_BASE"
+  jq --argjson o 6 --arg w "$WORK_BASE" '. + {cd_read_offset: $o, work_dir: $w}' "$CONFIG_FILE" \
+    >"$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+}
+
+WORK_BASE="$SANDBOX/tmp/media-management"
+SKILLS="$EVAL_FIXTURES/../../skills"
+SET_WORK="$WORK_BASE/cd-rip-Night Drive - Afterglow Live"
+CD2_EDITION=5e1d1c3a-7a10-4b2e-9c55-0b1d2e3f4a02
+
+# plugin <skill>/<script> [args]...: run one of the plugin's own scripts the
+# way the skill would, against the sandbox (its stubs, its config).
+plugin() {
+  local script="$1"
+  shift
+  PATH="$EVAL_BIN:$PATH" MEDIA_MGMT_CONFIG_PATH="$CONFIG_FILE" \
+    bash "$SKILLS/$script" "$@" >/dev/null 2>"$SANDBOX/.eval/plugin-$(basename "$script").err" || {
+    echo "setup: $script failed:" >&2
+    cat "$SANDBOX/.eval/plugin-$(basename "$script").err" >&2
+    exit 3
+  }
+}
+
+# disc_done <n> [encoded|archive]: disc n of the 2-CD edition taken through
+# rip-cd as a user would have, earlier: answers given (genre Electronic,
+# MusicBrainz's titles in plain punctuation), ripped, verified, encoded, then
+# (unless "encoded") imported to Apple Music and (with "archive") staged to
+# the NAS. Work goes to $SET_WORK.
+disc_done() {
+  local n="$1" mode="${2:-}"
+  insert_disc "$n"
+  mkdir -p "$SET_WORK"
+  plugin rip-cd/scripts/read-disc.sh --out "$SET_WORK/disc$n.json"
+  local discid
+  discid=$(jq -r .musicbrainz.discid "$SET_WORK/disc$n.json")
+  if [[ ! -f "$SET_WORK/release.json" ]]; then
+    plugin rip-cd/scripts/make-release-record.sh --release-id "$CD2_EDITION" --genre Electronic \
+      --plain-punctuation --discid "$n=$discid" --out "$SET_WORK/release.json"
+    plugin rip-cd/scripts/fetch-cover.sh "$CD2_EDITION" "$SET_WORK/cover.jpg"
+  else
+    plugin rip-cd/scripts/update-record.sh "$SET_WORK/release.json" --disc "$n" --discid "$discid"
+  fi
+  plugin rip-cd/scripts/rip-disc.sh "$SET_WORK/rip-disc$n" --offset 6 --out "$SET_WORK/rip-disc$n.json"
+  plugin rip-cd/scripts/verify-accuraterip.sh "$SET_WORK/rip-disc$n" "$SET_WORK/disc$n.json"
+  plugin rip-cd/scripts/update-record.sh "$SET_WORK/release.json" --disc "$n" --accuraterip verified
+  plugin rip-cd/scripts/encode-release.sh "$SET_WORK/rip-disc$n" "$SET_WORK/release.json" "$n" \
+    "$SET_WORK/disc$n" --cover "$SET_WORK/cover.jpg"
+  [[ "$mode" == encoded ]] && return 0
+  cp "$SET_WORK/disc$n/mp3/"*.mp3 "$LIBRARY_IMPORT/"
+  python3 -I "$MUSIC_STATE/music-model.py" "$MUSIC_STATE" ingest || exit 3
+  if [[ "$mode" == archive ]]; then
+    plugin archive-media/scripts/archive-files.sh mp3 "$LIBRARY_STORAGE/Night Drive/Afterglow Live" \
+      "$ARCHIVE_WORKDIR/to_nas/mp3/Night Drive/Afterglow Live"
+    plugin archive-media/scripts/archive-files.sh wav "$SET_WORK/disc$n/wav" \
+      "$ARCHIVE_WORKDIR/to_nas/wav/Night Drive/Afterglow Live"
+  fi
+}
+
+# days_later: the work folder is gone (the system cleared its temp folder);
+# only what the NAS and Apple Music hold remains.
+days_later() {
+  rm -rf "$WORK_BASE"
+  mkdir -p "$WORK_BASE"
+}
+
+# insert_disc <1|2|none>: change the disc in the drive.
+insert_disc() {
+  echo "$1" >"$CD_STATE/disc"
+}
+
+# library_mp3 <album> <album_artist> <disc>/<discs> <track>/<tracks> <title> <seconds> [tag=value]...:
+# a track already in the Apple Music library (imported before the run), as an
+# MP3 320 filed where Apple Music files it.
+library_mp3() {
+  local album="$1" aa="$2" disc="$3" track="$4" title="$5" secs="$6"
+  shift 6
+  local tmp="$SANDBOX/.eval/gen/import"
+  mkdir -p "$tmp"
+  ffmpeg -v error -filter_complex "$(tone $((200 + ${track%%/*} * 40)) "$secs")" -ac 2 -ar 44100 \
+    -c:a libmp3lame -b:a 320k -id3v2_version 3 -metadata "title=$title" -metadata "artist=Night Drive" \
+    -metadata "album=$album" -metadata "album_artist=$aa" -metadata "disc=$disc" \
+    -metadata "track=$track" -metadata "date=2026" "$@" -y "$tmp/$title.mp3" </dev/null || exit 3
+  mv "$tmp/$title.mp3" "$LIBRARY_IMPORT/"
+  python3 -I "$MUSIC_STATE/music-model.py" "$MUSIC_STATE" ingest || exit 3
+}
+
+# half_done_import: Afterglow Live as Apple Music's own CD import left it:
+# each disc its own album ("Afterglow Live" and "Afterglow Live [Disc 2]"),
+# no Album Artist, the live suffix on every title, no embedded artwork, and
+# nothing on the NAS.
+half_done_import() {
+  local suffix=" (Live at Hall 7, Berlin 14.03.26)"
+  library_mp3 "Afterglow Live" "" 1/2 1/3 "Dusk$suffix" 7 -metadata genre=Electronic
+  library_mp3 "Afterglow Live" "" 1/2 2/3 "Neon Rain$suffix" 6 -metadata genre=Electronic
+  library_mp3 "Afterglow Live" "" 1/2 3/3 "Overpass (Hall Mix)$suffix" 8 -metadata genre=Electronic
+  library_mp3 "Afterglow Live [Disc 2]" "" 2/2 1/3 "Last Train$suffix" 6 -metadata genre=Electronic
+  library_mp3 "Afterglow Live [Disc 2]" "" 2/2 2/3 "Undertow$suffix" 7 -metadata genre=Electronic
+  library_mp3 "Afterglow Live [Disc 2]" "" 2/2 3/3 "Glasshouse - Reprise$suffix" 5 -metadata genre=Electronic
 }
 
 # playlist <name> [tracks]: a playlist that already exists in the stub's library.

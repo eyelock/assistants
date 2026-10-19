@@ -89,6 +89,35 @@
         "Asks the user to check in Apple Music that the tracks appear as one album with the right artist and order",
         "Says the archive to the NAS waits until the user confirms the import looks right, rather than just asking whether to proceed"
       ]
+    },
+    {
+      "name": "import-and-wait-for-pickup",
+      "prompt": "Add disc 1 of Afterglow Live to Apple Music: the MP3s rip-cd made are in its work folder under tmp/media-management/ (the disc1/mp3 folder). Make sure Apple Music has actually picked them up.",
+      "setup": "../../evals/files/import-wait.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 20,
+      "expected_output": "Copies the 3 MP3s to the auto-import folder with the import script's --wait, which reports that Apple Music picked them up (the folder empties and none landed in 'Not Added'); then asks the user to check the album in Apple Music.",
+      "assertions": [
+        "Confirms that Apple Music picked up the files (rather than only saying they were copied)",
+        "The evidence shows the 3 tracks in the Apple Music library under Night Drive/Afterglow Live/ and the auto-import folder empty of them",
+        "Asks the user to check the album in Apple Music"
+      ],
+      "id": 4
     }
   ]
 }

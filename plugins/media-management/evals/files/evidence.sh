@@ -69,6 +69,54 @@ if [[ -n "$config" ]]; then
   echo
 fi
 
+if [[ -n "$mp3s" ]]; then
+  echo "== MP3 disc, release and artwork (file | disc | MusicBrainz Album Id | MusicBrainz Disc Id | embedded cover | kbps) =="
+  while IFS= read -r f; do
+    json=$(ffprobe -v quiet -print_format json -show_format -show_streams "$f" 2>/dev/null || echo '{}')
+    jq -r --arg f "$f" '.format as $x | ($x.tags // {}) as $t |
+      ($t | to_entries | map({key: (.key | ascii_downcase), value}) | from_entries) as $l |
+      [$f, ($t.disc // "-"), ($l["musicbrainz album id"] // "-"), ($l["musicbrainz disc id"] // "-"),
+       (if any(.streams[]?; .disposition.attached_pic == 1) then "yes" else "no" end),
+       (((($x.bit_rate // "0") | tonumber) / 1000 | round) | tostring)] | join(" | ")' <<<"$json"
+  done <<<"$mp3s"
+  echo
+fi
+
+if [[ -f .eval/music/tracks.json ]]; then
+  echo "== Apple Music stub: library, as albums (album | album artist | tracks | discs) =="
+  jq -r 'group_by([.album, .album_artist]) | .[] |
+    "\(.[0].album) | \(if .[0].album_artist == "" then "(blank)" else .[0].album_artist end) | \(length) | \([.[].disc] | unique | map(tostring) | join(","))"' \
+    .eval/music/tracks.json
+  echo
+  echo "== Apple Music stub: tracks (album | disc-track | name | genre | file) =="
+  jq -r 'sort_by(.album, .disc, .track)[] | "\(.album) | \(.disc)-\(.track) | \(.name) | \(.genre) | \(.location | sub(".*/Music/Media.localized/"; ""))"' \
+    .eval/music/tracks.json
+  echo
+fi
+
+wavs=$(files | grep -i '\.wav$' || true)
+if [[ -n "$wavs" ]]; then
+  echo "== WAV audio (file | seconds | sample rate | channels | bits) =="
+  while IFS= read -r f; do
+    ffprobe -v quiet -print_format json -show_streams "$f" 2>/dev/null | jq -r --arg f "$f" \
+      '.streams[0] | [$f, ((.duration // "0") | tonumber | floor | tostring), .sample_rate, (.channels | tostring), (.bits_per_sample | tostring)] | join(" | ")'
+  done <<<"$wavs"
+  echo
+fi
+
+while IFS= read -r rec; do
+  [[ -n "$rec" ]] || continue
+  echo "== $rec (album | album artist | genre | discs: disc accuraterip mb_discid) =="
+  jq -r '"\(.album) | \(.album_artist) | \(.genre)", (.discs[] | "  disc \(.disc): \(.accuraterip // "-") \(.mb_discid // "-")")' "$rec"
+  echo
+done < <(files | grep '/release.json$' | grep 'NAS/' || true)
+
+if [[ -f .eval/cd/disc ]]; then
+  echo "== Optical drive stub: disc in the drive =="
+  cat .eval/cd/disc
+  echo
+fi
+
 if [[ -f .eval/music/playlists ]]; then
   echo "== Apple Music stub: user playlists (name, tracks) =="
   if [[ -s .eval/music/playlists ]]; then cat .eval/music/playlists; else echo "(none)"; fi

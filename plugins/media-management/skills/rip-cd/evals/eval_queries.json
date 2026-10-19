@@ -1,0 +1,66 @@
+[
+  {
+    "query": "rip this CD into Apple Music",
+    "should_trigger": true
+  },
+  {
+    "query": "I've put a CD in the drive, can you import it",
+    "should_trigger": true
+  },
+  {
+    "query": "I've put disc 2 in now",
+    "should_trigger": true
+  },
+  {
+    "query": "import the album in the CD drive, as MP3 and a lossless WAV backup",
+    "should_trigger": true
+  },
+  {
+    "query": "can you get this CD onto the NAS and into my library",
+    "should_trigger": true
+  },
+  {
+    "query": "disc 3 is in the player",
+    "should_trigger": true
+  },
+  {
+    "query": "rip the disc that's in the Blu-ray drive, it's an audio CD",
+    "should_trigger": true
+  },
+  {
+    "query": "secure rip the CD and check it against AccurateRip",
+    "should_trigger": true
+  },
+  {
+    "query": "process the album I just bought from Bandcamp, it's in Downloads",
+    "should_trigger": false
+  },
+  {
+    "query": "my album shows up as two albums in Apple Music, fix it",
+    "should_trigger": false
+  },
+  {
+    "query": "burn these MP3s to a CD",
+    "should_trigger": false
+  },
+  {
+    "query": "rip the film off this Blu-ray",
+    "should_trigger": false
+  },
+  {
+    "query": "convert these WAV files to MP3 320",
+    "should_trigger": false
+  },
+  {
+    "query": "Apple Music is showing the wrong cover for this album",
+    "should_trigger": false
+  },
+  {
+    "query": "free up space by offloading cloud tracks",
+    "should_trigger": false
+  },
+  {
+    "query": "eject the disc",
+    "should_trigger": false
+  }
+]

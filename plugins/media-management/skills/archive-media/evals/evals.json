@@ -88,6 +88,36 @@
         "The WAVs in Downloads/Night Drive - Afterglow-wav are still there",
         "Reports that the copy count was verified and the files were renamed"
       ]
+    },
+    {
+      "name": "second-disc-into-existing-folder",
+      "prompt": "Disc 2 of Night Drive's Afterglow Live looks right in Apple Music. Stage it to the NAS next to disc 1: the MP3s, and the WAVs that rip-cd left in its work folder under tmp/media-management/.",
+      "setup": "../../evals/files/archive-disc2.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 25,
+      "expected_output": "Copies the album's MP3s from the Apple Music library (now 6, both discs) to NAS/to_nas/mp3/Night Drive/Afterglow Live/, and disc 2's 3 WAVs plus release.json and cover.jpg from the work folder to NAS/to_nas/wav/Night Drive/Afterglow Live/, where disc 1's WAVs already are. The WAV archive reports verified (every disc 2 file arrived intact) even though the folder now holds 6 WAVs. The names stay '2-01 Last Train.wav' etc.",
+      "assertions": [
+        "The evidence shows 6 MP3s under NAS/to_nas/mp3/Night Drive/Afterglow Live/ (both discs)",
+        "The evidence shows 6 WAVs under NAS/to_nas/wav/Night Drive/Afterglow Live/, disc 2's named like '2-01 Last Train.wav' (not renamed to '01 01 ...' or similar)",
+        "Reports the WAV staging as verified, without flagging the 3 vs 6 file count as a mismatch",
+        "The evidence shows disc 1's WAVs on the NAS unchanged"
+      ],
+      "id": 4
     }
   ]
 }

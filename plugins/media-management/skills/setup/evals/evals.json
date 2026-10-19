@@ -125,6 +125,37 @@
         "Explains why: the MCP server config (.mcp.json) reads environment variables, not config.json",
         "Says the session (or terminal / Claude Code) must be restarted for it to take effect"
       ]
+    },
+    {
+      "id": 5,
+      "name": "cd-keys-optional",
+      "prompt": "is media management set up properly? I've been ripping CDs with it too",
+      "setup": "../../evals/files/setup-complete.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)",
+        "Write(./**)",
+        "Edit(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Reports every required path as set, with where each came from, and mentions cd_read_offset and work_dir as optional settings that are not set (work_dir defaulting to the system temp folder), without treating them as problems or asking for them.",
+      "assertions": [
+        "Reports that all required paths are configured",
+        "Mentions cd_read_offset (the drive read offset) as optional, not as missing or required",
+        "Does not ask the user for cd_read_offset or work_dir values, and does not suggest Downloads or the home folder for temporary work",
+        "The evidence shows config.json unchanged"
+      ]
     }
   ]
 }

@@ -42,6 +42,19 @@ wav <artist> <album> <source_folder>
 - **mp3**: Archives from Apple Music library (`$LIBRARY_STORAGE/AlbumArtist/Album/`)
 - **wav**: Archives from extraction folder, skips Apple Music entirely
 
+## A CD rip (rip-cd)
+
+When the release came from a CD (`rip-cd`), the WAVs are not in Downloads:
+they are in the rip's temporary work folder, `<work_dir>/cd-rip-<Artist> -
+<Album>/disc<N>/wav/` (`work_dir` from setup's checker, default
+`$TMPDIR/media-management`), with its `release.json` and `cover.jpg`. Archive
+both formats, the MP3s from the Apple Music library and that WAV folder, so
+the NAS has the lossless copy too, and use the folder names Apple Music used
+(it writes ":" and "/" as "_"). Then compare the record's `disc_total` with
+the discs now on the NAS and say whether the set is complete ("disc 1 of 2
+is on the NAS; disc 2 is still to rip"). Prefer the `rip-cd` skill for this
+whole step when it is available: it knows the work folder.
+
 ## Workflow
 
 Determine mode from the first argument: `mp3` or `wav`.
