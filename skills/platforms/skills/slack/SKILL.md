@@ -1,6 +1,6 @@
 ---
 name: slack
-description: How to read and search Slack well through Slack's official MCP server - finding messages, threads, mentions and DMs, who said what, and what is waiting on someone. Use when a task needs Slack content read or searched, when reading a DM or thread, or when answering what is waiting in Slack. Not for writing or posting messages.
+description: How to read and search Slack well through Slack's official MCP server - finding messages, threads, mentions and DMs, who said what, and what is waiting on someone. Use when a task needs Slack content read or searched, when reading a DM or thread, when building a permalink from a Slack ts, or when answering what is waiting in Slack. Not for writing or posting messages.
 ---
 
 # Slack
