@@ -1,7 +1,7 @@
 # Triage in Slack
 
-Answer the four questions with `triage-report` (shape and rules), using `waiting-on-me`,
-`waiting-on-them` and `action-now-or-soon`. First get the user's ID from the search tools'
+Answer the questions with `triage-report` (shape and rules), using `waiting-on-me`,
+`waiting-on-them`, `action-now-or-soon`, `my-commitments`, `catch-up` and `find`. First get the user's ID from the search tools'
 descriptions. There is no unreads or mentions tool: see "There is no unreads or mentions tool"
 in `SKILL.md`. Slack has no standing state, so every question uses a window: state it.
 
@@ -11,6 +11,9 @@ in `SKILL.md`. Slack has no standing state, so every question uses a window: sta
 | waiting-on-them | `filters: "from:<@U...> after:<date>"` (and again with `is:dm`) for messages the user sent that ask something, then read the thread or DM to see whether anyone answered |
 | action-now | Also: a direct message waiting more than a few hours in the working day |
 | action-soon | As waiting-on-me, for what is not yet urgent: a mention with a date ahead, a request with a deadline |
+| my-commitments | One `filters: "from:<@U...> after:<date>"` search (and one with `is:dm`) for the user's own messages in the window, reading each result's text for a promise ("I'll", "will send", "let me"); keywords are AND'd, so do not search for promise words one by one. Then `slack_read_thread` or `slack_read_channel` to see whether it was done afterwards |
+| catch-up | A DM: `slack_read_channel` with the person's `D...` ID or user ID (`slack_search_users` to find them). A channel: `slack_search_channels` for the ID, then `slack_read_channel`. A thread: `slack_read_thread`. A topic: one `slack_search_public_and_private` search for its words, then read the threads that matter, and say that it is a search |
+| find | `slack_search_public_and_private` with `keywords` and, when the caller gave them, `from:`, `in:`, `after:` and `before:` in `filters`; then `slack_read_thread` to confirm the hit. Few searches and no loops on `ratelimited`; widen the words once |
 
 ## Rules
 
