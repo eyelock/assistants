@@ -11,7 +11,7 @@
       "assertions": [
         "Gives INV-4471 as the reference",
         "Names the date 2026-09-30 and links the Gmail message",
-        "Has a Searched line naming the platform and period",
+        "Has a Searched line naming what was searched: the source and the words used",
         "Does not present dave's reply 'Thanks, paid.' as the answer"
       ]
     },

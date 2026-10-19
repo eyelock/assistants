@@ -1,6 +1,6 @@
 ---
 name: find
-description: Find something that was said, sent or decided - a number, an address, a plan, a decision, a link - and say where and when. Use when asked to find, look up, search for or remember what someone said or wrote, or where something was mentioned, on any platform.
+description: Find something that was said, sent or decided - a number, an address, a plan, a decision, a link - in messages, mail or comments, and say where and when. Use whenever asked to find, look up, search for or remember what someone said or wrote, or where something was mentioned, on any platform, even for one small fact: it sets how the answer is given (the fragment, where and when, a link, what was searched) and never repeats a password, token or code.
 ---
 
 # Find
@@ -20,13 +20,15 @@ nothing was found.
 ```markdown
 ### find: <what was asked for>
 
-| Platform | When | Who | What | Link |
+| Where | When | Who | What | Link |
 |---|---|---|---|---|
-| slack | 2026-10-14 | @sam | "Door code is on the invoice, ref 4471" | https://example.slack.com/archives/C1/p1 |
+| slack #ops | 2026-10-14 | @sam | "Door code is on the invoice, ref 4471" | https://example.slack.com/archives/C1/p1 |
 
 Searched: Slack, 2026-09-14 to 2026-10-19, "door code".
 ```
 
+- **Where** is the platform and the place in it: the channel, the DM, the thread, the mail
+  subject or the pull request ("slack #ops", "gmail: Invoice, Parker order").
 - At most five rows, best match first. **What** holds the fragment that answers the question,
   quoted, and nothing around it.
 - When nothing matches, write `Nothing found.` and the **Searched** line. Never fill in an answer
