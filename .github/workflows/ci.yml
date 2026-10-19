@@ -78,3 +78,19 @@ jobs:
       - name: Changeset status (PRs only)
         if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
         run: pnpm exec changeset status --since=origin/${{ github.base_ref }}
+
+  skillspector:
+    name: SkillSpector
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pull requests scan the skills they change; pushes scan every skill.
+      # Eval fixtures and e2e fixtures are test data, not shipped skills.
+      - uses: eyelock/actions/skillspector@skillspector-v1
+        with:
+          exclude: |
+            */evals/files/*
+            e2e-fixtures/*

@@ -53,6 +53,22 @@ way. Before adding a question, or a platform-specific feature that looks like on
 `add-triage-question` skill (`skills/triage/skills/add-triage-question`): most ideas should stay
 off the list. `pnpm test` fails when a harness and the list disagree.
 
+## Security scan
+
+CI scans every skill a pull request changes with [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector),
+through [`eyelock/actions/skillspector`](https://github.com/eyelock/actions/tree/develop/skillspector).
+Any finding not accepted in `.skillspector-baseline.yaml` fails the build.
+
+When it flags something, read the finding first. If it is a real concern, fix the skill: pin
+what a harness downloads, and don't hand the agent pipe-to-shell commands. If it is a false
+positive, add a rule to the baseline with an `id`, a `path` scoped to the file, and a `reason`.
+Run it locally with Docker:
+
+```bash
+docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
+  --exclude '*/evals/files/*' --exclude 'e2e-fixtures/*'
+```
+
 ## Conventions
 
 - Scripts output JSON to stdout, diagnostics to stderr

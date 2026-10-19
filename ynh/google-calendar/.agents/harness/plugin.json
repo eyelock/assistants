@@ -20,7 +20,7 @@
   "mcp_servers": {
     "google-calendar": {
       "command": "uvx",
-      "args": ["workspace-mcp", "--single-user", "--read-only", "--tools", "calendar"],
+      "args": ["workspace-mcp@2.1.0", "--single-user", "--read-only", "--tools", "calendar"],
       "env": {
         "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
         "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}",

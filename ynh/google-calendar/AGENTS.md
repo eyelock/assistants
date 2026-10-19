@@ -7,7 +7,7 @@ with `triage-report`, and `google-calendar`'s `references/triage.md` says where 
 
 ## What this harness allows
 
-- **Read only.** `uvx workspace-mcp --single-user --read-only --tools calendar`: only read
+- **Read only.** `uvx workspace-mcp@2.1.0 --single-user --read-only --tools calendar`: only read
   scopes are requested, and the tools that create, change or respond to events are removed.
 - **Credentials.** `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` and
   `USER_GOOGLE_EMAIL`, passed through from your environment. The user is `USER_GOOGLE_EMAIL`.

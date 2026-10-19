@@ -151,7 +151,7 @@ Team (dashboard-managed, Team/Enterprise plans).
 
 ## Key CLI Details
 
-- Binary: `agent` (installed via `curl https://cursor.com/install -fsS | bash`)
+- Binary: `agent` (installed by the script at https://cursor.com/install; see Cursor's CLI docs)
 - Non-interactive: `agent -p "prompt"`
 - Environment vars: `$CURSOR_PROJECT_DIR`, `$CURSOR_ENV_FILE`, `$CURSOR_WORKSPACE_DIR`
 

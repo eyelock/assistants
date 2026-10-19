@@ -25,7 +25,7 @@ details are in `references/tools.md`; the triage questions answered in Drive are
 ## What the harness allows
 
 The `google-drive` harness runs `taylorwilsdon/google_workspace_mcp` as
-`uvx workspace-mcp --single-user --read-only --tools drive docs sheets slides`. `--read-only`
+`uvx workspace-mcp@2.1.0 --single-user --read-only --tools drive docs sheets slides`. `--read-only`
 requests only read scopes and removes the write tools. Credentials are
 `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` and `USER_GOOGLE_EMAIL`; the user is
 `USER_GOOGLE_EMAIL`. The comments tools are in the server's `extended` tool tier, not `core`:

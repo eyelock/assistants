@@ -1,0 +1,190 @@
+# SkillSpector baseline: findings read by a person and accepted.
+#
+# CI scans every changed skill with eyelock/actions/skillspector and fails on any finding
+# not suppressed here. Paths are relative to the repository root; `*` crosses `/`.
+#
+# Before adding a rule, read the finding. If it is a real concern, fix the skill instead.
+# Every rule names an `id`, is scoped with `path` (and `message` where the wording is the
+# point), and says why in `reason`. A full scan warns about rules that no longer match
+# anything; delete those.
+#
+# Rules, not fingerprints: fingerprints bind to one SkillSpector version, so every upgrade
+# would break CI on unchanged skills.
+
+version: 2
+
+rules:
+  # --- Skills that defend against prompt injection --------------------------------------
+  # The platform skills tell the agent never to follow instructions found in messages,
+  # and quote a typical injection as the example. The scanner sees the quoted phrase.
+
+  - id: "P1"
+    path: "skills/platforms/skills/*/SKILL.md"
+    message: "*ignore previous instructions*"
+    reason: "Quoted as an example of injected text the skill must refuse, inside its untrusted-content rule."
+
+  - id: "YR4"
+    path: "skills/platforms/skills/*/SKILL.md"
+    message: "*ignore previous instructions*"
+    reason: "Same quoted example as P1, matched by the YARA hidden-instructions rule."
+
+  # --- Credentials named, never read ----------------------------------------------------
+
+  - id: "PE3"
+    path: "skills/platforms/skills/github/SKILL.md"
+    message: "*access token*"
+    reason: "Names the token scope the GitHub MCP server needs for notifications; the skill never reads a token."
+
+  - id: "PE3"
+    path: "skills/triage/skills/find/SKILL.md"
+    message: "*access token*"
+    reason: "Tells the agent not to repeat access tokens found in messages."
+
+  - id: "PE3"
+    path: "skills/dev/skills/dev-security/SKILL.md"
+    message: "*credentials.json*"
+    reason: "Advises adding secret files such as credentials.json to .gitignore."
+
+  # --- Eval cases -------------------------------------------------------------------------
+  # Eval prompts and assertions describe the behaviour under test, including the risky
+  # requests a skill must handle ("go ahead without asking", "git push --force"). Agents
+  # do not load them; the eval runner does.
+
+  - id: "AR2"
+    path: "*/evals/*.json"
+    reason: "Eval assertion text (e.g. 'no warning'), not an instruction to the agent."
+
+  - id: "AS3"
+    path: "*/evals/*.json"
+    reason: "Eval fixtures name skill files the skill under test is asked to inspect."
+
+  - id: "EA2"
+    path: "*/evals/*.json"
+    reason: "Eval prompt in which the user pre-authorises an action, to test the skill's confirmation rules."
+
+  - id: "OH1"
+    path: "*/evals/*.json"
+    reason: "Eval expected-output text describing a code review finding."
+
+  - id: "PE3"
+    path: "*/evals/*.json"
+    reason: "Eval prompts that mention credentials, to test that the skill handles them safely."
+
+  - id: "TM1"
+    path: "*/evals/*.json"
+    reason: "Eval prompt asking for a risky git command, to test that the skill pauses."
+
+  - id: "EA1"
+    path: "*/evals/*.json"
+    reason: "Eval text describing an agent with broad tool access, to test the skill's limits."
+
+  - id: "EA3"
+    path: "*/evals/*.json"
+    reason: "Eval expected-output text ('not limited to'), not an instruction."
+
+  - id: "E1"
+    path: "skills/platforms/skills/github/*"
+    message: "*api.githubcopilot.com*"
+    reason: "GitHub's official remote MCP endpoint, which the github harness connects to."
+
+  # --- vendor-harness: agent tooling is the subject ---------------------------------------
+  # These skills diagnose harness artifacts, so their references document vendor config
+  # paths and vendor behaviour. A scanner looking for agents that touch agent config
+  # lights up on the subject matter.
+
+  - id: "AS1"
+    path: "plugins/vendor-harness/skills/*/references/*.md"
+    reason: "References document where each vendor keeps its config; the skills read them to diagnose harness problems."
+
+  - id: "AS2"
+    path: "plugins/vendor-harness/skills/*/references/*.md"
+    reason: "References document each vendor's MCP config location."
+
+  - id: "EA1"
+    path: "plugins/vendor-harness/skills/*/references/*.md"
+    reason: "References describe what vendor settings such as allowed-tools and tools: [\"*\"] permit, and warn against them."
+
+  - id: "AS3"
+    path: "plugins/vendor-harness/skills/*/references/*.md"
+    reason: "References document where each vendor looks for skills."
+
+  - id: "AR2"
+    path: "plugins/vendor-harness/skills/*"
+    message: "*warning*"
+    reason: "Describes vendors that ignore unsupported fields without a warning; not an instruction to suppress warnings."
+
+  - id: "RA2"
+    path: "plugins/vendor-harness/skills/skill-artifact/references/claude.md"
+    reason: "Notes that ynd's create skill command avoids unsupported fields; nothing persists across sessions."
+
+  - id: "AE1"
+    path: "plugins/vendor-harness/skills/vendor-adapters/SKILL.md"
+    message: "*references/copilot.md*"
+    reason: "A list of Copilot slash commands (/skills list|info|reload|add|remove) trips the obfuscation heuristic. Checked: no hidden or encoded text."
+
+  # --- media-management -------------------------------------------------------------------
+
+  - id: "RA1"
+    path: "plugins/media-management/skills/process-album/references/safety-rules.md"
+    message: "*replace the original file*"
+    reason: "Split audio parts replace the original audio file; the skill does not modify itself."
+
+  - id: "TM1"
+    path: "plugins/media-management/skills/process-album/scripts/extract-zip.sh"
+    message: "*__MACOSX*"
+    reason: "Removes macOS resource-fork debris inside a destination the script validates (non-empty, not / or home, set -u)."
+
+  - id: "RA2"
+    path: "plugins/media-management/skills/setup/SKILL.md"
+    reason: "allowed-tools grants Write so setup can write the plugin's own config file."
+
+  - id: "EA2"
+    path: "plugins/media-management/skills/manage-metadata/SKILL.md"
+    reason: "Applies only values the user already gave ('without asking again'); the same rule forbids auto-applying anything else."
+
+  # --- Scanner coverage limits ------------------------------------------------------------
+  # SkillSpector stops parsing a shell or JavaScript expression past a span limit and
+  # reports the script as partially inspected. A coverage gap, not a finding.
+
+  - id: "AE1"
+    path: "plugins/media-management/skills/manage-metadata/SKILL.md"
+    message: "*scripts/*.sh*"
+    reason: "static_parse_limit on the skill's own metadata scripts."
+
+  - id: "AE1"
+    path: "plugins/media-management/skills/split-long-tracks/SKILL.md"
+    message: "*scripts/split-long-tracks.sh*"
+    reason: "static_parse_limit on the skill's own split script."
+
+  - id: "AE1"
+    path: "skills/triage/skills/add-triage-question/SKILL.md"
+    message: "*scripts/triage-questions.mjs*"
+    reason: "static_parse_limit on the repository's triage-questions script."
+
+  # --- gitflow ----------------------------------------------------------------------------
+
+  - id: "E4"
+    path: "plugins/gitflow/skills/push/SKILL.md"
+    message: "*capture context*"
+    reason: "'Capture context' means saving shell variables before leaving a worktree; nothing leaks."
+
+  # --- dev and tech skills ----------------------------------------------------------------
+
+  - id: "AS3"
+    path: "skills/dev/skills/skill-creator/SKILL.md"
+    reason: "Creating skills means reading where the harness keeps them."
+
+  - id: "EA2"
+    path: "skills/dev/skills/dev-debug/SKILL.md"
+    message: "*without asking*"
+    reason: "Heads an explicit list of local, reversible actions (branches, local commits); remote actions still need confirmation."
+
+  - id: "RP1"
+    path: "skills/dev/skills/dev-quality/SKILL.md"
+    message: "*npx *"
+    reason: "Runs the project's own formatter, linter and type checker, not an MCP server; versions come from the project's lockfile."
+
+  - id: "P4"
+    path: "skills/tech/skills/go-lang/SKILL.md"
+    message: "*Make targets*"
+    reason: "Coding convention (use the Makefile), not manipulation of the agent's behaviour."
