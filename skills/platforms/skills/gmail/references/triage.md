@@ -1,7 +1,7 @@
 # Triage in Gmail
 
-Answer the four questions with `triage-report` (shape and rules), using `waiting-on-me`,
-`waiting-on-them` and `action-now-or-soon`. The user is `USER_GOOGLE_EMAIL`.
+Answer the questions with `triage-report` (shape and rules), using `waiting-on-me`,
+`waiting-on-them`, `action-now-or-soon`, `my-commitments`, `catch-up` and `find`. The user is `USER_GOOGLE_EMAIL`.
 
 | Question | Where to look |
 |---|---|
@@ -9,6 +9,9 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
 | waiting-on-them | `search_gmail_messages` with `in:sent newer_than:14d`: the thread waits on someone else when the user sent last and asked for something |
 | action-now | Also: starred threads, and threads naming a date of today or earlier |
 | action-soon | As waiting-on-me, for what is not urgent: a request with a date ahead |
+| my-commitments | `search_gmail_messages` with `in:sent newer_than:14d` (or the caller's window), then `get_gmail_messages_content_batch` to read the user's own words for a promise ("I'll", "will send", "let me know by"). It is done when a later message in the same thread delivers it, for example an attachment or a "sent" |
+| catch-up | A thread: `get_gmail_thread_content`. A person: `search_gmail_messages` with `from:<address> OR to:<address>`, newest first, then the threads that matter. A topic: search its words, then read the threads, and say that it is a search |
+| find | `search_gmail_messages` with Gmail operators (`from:`, `to:`, `subject:`, `after:`, `before:`, `has:attachment`, quoted phrases), then `get_gmail_messages_content_batch` to read the hits. Search all mail, not only the last 14 days, unless the caller gave a window |
 
 ## Rules
 
