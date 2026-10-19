@@ -59,6 +59,31 @@
         "Says the comments tools are in the extended tool tier (not core), so they would be missing at a lower tier",
         "Plans only tools from the list given: nothing that comments, resolves or edits"
       ]
+    },
+    {
+      "id": 5,
+      "name": "commitments-from-comments",
+      "prompt": "data/drive-raw-commitments.json is what the Google Drive tools returned for me (dave@acme.example, UTC) this morning. What have I promised in Drive comments and not done? Link each item.",
+      "files": ["../../evals/files/drive-raw-commitments.json"],
+      "expected_output": "One row: the comment on Q4 plan, 'I'll fix section 2 by Friday', said 2026-10-14, due Friday 2026-10-16 (now overdue), unresolved with no reply; link https://docs.google.com/d/f1/edit. Not 'I'll add the budget table' (resolved, with a reply 'Added.'), not 'I'll confirm the dates in column C' (Dave replied 'Confirmed' on 10-19), not the 'we should probably restructure' hedge.",
+      "assertions": [
+        "Lists the promise to fix section 2 of Q4 plan, Since 2026-10-14, due 2026-10-16, and says it has no reply or is overdue",
+        "Does not list 'I'll add the budget table', since it is resolved with a reply",
+        "Does not list the column C promise on Launch checklist, since Dave replied that it was confirmed",
+        "Does not list 'we should probably restructure this at some point' as a commitment",
+        "Links the row with https://docs.google.com/d/f1/edit"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "find-a-file",
+      "prompt": "data/drive-raw-commitments.json is what the Google Drive tools returned. Where is the vendor contract?",
+      "files": ["../../evals/files/drive-raw-commitments.json"],
+      "expected_output": "Vendor contract 2026, a Google Doc owned by Pia, shared with dave on 2026-10-09, last modified 2026-10-09, link https://docs.google.com/d/f7/edit.",
+      "assertions": [
+        "Names Vendor contract 2026, owned by Pia, with the link https://docs.google.com/d/f7/edit",
+        "Gives the date 2026-10-09"
+      ]
     }
   ]
 }
