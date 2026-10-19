@@ -138,6 +138,35 @@ rules:
     path: "plugins/media-management/skills/setup/SKILL.md"
     reason: "allowed-tools grants Write so setup can write the plugin's own config file."
 
+  - id: "RA1"
+    path: "plugins/media-management/skills/*/SKILL.md"
+    message: "*Write Skill*"
+    reason: "Matches the text 'allowed-tools: Bash Read Write Skill'; the skills write records and call other skills, never themselves."
+
+  - id: "EA2"
+    path: "plugins/media-management/skills/*/SKILL.md"
+    message: "*auto-approve*"
+    reason: "Describes the plugin's safety hook, which auto-approves only one exact command shape and asks for anything else."
+
+  - id: "LP1"
+    path: "plugins/media-management/skills/*/scripts/*.sh"
+    reason: "Scripts query MusicBrainz and AccurateRip with curl, run through the declared Bash tool. The skill spec has no network permission field, and granting WebFetch would widen access the skill does not use."
+
+  - id: "PE5"
+    path: "plugins/media-management/skills/rip-cd/scripts/*.sh"
+    message: "*--device /dev/*"
+    reason: "--device /dev/diskN is the script's option naming the optical drive; no container is involved."
+
+  - id: "TM1"
+    path: "plugins/media-management/skills/rip-cd/scripts/rip-disc.sh"
+    message: "*rm -f*"
+    reason: "Removes the one track file that failed to rip, inside a destination the script requires to be non-empty (set -u)."
+
+  - id: "RA2"
+    path: "plugins/media-management/skills/rip-cd/scripts/*"
+    message: "*plist*"
+    reason: "Parses the plist that drutil prints for the disc's table of contents; nothing persists across sessions."
+
   - id: "EA2"
     path: "plugins/media-management/skills/manage-metadata/SKILL.md"
     reason: "Applies only values the user already gave ('without asking again'); the same rule forbids auto-applying anything else."
@@ -147,14 +176,9 @@ rules:
   # reports the script as partially inspected. A coverage gap, not a finding.
 
   - id: "AE1"
-    path: "plugins/media-management/skills/manage-metadata/SKILL.md"
+    path: "plugins/media-management/skills/*/SKILL.md"
     message: "*scripts/*.sh*"
-    reason: "static_parse_limit on the skill's own metadata scripts."
-
-  - id: "AE1"
-    path: "plugins/media-management/skills/split-long-tracks/SKILL.md"
-    message: "*scripts/split-long-tracks.sh*"
-    reason: "static_parse_limit on the skill's own split script."
+    reason: "static_parse_limit on the media skills' own shell scripts."
 
   - id: "AE1"
     path: "skills/triage/skills/add-triage-question/SKILL.md"
