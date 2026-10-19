@@ -179,7 +179,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "ynh/imessage"
       },
-      "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only; shows only as much text as the job needs.",
+      "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
       "version": "0.1.0",
       "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"]
     },

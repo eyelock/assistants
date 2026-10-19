@@ -30,17 +30,18 @@ actually have before planning.
 
 ## Privacy modes
 
-The server runs in one of three modes. The harness uses the least revealing one that works.
+The server runs in one of three modes. The harness reads the text by default, because telling a
+question from a thank-you or a reply needs it.
 
-- `redacted` (default): message text and filenames are dropped. Who, when, direction, service and
-  counts remain. Enough to see who waits on a reply, not what they asked.
-- `full` (profile `full`): text is returned. Needed to summarize a thread, find something said,
-  judge whether a message asks anything, or list commitments. Attachments need `full`.
+- `full` (default): text is returned. Needed to summarize a thread, find something said, judge
+  whether a message asks anything, or list commitments. Attachments need `full`.
+- `redacted` (profile `redacted`): message text and filenames are dropped. Who, when, direction,
+  service and counts remain. Enough to see who waits on a reply, not what they asked.
 - `aggregate` (profile `counts`): counts only.
 
 A call can ask for stricter, never looser. In `redacted`, do not invent content: say who and
-when, say the text is not available, and suggest the `full` profile (the `catch-up`, `commitments`
-or `find` focus) for that thread. Never guess what a message said from its sender or time.
+when, say the text is not available, and suggest the default profile for that thread. Never guess
+what a message said from its sender or time.
 
 ## Reading results correctly
 

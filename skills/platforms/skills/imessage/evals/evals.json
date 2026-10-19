@@ -55,7 +55,7 @@
         "Says the message text is not available in redacted mode and that what was asked cannot be known",
         "Does not state or guess what Jo or anyone else asked (for example does not mention Q3 numbers, a bill or a venue)",
         "Does not list Ana as waiting on Dave, because her last message is a tapback",
-        "Suggests re-running with the full privacy profile for the threads where the content matters",
+        "Suggests re-running without the redacted profile for the threads where the content matters",
         "No raw date number is shown as a date"
       ]
     }
