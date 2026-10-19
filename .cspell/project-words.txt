@@ -1,4 +1,5 @@
 Aapp
+accuraterip
 agentskills
 anipotts
 anthropics
@@ -13,6 +14,7 @@ behaviour
 behavioural
 biome
 biomejs
+cdparanoia
 changelogs
 changeset
 changesets
@@ -25,6 +27,8 @@ cursorrc
 cursorrules
 dcollie
 devops
+discid
+discids
 dontAsk
 dorny
 errcheck
@@ -36,6 +40,7 @@ Fatalf
 Fdependabot
 ffprobe
 footgun
+Foro
 freebusy
 Frenovate
 frontmatter
@@ -57,9 +62,11 @@ infra
 inout
 itemise
 JSONC
+kbps
 korotovsky
 launchservices
 ldflags
+libcdio
 LOCALAPPDATA
 lockfiles
 mapfile
@@ -68,8 +75,11 @@ mdfind
 MGMT
 misconfig
 monorepo
+Mori
 mpim
 mpnpm
+MusicBrainz
+MusicBrainz's
 myproject
 mypy
 nolint
@@ -80,6 +90,7 @@ oneline
 Optimise
 osascript
 overcomplicating
+paranoia
 pnpm
 pnpmjs
 Priya
@@ -88,6 +99,7 @@ pytest
 PYTHONPATH
 recognise
 Rekordbox
+retag
 sandboxed
 scriptable
 shellcheck
@@ -113,6 +125,7 @@ tfstate
 tfvars
 toolsets
 toplevel
+TSSTcorp
 turborepo
 unreads
 unrecognised

@@ -19,3 +19,6 @@ node_modules/
 
 # Skill eval runs (scripts/skill-evals.mjs)
 .evals/
+
+# Python bytecode from the plugins' helper libraries
+__pycache__/

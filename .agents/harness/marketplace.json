@@ -92,7 +92,7 @@
         "repo": "github.com/eyelock/assistants",
         "path": "plugins/media-management"
       },
-      "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
+      "description": "Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports.",
       "version": "0.1.0",
       "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
     },

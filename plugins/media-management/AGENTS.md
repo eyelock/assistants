@@ -1,11 +1,12 @@
 # Media Management Plugin
 
-Process downloaded music purchases (MP3/WAV ZIP pairs) into Apple Music and NAS storage.
+Process downloaded music purchases (MP3/WAV ZIP pairs) and audio CDs into Apple Music and NAS storage, and repair imports that went wrong.
 
 ## Prerequisites
 
 - macOS with Apple Music app
 - `brew install ffmpeg` (provides ffmpeg and ffprobe)
+- For CDs: `brew install libcdio-paranoia` (cd-paranoia), python3, curl
 - `unzip` (ships with macOS)
 
 ## Configuration
@@ -32,6 +33,8 @@ Set any of these to override the defaults above:
 - MEDIA_MGMT_LIBRARY_IMPORT
 - MEDIA_MGMT_LIBRARY_STORAGE
 - MEDIA_MGMT_ARCHIVE_WORKDIR
+- MEDIA_MGMT_CD_READ_OFFSET (optional: the drive's read offset in samples)
+- MEDIA_MGMT_WORK_DIR (optional: temp work, default $TMPDIR/media-management)
 - MEDIA_MGMT_REKORDBOX_MCP_PATH
 - MEDIA_MGMT_CONFIG_PATH (path to the config.json fallback file itself; default `~/.config/media-management/config.json`)
 
@@ -58,3 +61,18 @@ Set any of these to override the defaults above:
 - A track inside an album keeps its place: "03 Title 1.mp3", "03 Title 2.mp3", keeping its track number
 - No "Part X" in filenames or titles
 - After splitting, re-run update-track-count.sh, which renumbers the whole folder in album order (existing track number, then filename)
+
+## CD Rules
+
+1. **Never let Apple Music import a CD itself** — it splits sets per disc, guesses titles and artwork, and keeps no lossless copy
+2. **One rip, two formats** — the WAV is the verified rip untouched; the MP3 is encoded from it
+3. **Verify before importing** — an AccurateRip mismatch stops the run (usually a wrong cd_read_offset)
+4. **Every disc of a set shares Album, Album Artist and disc total** — numbered among the CDs only; a later disc reuses the release.json on the NAS
+5. **Temporary work goes to the work dir** (`rip-cd/scripts/work-dir.sh`), never Downloads or the home folder
+6. **Scripts run as one call by absolute path, JSON saved with `--out`** — the safety hook auto-approves only that shape
+
+## Repair Rules
+
+1. **Audit first, plan second, apply only on a yes** — `repair-release.sh plan` is read-only and is the undo
+2. **Retag in place through Apple Music** to merge a split album; do not re-import
+3. **Replacing an import**: snapshot the old tracks before re-importing, then remove only the snapshot's tracks, files to the Trash

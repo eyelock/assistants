@@ -30,7 +30,7 @@ assistants/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── .agents/harness/plugin.json
-│   ├── media-management/         # Music processing plugin (7 skills, 2 agents, hooks)
+│   ├── media-management/         # Music processing plugin (11 skills, 2 agents, hooks)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── .agents/harness/plugin.json
@@ -127,7 +127,7 @@ See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 | Plugin | Skills | Description |
 |--------|--------|-------------|
 | `gitflow` | 6 | Gitflow branching, conventional commits, quality gate, tag-driven release, push/PR workflow |
-| `media-management` | 7 | Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS |
+| `media-management` | 11 | Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports |
 | `vendor-harness` | 11 | Lifecycle management for LLM vendor harness artifacts across Claude Code, Cursor, Codex, and GitHub Copilot CLI |
 | `dev-skills` | 9 | Project setup, code quality, review, debugging, backend, UI, security, and skill authoring |
 | `tech-skills` | 4 | Go, Java, Swift, and SwiftUI development workflows |

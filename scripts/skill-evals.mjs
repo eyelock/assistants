@@ -33,6 +33,8 @@
 //               log their calls to $EVAL_STUB_LOG.
 //   "evidence": a shell command run after the agent; its output, with the
 //               stub log, is saved and shown to the judge.
+//   "max_turns": this case's turn cap, for a long workflow (default: the
+//               --max-turns option).
 // The sandbox also points git at an empty global config and gh at a host that
 // does not resolve, so nothing reaches a real remote or credential. Any case
 // that grants shell access runs under Claude Code's OS sandbox, which confines
@@ -348,7 +350,7 @@ async function runCase(c, arm, runNo, ctx) {
       "--verbose",
       ...BASE_ARGS,
       "--max-turns",
-      String(ctx.maxTurns),
+      String(c.max_turns ?? ctx.maxTurns),
       "--allowedTools",
       ["Read", "Glob", "Grep", "Skill", ...extra].join(","),
       "--disallowedTools",
