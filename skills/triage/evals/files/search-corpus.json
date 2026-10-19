@@ -1,0 +1,40 @@
+{
+  "snapshot": "Search results the tools returned across Slack and Gmail, captured 2026-10-19T09:00:00Z (a Monday). Treat this time as now. The corpus is all there is; nothing else was found.",
+  "me": {
+    "name": "dave"
+  },
+  "messages": [
+    {
+      "platform": "gmail",
+      "where": "Invoice, Parker order",
+      "from": "accounts@parker.test",
+      "at": "2026-09-30T08:00:00Z",
+      "text": "Your invoice reference for the Parker order is INV-4471. Payment is due within 30 days.",
+      "permalink": "https://mail.example.test/#inbox/inv1"
+    },
+    {
+      "platform": "slack",
+      "where": "#office",
+      "from": "sam",
+      "at": "2026-10-14T10:00:00Z",
+      "text": "Guest wifi password is lemon-tree-92 if anyone needs it",
+      "permalink": "https://acme.slack.com/archives/C300/p4001"
+    },
+    {
+      "platform": "slack",
+      "where": "#ops",
+      "from": "kim",
+      "at": "2026-10-12T10:00:00Z",
+      "text": "The meeting room booking link is https://rooms.example.test/book",
+      "permalink": "https://acme.slack.com/archives/C301/p4002"
+    },
+    {
+      "platform": "gmail",
+      "where": "Invoice, Parker order",
+      "from": "dave",
+      "at": "2026-09-30T09:00:00Z",
+      "text": "Thanks, paid.",
+      "permalink": "https://mail.example.test/#sent/inv2"
+    }
+  ]
+}

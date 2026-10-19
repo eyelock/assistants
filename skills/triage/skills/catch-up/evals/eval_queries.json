@@ -1,0 +1,42 @@
+[
+  {
+    "query": "catch me up on the pitch deck",
+    "should_trigger": true
+  },
+  {
+    "query": "what happened in the thread with Sam while I was away",
+    "should_trigger": true
+  },
+  {
+    "query": "summarize the conversation with Priya",
+    "should_trigger": true
+  },
+  {
+    "query": "what did I miss on the migration PR",
+    "should_trigger": true
+  },
+  {
+    "query": "bring me up to speed on the offsite planning",
+    "should_trigger": true
+  },
+  {
+    "query": "what's waiting on me?",
+    "should_trigger": false
+  },
+  {
+    "query": "find the invoice number Priya sent",
+    "should_trigger": false
+  },
+  {
+    "query": "draft a reply to Sam",
+    "should_trigger": false
+  },
+  {
+    "query": "what did I promise this week",
+    "should_trigger": false
+  },
+  {
+    "query": "explain what this PR changes",
+    "should_trigger": false
+  }
+]

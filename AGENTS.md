@@ -45,6 +45,14 @@ Run them with make:
 
 Output evals run each case with and without the skill, graded by an LLM judge; trigger evals check the skill fires for the right requests. Results go to `.evals/<skill>-workspace/iteration-<N>/`, which is gitignored. For one suite with every option, use `node scripts/skill-evals.mjs <skill-dir> --help`. Runs use your own Claude Code login and cost money, so CI does not run them.
 
+## Triage questions
+
+The common triage questions (what is waiting on me, what I am waiting on, what to act on now or
+soon, what I promised, catch up, find) are one list that every platform harness answers the same
+way. Before adding a question, or a platform-specific feature that looks like one, read the
+`add-triage-question` skill (`skills/triage/skills/add-triage-question`): most ideas should stay
+off the list. `pnpm test` fails when a harness and the list disagree.
+
 ## Conventions
 
 - Scripts output JSON to stdout, diagnostics to stderr

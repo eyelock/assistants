@@ -1,0 +1,54 @@
+{
+  "skill_name": "add-triage-question",
+  "fixtures": "Each file is a snapshot of platform tool results, copied into the run's data/ folder. Its snapshot field gives the time to treat as now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "platform-feature-stays-off",
+      "prompt": "I want a common triage question 'which of my CI workflow runs failed?' across all the platform harnesses. Should it go on the list?",
+      "files": [],
+      "expected_output": "No. It only makes sense on code hosting, so it is a feature of the GitHub skill or harness, not a common question. It says where it goes instead.",
+      "assertions": [
+        "Says it should not be added to the common list",
+        "Gives the reason: it makes sense on only one platform (GitHub)",
+        "Says it belongs in the GitHub platform skill or harness"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "action-stays-off",
+      "prompt": "Add a 'draft-replies' question to the common triage list so every harness can draft replies to what's waiting on me.",
+      "files": [],
+      "expected_output": "No. Drafting is an action, not a read-only question, and sits in a different risk tier and harness. It must not become a triage question.",
+      "assertions": [
+        "Says it should not be added",
+        "Says that drafting is an action or a different risk tier, not a read-only question",
+        "Does not edit questions.json or write a new skill for it"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "filter-is-a-parameter",
+      "prompt": "Should 'urgent-only' be a new triage question, answering what's waiting on me that's urgent?",
+      "files": [],
+      "expected_output": "No. It is a filter of an existing question (action-now or waiting-on-me with a key person), which the caller passes. Not a new question.",
+      "assertions": [
+        "Says it should not be added",
+        "Says it is a filter or parameter of an existing question",
+        "Points to action-now or waiting-on-me instead"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "how-to-add",
+      "prompt": "We have a read-only question that works on mail, chat and code review: 'which threads did I start that have gone quiet for more than a week with no answer?'. Walk me through how to add it to the common triage list.",
+      "files": [],
+      "expected_output": "It first notices that waiting-on-them already answers this, with the quiet period as a parameter, so likely should not be added; if it still proceeds it lists the steps: generic skill with evals, an entry in assets/questions.json with every platform in on, todo or not_on, references/triage.md notes per platform, sync, check.",
+      "assertions": [
+        "Notices that waiting-on-them already covers threads the user started that got no answer",
+        "Recommends against adding a new question, or says the quiet period is a parameter of waiting-on-them",
+        "If it lists steps, they include putting every platform in on, todo or not_on and running the check"
+      ]
+    }
+  ]
+}

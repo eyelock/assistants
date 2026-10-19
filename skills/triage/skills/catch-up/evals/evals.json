@@ -1,0 +1,32 @@
+{
+  "skill_name": "catch-up",
+  "fixtures": "Each file is a snapshot of platform tool results, copied into the run's data/ folder. Its snapshot field gives the time to treat as now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "topic-across-platforms",
+      "prompt": "data/thread-pitch.json is everything the tools returned about the pitch deck. Catch me up.",
+      "files": ["../../evals/files/thread-pitch.json"],
+      "expected_output": "A short status, a time-ordered table of key events (deck shared 10-08, dave flagged slide 4, Priya's corrected figures 10-10, Sam's update 10-14, Sam's request for a yes or no 10-18), at most ten rows with the run of small Slack messages merged, a link per row, an Open line saying dave owes Sam a yes or no and that dave asked Priya for the Q2 comparison with no reply, and a Searched line.",
+      "assertions": [
+        "Begins with a heading naming the subject and two or three sentences on where it stands",
+        "Has a table of events oldest first, with a link in every row",
+        "Merges dave's two quick Slack messages of 2026-10-08 into one row, or does not show them as separate rows",
+        "Open says dave owes Sam a yes or no on the final deck",
+        "Open says dave is waiting on Priya for the Q2 comparison",
+        "Ends with a Searched line naming the platforms and dates it read"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "no-subject",
+      "prompt": "Catch me up.",
+      "files": [],
+      "expected_output": "It asks which conversation, person or topic to catch up on, and does not guess one or call any tool.",
+      "assertions": [
+        "Asks which conversation, thread, person or topic",
+        "Does not summarize anything"
+      ]
+    }
+  ]
+}

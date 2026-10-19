@@ -5,7 +5,7 @@ description: The shared rules and table shape for every triage answer - read onl
 
 # Triage Report
 
-The triage skills answer four questions about one platform. This skill holds what they share:
+The triage skills answer questions about one platform. This skill holds what they share:
 the rules every answer follows, the shape it takes, and how answers from several platforms merge.
 
 | Question | Skill |
@@ -13,6 +13,12 @@ the rules every answer follows, the shape it takes, and how answers from several
 | waiting-on-me | `waiting-on-me` |
 | waiting-on-them | `waiting-on-them` |
 | action-now, action-soon | `action-now-or-soon` |
+| my-commitments | `my-commitments` |
+| catch-up | `catch-up` |
+| find | `find` |
+
+The full list, and what each platform answers, is in `add-triage-question`. `catch-up` and `find`
+answer in their own shapes, set out in their skills; the rules below apply to all of them.
 
 ## Rules
 
@@ -57,7 +63,8 @@ Counts: waiting-on-me 7 (now 2, soon 5), waiting-on-them 3.
 - **Who:** the other person: the asker for waiting-on-me, the one being waited on for
   waiting-on-them.
 - **Since:** the date the wait started, `YYYY-MM-DD`.
-- **Why now:** filled only in `action-now`, naming the rule that applied.
+- **Why now:** filled in `action-now`, naming the rule that applied, and in `my-commitments`, giving
+  the due date if one was stated.
 - **Link:** the platform's own URL for the item.
 
 When a question has no items, write its heading and `Nothing.` When a platform could not be

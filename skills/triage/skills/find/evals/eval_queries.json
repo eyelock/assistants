@@ -1,0 +1,42 @@
+[
+  {
+    "query": "find the invoice reference Parker sent me",
+    "should_trigger": true
+  },
+  {
+    "query": "where did Sam mention the door code?",
+    "should_trigger": true
+  },
+  {
+    "query": "look up the address Priya gave me for the offsite",
+    "should_trigger": true
+  },
+  {
+    "query": "search my messages for the flight number",
+    "should_trigger": true
+  },
+  {
+    "query": "what was the decision on the pricing change, where was it said",
+    "should_trigger": true
+  },
+  {
+    "query": "what's waiting on me?",
+    "should_trigger": false
+  },
+  {
+    "query": "catch me up on the pitch deck thread",
+    "should_trigger": false
+  },
+  {
+    "query": "find a bug in this function",
+    "should_trigger": false
+  },
+  {
+    "query": "search the codebase for TODOs",
+    "should_trigger": false
+  },
+  {
+    "query": "what did I promise this week",
+    "should_trigger": false
+  }
+]
