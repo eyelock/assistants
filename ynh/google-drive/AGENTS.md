@@ -7,7 +7,7 @@ How to work well in Drive is the `google-drive` skill; the triage questions are 
 
 ## What this harness allows
 
-- **Read only.** `uvx workspace-mcp --single-user --read-only --tools drive docs sheets slides`:
+- **Read only.** `uvx workspace-mcp@2.1.0 --single-user --read-only --tools drive docs sheets slides`:
   only read scopes are requested, and the tools that comment, resolve, share or edit are removed.
 - **Credentials.** `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` and
   `USER_GOOGLE_EMAIL`, passed through from your environment. The user is `USER_GOOGLE_EMAIL`.

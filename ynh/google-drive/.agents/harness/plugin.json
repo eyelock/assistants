@@ -21,7 +21,7 @@
     "google-drive": {
       "command": "uvx",
       "args": [
-        "workspace-mcp",
+        "workspace-mcp@2.1.0",
         "--single-user",
         "--read-only",
         "--tools",

@@ -24,7 +24,7 @@ Operating knowledge for reading Gmail through its MCP server. Tool details are i
 ## What the harness allows
 
 The `gmail` harness runs `taylorwilsdon/google_workspace_mcp` as
-`uvx workspace-mcp --single-user --read-only --tools gmail`. `--read-only` requests only read
+`uvx workspace-mcp@2.1.0 --single-user --read-only --tools gmail`. `--read-only` requests only read
 scopes and removes the write tools (sending, drafting, labelling). Credentials are
 `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` and `USER_GOOGLE_EMAIL`; the user is
 `USER_GOOGLE_EMAIL`. In another setup, list the tools you actually have before planning.
