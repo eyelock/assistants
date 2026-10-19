@@ -1,7 +1,7 @@
 # Triage in GitHub
 
-Answer the four questions with `triage-report` (shape and rules), using `waiting-on-me`,
-`waiting-on-them` and `action-now-or-soon`. Start with `get_me`.
+Answer the questions with `triage-report` (shape and rules), using `waiting-on-me`,
+`waiting-on-them`, `action-now-or-soon`, `my-commitments`, `catch-up` and `find`. Start with `get_me`.
 
 | Question | Where to look |
 |---|---|
@@ -9,6 +9,9 @@ Answer the four questions with `triage-report` (shape and rules), using `waiting
 | waiting-on-them | `search_pull_requests` with `author:@me is:open` (no date filter), then `pull_request_read` for review state and checks: a PR with no review yet, or a review requested and not given, is waiting on the reviewer |
 | action-now | Also: changes requested on the user's PRs, and failing checks on them, since both block the user's own work |
 | action-soon | As waiting-on-me, for what is not urgent: a review requested a few days ago with no deadline, an assigned issue |
+| my-commitments | Promises are in the user's own words, so they are recency-bound: `search_pull_requests` and `search_issues` with `commenter:@me updated:>=<date>` (the window), then `issue_read` or `pull_request_read` to read the user's comments and reviews for "I'll...", "will do", "I'll take a look" and what came after. An open assignment is not a promise here: `waiting-on-me` has it. Done means a later comment, a merge or a close shows it |
+| catch-up | A named PR or issue: `pull_request_read` or `issue_read` for its description, comments, reviews and checks, in time order. A named person: `search_pull_requests` and `search_issues` with `involves:<login>`, the most recently updated first. A topic: search its words plus any `repo:` or label the caller gave, and say that it is a search |
+| find | `search_issues` and `search_pull_requests` with the words and `in:comments` (and `in:title,body`), narrowed by `repo:` or `author:` when the caller gave them; then `issue_read` or `pull_request_read` to confirm the fragment. These tools search issues and pull requests and their comments, not code or commit messages. Say so in **Searched** |
 
 ## Rules
 

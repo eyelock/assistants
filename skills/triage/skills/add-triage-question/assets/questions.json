@@ -54,22 +54,22 @@
       "id": "my-commitments",
       "skills": ["my-commitments"],
       "ask": "find the promises I made {at}: what I said I would do, to whom, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days.",
-      "on": ["imessage"],
-      "todo": ["github", "slack", "gmail", "google-calendar", "google-drive"]
+      "on": ["imessage", "github"],
+      "todo": ["slack", "gmail", "google-calendar", "google-drive"]
     },
     {
       "id": "catch-up",
       "skills": ["catch-up"],
       "ask": "catch me up on one conversation, thread or topic {at}: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one.",
-      "on": ["imessage"],
-      "todo": ["github", "slack", "gmail", "google-calendar", "google-drive"]
+      "on": ["imessage", "github"],
+      "todo": ["slack", "gmail", "google-calendar", "google-drive"]
     },
     {
       "id": "find",
       "skills": ["find"],
       "ask": "find what the caller asks for {at} (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one.",
-      "on": ["imessage"],
-      "todo": ["github", "slack", "gmail", "google-calendar", "google-drive"]
+      "on": ["imessage", "github"],
+      "todo": ["slack", "gmail", "google-calendar", "google-drive"]
     }
   ]
 }
