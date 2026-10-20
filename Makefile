@@ -12,7 +12,7 @@ MODEL ?= sonnet
 J ?= 4
 EVAL_FLAGS = --mode $(MODE) --runs $(RUNS) --model $(MODEL) -j $(J) $(if $(DRY_RUN),--dry-run)
 
-.PHONY: help evals eval
+.PHONY: help evals eval docs
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-8s %s\n", $$1, $$2}'
@@ -25,3 +25,7 @@ evals: ## Run the evals of every skill (costs money: try DRY_RUN=1 first)
 eval: ## Run the evals of one skill, package or plugin: make eval P=plugins/gitflow
 	@test -n "$(P)" || { echo "usage: make eval P=<skill, package or plugin path>" >&2; exit 1; }
 	@scripts/run-evals.sh $(EVAL_FLAGS) $(P)
+
+docs: ## Serve docs/ at http://localhost:3000 with live reload (needs npx)
+	@command -v npx >/dev/null 2>&1 || { echo "npx not found. Install Node.js to browse docs locally." >&2; exit 1; }
+	@npx --yes docsify-cli@4.4.4 serve docs
