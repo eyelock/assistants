@@ -63,7 +63,7 @@ Any finding not accepted in `.skillspector-baseline.yaml` fails the build.
 When it flags something, read the finding first. If it is a real concern, fix the skill: pin
 what a harness downloads, and don't hand the agent pipe-to-shell commands. If it is a false
 positive, add a rule to the baseline with an `id`, a `path` scoped to the file, and a `reason`.
-Run it locally with Docker:
+Run it locally with `make skillspector` (needs Docker), which runs:
 
 ```bash
 docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
