@@ -51,17 +51,17 @@ assistants/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── .agents/harness/plugin.json
-│   └── pause/                    # Conversational alignment plugin (2 skills)
-│       ├── .claude-plugin/plugin.json
-│       ├── .cursor-plugin/plugin.json
-│       └── .agents/harness/plugin.json
-└── ynh/                          # Personas (compose skills via includes)
-    ├── david/
-    ├── planner/
-    ├── tester/
-    ├── researcher/
-    ├── ynh-dev/
-    └── termq-dev/
+│   ├── pause/                    # Conversational alignment plugin (2 skills)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
+│   ├── triage/                   # Generic triage questions (waiting-on-me, find, ...)
+│   ├── platforms/                # One skill per tool: GitHub, Slack, Gmail, Calendar, Drive, iMessage
+│   └── voice/                    # Writing-voice skills
+├── ynh/                          # ynh harnesses
+│   ├── david/ planner/ tester/ researcher/ ynh-dev/ termq-dev/   # Personas
+│   └── github/ gmail/ google-calendar/ google-drive/ imessage/ slack/   # Read-only platform harnesses
+└── docs/                         # Tutorials, how-to, reference, explanation
 ```
 
 ## Using the Marketplace

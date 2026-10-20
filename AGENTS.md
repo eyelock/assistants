@@ -4,9 +4,10 @@ This is a reference repository of sample plugins, skills, and personas. It is no
 
 ## Repository Structure
 
-- `plugins/` — Self-contained plugins with manifests (`harness.json`, `.cursor-plugin/`)
+- `plugins/` — Self-contained plugins with manifests (`.agents/harness/plugin.json`, `.claude-plugin/`, `.cursor-plugin/`)
 - `skills/` — Shared skill plugins organized by domain, each with its own plugin manifests
-- `ynh/` — Personas that compose skills from the shared library via includes
+- `ynh/` — ynh harnesses: personas that compose skills, and read-only platform harnesses that add an MCP server
+- `docs/` — Tutorials, how-to guides, reference and explanation, split as on diataxis.fr
 - `.claude-plugin/marketplace.json` — Claude Code marketplace index
 - `.cursor-plugin/marketplace.json` — Cursor marketplace index
 - `.github/plugin/marketplace.json` — GitHub Copilot CLI marketplace index
@@ -81,6 +82,6 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 ## Working with this repo
 
 - Do not modify skills content without understanding the agentskills.io spec
-- Plugin manifests exist as `harness.json` and `.cursor-plugin/plugin.json` — keep them in sync
+- Plugin manifests exist as `.agents/harness/plugin.json` and `.cursor-plugin/plugin.json` — keep them in sync
 - Marketplace JSON files exist in three directories — keep them in sync (`pnpm sync-manifests` handles versions; `pnpm sync-manifests:check` gates CI)
 - The Copilot index must avoid the `git-subdir`, `archive`, and `command` source types Claude allows — Copilot rejects the whole index over one unsupported entry
