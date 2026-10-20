@@ -40,7 +40,7 @@ release (`curl` from GitHub Releases), which is not guaranteed to match the sour
 - Pin one release, download it, and check its SHA-256 against the release before use.
 - Or build it from source with Swift (`swift build -c release`) and put the result on your `PATH`
   as `che-ical-mcp`.
-- Do not run `--self-update`: it downloads a newer binary from GitHub Releases.
+- Never use the server's built-in update option: it replaces the binary with a newer download that you have not checked.
 - When macOS asks, allow Calendar. Deny Reminders; the harness never uses it.
 
 ## Permission
