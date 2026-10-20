@@ -1,6 +1,8 @@
-# Your first triage run
+# Give a harness a tool
 
-Build a small ynh harness, point it at a fake Messages database, and run a read-only triage that finds who is waiting on a reply from you. You will see the pieces of this repo work together: an MCP server, a platform skill, a generic triage skill, a focus, and a hook that stops a write.
+Teach a harness to use a tool, and to be stopped from misusing it. You will build a small ynh harness that gets an MCP server (the tool), attaches a `before_tool` hook that blocks anything that would change something, and names a repeatable question as a focus. Along the way you will see skills from this repo arrive in the harness, and the hook refuse a write.
+
+The tool here is an MCP server that reads Messages, pointed at a fake database. Any MCP server follows the same steps; Messages is just a convenient one because a fake `chat.db` is easy to build. The skills the harness includes happen to answer "what is waiting on me?", which is one use of this repo among many. What you are learning is the tool and the hook.
 
 Nothing here touches your real Messages and nothing needs a login. The data is invented, in a database you build yourself.
 
@@ -143,9 +145,9 @@ chat900001|1|Count me in too
 A hook is a script the assistant runs before every matching tool call. This one blocks anything that would change something. Exit code 2 means "stop", and what the script prints to stderr goes back to the model.
 
 ```bash
-mkdir -p /tmp/assistants-tutorial/triage-harness/.agents/harness /tmp/assistants-tutorial/triage-harness/hooks
+mkdir -p /tmp/assistants-tutorial/messages-harness/.agents/harness /tmp/assistants-tutorial/messages-harness/hooks
 
-cat > /tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh << 'EOF'
+cat > /tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh << 'EOF'
 #!/bin/bash
 # before_tool hook: this harness reads and reports. It never changes anything.
 # The tool call arrives as JSON on stdin; exit code 2 blocks it and the
@@ -153,25 +155,25 @@ cat > /tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh << 'EOF'
 INPUT=$(cat)
 TOOL=$(printf '%s' "$INPUT" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
 cat >&2 << MSG
-BLOCKED: this is a read-only triage harness; "$TOOL" would change something.
+BLOCKED: this is a read-only harness; "$TOOL" would change something.
 Remediation: put the result in your reply instead. Do not write files or send messages.
 MSG
 exit 2
 EOF
-chmod +x /tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh
+chmod +x /tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh
 ```
 
 Try it on its own, with the JSON Claude Code would send for a file write:
 
 ```bash
-echo '{"tool_name":"Write","tool_input":{"file_path":"report.md"}}' | /tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh
+echo '{"tool_name":"Write","tool_input":{"file_path":"report.md"}}' | /tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh
 echo "exit $?"
 ```
 
 You should see:
 
 ```
-BLOCKED: this is a read-only triage harness; "Write" would change something.
+BLOCKED: this is a read-only harness; "Write" would change something.
 Remediation: put the result in your reply instead. Do not write files or send messages.
 exit 2
 ```
@@ -181,12 +183,12 @@ exit 2
 The harness is one file. It pulls in two skill sets from your clone of this repo, runs the `imessage-mcp` server against your fake database, attaches the hook, and defines a focus called `waiting-on-me`.
 
 ```bash
-cat > /tmp/assistants-tutorial/triage-harness/.agents/harness/plugin.json << 'EOF'
+cat > /tmp/assistants-tutorial/messages-harness/.agents/harness/plugin.json << 'EOF'
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
-  "name": "triage-first-run",
+  "name": "messages-reader",
   "version": "0.1.0",
-  "description": "Read-only Messages triage against a fake chat.db",
+  "description": "Read-only Messages reader over a fake chat.db",
   "default_vendor": "claude",
   "includes": [
     { "git": "/tmp/assistants-tutorial/assistants", "path": "skills/triage" },
@@ -212,14 +214,14 @@ cat > /tmp/assistants-tutorial/triage-harness/.agents/harness/plugin.json << 'EO
     "before_tool": [
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
-        "command": "/tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh"
+        "command": "/tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh"
       }
     ]
   },
   "agent": { "max_turns": 25, "effort": "low" },
   "focuses": {
     "waiting-on-me": {
-      "prompt": "Use the waiting-on-me skill to find who is waiting on a reply from me in Messages."
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me in Messages."
     }
   }
 }
@@ -231,19 +233,19 @@ This is the same shape as `ynh/imessage/.agents/harness/plugin.json` in the repo
 Check it:
 
 ```bash
-ynd validate /tmp/assistants-tutorial/triage-harness
+ynd validate /tmp/assistants-tutorial/messages-harness
 ```
 
 You should see (trimmed):
 
 ```
-/tmp/assistants-tutorial/triage-harness: valid
+/tmp/assistants-tutorial/messages-harness: valid
   checked:
-    manifest     .../triage-harness/.agents/harness/plugin.json against https://eyelock.github.io/ynh/schema/plugin.schema.json
+    manifest     .../messages-harness/.agents/harness/plugin.json against https://eyelock.github.io/ynh/schema/plugin.schema.json
     includes     /tmp/assistants-tutorial/assistants path skills/triage
                  /tmp/assistants-tutorial/assistants path skills/platforms pick skills/imessage
     mcp_servers  imessage runs `npx -y imessage-mcp@3.2.0 --privacy full --contacts none --database /tmp/assistants-tutorial/chat.db`
-    hooks        before_tool runs `/tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh`
+    hooks        before_tool runs `/tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh`
     focuses      waiting-on-me
 ```
 
@@ -252,7 +254,7 @@ You should see (trimmed):
 Preview assembles the harness for Claude without starting it.
 
 ```bash
-ynd preview /tmp/assistants-tutorial/triage-harness -v claude -o /tmp/assistants-tutorial/preview
+ynd preview /tmp/assistants-tutorial/messages-harness -v claude -o /tmp/assistants-tutorial/preview
 cat /tmp/assistants-tutorial/preview/.claude/hooks/hooks.json
 ls /tmp/assistants-tutorial/preview/.claude/skills
 ```
@@ -269,7 +271,7 @@ Preview written to /tmp/assistants-tutorial/preview
         "hooks": [
           {
             "type": "command",
-            "command": "/tmp/assistants-tutorial/triage-harness/hooks/block-writes.sh"
+            "command": "/tmp/assistants-tutorial/messages-harness/hooks/block-writes.sh"
           }
         ]
       }
@@ -287,9 +289,9 @@ waiting-on-me
 waiting-on-them
 ```
 
-Your one hook became Claude's `PreToolUse`. The skills came from two places: `waiting-on-me`, `triage-report` and the rest are the generic triage skills, which know how to judge "waiting" on any platform. `imessage` is the platform skill, which knows how Messages stores dates and tapbacks. `.claude/.mcp.json` in the same folder holds the server.
+Your one hook became Claude's `PreToolUse`. The skills came from two places: `waiting-on-me`, `triage-report` and the rest are generic skills from `skills/triage`. `imessage` is the platform skill from `skills/platforms`, which knows how Messages stores dates and tapbacks. `.claude/.mcp.json` in the same folder holds the server.
 
-## Run the triage
+## Run it
 
 This is the one step that runs a model. The focus supplies the prompt. `--instructions` asks for something the hook must refuse, so you see it stop a write. `--allowedTools` lets the model call the read-only Messages tools without a prompt, since no one is at the keyboard in a focus run. Give it the full tool names, as below: a shorter prefix such as `mcp__plugin__claude_imessage` is not matched and every Messages call is refused.
 
@@ -297,7 +299,7 @@ This is the one step that runs a model. The focus supplies the prompt. `--instru
 
 ```bash
 P=mcp__plugin__claude_imessage__
-ynh run /tmp/assistants-tutorial/triage-harness \
+ynh run /tmp/assistants-tutorial/messages-harness \
   --focus waiting-on-me \
   --model=sonnet \
   --allowedTools="${P}server_status,${P}list_conversations,${P}get_conversation,${P}resolve_contact,${P}search_messages" \
@@ -311,16 +313,17 @@ Resolving 2 include(s)...
   Cached /tmp/assistants-tutorial/assistants → skills/triage
   Cached /tmp/assistants-tutorial/assistants → skills/platforms [skills/imessage]
 Launching claude...
+I couldn't save the report. A hook in the read-only Messages harness blocked the write, so the report is only here in my reply.
+
 ### waiting-on-me
 
 | Platform | What | Who | Since | Why now | Link |
 |---|---|---|---|---|---|
-| imessage | Asks if you can still review the pitch deck before Thursday. A follow-up asks for a yes or no by tonight. You haven't replied. | Unknown number +447700900101 (not resolved to a contact) | 2026-10-19 | | Messages, 1:1 chat with +447700900101 (no permalink) |
+| messages | Asked whether you can still review the pitch deck before Thursday, then asked for a yes or no by tonight. Neither message has a reply from you. | Unknown number +447700900101 (not in your contacts), 1:1 iMessage | 2026-10-19 | | No link; conversation with +447700900101, 2026-10-19 |
 
-Looked back 14 days for messages. I can widen that if you like.
-Counts: waiting-on-me 1 (imessage 1).
+Looked back 14 days for messages, from 2026-10-06. I can widen that.
 
-I couldn't save this to `/tmp/assistants-tutorial/report.md`. A read-only triage hook blocked the write and told me to put the result in my reply, so I didn't try another way to write it.
+Counts: messages waiting-on-me 1.
 ```
 
 The date is the day your database was built, not 2026-10-19.
@@ -337,7 +340,7 @@ You should see:
 ls: /tmp/assistants-tutorial/report.md: No such file or directory
 ```
 
-That is the whole result. The MCP server returned the conversations. The `imessage` skill told the model how to read them. `waiting-on-me` decided that only the pitch deck waits on you, because the other threads end on your own message or on a thank-you. `triage-report` shaped the one-line answer. And the hook refused the write.
+That is the whole result, and each part did one job. The MCP server is the tool: it returned the conversations. The `imessage` skill told the model how to read them. `waiting-on-me` decided that only the pitch deck waits on you. And the hook refused the write.
 
 ## Clean up
 
@@ -349,11 +352,13 @@ unset YNH_HOME
 ## What you learned
 
 - A harness is one `plugin.json` that names its skills, its MCP server, its hooks and its focuses
-- `includes` pulls a generic skill set and a picked platform skill from this repo
+- `mcp_servers` gives the harness a tool, and `includes` gives it skills that say how to use it
 - The MCP server is the only part that touches data, and here it reads a file you made
 - A focus gives a repeatable question a name you pass with `--focus`
 - A `before_tool` hook that exits 2 blocks a tool call, and its message goes back to the model
 
 ## Next
 
-Point the real `ynh/imessage` harness at a copy of your own `chat.db` with `--database`, as `ynh/imessage/AGENTS.md` suggests for a first trial.
+- Make the hook a proper script you can test and reuse: [Add a hook](../how-to/add-a-hook.md)
+- See every field you used: [Harness manifest](../reference/harness-manifest.md)
+- Point the real `ynh/imessage` harness at a copy of your own `chat.db` with `--database`, as `ynh/imessage/AGENTS.md` suggests for a first trial.

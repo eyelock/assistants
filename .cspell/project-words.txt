@@ -150,3 +150,7 @@ Diataxis
 ical
 pipefail
 AUTOINCREMENT
+Jeffallan
+mktemp
+esac
+wrongname

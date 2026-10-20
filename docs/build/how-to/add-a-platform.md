@@ -1,5 +1,7 @@
 # Add a platform
 
+A platform harness is a read-only harness that gives an assistant one tool, such as Slack or Gmail, through an MCP server. The recipe below also covers the platform skill. For the parts, see [Give a harness a tool](../tutorials/give-a-harness-a-tool.md) and [Add a hook](add-a-hook.md).
+
 Worked example: branch `feat/apple-calendar` (not yet merged). Replace `<p>` with the platform
 id, for example `apple-calendar`.
 

@@ -1,6 +1,6 @@
 # Triage questions
 
-Generated from `skills/triage/skills/add-triage-question/assets/questions.json`. Edit that file, not this page. To add one, see [Add a triage question](../how-to/add-a-triage-question.md); for why the list is shared, see [Architecture](../explanation/architecture.md).
+Generated from `skills/triage/skills/add-triage-question/assets/questions.json`. Edit that file, not this page. To add one, see [Add a triage question](../../build/how-to/add-a-triage-question.md); for why the list is shared, see [Architecture](../../learn/explanation/architecture.md).
 
 ## Questions
 

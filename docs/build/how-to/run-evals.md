@@ -3,13 +3,13 @@
 Runs use your Claude Code login and cost money. List what would run first.
 
 ```bash
-make eval P=skills/triage/skills/find DRY_RUN=1
+make eval P=skills/voice/skills/voice-warm DRY_RUN=1
 ```
 
 One skill, or every skill in a package or plugin:
 
 ```bash
-make eval P=skills/triage/skills/find
+make eval P=skills/voice/skills/voice-warm
 make eval P=plugins/gitflow
 ```
 
@@ -33,13 +33,15 @@ Options for both targets:
 Only trigger evals, for one skill:
 
 ```bash
-make eval P=skills/triage/skills/find MODE=triggers
+make eval P=skills/voice/skills/voice-warm MODE=triggers
 ```
 
 One suite with every option:
 
 ```bash
-node scripts/skill-evals.mjs skills/triage/skills/find --help
+node scripts/skill-evals.mjs skills/voice/skills/voice-warm --help
 ```
 
 Results are in `.evals/<skill>-workspace/iteration-<N>/` (gitignored). CI does not run evals.
+
+To write the evals this runs, see [Write a skill with evals](../tutorials/write-a-skill-with-evals.md).

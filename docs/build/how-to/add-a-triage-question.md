@@ -1,5 +1,7 @@
 # Add a triage question
 
+Triage is one domain among several in this repo, and this page is only for it. To add any other skill, see [Add a skill to a plugin](add-a-skill-to-a-plugin.md).
+
 First decide whether it belongs on the list. The criteria are in
 `skills/triage/skills/add-triage-question/SKILL.md`. Most ideas should not be added.
 
@@ -24,7 +26,7 @@ First decide whether it belongs on the list. The criteria are in
    pnpm test
    ```
 
-6. Regenerate [Triage questions](../reference/triage-questions.md) from `questions.json`
+6. Regenerate [Triage questions](../../use/reference/triage-questions.md) from `questions.json`
    (not yet scripted; edit by hand).
 
 To move a platform from `todo` to `on`, do steps 3 to 5 for that platform alone.

@@ -1,37 +1,23 @@
 # assistants docs
 
-`eyelock/assistants` is a reference repository, not production software. These docs are
-organized by [Diataxis](https://diataxis.fr): each page is exactly one of the four kinds.
+`eyelock/assistants` is a reference library of agent skills, plugins and [ynh](https://github.com/eyelock/ynh) harnesses. It is not production software. It shows how the agentic features fit together: agent skills, plugins and marketplaces, MCP servers, hooks, and harnesses with profiles and focuses.
 
-## Tutorials
+The docs have three tracks. Pick the one that matches what you want to do. Inside each track the pages follow [Diataxis](https://diataxis.fr): tutorials teach by doing, how-to guides solve a task, reference states facts, and explanation gives understanding. A page is only ever one of those.
 
-Learning by doing, start to finish. For someone new to the repo.
+| I want to... | Go to |
+|---|---|
+| Install and use the skills, plugins and harnesses | [Use](use/README.md) |
+| Make my own skills, plugins and harnesses | [Build](build/README.md) |
+| Understand how the features work | [Learn](learn/README.md) |
 
-See [tutorials](tutorials/).
+## Where to start
 
-## How-to guides
+- **Never used any of this:** [What is in the repo](use/explanation/whats-in-the-repo.md), then [Install a plugin](use/tutorials/install-a-plugin.md).
+- **Want to see a harness work:** [Run a persona](use/tutorials/run-a-persona.md).
+- **Want to make something:** [Build a persona harness](build/tutorials/build-a-persona-harness.md), or [Write a skill with evals](build/tutorials/write-a-skill-with-evals.md).
+- **Want to know why it is built this way:** [Architecture](learn/explanation/architecture.md), then [Agentic features](learn/explanation/agentic-features.md).
+- **Want a guided tour with no model needed:** [Follow a request](learn/tutorials/follow-a-request.md).
 
-Recipes for a task you already understand. For someone who is changing the repo.
+## Viewing these docs
 
-- [Add a platform](how-to/add-a-platform.md)
-- [Add a triage question](how-to/add-a-triage-question.md)
-- [Run evals](how-to/run-evals.md)
-- [Run SkillSpector](how-to/run-skillspector.md)
-
-## Reference
-
-Facts to look up. For someone who needs an exact name, list or table.
-
-- [Triage questions](reference/triage-questions.md): the common list, and which platform answers what.
-- [Harnesses](reference/harnesses.md): every `ynh/*` harness, its server, barrier, profiles and focuses.
-
-## Explanation
-
-Background and reasons. For someone who wants to know why it is built this way.
-
-- [Architecture](explanation/architecture.md): three layers, and where each agentic feature shows up.
-- [Safety](explanation/safety.md): risk tiers, guards, and what is and is not verified.
-
-## Project rules
-
-The rules for working in the repo are in `AGENTS.md` at the repository root.
+Run `make docs` in the repository root and open http://localhost:3000.
