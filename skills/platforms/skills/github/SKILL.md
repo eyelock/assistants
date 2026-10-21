@@ -1,6 +1,6 @@
 ---
 name: github
-description: How to read GitHub well through the GitHub MCP server's read-only endpoint - review requests, your PRs' reviews and checks, notifications, mentions and assigned issues, and who a request is really addressed to. Use when a task needs GitHub pull requests, issues or notifications read through the MCP tools, or when answering what is waiting on someone in GitHub. Not for writing (comments, reviews, merges) and not for the gh CLI.
+description: How to read GitHub well through the GitHub MCP server's read-only endpoint - review requests, your PRs' reviews and checks, notifications, mentions and assigned issues, and who a request is really addressed to. Use when a task needs GitHub pull requests, issues or notifications read through the MCP tools, when finding where someone said something in an issue or pull request comment, or when answering what is waiting on someone in GitHub. Not for writing (comments, reviews, merges) and not for the gh CLI.
 ---
 
 # GitHub
