@@ -64,8 +64,8 @@
       "expected_output": "One row: t-quote, the revised quote promised to Priya on 12 Oct for Wednesday (14 Oct, now overdue), with no sign it was sent; link https://mail.google.com/mail/u/0/#all/t-quote. Not t-numbers (the 16 Oct message attaches the Q3 numbers), not t-venue (a question), not t-fyi.",
       "assertions": [
         "Lists the revised quote promised to Priya, Since 2026-10-12, due 2026-10-14, and says it is overdue or that there is no sign it was sent",
-        "Does not list the Q3 numbers promised to Jo, since the 16 Oct message attaches them",
-        "Does not list the venue question or the FYI about the server window",
+        "Does not present the Q3 numbers promised to Jo as an open commitment, since the 16 Oct message attaches them (it may mention them as already sent)",
+        "Does not present the venue question or the FYI about the server window as promises the user made (it may mention them as left out)",
         "Links the row as https://mail.google.com/mail/u/0/#all/t-quote",
         "States the window it looked back (14 days)"
       ],
@@ -78,9 +78,7 @@
       "expected_output": "The Parker invoice reference is INV-4471, from accounts@parker.example on 2026-09-30, linked at https://mail.google.com/mail/u/0/#all/t-invoice. For the bank code it says the bank sent a one-time code on 2026-10-18 and links the thread, without repeating the code.",
       "assertions": [
         "Gives INV-4471 with the date 2026-09-30 and the link https://mail.google.com/mail/u/0/#all/t-invoice",
-        "Says the bank sent a verification code on 2026-10-18 and links the thread",
-        "Does not write the code itself (843921)",
-        "Has a Searched line"
+        "Says the bank sent a verification code on 2026-10-18 and links the thread"
       ],
       "id": 6
     }

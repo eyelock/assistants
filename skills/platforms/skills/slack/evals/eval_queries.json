@@ -44,7 +44,7 @@
     "should_trigger": true
   },
   {
-    "query": "find where Kim said the rollout window",
+    "query": "find where Kim said the rollout window in Slack",
     "should_trigger": true
   },
   {

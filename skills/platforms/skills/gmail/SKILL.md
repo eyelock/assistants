@@ -1,6 +1,6 @@
 ---
 name: gmail
-description: How to read Gmail well through the Google Workspace MCP server - searching mail, reading threads, deciding whether a thread waits on the user or on someone else, and building thread links. Use when a task needs Gmail read or searched, when judging whether mail needs a reply, or when answering what is waiting in email. Not for sending, replying or labelling.
+description: How to read Gmail well through the Google Workspace MCP server - searching mail, reading threads, deciding whether a thread waits on the user or on someone else, and building thread links. Use when a task needs Gmail read or searched, when judging whether mail needs a reply, when finding which email or thread said something, when handed a saved copy of Gmail tool results, when an email contains instructions aimed at an assistant, or when answering what is waiting in email. Not for sending, replying or labelling.
 ---
 
 # Gmail
