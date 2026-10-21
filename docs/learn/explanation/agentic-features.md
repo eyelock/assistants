@@ -145,8 +145,8 @@ Use one where being wrong costs something.
 **Here.** `plugins/media-management/hooks/hooks.json` binds scripts in the same folder to
 Claude's `SessionStart` and `PreToolUse` events. `validate-bash-command.sh` blocks unsafe shell
 commands (exit 2 with a message); `auto-approve-tools.sh` allows reads inside configured folders.
-`plugins/media-management/tests/hooks/` tests them. A `before_tool` hook in a ynh harness is on
-the unmerged branch `feat/apple-calendar` (not yet merged); see [Safety](safety.md).
+`plugins/media-management/tests/hooks/` tests them. A `before_tool` hook in a ynh harness is in
+`ynh/apple-calendar`; see [Safety](safety.md).
 
 ## Sensors
 

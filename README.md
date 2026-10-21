@@ -60,7 +60,7 @@ assistants/
 │   └── voice/                    # Writing-voice skills
 ├── ynh/                          # ynh harnesses
 │   ├── david/ planner/ tester/ researcher/ ynh-dev/ termq-dev/   # Personas
-│   └── github/ gmail/ google-calendar/ google-drive/ imessage/ slack/   # Read-only platform harnesses
+│   └── github/ gmail/ google-calendar/ google-drive/ imessage/ slack/ apple-calendar/   # Read-only platform harnesses
 └── docs/                         # Tutorials, how-to, reference, explanation
 ```
 

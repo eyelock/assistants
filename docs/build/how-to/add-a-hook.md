@@ -6,7 +6,7 @@ There are two places a hook can live in this repo. Pick by what you are building
 
 | You are building | Declare the hook in | Example |
 |---|---|---|
-| An ynh harness (`ynh/<name>`) | `hooks` in `.agents/harness/plugin.json` | `ynh/apple-calendar` on branch `feat/apple-calendar` (not yet merged) |
+| An ynh harness (`ynh/<name>`) | `hooks` in `.agents/harness/plugin.json` | `ynh/apple-calendar` |
 | A Claude Code plugin (`plugins/<name>`) | `hooks/hooks.json` at the plugin root | `plugins/media-management/hooks/hooks.json` |
 
 ## In a harness
@@ -88,7 +88,7 @@ There are two places a hook can live in this repo. Pick by what you are building
 
    `-v cursor` writes `.cursor/hooks.json` with `beforeShellExecution`. Copilot gets no hooks from ynh, so a hook that must hold cannot be your only barrier there.
 
-5. Add a test in `scripts/` if the hook is the only thing standing between the model and a write. `scripts/apple-calendar-guard.test.mjs` on `feat/apple-calendar` (not yet merged) checks a hook's `matcher` against every tool name of the server, so a tool added later cannot slip through.
+5. Add a test in `scripts/` if the hook is the only thing standing between the model and a write. `scripts/apple-calendar-guard.test.mjs` checks a hook's `matcher` against every tool name of the server, so a tool added later cannot slip through.
 
 ## In a plugin
 
