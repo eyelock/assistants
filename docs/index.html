@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>assistants</title>
+  <meta name="description" content="Skills, plugins and ynh harnesses for day-to-day tools">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
+  <style>
+    :root { --theme-color: #0066cc; }
+    .sidebar-nav > ul > li > p { font-weight: 600; text-transform: uppercase; font-size: 0.9em; color: var(--theme-color); margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <div id="app">Loading...</div>
+  <script>
+    window.$docsify = {
+      name: 'assistants',
+      repo: 'https://github.com/eyelock/assistants',
+      loadSidebar: true,
+      // Resolve relative links from the page that holds them, as GitHub does.
+      relativePath: true,
+      homepage: 'README.md',
+      subMaxLevel: 2,
+      auto2top: true,
+      search: { maxAge: 86400000, paths: 'auto', placeholder: 'Search docs...', noData: 'No results found', depth: 4 },
+      copyCode: { buttonText: 'Copy', errorText: 'Error', successText: 'Copied' }
+    }
+  </script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
+</body>
+</html>
