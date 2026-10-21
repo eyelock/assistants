@@ -6,8 +6,7 @@ Needs Docker. This is the scan CI runs.
 make skillspector
 ```
 
-`make skillspector` exists on branch `feat/make-skillspector`, not yet on this one. Until it
-merges, run the command it wraps:
+It runs this command, which you can also run directly:
 
 ```bash
 docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
