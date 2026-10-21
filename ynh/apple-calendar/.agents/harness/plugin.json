@@ -1,0 +1,59 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "apple-calendar",
+  "version": "0.1.0",
+  "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
+  "default_vendor": "claude",
+  "keywords": ["calendar", "apple", "icloud", "meetings", "invites", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/apple-calendar"]
+    }
+  ],
+  "mcp_servers": {
+    "apple-calendar": {
+      "command": "che-ical-mcp"
+    }
+  },
+  "hooks": {
+    "before_tool": [
+      {
+        "matcher": "mcp__.*apple-calendar__(?!(list_calendars|list_events|list_events_quick|search_events|check_conflicts|find_duplicate_events)$)",
+        "command": "echo 'apple-calendar is read only: only list_calendars, list_events, list_events_quick, search_events, check_conflicts and find_duplicate_events may be called. Do not retry or look for another way to change a calendar.' >&2; exit 2"
+      }
+    ]
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on Apple Calendar."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on Apple Calendar."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on Apple Calendar."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Apple Calendar."
+    },
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic on Apple Calendar: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
+    },
+    "find": {
+      "prompt": "Use the find skill to find what the caller asks for on Apple Calendar (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on Apple Calendar, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
+}
