@@ -74,10 +74,9 @@ It needs no environment variable, but it needs `npx` (Node.js) and a macOS permi
    `--profile counts` (counts only); see
    [Ask a triage question](ask-a-triage-question.md).
 
-## Apple Calendar (not yet merged)
+## Apple Calendar
 
-`apple-calendar` is on the branch `feat/apple-calendar` and is not in this branch's marketplace.
-Everything here is read from that branch.
+The server has not been run against a real calendar yet; the steps below come from its documentation and the harness.
 
 1. Get the server, `che-ical-mcp` ([PsychQuant/che-ical-mcp](https://github.com/PsychQuant/che-ical-mcp)),
    a Swift binary. Pin one release, check its SHA-256 against the release, or build it from
