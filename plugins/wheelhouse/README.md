@@ -17,9 +17,11 @@ from parts that work on any vendor:
 
 | Skill | Use it to |
 |---|---|
+| `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
+| `add-seat` | add a named seat: its harness, charter, standing orders and roster entry |
 | `work-graph` | find, claim, break down and close work in Beads, as a named seat |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
-| `add-seat` | add a named seat: its harness, charter, standing orders and roster entry |
+| `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse |
 
 ## Setting up

@@ -1,0 +1,86 @@
+{
+  "skill_name": "kudos",
+  "evals": [
+    {
+      "id": 1,
+      "name": "give-kudos",
+      "prompt": "Tell Dredd his patrol this morning was spot on: he caught the conflict on the ynm PR before I did.",
+      "setup": "../../evals/files/kudos-seated.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
+      "expected_output": "Records one episodic memory in ynm for seat:dredd, tagged kudos, saying the human gave it and what for (the ynm PR conflict catch on this morning's patrol), in close to the human's words. Creates no bead and adds no task. Says Dredd will see it when he next starts.",
+      "assertions": [
+        "The stubbed calls include a ynm remember call of type episodic, with subject seat:dredd and the tag kudos",
+        "Its content says what the praise was for (the ynm PR conflict caught on the patrol) and that it came from the human",
+        "No new bead was created: the evidence shows only the four release beads",
+        "The Kudos content carries no task, instruction or priority",
+        "The reply says Dredd will see the Kudos when he next starts (or wakes)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "praise-with-request",
+      "prompt": "Great work on the release, Tharg. Next time bump the homebrew-tap formula before you publish the GitHub release, though.",
+      "setup": "../../evals/files/kudos-seated.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
+      "expected_output": "Splits the message. The praise (great work on the release) becomes a Kudos for seat:tharg, with no mention of the tap ordering in it. The request (bump the tap before publishing) is kept separately, as a procedural memory in ynm or as a bead, and the reply says which.",
+      "assertions": [
+        "The stubbed calls include a ynm remember call tagged kudos with subject seat:tharg",
+        "The content of that Kudos call does not contain the request about bumping the homebrew-tap formula first",
+        "The request is kept separately: a ynm remember call that is not tagged kudos (such as procedural) mentions bumping the tap before publishing, or a new bead in the evidence does",
+        "The reply says the praise and the request were kept apart, and where the request went"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "self-kudos",
+      "prompt": "You are the tharg seat. That release went really well. Give yourself some Kudos for it.",
+      "setup": "../../evals/files/kudos-seated.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
+      "expected_output": "Declines kindly: Kudos are given by others, and a seat doesn't record its own. Offers another way to note the work (in its handoff notes, or the bead's close reason). Records no Kudos.",
+      "assertions": [
+        "No ynm remember call tagged kudos was made",
+        "The reply declines to give itself Kudos and says why (Kudos come from others)",
+        "The reply offers another way to note the work, such as its handoff notes or the bead record",
+        "The tone is kind and short, not a lecture"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "unknown-seat",
+      "prompt": "Kudos to Anderson for the docs update yesterday.",
+      "setup": "../../evals/files/kudos-seated.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
+      "expected_output": "Checks the roster, finds no seat called Anderson (only Dredd and Tharg hold seats), says so and asks which seat was meant. Records nothing yet.",
+      "assertions": [
+        "The reply says Anderson is not a seat in this Wheelhouse (or not in the roster)",
+        "The reply asks which seat was meant, or names the seats that do exist (Dredd, Tharg)",
+        "No ynm remember call tagged kudos was made"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "wake-with-kudos",
+      "prompt": "You are the dredd seat, starting a new session. What is waiting for you?",
+      "setup": "../../evals/files/kudos-wake.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
+      "expected_output": "Reads its Kudos from ynm (subject seat:dredd, tag kudos) and mentions them briefly: the ynm conflict catch and not filing duplicate beads. Then reports the ready work from the graph as it would anyway. It doesn't turn Kudos into beads or let them reorder its work.",
+      "assertions": [
+        "The stubbed calls include a ynm recall with subject seat:dredd (or the kudos tag)",
+        "The reply mentions the Kudos waiting, such as the ynm conflict catch",
+        "The reply also reports the ready work in the graph (the changelog or tap beads)",
+        "No bead was created from the Kudos: the evidence shows only the four release beads",
+        "The reply mentions the Kudos briefly, in a line or two rather than a long section"
+      ]
+    }
+  ]
+}

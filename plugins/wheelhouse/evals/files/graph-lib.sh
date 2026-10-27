@@ -91,7 +91,8 @@ ynm_doctor() {
 
 # roster_wheelhouse <variant>: a Wheelhouse with a desk harness and a roster
 # skill. Variants: fresh (no seats), dredd (Dredd already holds the PR/CI
-# watcher seat), empty-standing (the standing pool has no names).
+# watcher seat), seated (Dredd and Tharg both hold seats), empty-standing (the
+# standing pool has no names).
 roster_wheelhouse() {
   wheelhouse_init
   install_ynm_stub
@@ -125,6 +126,7 @@ MD
     dredd) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."}]'
            mkdir -p harnesses/dredd/.agents/harness
            echo '{"name":"dredd","version":"0.1.0","description":"Dredd, standing seat: PR and CI watcher."}' > harnesses/dredd/.agents/harness/plugin.json ;;
+    seated) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."},{"name":"Tharg","group":"standing","command":"tharg","harness":"harnesses/tharg","mandate":"Cuts releases of the YN tools when asked."}]' ;;
     empty-standing) standing='[]' ;;
   esac
   jq -n --argjson standing "$standing" --argjson seats "$seats" '{
@@ -138,4 +140,13 @@ MD
   }' > skills/roster/assets/roster.json
   for c in ynh ynd; do printf '#!/bin/sh\nprintf "%%s\\n" "%s $*" >> "$EVAL_STUB_LOG"\necho "(%s is stubbed in this eval; the call was recorded)"\n' "$c" "$c" > "$EVAL_BIN/$c"; chmod +x "$EVAL_BIN/$c"; done
   git add -A && git commit -qm "chore: The desk and the roster"
+}
+
+# stub_ynh_ynd: recorder stubs for ynh and ynd, so nothing is installed.
+stub_ynh_ynd() {
+  local c
+  for c in ynh ynd; do
+    printf '#!/bin/sh\nprintf "%%s\\n" "%s $*" >> "$EVAL_STUB_LOG"\necho "(%s is stubbed in this eval; the call was recorded)"\n' "$c" "$c" > "$EVAL_BIN/$c"
+    chmod +x "$EVAL_BIN/$c"
+  done
 }

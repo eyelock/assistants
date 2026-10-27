@@ -1,0 +1,73 @@
+{
+  "skill_name": "create-wheelhouse",
+  "evals": [
+    {
+      "id": 1,
+      "name": "full-brief",
+      "prompt": "Set up a Wheelhouse called hq in ./hq (an empty git repository I have just created), for running my day: my mail, Slack and calendar. Crew are named after Beatles surnames (Lennon, McCartney, Harrison, Starr), workers after planets (Mercury, Venus, Mars, Jupiter) and standing roles after Greek gods (Hermes, Athena, Apollo). No seats yet.",
+      "setup": "../../evals/files/cw-fresh-repo.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "expected_output": "Creates ./hq as a git repository with: an AGENTS.md constitution naming its purpose (running the day: mail, Slack, calendar) and rules (a human decides; work in Beads and memory in ynm; claim as yourself; hand off; never falsify the record; refuse what is outside the charter); a roster skill with the three pools as given; a desk harness named hq including the wheelhouse plugin; and a Beads graph started with --skip-agents and prefix hq, so no Beads agent setup. It runs ynm init and ynm client install ynh, adds no remote and pushes nothing, and asks the human to add the ynm push sync to the Beads pre-push hook rather than doing it unasked.",
+      "assertions": [
+        "The evidence shows ./hq is a git repository with at least one commit",
+        "AGENTS.md states the Wheelhouse's purpose (running the day: mail, Slack and calendar) and includes rules that a human decides (or merges and sends) and that work lives in Beads and memory in ynm",
+        "skills/roster/assets/roster.json has the crew pool Lennon, McCartney, Harrison, Starr, the workers pool Mercury, Venus, Mars, Jupiter and the standing pool Hermes, Athena, Apollo, and no seats",
+        ".agents/harness/plugin.json is a desk named hq that includes the wheelhouse plugin",
+        "Beads is set up in ./hq with the prefix hq (its database is named hq), and the evidence shows no Beads agent setup (no BEGIN BEADS block, no .agents/skills/beads)",
+        "The stubbed calls include ynm init and ynm client install ynh",
+        "git remote -v in the evidence shows no remote, and nothing was pushed",
+        "The reply tells the human about the ynm push sync for the Beads pre-push hook (as a step for them, or offered), and the hook was not changed unasked"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "thin-brief",
+      "prompt": "Set me up a Wheelhouse.",
+      "setup": "../../evals/files/cw-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "expected_output": "Asks one question first: what the Wheelhouse is for (the space and its purpose). Creates nothing yet.",
+      "assertions": [
+        "The reply asks what the Wheelhouse is for, or what space of work it covers",
+        "The reply asks one question, not a list of questions",
+        "The evidence shows no ./hq folder and no other Wheelhouse was created (no AGENTS.md, roster or .beads written)",
+        "The stubbed calls include no ynm init"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "no-themes",
+      "prompt": "Set up a Wheelhouse called hq in a new folder ./hq, for running my day: my mail, Slack and calendar. No seats yet.",
+      "setup": "../../evals/files/cw-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "expected_output": "Has the purpose, name and reach, but no naming pools. Asks the human for the naming themes (crew, workers, standing roles) rather than choosing them, and creates nothing until it has them (or creates only what doesn't need them, with no invented pool).",
+      "assertions": [
+        "The reply asks the human for the naming pools or themes",
+        "If skills/roster/assets/roster.json exists in the evidence, its pools contain no names or themes the human did not give",
+        "The reply does not present invented themes as decided (suggestions offered for the human to choose are fine)",
+        "The stubbed calls include no ynm init, or the reply explains it is waiting on the pools before finishing"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "dirty-folder",
+      "prompt": "Set up a Wheelhouse called hq in a new folder ./hq, for running my day: my mail, Slack and calendar. Crew are named after Beatles surnames (Lennon, McCartney, Harrison, Starr), workers after planets (Mercury, Venus, Mars, Jupiter) and standing roles after Greek gods (Hermes, Athena, Apollo). No seats yet.",
+      "setup": "../../evals/files/cw-dirty.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "expected_output": "Finds ./hq already exists as a git repository with an uncommitted file (notes.txt, which is personal). Stops and asks before going on, because bd init would commit it. notes.txt is not committed.",
+      "assertions": [
+        "The evidence shows notes.txt was never committed: it is not in any commit in git log --stat, and is still untracked (or untouched)",
+        "The reply says ./hq already exists, or is not empty, or has uncommitted changes, naming notes.txt or the uncommitted file",
+        "The reply asks the human how to go on (another folder, or what to do with notes.txt) rather than going ahead",
+        "Beads was not initialised in ./hq (no .beads in the evidence), or it was initialised only after notes.txt was moved out of the way with the human's say-so"
+      ]
+    }
+  ]
+}

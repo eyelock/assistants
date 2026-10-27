@@ -157,3 +157,5 @@ wrongname
 calshow
 gahan
 Yegge
+Dredd
+Tharg
