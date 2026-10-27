@@ -23,7 +23,7 @@ These have no MCP server and no platform to protect. They compose skills from th
 | `ynh-dev` | ynh development | the `gitflow` plugin, `golang-pro` from `github.com/Jeffallan/claude-skills`, `dev-quality`, `dev-review`, `skill-creator`, `gh-cli`, `go-lang`, the `pause` skills | `thorough`, `quick`, `security` | `code-review`, `security-hardening`, `cli-contract`, `refactor`, `changelog` |
 
 `ynh-dev` is the only harness that includes something from outside this repository.
-No harness declares `hooks` or `sensors` on this branch.
+Only `apple-calendar` declares `hooks` (see below), and no harness declares `sensors`.
 
 ## Platform harnesses
 
@@ -36,6 +36,7 @@ All answer the triage questions with the skills in `skills/triage`. Every one ha
 | `google-calendar` | Reads Google Calendar | `google-calendar`, `uvx workspace-mcp@2.1.0 --read-only --tools calendar` | server | none | triage set without `my-commitments`, `all` |
 | `google-drive` | Reads Drive, Docs, Sheets and Slides | `google-drive`, `uvx workspace-mcp@2.1.0 --read-only --tools drive docs sheets slides` | server | none | triage set, `all` |
 | `imessage` | Reads Messages on a Mac | `imessage`, `npx imessage-mcp@3.2.0` | server | `redacted`, `counts` | triage set |
+| `apple-calendar` | Reads Apple Calendar on a Mac | `apple-calendar`, `che-ical-mcp` (on `PATH`) | hook | none | triage set without `my-commitments`, `all` |
 | `slack` | Reads Slack | `slack`, `https://mcp.slack.com/mcp` | credential | none | triage set, `all` |
 
 The triage set is `waiting-on-me`, `waiting-on-them`, `action-now`, `action-soon`,
@@ -53,9 +54,6 @@ Credentials, passed through from the environment:
 Profiles of `imessage`: the default runs `--privacy full`, `redacted` runs `--privacy redacted`
 and `counts` runs `--privacy aggregate`.
 
-### Not yet merged
+### The Apple Calendar hook
 
-`apple-calendar` exists on branch `feat/apple-calendar`, not on this one. It runs
-`che-ical-mcp` (found on `PATH`), is read only through a hook, has no profiles, and its focuses are `waiting-on-me`,
-`waiting-on-them`, `action-now`, `action-soon`, `catch-up`, `find` and `all`. Its `before_tool`
-hook blocks every tool but six.
+`apple-calendar` is read only through a `before_tool` hook, because `che-ical-mcp` has no read-only mode and macOS Calendar access can write. The hook blocks every tool except `list_calendars`, `list_events`, `list_events_quick`, `search_events`, `check_conflicts` and `find_duplicate_events`. `scripts/apple-calendar-guard.test.mjs` tests the pattern against all 29 tool names. It has not been run against the real server.

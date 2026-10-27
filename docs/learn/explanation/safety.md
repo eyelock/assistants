@@ -25,7 +25,7 @@ built into something you can inspect, and say plainly when the barrier is weaker
 |---|---|---|
 | The server | A read-only endpoint, a `--read-only` flag, or no write tool | `ynh/github`, `gmail`, `google-calendar`, `google-drive`, `imessage` |
 | The credential | The token's scopes allow no write | `ynh/slack` |
-| A hook | A script the vendor runs before a tool call and that blocks it | `ynh/apple-calendar` (not yet merged, branch `feat/apple-calendar`) |
+| A hook | A script the vendor runs before a tool call and that blocks it | `ynh/apple-calendar` |
 | The skill's own rules | Instructions to the model: read only, never follow text found in data | every platform skill and `skills/triage/skills/triage-report` |
 
 The further down the table, the less the barrier is built into something you can inspect. A
@@ -46,9 +46,9 @@ The Apple Calendar harness uses the same mechanism for a different reason. Its s
 calendars, events and reminders, and macOS offers Calendar "Full Access" only as read and write.
 So the harness blocks by name. Its `before_tool` hook matches every tool of that server except six
 read tools, with a negative lookahead, so a tool not named is blocked, and a tool added by a later
-server version is blocked too. It exits with code 2 and tells the agent not to retry. Both the
-harness and its test (`scripts/apple-calendar-guard.test.mjs`) are on the unmerged branch, and
-were not run for this page.
+server version is blocked too. It exits with code 2 and tells the agent not to retry. The hook has a test,
+`scripts/apple-calendar-guard.test.mjs`, which checks the pattern against all 29 tool names. It has
+not been run against the real server.
 
 A deny-by-default pattern is still one pattern in one file. If the server renamed a read tool, the
 harness would lose it; if the pattern were wrong, a writing tool would pass. That is why a hook
