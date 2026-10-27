@@ -1,0 +1,42 @@
+[
+  {
+    "query": "what should I pick up next from the work graph?",
+    "should_trigger": true
+  },
+  {
+    "query": "I am mccoist, claim the next ready bead",
+    "should_trigger": true
+  },
+  {
+    "query": "split the ynm 0.5 release into tasks with the right ordering",
+    "should_trigger": true
+  },
+  {
+    "query": "who is working on the homebrew-tap formula bump?",
+    "should_trigger": true
+  },
+  {
+    "query": "mark ynw-a3f2 done, the docs build was skipped",
+    "should_trigger": true
+  },
+  {
+    "query": "what is blocking the ynh release epic?",
+    "should_trigger": true
+  },
+  {
+    "query": "open a GitHub issue on eyelock/ynh about the flaky test",
+    "should_trigger": false
+  },
+  {
+    "query": "what PRs are waiting on my review?",
+    "should_trigger": false
+  },
+  {
+    "query": "remember that I prefer squash merges",
+    "should_trigger": false
+  },
+  {
+    "query": "write a plan.md for the ynf scheduler refactor",
+    "should_trigger": false
+  }
+]

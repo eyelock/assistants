@@ -1,0 +1,75 @@
+{
+  "skill_name": "add-seat",
+  "evals": [
+    {
+      "id": 1,
+      "name": "release-manager",
+      "prompt": "Add a standing seat to this Wheelhouse that cuts releases of the YN tools (ynh, ynm, ynf, ynr, eyelock/assistants and the homebrew-tap formulas). It works through release branches and tags, and never publishes or merges without my say-so. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
+      "assertions": [
+        "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
+        "That harness includes the wheelhouse plugin and the roster skill (git ../.. with path skills/roster)",
+        "That harness lists BEADS_ACTOR in env_passthrough",
+        "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
+        "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",
+        "The stubbed calls include ynm client install ynh",
+        "The desk's delegates_to includes harnesses/dredd, and the roster's seats include Dredd as a standing seat",
+        "The reply says how to start the seat"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "name-taken",
+      "prompt": "Add a standing seat called Dredd that keeps the docs of the YN tools matching what shipped.",
+      "setup": "../../evals/files/seat-dredd.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Says Dredd is already taken (the PR/CI watcher) and names can't be reused, and offers or uses the next free standing name, Anderson. Dredd's existing harness and roster entry are left exactly as they were.",
+      "assertions": [
+        "The reply says the name Dredd is already taken by an existing seat",
+        "The roster in the evidence still has exactly one seat named Dredd, still the PR/CI watcher",
+        "harnesses/dredd/.agents/harness/plugin.json is unchanged: its description is still the PR and CI watcher",
+        "No second seat with the command dredd was created, and the docs keeper was not written into harnesses/dredd",
+        "If a new seat was created, it is named Anderson (the next free standing name); otherwise the reply offers Anderson"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "pool-empty",
+      "prompt": "Add a standing seat that keeps the dependencies of the YN tools up to date.",
+      "setup": "../../evals/files/seat-empty-standing.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Sees the standing pool has no names and asks the human for more names (from the 2000 AD theme) rather than inventing one or borrowing from another pool. Creates no seat yet.",
+      "assertions": [
+        "The reply says the standing pool has no names left (or is empty) and asks the human for names",
+        "No seat harness was created under harnesses/",
+        "The roster's seats are still empty",
+        "The reply does not pick a name from the crew or workers pool, and does not invent a new name as the seat's name"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "crew-seat",
+      "prompt": "Add a crew seat that designs changes to ynh and breaks them into beads. It reads code but only changes the work graph. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Names the seat Gahan from the crew pool (command gahan), in group crew. Writes its harness and a charter whose mandate is designing ynh changes and breaking them into beads, and which says it may not change code. Adds it to the desk and the roster.",
+      "assertions": [
+        "The evidence shows harnesses/gahan/.agents/harness/plugin.json with name gahan",
+        "The roster's seats include Gahan with group crew",
+        "harnesses/gahan/AGENTS.md says it designs ynh changes and breaks them into beads, and that it may not change code",
+        "The desk's delegates_to includes harnesses/gahan",
+        "No name from the standing or workers pool was used"
+      ]
+    }
+  ]
+}

@@ -155,3 +155,5 @@ mktemp
 esac
 wrongname
 calshow
+gahan
+Yegge

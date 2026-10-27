@@ -75,6 +75,12 @@
       "source": "./skills/voice",
       "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
       "version": "0.1.0"
+    },
+    {
+      "name": "wheelhouse",
+      "source": "./plugins/wheelhouse",
+      "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
+      "version": "0.1.0"
     }
   ]
 }

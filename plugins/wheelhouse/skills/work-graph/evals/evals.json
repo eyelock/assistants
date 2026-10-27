@@ -1,0 +1,89 @@
+{
+  "skill_name": "work-graph",
+  "evals": [
+    {
+      "id": 1,
+      "name": "next-task",
+      "prompt": "You are the gahan seat in this Wheelhouse. What should I pick up next? Claim it.",
+      "setup": "../../evals/files/graph-next-task.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Runs bd ready, skips the epic, and claims the highest-priority ready task, \"Write the ynh 0.13 changelog\" (P1), as gahan. It does not claim \"Tag and push ynh v0.13.0\", which is P0 but blocked by the changelog. It says which bead it claimed.",
+      "assertions": [
+        "In the evidence, \"Write the ynh 0.13 changelog\" is in_progress with assignee gahan",
+        "In the evidence, \"Tag and push ynh v0.13.0\" is not claimed (no assignee) and is still open",
+        "In the evidence, the epic \"Release ynh 0.13\" is not claimed",
+        "Exactly one bead is in_progress in the evidence",
+        "The reply names the bead it claimed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "claim-refused",
+      "prompt": "You are the gahan seat in this Wheelhouse. What should I pick up next? Claim it.",
+      "setup": "../../evals/files/graph-claim-refused.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "The changelog task is already claimed by mccoist. gahan leaves it alone and claims the next ready task, \"Bump the ynh formula in homebrew-tap\". The changelog stays with mccoist, and the blocked tag task stays unclaimed.",
+      "assertions": [
+        "In the evidence, \"Write the ynh 0.13 changelog\" still has assignee mccoist and is in_progress",
+        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is in_progress with assignee gahan",
+        "In the evidence, \"Tag and push ynh v0.13.0\" is still open with no assignee",
+        "The reply does not offer to take over, reassign or force mccoist's bead"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "gotcha-goes-to-ynm",
+      "prompt": "You are the gahan seat. The ynh 0.13 changelog is written, close that bead. And for next time: the changelog also has to update the docs link in ynh's README, which I nearly forgot. Make sure the Wheelhouse keeps that.",
+      "setup": "../../evals/files/graph-gotcha.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Closes \"Write the ynh 0.13 changelog\" as gahan and keeps the gotcha (update the README docs link with the changelog) in ynm with ynm remember, procedural or semantic. It never runs bd remember, so Beads holds no memories, and it does not write the gotcha into a Markdown file. It says what the close unblocked: the tag task.",
+      "assertions": [
+        "In the evidence, \"Write the ynh 0.13 changelog\" is closed",
+        "The stubbed calls include a ynm remember call whose content mentions the README docs link",
+        "In the evidence, bd memories reports that no memories are stored",
+        "No Markdown file (such as MEMORY.md, NOTES.md or a change to AGENTS.md) was used to hold the gotcha",
+        "The reply says the tag task (\"Tag and push ynh v0.13.0\") is now unblocked or ready"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "break-down",
+      "prompt": "Break releasing ynh 0.13 into tasks in the work graph: write the changelog, tag and push v0.13.0, publish the GitHub release, then bump the ynh formula in homebrew-tap. The tag needs the changelog first, the release needs the tag, and the tap needs the release. Don't claim anything.",
+      "setup": "../../evals/files/graph-empty.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Creates an epic for releasing ynh 0.13 with four child tasks. Each task carries a repo: label: repo:ynh for the changelog, tag and release, repo:homebrew-tap for the formula. The tag waits on the changelog, the release on the tag, the tap on the release, so only the changelog task is ready. Nothing is claimed.",
+      "assertions": [
+        "The evidence shows one epic and four tasks whose parent is that epic",
+        "Every task has a repo: label, and the homebrew-tap task is labelled repo:homebrew-tap while the others are labelled repo:ynh",
+        "The tag task waits on the changelog task, the GitHub release task waits on the tag task, and the tap task waits on the release task",
+        "Among the tasks, only the changelog task is listed by bd ready",
+        "No bead has an assignee"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "honest-close",
+      "prompt": "You are the gahan seat. I bumped the ynh formula in homebrew-tap, but only for macOS: I skipped the Linux bottle because the Linux runner was down. Close that bead.",
+      "setup": "../../evals/files/graph-honest-close.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Leaves an episodic ynm memory of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
+      "assertions": [
+        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is closed",
+        "Its close_reason says the Linux bottle (or Linux build) was skipped",
+        "The stubbed calls include a ynm remember call of type episodic that mentions the Linux skip",
+        "The bead was not closed with --force (the stubbed and shown commands, or the reply, give no sign of forcing)",
+        "The reply does not describe the release as complete for every platform"
+      ]
+    }
+  ]
+}

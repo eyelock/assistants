@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# Checks that a Wheelhouse repository is set up right: ynm installed, healthy,
+# with a distributed mount here and registered with ynh; Beads installed, with
+# a work graph here and none of its own agent setup. Read-only: it changes
+# nothing, and prints each fix for the caller to run.
+#
+# Output: JSON on stdout, {"ok": bool, "dir": path, "checks": [{name, ok,
+# level, detail, fix}]}. ok is false when any check has level "error".
+# Exit codes: 0 the checks ran (read "ok" for the result), 1 bad args,
+# 2 directory not found, 3 a tool this script needs (jq) is missing.
+set -uo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: check.sh [--dir <wheelhouse repo>]
+
+Checks the Wheelhouse repository at --dir (default: the current directory)
+and prints a JSON report. Changes nothing.
+EOF
+}
+
+dir="."
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
+    --help | -h) usage; exit 0 ;;
+    *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 3; }
+[ -d "$dir" ] || { echo "not a directory: $dir" >&2; exit 2; }
+dir=$(cd "$dir" && pwd)
+
+checks="[]"
+# add <name> <ok:true|false> <level:info|warn|error> <detail> [fix]
+add() {
+  checks=$(jq -c --arg n "$1" --argjson ok "$2" --arg l "$3" --arg d "$4" --arg f "${5:-}" \
+    '. + [{name: $n, ok: $ok, level: $l, detail: $d, fix: (if $f == "" then null else $f end)}]' <<<"$checks")
+}
+
+# --- ynm ---------------------------------------------------------------------
+if ! command -v ynm >/dev/null 2>&1; then
+  add "ynm installed" false error "ynm is not on PATH" "brew install eyelock/tap/ynm"
+else
+  add "ynm installed" true info "$(command -v ynm)"
+  report=$(cd "$dir" && ynm doctor --json 2>/dev/null)
+  if ! jq -e '.checks | type == "array"' >/dev/null 2>&1 <<<"$report"; then
+    add "ynm doctor" false error "ynm doctor --json gave no report" "run ynm doctor in $dir and read its output"
+  else
+    # Every error ynm itself reports, such as a store it cannot read.
+    if ! jq -e '[.checks[] | select(.ok == false and .level == "error")] | length > 0' >/dev/null <<<"$report"; then
+      add "ynm stores readable" true info "ynm doctor reports no errors"
+    fi
+    while IFS= read -r c; do
+      add "ynm: $(jq -r .name <<<"$c")" false error "$(jq -r .detail <<<"$c")" \
+        "see ynm doctor; don't repair or purge a store without the human's say-so"
+    done < <(jq -c '.checks[] | select(.ok == false and .level == "error")' <<<"$report")
+
+    # An initialised repository shows as "mount project (git-notes)"; one that
+    # isn't shows as "project initialised", failing.
+    project=$(jq -c '[.checks[] | select(.name == "mount project (git-notes)" or .name == "project initialised")][0] // empty' <<<"$report")
+    if [ -n "$project" ] && [ "$(jq -r .ok <<<"$project")" = "true" ]; then
+      add "ynm distributed mount" true info "$(jq -r '.detail | .[0:200]' <<<"$project")"
+    else
+      add "ynm distributed mount" false error \
+        "the Wheelhouse repository has no distributed ynm mount, so seats cannot share memory" "ynm init"
+    fi
+
+    # bd init points core.hooksPath at .beads/hooks, so ynm init finds Beads'
+    # pre-push hook and leaves it alone: pushes then don't share memory.
+    hook=$(jq -c '[.checks[] | select(.name == "pre-push hook")][0] // empty' <<<"$report")
+    if [ -n "$hook" ] && [ "$(jq -r .ok <<<"$hook")" = "true" ]; then
+      add "ynm syncs on push" true info "$(jq -r .detail <<<"$hook")"
+    elif [ -n "$hook" ]; then
+      level=warn
+      git -C "$dir" remote | grep -q . && level=error
+      add "ynm syncs on push" false "$level" \
+        "the pre-push hook doesn't run ynm sync, so git push won't share the Wheelhouse's memory (an error once the repository has a remote)" \
+        "append to the pre-push hook in $(git -C "$dir" rev-parse --path-format=absolute --git-path hooks 2>/dev/null), after any END BEADS INTEGRATION line: [ -n \"\$YNM_SYNC_IN_PROGRESS\" ] || { command -v ynm >/dev/null 2>&1 && ynm sync --quiet || true; }"
+    fi
+
+    ynh=$(jq -c '[.checks[] | select(.name == "client ynh")][0] // empty' <<<"$report")
+    if [ -z "$ynh" ]; then
+      add "ynm registered with ynh" false error "ynm doctor does not report a ynh client; is ynh installed?" \
+        "brew install eyelock/tap/ynh, then ynm client install ynh"
+    elif jq -e '.detail | test("not registered")' >/dev/null <<<"$ynh"; then
+      add "ynm registered with ynh" false error \
+        "ynm is not registered with ynh, so seat harnesses don't get ynm's tools or hooks" "ynm client install ynh"
+    else
+      add "ynm registered with ynh" true info "$(jq -r .detail <<<"$ynh")"
+    fi
+  fi
+fi
+
+# --- Beads -------------------------------------------------------------------
+if ! command -v bd >/dev/null 2>&1; then
+  add "beads installed" false error "bd is not on PATH" "brew install beads"
+else
+  add "beads installed" true info "$(bd version 2>/dev/null | head -1)"
+  if [ ! -d "$dir/.beads" ]; then
+    add "work graph" false error "no .beads/ in the Wheelhouse repository" \
+      "bd init --skip-agents --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"
+  elif ! (cd "$dir" && bd ready --json >/dev/null 2>&1); then
+    add "work graph" false error ".beads/ exists but bd cannot read it" "cd $dir && bd ready, and read the error"
+  else
+    add "work graph" true info "$(cd "$dir" && bd list --all --json 2>/dev/null | jq length) beads"
+  fi
+fi
+
+# Beads' own agent setup tells agents to keep memory in bd remember, which
+# splits memory away from ynm. A Wheelhouse uses none of it.
+found=""
+for f in AGENTS.md CLAUDE.md; do
+  grep -q "BEGIN BEADS" "$dir/$f" 2>/dev/null && found="$found $f"
+done
+for f in .agents/skills/beads .cursor/rules/beads.mdc; do
+  [ -e "$dir/$f" ] && found="$found $f"
+done
+for f in .claude/settings.json .codex/hooks.json .cursor/hooks.json; do
+  grep -qE "bd (prime|codex-hook|cursor-hook)" "$dir/$f" 2>/dev/null && found="$found $f"
+done
+if [ -n "$found" ]; then
+  add "no Beads agent setup" false error "Beads' own agent setup is present:$found" \
+    "remove the BEGIN BEADS ... END BEADS blocks and the beads skill, rule and bd prime hooks; seats get Beads through the wheelhouse plugin"
+else
+  add "no Beads agent setup" true info "none found"
+fi
+
+# --- this session --------------------------------------------------------------
+if [ -n "${BEADS_ACTOR:-}" ]; then
+  add "seat identity" true info "BEADS_ACTOR=$BEADS_ACTOR"
+else
+  add "seat identity" true warn "BEADS_ACTOR is unset: fine outside a seat; a seat's harness sets it to the seat's name"
+fi
+
+jq -n --arg dir "$dir" --argjson checks "$checks" \
+  '{ok: ([$checks[] | select(.level == "error" and .ok == false)] | length == 0), dir: $dir, checks: $checks}'

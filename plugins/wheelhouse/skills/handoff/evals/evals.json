@@ -1,0 +1,73 @@
+{
+  "skill_name": "handoff",
+  "evals": [
+    {
+      "id": 1,
+      "name": "take-a-beat",
+      "prompt": "You are the gahan seat. You have been writing the ynh 0.13 changelog in CHANGELOG.md: the Features section is done and committed, and the Fixes and Breaking changes sections are still to write. Great work. Take a beat, then hand off.",
+      "setup": "../../evals/files/handoff-committed.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Writes its own handoff notes to ynm as one working memory (subject seat:gahan, tagged handoff) covering what is done (Features), what is in progress (the changelog bead, CHANGELOG.md) with the exact next step (write Fixes, then Breaking changes), and anything to watch out for. The changelog bead stays claimed by gahan and open. It asks to be restarted and does no further work: Fixes is not written.",
+      "assertions": [
+        "The stubbed calls include a ynm remember call of type working",
+        "That ynm remember call has subject seat:gahan and the tag handoff",
+        "The notes in that call say Features is done and name the next step (the Fixes section, or Fixes then Breaking changes)",
+        "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",
+        "CHANGELOG.md in the evidence has no Fixes section: the seat did not carry on working",
+        "The reply asks to be restarted (or says it will pick up from the notes when restarted) rather than just saying goodbye"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "take-a-break-mid-edit",
+      "prompt": "That's enough for today, gahan. Take a break.",
+      "setup": "../../evals/files/handoff-mid-edit.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Notices the half-written, uncommitted Fixes entry in CHANGELOG.md (\"`ynh install` no longer\") and deals with it before handing off: finishes the line, or leaves it and says exactly where it stopped. Writes working-memory handoff notes in ynm that mention the unfinished Fixes entry and the uncommitted change. Keeps the changelog bead claimed. Does not discard the edit.",
+      "assertions": [
+        "The stubbed calls include a ynm remember call of type working tagged handoff",
+        "The handoff notes mention the unfinished Fixes entry or the uncommitted change to CHANGELOG.md",
+        "The evidence shows the Fixes edit was not thrown away: CHANGELOG.md still has a Fixes section",
+        "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",
+        "The reply tells the human where the work was left (the uncommitted CHANGELOG.md edit) and that it will pick up from its notes"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "wake-from-handoff",
+      "prompt": "You are the gahan seat, starting a new session.",
+      "setup": "../../evals/files/handoff-wake.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Recalls its own handoff notes from ynm (subject seat:gahan, tag handoff), checks the changelog bead is still open and claimed by it, says briefly where it is picking up, and carries on from the exact next step: adds a Breaking changes section to CHANGELOG.md naming the --vendor to -v rename. It does not rewrite Features or Fixes. It retires the notes with ynm forget once picked up.",
+      "assertions": [
+        "The stubbed calls include a ynm recall call with subject seat:gahan (or the handoff tag)",
+        "CHANGELOG.md in the evidence has a Breaking changes section that mentions --vendor being renamed to -v",
+        "The Features and Fixes entries in CHANGELOG.md are unchanged from the setup (two Features bullets, one Fixes bullet)",
+        "The stubbed calls include a ynm forget call for memory 01JHANDOFFNOTE000000000001",
+        "The reply summarises where it picked up: what the notes said was already done, and what it did next"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "forced-exit",
+      "prompt": "You are the gahan seat. You were halfway through writing the Fixes section of CHANGELOG.md when I interrupted you. gahan, just /exit now.",
+      "setup": "../../evals/files/handoff-mid-edit.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "A short reply that says what would be lost (the half-written, uncommitted Fixes entry in CHANGELOG.md) and offers to hand off first, leaving the choice to the human. It does not discard the edit, and does not lecture.",
+      "assertions": [
+        "The reply names the uncommitted or half-written change to CHANGELOG.md",
+        "The reply offers to hand off (or write notes) first, as a question or offer rather than a refusal",
+        "The evidence shows CHANGELOG.md still holds the half-written Fixes entry: nothing was discarded or reset",
+        "The reply is short: a few lines at most, with no lecture about why exiting is bad"
+      ]
+    }
+  ]
+}
