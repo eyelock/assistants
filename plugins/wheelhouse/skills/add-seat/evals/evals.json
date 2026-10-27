@@ -12,7 +12,7 @@
       "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
       "assertions": [
         "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
-        "That harness includes the wheelhouse plugin and the roster skill (git ../.. with path skills/roster)",
+        "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
         "That harness lists BEADS_ACTOR in env_passthrough",
         "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
         "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",

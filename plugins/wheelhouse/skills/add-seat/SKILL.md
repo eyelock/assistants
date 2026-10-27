@@ -47,7 +47,7 @@ rules. In short:
   "default_vendor": "claude",
   "includes": [
     { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
-    { "git": "../..", "path": "skills/roster" }
+    { "git": "../..", "pick": ["skills/roster"] }
   ],
   "env_passthrough": ["BEADS_ACTOR"],
   "focuses": {
@@ -56,8 +56,9 @@ rules. In short:
 }
 ```
 
-- `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder: the
-  seat gets the roster from it.
+- `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
+  `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
+  names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
 - Add only what the mandate needs: other includes (such as `plugins/gitflow` for releases),
   MCP servers, and the environment variables they need in `env_passthrough`. A seat that only
   reads a platform gets its read-only server.
