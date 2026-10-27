@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", or asked to /exit or stop mid-work, and at the start of a seat's session when a handoff is waiting.
+description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", or asked to exit or stop mid-work, and when a seat's session begins with a handoff waiting.
 ---
 
 # Handoff

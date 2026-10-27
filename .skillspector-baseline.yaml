@@ -192,6 +192,16 @@ rules:
     message: "*capture context*"
     reason: "'Capture context' means saving shell variables before leaving a worktree; nothing leaks."
 
+  # --- wheelhouse ---------------------------------------------------------------------------
+
+  - id: "AS3"
+    path: "plugins/wheelhouse/skills/add-seat/SKILL.md"
+    reason: "Adding a seat reads and updates the Wheelhouse's own roster skill (skills/roster), in the repository it is building."
+
+  - id: "AS3"
+    path: "plugins/wheelhouse/skills/create-wheelhouse/SKILL.md"
+    reason: "Creating a Wheelhouse writes its roster skill (skills/roster) into the new repository."
+
   # --- dev and tech skills ----------------------------------------------------------------
 
   - id: "AS3"
