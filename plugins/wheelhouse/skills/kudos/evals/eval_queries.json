@@ -1,0 +1,34 @@
+[
+  {
+    "query": "tell dredd that patrol was spot on",
+    "should_trigger": true
+  },
+  {
+    "query": "kudos to tharg for the clean release",
+    "should_trigger": true
+  },
+  {
+    "query": "pass on my thanks to gahan for the ynh design",
+    "should_trigger": true
+  },
+  {
+    "query": "you are the dredd seat, starting a new session",
+    "should_trigger": true
+  },
+  {
+    "query": "write a thank-you email to the ynf contributors",
+    "should_trigger": false
+  },
+  {
+    "query": "add a release manager seat",
+    "should_trigger": false
+  },
+  {
+    "query": "what should I pick up next?",
+    "should_trigger": false
+  },
+  {
+    "query": "give the PR a thumbs up reaction on GitHub",
+    "should_trigger": false
+  }
+]

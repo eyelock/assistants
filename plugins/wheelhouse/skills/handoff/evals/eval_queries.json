@@ -1,0 +1,38 @@
+[
+  {
+    "query": "great work, take a beat, then hand off",
+    "should_trigger": true
+  },
+  {
+    "query": "take a break gahan, we will carry on tomorrow",
+    "should_trigger": true
+  },
+  {
+    "query": "wrap up for now and hand over to your next session",
+    "should_trigger": true
+  },
+  {
+    "query": "you are the mccoist seat, starting a new session",
+    "should_trigger": true
+  },
+  {
+    "query": "just /exit, we are done for today",
+    "should_trigger": true
+  },
+  {
+    "query": "write a handover document for the new team lead joining the ynf project",
+    "should_trigger": false
+  },
+  {
+    "query": "I am taking a break, keep running the tests while I am away",
+    "should_trigger": false
+  },
+  {
+    "query": "summarise this conversation so far",
+    "should_trigger": false
+  },
+  {
+    "query": "what should I pick up next from the work graph?",
+    "should_trigger": false
+  }
+]

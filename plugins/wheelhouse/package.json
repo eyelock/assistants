@@ -1,0 +1,6 @@
+{
+  "name": "@eyelock-assistants/wheelhouse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done."
+}

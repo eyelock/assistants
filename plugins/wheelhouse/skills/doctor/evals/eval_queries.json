@@ -1,0 +1,34 @@
+[
+  {
+    "query": "is this wheelhouse set up right?",
+    "should_trigger": true
+  },
+  {
+    "query": "check ynm and beads are configured properly for the seats",
+    "should_trigger": true
+  },
+  {
+    "query": "gahan says bd is missing, can you diagnose the wheelhouse",
+    "should_trigger": true
+  },
+  {
+    "query": "validate the wheelhouse after we created it",
+    "should_trigger": true
+  },
+  {
+    "query": "why is my ynh install failing to clone includes?",
+    "should_trigger": false
+  },
+  {
+    "query": "run the unit tests for ynm",
+    "should_trigger": false
+  },
+  {
+    "query": "what should I pick up next?",
+    "should_trigger": false
+  },
+  {
+    "query": "check my PRs for failing CI",
+    "should_trigger": false
+  }
+]

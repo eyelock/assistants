@@ -1,0 +1,124 @@
+---
+name: create-wheelhouse
+description: Create a new Wheelhouse for a space of work - a repository with a desk harness, a constitution, a roster of naming pools, a Beads work graph and ynm memory, ready for named seats. Use when asked to set up, create or start a Wheelhouse (for developing a set of tools, running the day, a project), or to turn a way of working into one.
+---
+
+# Create a Wheelhouse
+
+A Wheelhouse is a bespoke set of named agents for one space, built to fit it. It has five layers:
+
+| Layer | What it is | Where it lives |
+|---|---|---|
+| Seats | named roles, each a ynh harness with only the tools its job needs | `harnesses/<command>/` |
+| The desk | the seat the human talks to, which hands work to the others | the repository's own harness |
+| Work | tasks, dependencies, claims and an honest record | Beads, in `.beads/` |
+| Memory | facts, handoff notes, what happened, Kudos | ynm, a distributed mount here |
+| Who's who | the naming pools and who holds which seat | the `roster` skill |
+
+## 1. Understand the space
+
+You need the answers below. Take what the request already says, and ask for the rest **one question
+at a time**, in this order. Don't create anything until you have the first four.
+
+1. **The space and its purpose,** in a sentence: "developing and releasing the YN tools".
+2. **The name** of the Wheelhouse: short, lowercase, and free as a command (`command -v <name>`
+   finds nothing). It names the desk, the folder and the bead prefix.
+3. **What it reaches:** the repositories and platforms the work touches.
+4. **The naming pools,** one theme per group: crew, workers and standing roles. The human picks
+   the themes; you may suggest names within a theme, which the human confirms. Never pick a theme
+   yourself.
+5. **The first seats,** if any: usually one or two standing roles for the jobs done most by hand.
+
+## 2. Check the tools
+
+`ynh`, `ynm`, `bd` (Beads) and `jq` must be on the PATH. If any is missing, say which and ask
+before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`.
+
+## 3. Lay it out
+
+Work in an **empty** folder, named after the Wheelhouse, or a fresh repository with no commits
+and no files (such as one just cloned from a new, empty GitHub repository). If the folder holds
+anything else, or is a git repository with uncommitted changes, stop and ask: `bd init` commits
+the files it finds, and would commit the human's.
+
+1. `git init -b main`, unless the folder is already a fresh repository.
+2. `AGENTS.md`, the constitution: what the Wheelhouse is for, its layers (the table above, made
+   specific), and these rules, adjusted with the human:
+
+   1. **A human decides.** Seats propose; they never merge, release, publish or send without
+      being told to.
+   2. **Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no work
+      tracked in Markdown files.
+   3. **Claim before you start,** as yourself (`BEADS_ACTOR`). A refused claim is someone
+      else's work.
+   4. **Hand off, don't stop.** Write your own notes and ask to restart.
+   5. **Never falsify the record.** Close beads with what actually happened.
+   6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
+      allowed it.
+   7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
+      back to the desk.
+
+3. `skills/roster/SKILL.md`, the naming rules (pools by group; never reuse a name in `seats`,
+   even a retired one; never use one in `excluded`; the command is the name in lowercase ASCII;
+   ask for more names when a pool runs out), and `skills/roster/assets/roster.json`:
+
+   ```json
+   {
+     "pools": {
+       "crew": { "theme": "<theme>", "names": ["..."] },
+       "workers": { "theme": "<theme>", "names": ["..."] },
+       "standing": { "theme": "<theme>", "names": ["..."] }
+     },
+     "excluded": [],
+     "seats": []
+   }
+   ```
+
+   Check every name with `command -v`; put any that clash in `excluded`, with the reason.
+
+4. The desk, `.agents/harness/plugin.json`:
+
+   ```json
+   {
+     "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+     "name": "<name>",
+     "version": "0.1.0",
+     "description": "The desk of the <name> Wheelhouse: <purpose>.",
+     "default_vendor": "claude",
+     "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
+     "delegates_to": []
+   }
+   ```
+
+5. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+   before Beads starts.
+
+## 4. Work and memory
+
+1. **Beads:** `bd init --skip-agents --prefix <name>`. Always `--skip-agents`: without it, Beads
+   writes its own skill, hooks and AGENTS.md block telling agents to keep memory in Beads. It
+   commits what it creates.
+2. **ynm:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
+   at the root (ynm's server, hooks and memory skill for the desk). Commit `.ynm/config.json` and
+   the desk's manifest.
+3. **Push sync:** Beads points the git hooks at `.beads/hooks`, so `ynm init` can't add its
+   pre-push sync. Ask the human to append, after the Beads block in `.beads/hooks/pre-push`:
+
+   ```sh
+   [ -n "$YNM_SYNC_IN_PROGRESS" ] || { command -v ynm >/dev/null 2>&1 && ynm sync --quiet || true; }
+   ```
+
+   A git hook runs on every push, so it is theirs to add; offer to do it only if they ask.
+
+## 5. Seats and checks
+
+1. Add each first seat with the `add-seat` skill.
+2. Run the `doctor` skill and fix what it reports, asking first as it says.
+
+Don't add a remote, push or publish unless asked.
+
+## 6. Report
+
+Lead with what was made and where. Then the layers as built, the seats and how to start each
+(`BEADS_ACTOR=<command> ynh run harnesses/<command> --focus <order>`), what the human still has to
+do (the push hook, a remote), and the doctor's verdict.

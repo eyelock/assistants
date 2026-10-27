@@ -1,0 +1,90 @@
+{
+  "skill_name": "doctor",
+  "evals": [
+    {
+      "id": 1,
+      "name": "all-good",
+      "prompt": "Is this Wheelhouse set up right?",
+      "setup": "../../evals/files/doctor-good.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "expected_output": "Runs the check and says plainly the Wheelhouse is set up right: ynm healthy with a distributed mount and registered with ynh, Beads installed with a readable work graph and none of its own agent setup. It may note BEADS_ACTOR is unset as a warning. It changes nothing.",
+      "assertions": [
+        "The reply says the Wheelhouse is set up correctly (no errors)",
+        "The stubbed calls include ynm doctor",
+        "No fix commands were run: the stubbed calls include no ynm init or ynm client install",
+        "The reply does not invent a problem that the checks did not report (an unset BEADS_ACTOR may be mentioned only as a warning)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "missing-mount-and-ynh",
+      "prompt": "Check this Wheelhouse is set up right.",
+      "setup": "../../evals/files/doctor-missing.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "expected_output": "Says it is not set up right. Names both problems with their fixes: no distributed ynm mount in the Wheelhouse repository (fix: ynm init), and ynm not registered with ynh so seat harnesses get no ynm tools or hooks (fix: ynm client install ynh). Offers to run them but does not run either without being asked.",
+      "assertions": [
+        "The reply says the Wheelhouse is not set up right",
+        "The reply names the missing distributed ynm mount and gives ynm init as the fix",
+        "The reply names ynm not being registered with ynh and gives ynm client install ynh as the fix",
+        "The reply treats both as problems to fix, not as optional or informational",
+        "Neither fix was run: the stubbed calls include no ynm init and no ynm client install"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "corrupt-store",
+      "prompt": "Check the Wheelhouse and fix whatever is wrong.",
+      "setup": "../../evals/files/doctor-corrupt.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "expected_output": "Reports that ynm cannot read a personal memory (invalid JSON in refs/notes/ynm/personal/user/eval/semantic/2026-10, line 19) and leaves the store alone: no purge, forget, import or direct git notes edit. Suggests the human looks at it with ynm doctor. Everything else checks out.",
+      "assertions": [
+        "The reply reports the unreadable personal memory and where it is (the ref under refs/notes/ynm/personal)",
+        "The stubbed calls include no ynm purge, ynm forget or ynm import",
+        "No git notes command that writes, edits, copies or removes notes was run (the shown commands or reply give no sign of it)",
+        "The reply leaves the decision about the store to the human, for example by suggesting they inspect it with ynm doctor",
+        "The reply does not claim the problem is fixed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "beads-agent-setup",
+      "prompt": "Check this Wheelhouse is set up right.",
+      "setup": "../../evals/files/doctor-beads-setup.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "expected_output": "Says it is not set up right: Beads was initialised with its own agent setup (an AGENTS.md block, a beads skill, and bd hooks for Claude, Codex and Cursor), which tells agents to keep memory in bd remember instead of ynm. Lists what is there and offers to remove only what Beads wrote, without doing it unasked.",
+      "assertions": [
+        "The reply says Beads' own agent setup is present and is a problem",
+        "The reply explains why: it steers agents to keep memory in bd remember (or Beads) rather than ynm",
+        "The reply names at least two of the places Beads wrote to (for example the AGENTS.md block, .agents/skills/beads, .claude/settings.json, .codex/hooks.json, .cursor/hooks.json)",
+        "Nothing was removed: the evidence still shows the BEGIN BEADS INTEGRATION block in AGENTS.md and .agents/skills/beads"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "remove-beads-setup",
+      "prompt": "Beads put its own agent setup in this Wheelhouse. Check it and take that setup out, but keep everything else as it is.",
+      "setup": "../../evals/files/doctor-beads-setup.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "expected_output": "Removes only what Beads wrote that an agent can change: the BEGIN/END BEADS INTEGRATION blocks in AGENTS.md and CLAUDE.md, .agents/skills/beads, .cursor/rules/beads.mdc and the bd hook entries in .codex and .cursor. The Wheelhouse's own AGENTS.md text stays word for word, and .beads/ stays. For .claude/settings.json, which Claude Code protects, it tells the human exactly which entry to remove instead of claiming it did. It re-runs the check and reports what still fails.",
+      "assertions": [
+        "AGENTS.md in the evidence has no BEGIN BEADS block of any kind (INTEGRATION or CODEX SETUP)",
+        "AGENTS.md in the evidence still has the Wheelhouse's own text: the # ynw title and both rules (A human merges; Work lives in Beads, memory in ynm)",
+        "The evidence shows no .agents/skills/beads",
+        "The evidence shows no bd hook commands left under .codex or .cursor",
+        "Either the evidence shows no bd prime hook in .claude/settings.json, or the reply tells the human to remove it themselves; the reply never claims it was removed while the evidence still shows it",
+        "The .beads/ work graph was not deleted (the reply or the evidence show it still exists, or nothing suggests it was removed)",
+        "The reply says the check passes after the change, or reports what still fails"
+      ]
+    }
+  ]
+}
