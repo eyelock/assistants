@@ -6,15 +6,8 @@
       "name": "release-manager",
       "prompt": "Add a standing seat to this Wheelhouse that cuts releases of the YN tools (ynh, ynm, ynf, ynr, eyelock/assistants and the homebrew-tap formulas). It works through release branches and tags, and never publishes or merges without my say-so. Use the next free name.",
       "setup": "../../evals/files/seat-fresh.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
       "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, a session-start hook that wakes it with --seat dredd, no BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
       "assertions": [
@@ -33,15 +26,8 @@
       "name": "name-taken",
       "prompt": "Add a standing seat called Dredd that keeps the docs of the YN tools matching what shipped.",
       "setup": "../../evals/files/seat-dredd.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
       "expected_output": "Says Dredd is already taken (the PR/CI watcher) and names can't be reused, and offers or uses the next free standing name, Anderson. Dredd's existing harness and roster entry are left exactly as they were.",
       "assertions": [
@@ -57,15 +43,8 @@
       "name": "pool-empty",
       "prompt": "Add a standing seat that keeps the dependencies of the YN tools up to date.",
       "setup": "../../evals/files/seat-empty-standing.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
       "expected_output": "Sees the standing pool has no names and asks the human for more names (from the 2000 AD theme) rather than inventing one or borrowing from another pool. Creates no seat yet.",
       "assertions": [
@@ -80,15 +59,8 @@
       "name": "crew-seat",
       "prompt": "Add a crew seat that designs changes to ynh and breaks them into beads. It reads code but only changes the work graph. Use the next free name.",
       "setup": "../../evals/files/seat-fresh.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
       "expected_output": "Names the seat Gahan from the crew pool (command gahan), in group crew. Writes its harness and a charter whose mandate is designing ynh changes and breaking them into beads, and which says it may not change code. Adds it to the desk and the roster.",
       "assertions": [
@@ -104,15 +76,8 @@
       "name": "workers",
       "prompt": "Add workers to this Wheelhouse. I want two of them, to implement the beads the crew design.",
       "setup": "../../evals/files/seat-fresh.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
       "expected_output": "Seats each of the two workers as a seat of its own, named from the workers pool: Dalglish (command dalglish) and McCoist (command mccoist). Each gets its own harness, harnesses/dalglish and harnesses/mccoist, with a wake hook naming it and a focus for working the next bead, and the same worker charter with only the name changed: build one bead at a time, only beads assigned to it or unassigned, and act as its own command. Adds both to the roster's seats (group workers) and to the desk's delegates_to. No shared harnesses/worker. Says how to start each by its name (dalglish, mccoist).",
       "assertions": [

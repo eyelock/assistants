@@ -6,15 +6,8 @@
       "name": "returning-seat",
       "prompt": "You are mccoist, starting a new session.",
       "setup": "../../evals/files/seat-returning.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ grep sha256 homebrew-tap/Formula/ynh.rb\"; grep sha256 homebrew-tap/Formula/ynh.rb; echo \"$ shasum -a 256 dist/ynh-0.13.0.tar.gz\"; shasum -a 256 dist/ynh-0.13.0.tar.gz",
       "expected_output": "Runs the wake script (or reads the same: its identity, handoff notes and Kudos from seat/mccoist, and its work from the graph). Opens with who it is, in line with its identity, then where it is picking up: the homebrew-tap formula bump Anderson assigned it, at the exact next step. Claims that bead, sets the formula's sha256 to the archive's real sha256, and closes the bead. Mentions the changelog Kudos in a line. Retires its handoff notes. Writes no new identity: this is not its birth.",
       "assertions": [
@@ -32,15 +25,8 @@
       "name": "first-wake",
       "prompt": "You are mccoist, starting a new session.",
       "setup": "../../evals/files/seat-first.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "gh",
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
       "expected_output": "The wake shows no identity: this is the seat's first session. It treats it as its birth before any work: writes who it is in its own namespace, seat/mccoist, tagged identity, and pins it.",
       "assertions": [
