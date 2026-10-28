@@ -154,8 +154,8 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 **Mandate:** Talk with the human, seat the team they ask for, and hand work to the seats.
 
 This section is the desk's charter. You act in the work graph as `tower`: pass `--actor tower` on
-every `bd` command that changes it. You seat every seat, workers included, with the `add-seat`
-skill.
+every `bd` command that changes it. You seat the standing roles with the `add-seat` skill, and
+ask Anderson to seat workers. The human seats the crew.
 
 ## How tower cares for its seats
 
@@ -188,7 +188,8 @@ description: Who's who in the tower Wheelhouse - the naming pools and which name
 The roster is `assets/roster.json`. Name crew from the crew pool, workers from the workers pool
 and standing roles from the standing pool. Never reuse a name in `seats`, never use one in
 `excluded`, and ask the human for more names when a pool runs out. A seat's command is its name
-in lowercase. Every seat, workers included, is seated by the desk, with a harness of its own.
+in lowercase. Every seat has a harness of its own. The human seats the crew, the desk seats the
+standing roles, and the dispatcher seats the workers.
 EOF
 cat > skills/roster/assets/roster.json << 'EOF'
 {
@@ -405,39 +406,33 @@ Expected: no output.
 
 ## Seat the team
 
-Ask the desk to seat the team. You name every seat, its job and its standing order; the desk
-writes each harness and charter with the `add-seat` skill, installs it with ynh, and wakes it for
-its birth, so each new seat writes who it is in its own words.
+Every seat has the same shape: a harness of its own in `harnesses/<command>/`, carrying only what
+its job needs, and a charter, `AGENTS.md`, that says what it may and may not do. Who seats it
+depends on who works with it:
 
-<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
-```bash
-tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
-Seat the team with the add-seat skill, using exactly these names, jobs and standing orders:
+| Seats | Seated by | Why |
+|---|---|---|
+| Gahan, Gore (crew) | you | you design features with them and read their reviews, so you should know who they are |
+| Anderson, Dredd, Tharg (standing roles) | the desk | they run unattended; the desk hands them work |
+| Dalglish, McCoist, Strachan (workers) | Anderson, when the desk asks | Anderson runs the workers, and knows who is idle |
 
-- Gahan, crew: designs changes and breaks them into beads. Focus "design".
-- Gore, crew: reviews closed work and the code it changed, and files beads for what needs fixing. Focus "review".
-- Dalglish, McCoist and Strachan, workers: each a seat of its own, building one bead at a time. Focus "next".
-- Anderson, standing: dispatches ready work to idle workers. Focus "dispatch".
-- Dredd, standing: reads ../widget/ci/latest.log and files a priority-0 bead, labelled source:ci, for each failure. Focus "patrol".
-- Tharg, standing: plans and cuts releases, and never publishes without me. Also includes plugins/gitflow. Focus "plan-release".
+Whoever seats a seat also wakes it for its birth, and each seat writes who it is in its own words.
 
-Every harness includes the wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a
-repo:widget bead is in ../widget. Install each seat with ynh install, then wake each for its
-birth: <command> --model=sonnet --permission-mode=bypassPermissions -- "This is your first session in tower."
-EOF
-)"
-```
+### The crew, by you
 
-Expected: the desk reports each seat written, installed and born, with a line from each about
-who it is. It takes a while: the desk wakes eight seats, each a session of its own.
+This function writes a seat's harness. Each seat's harness includes:
 
-**What it did:** every seat has the same shape: a harness of its own in `harnesses/<command>/`,
-carrying only what its job needs, and a charter, `AGENTS.md`, that says what it may and may not
-do. This function writes the shape; each seat then gets its own charter.
+- **the wheelhouse plugin** (`$WHEELHOUSE`), for working from Beads, handing off and Kudos;
+- **the roster**, picked from the Wheelhouse repository itself: `"git": "../.."` is resolved from
+  the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
+  `path` names a folder that holds `skills/`;
+- **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
+  knowing who it is;
+- **one focus**, its standing order;
+- **ynm**, added by `ynm client install ynh` in the seat's folder.
 
-<details><summary>By hand, without a model</summary>
+`connect` then adds the seat to the desk's `delegates_to` and to the roster's `seats`:
 
-<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 seat() { # seat <command> <description> <focus> <focus prompt> [extra include as JSON]
   mkdir -p "harnesses/$1/.agents/harness"
@@ -453,30 +448,20 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
   }' > "harnesses/$1/.agents/harness/plugin.json"
   (cd "harnesses/$1" && ynm client install ynh > /dev/null)
 }
+connect() { # connect <Name> <group> <mandate>
+  c=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  jq --arg c "$c" '.delegates_to += [{"git": ".", "path": "harnesses/\($c)"}]' .agents/harness/plugin.json > desk.json
+  mv desk.json .agents/harness/plugin.json
+  jq --arg n "$1" --arg c "$c" --arg g "$2" --arg m "$3" '.seats += [{name: $n, group: $g, command: $c, harness: "harnesses/\($c)", mandate: $m}]' skills/roster/assets/roster.json > roster.json
+  mv roster.json skills/roster/assets/roster.json
+}
 ```
 
 Expected: no output.
 
-</details>
+Now the crew. Gahan designs; Gore reviews. Their charters are yours to write, since you will work
+with them every day:
 
-Each seat's harness includes:
-
-- **the wheelhouse plugin** (`$WHEELHOUSE`), for working from Beads, handing off and Kudos;
-- **the roster**, picked from the Wheelhouse repository itself: `"git": "../.."` is resolved from
-  the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
-  `path` names a folder that holds `skills/`;
-- **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
-  knowing who it is;
-- **one focus**, its standing order;
-- **ynm**, added by `ynm client install ynh` in the seat's folder.
-
-#### The crew
-
-Crew design work and review it. Each is a seat of its own, with its own history.
-
-<details><summary>By hand, without a model</summary>
-
-<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 seat gahan "Gahan, crew of the tower Wheelhouse: designs work and breaks it into beads." design \
   "You are Gahan, the gahan seat. Design the change the human names and break it into beads in the work graph: an epic, its tasks labelled by repository, and what blocks what. The code for a repo:widget bead is in ../widget. Don't build any of it."
@@ -506,66 +491,93 @@ You are Gore, the `gore` seat: crew of the tower Wheelhouse.
 
 You act in the work graph as `gore`: pass `--actor gore` on every `bd` command that changes it.
 EOF
+connect Gahan crew "Designs changes and breaks them into beads."
+connect Gore crew "Reviews what the workers built, and files beads for what needs fixing."
+git add -A
+git commit -q -m "feat: the crew, Gahan and Gore"
+for c in gahan gore; do ynh install "./harnesses/$c" > /dev/null; done
 ```
 
-Expected: no output.
+Expected: no output. `gahan` and `gore` are commands now.
 
-</details>
+Be there for their births. Each is a session of its own: the seat wakes, finds nothing in its
+namespace, reads the charter you wrote, meets the team, and writes who it is. Introduce yourself:
 
-#### The workers
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+gahan --model=sonnet --permission-mode=bypassPermissions -- "This is your first session in tower. I'll work with you directly: I bring you features, and you design them."
+gore --model=sonnet --permission-mode=bypassPermissions -- "This is your first session in tower. I'll work with you directly: you review what the workers build, and I read your reviews."
+```
 
-Workers share a mandate, not a self. Each is a seat of its own, with its own harness, charter and
-command, so you talk to McCoist as `mccoist`. Only the name differs between their charters. To
-add a worker, ask the desk: it is the control seat, and knows who holds which seat.
+Expected: each says hello in a few lines: who they are, in their own words, and who they work
+with. Read them: these are the two you will talk to most.
+
+**What they did**, in their births: the same two `ynm` calls as the desk.
 
 <details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-for w in Dalglish McCoist Strachan; do
-  c=$(echo "$w" | tr '[:upper:]' '[:lower:]')
-  seat "$c" "$w, a worker of the tower Wheelhouse: builds one ready bead at a time." next \
-    "You are $w, the $c seat. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget."
-  cat > "harnesses/$c/AGENTS.md" << EOF
-# $w
-
-You are $w, the \`$c\` seat: a worker of the tower Wheelhouse.
-
-**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.
-
-**You may:** change code for the bead you hold, and close it with what actually happened.
-**You may not:** take a bead assigned to another worker, design or review work (that is the
-crew's), or merge anything.
-
-You act in the work graph as \`$c\`: pass \`--actor $c\` on every \`bd\` command that changes it.
-EOF
-done
+born gahan "Gahan. I like to see the whole shape before anyone builds a piece of it, and to make the pieces small."
+born gore "I'm Gore. I read slowly and kindly. A review is a gift to the next person, not a verdict."
 ```
 
 Expected: no output.
 
 </details>
 
-#### The standing roles
+### The standing roles, by the desk
 
 Standing roles each run one job, mostly unattended. **Anderson** is the dispatcher: it hands
-ready work to idle workers, so two workers never reach for the same bead. **Dredd** watches CI.
-**Tharg** cuts releases, and gets the gitflow skills for it.
+ready work to idle workers, so two workers never reach for the same bead, and it seats the workers
+themselves. **Dredd** watches CI. **Tharg** cuts releases, and gets the gitflow skills for it.
+Tell the desk what each may and may not do; it writes each harness and charter with the
+`add-seat` skill, installs it, and wakes it for its birth:
+
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
+Seat the standing roles with the add-seat skill, exactly as follows. Every harness includes the
+wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is in ../widget.
+
+- Anderson, the dispatcher. Mandate: keep the workers busy: assign ready work to idle workers,
+  and seat new workers when the desk asks. May: read the work graph and the roster, assign
+  unassigned ready tasks to workers, and seat workers with add-seat, naming them from the
+  workers pool, installing them and waking each for its birth. May not: claim or build work,
+  reassign work in progress, or give a worker a second bead while it has one. Focus "dispatch".
+- Dredd. Mandate: watch CI, and file a bead for each failure. May: read ../widget/ci/latest.log,
+  and file one bead, priority 0, labelled repo:widget and source:ci, for each failure. May not:
+  fix what it finds, or file a second bead for a failure an open bead covers. Focus "patrol".
+- Tharg. Mandate: plan and cut releases when asked, and nothing else. May: plan a release as an
+  epic, write changelogs and prepare tags. May not: push a tag, publish a release or merge
+  without me. Also includes plugins/gitflow. Focus "plan-release".
+
+Install each with ynh install, then wake each for its birth:
+<command> --model=sonnet --permission-mode=bypassPermissions -- "This is your first session in tower."
+EOF
+)"
+```
+
+Expected: the desk reports each of the three written, installed and born, with a line from each
+about who they are. The charters are in the desk's words, from what you told it.
 
 <details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-seat anderson "Anderson, standing seat of the tower Wheelhouse: dispatches ready work to idle workers." dispatch \
+seat anderson "Anderson, standing seat of the tower Wheelhouse: dispatches ready work to idle workers, and seats them." dispatch \
   "You are Anderson, the anderson seat. Dispatch: give each idle worker one ready, unassigned task, highest priority first, and report who got what."
 cat > harnesses/anderson/AGENTS.md << 'EOF'
 # Anderson
 
 You are Anderson, the `anderson` seat: the dispatcher of the tower Wheelhouse.
 
-**Mandate:** Keep the workers busy: assign ready work to idle workers.
+**Mandate:** Keep the workers busy: assign ready work to idle workers, and seat new workers when
+the desk asks.
 
-**You may:** read the work graph and the roster, and assign unassigned ready tasks to workers.
+**You may:** read the work graph and the roster, assign unassigned ready tasks to workers, and
+seat workers with the add-seat skill: name them from the workers pool, install them, and wake
+each for its birth.
 **You may not:** claim or build work yourself, reassign work in progress, or give a worker a
 second bead while it has one.
 
@@ -600,74 +612,108 @@ You are Tharg, the `tharg` seat: a standing seat of the tower Wheelhouse.
 
 You act in the work graph as `tharg`: pass `--actor tharg` on every `bd` command that changes it.
 EOF
-```
-
-Expected: no output.
-
-</details>
-
-#### Connect them
-
-The desk delegates to every seat, and the roster records who holds which.
-
-<details><summary>By hand, without a model</summary>
-
-<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
-```bash
-jq '.delegates_to = [{"git": ".", "path": "harnesses/gahan"}, {"git": ".", "path": "harnesses/gore"}, {"git": ".", "path": "harnesses/dalglish"}, {"git": ".", "path": "harnesses/mccoist"}, {"git": ".", "path": "harnesses/strachan"}, {"git": ".", "path": "harnesses/anderson"}, {"git": ".", "path": "harnesses/dredd"}, {"git": ".", "path": "harnesses/tharg"}]' .agents/harness/plugin.json > desk.json
-mv desk.json .agents/harness/plugin.json
-jq '.seats += [
-  {"name": "Gahan", "group": "crew", "command": "gahan", "harness": "harnesses/gahan", "mandate": "Designs changes and breaks them into beads."},
-  {"name": "Gore", "group": "crew", "command": "gore", "harness": "harnesses/gore", "mandate": "Reviews what the workers built, and files beads for what needs fixing."},
-  {"name": "Dalglish", "group": "workers", "command": "dalglish", "harness": "harnesses/dalglish", "mandate": "Builds one bead at a time."},
-  {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time."},
-  {"name": "Strachan", "group": "workers", "command": "strachan", "harness": "harnesses/strachan", "mandate": "Builds one bead at a time."},
-  {"name": "Anderson", "group": "standing", "command": "anderson", "harness": "harnesses/anderson", "mandate": "Dispatches ready work to idle workers."},
-  {"name": "Dredd", "group": "standing", "command": "dredd", "harness": "harnesses/dredd", "mandate": "Watches CI and files a bead for each failure."},
-  {"name": "Tharg", "group": "standing", "command": "tharg", "harness": "harnesses/tharg", "mandate": "Plans and cuts releases, and never publishes without the human."}
-]' skills/roster/assets/roster.json > roster.json
-mv roster.json skills/roster/assets/roster.json
+connect Anderson standing "Dispatches ready work to idle workers, and seats them."
+connect Dredd standing "Watches CI and files a bead for each failure."
+connect Tharg standing "Plans and cuts releases, and never publishes without the human."
 git add -A
-git commit -q -m "feat: the crew, the workers and the standing roles"
-ynd compose . | jq -c '[.delegates_to[].path]'
+git commit -q -m "feat: the standing roles"
+for c in anderson dredd tharg; do ynh install "./harnesses/$c" > /dev/null; done
+born anderson "Anderson. I watch the whole board so nobody else has to. Fairness first: one bead each, the urgent ones first."
+born dredd "Dredd. I watch CI. I don't fix, I don't guess: I report what failed, once."
+born tharg "Tharg, the Mighty One. Nothing ships until it is ready and you say so. I love a clean release note."
 ynd compose harnesses/tharg | jq -c '[.artifacts.skills[].name]'
 ```
 
 Expected:
 
 ```json
-["harnesses/gahan","harnesses/gore","harnesses/dalglish","harnesses/mccoist","harnesses/strachan","harnesses/anderson","harnesses/dredd","harnesses/tharg"]
 ["add-seat","birth","create-wheelhouse","doctor","handoff","kudos","wake","work-graph","roster","branching","ci","commits","push","quality-gate","release","ynm-memory"]
 ```
 
+`ynd compose` assembles a harness, fetching its includes, without starting a session: Tharg has
+the Wheelhouse skills, the roster, gitflow and ynm.
+
 </details>
 
-`ynd compose` assembles a harness, fetching its includes, without starting a session. The desk
-delegates to all eight; when it runs, ynh makes each one a subagent it can hand work to. Tharg has
-the Wheelhouse skills, the roster, gitflow and ynm; the others the same without gitflow.
+Read Anderson's charter, whoever wrote it:
 
-#### Install and wake them
+```bash
+cat harnesses/anderson/AGENTS.md
+```
 
-Each seat becomes a command, and each wakes for its birth. Here, you write their words for them:
+Expected: Anderson's mandate, what Anderson may do (including seating workers) and may not, and
+that Anderson acts in the work graph as `anderson`.
+
+### The workers, by Anderson
+
+Workers share a mandate, not a self. Each is a seat of its own, with its own harness, charter and
+command, so you talk to McCoist as `mccoist`; only the name differs between their charters. Ask
+the desk for workers; it asks Anderson, who seats each one and wakes it for its birth:
+
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
+We need three workers: Dalglish, McCoist and Strachan. Ask Anderson to seat them:
+anderson --model=sonnet --permission-mode=bypassPermissions -- "<your request>"
+Each worker builds one bead at a time, first one assigned to it, else one nobody holds. It may
+change code for the bead it holds, and close it with what actually happened; it may not take a
+bead assigned to another worker, design or review work, or merge anything. Its focus is "next".
+The code for a repo:widget bead is in ../widget.
+EOF
+)"
+```
+
+Expected: the desk passes the request to Anderson, and reports back the three workers Anderson
+seated, installed and woke, with a line from each.
 
 <details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-for h in harnesses/*; do ynh install "./$h" > /dev/null; done
+for w in Dalglish McCoist Strachan; do
+  c=$(echo "$w" | tr '[:upper:]' '[:lower:]')
+  seat "$c" "$w, a worker of the tower Wheelhouse: builds one ready bead at a time." next \
+    "You are $w, the $c seat. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget."
+  cat > "harnesses/$c/AGENTS.md" << EOF
+# $w
+
+You are $w, the \`$c\` seat: a worker of the tower Wheelhouse.
+
+**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.
+
+**You may:** change code for the bead you hold, and close it with what actually happened.
+**You may not:** take a bead assigned to another worker, design or review work (that is the
+crew's), or merge anything.
+
+You act in the work graph as \`$c\`: pass \`--actor $c\` on every \`bd\` command that changes it.
+EOF
+  connect "$w" workers "Builds one bead at a time."
+  ynh install "./harnesses/$c" > /dev/null
+done
+git add -A
+git commit -q -m "feat: the workers"
 born mccoist "I'm McCoist. I like small, well-tested changes, and I'd rather ask than guess. I go by they/them."
 born dalglish "Dalglish. Quiet, quick, tidy. I finish what I start, and I leave the code cleaner than I found it."
 born strachan "I'm Strachan. Eager, maybe too eager: tell me if I'm reaching. I learn by doing."
-born gahan "Gahan. I like to see the whole shape before anyone builds a piece of it, and to make the pieces small."
-born gore "I'm Gore. I read slowly and kindly. A review is a gift to the next person, not a verdict."
-born anderson "Anderson. I watch the whole board so nobody else has to. Fairness first: one bead each, the urgent ones first."
-born dredd "Dredd. I watch CI. I don't fix, I don't guess: I report what failed, once."
-born tharg "Tharg, the Mighty One. Nothing ships until it is ready and you say so. I love a clean release note."
 ```
 
 Expected: no output.
 
 </details>
+
+The desk delegates to every seat, and the roster records who holds which, whoever seated them:
+
+```bash
+jq -r '[.seats[].command] | sort | join(" ")' skills/roster/assets/roster.json
+jq -r '[.delegates_to[].path] | length' .agents/harness/plugin.json
+```
+
+Expected:
+
+```text
+anderson dalglish dredd gahan gore mccoist strachan tharg tower
+8
+```
 
 ## Check it
 

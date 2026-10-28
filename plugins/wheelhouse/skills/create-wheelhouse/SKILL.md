@@ -60,8 +60,8 @@ the files it finds, and would commit the human's.
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
-   it seats every seat, workers included, with the `add-seat` skill: it is the control seat, and
-   knows who holds which seat.
+   it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
+   The human seats the crew they work with directly.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:

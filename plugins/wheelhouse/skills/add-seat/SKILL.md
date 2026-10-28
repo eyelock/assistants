@@ -8,8 +8,10 @@ description: Add a named seat to a Wheelhouse - a crew member, a standing role (
 A seat is a named role with a lasting identity: its claims and closes in Beads, its memories and
 Kudos in ynm. Each seat is a ynh harness under `harnesses/<command>/` in the Wheelhouse
 repository, started by its own name, and the desk (the repository's own harness) delegates to it.
-Every seat is added through the desk, workers included: it is the control seat, and knows who
-holds which seat.
+Who seats a seat depends on who works with it. The human seats the crew they work with directly,
+and is there for their births. The desk seats the standing roles. The dispatcher seats the
+workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
+the human lets you; if asked for a seat that is someone else's to make, say whose it is.
 
 Work from the Wheelhouse repository root, the folder holding `.agents/harness/plugin.json`,
 `.beads/` and `skills/roster/`.
@@ -30,7 +32,7 @@ You need three things. Ask for any you can't tell from the request, one question
 
 Workers share a mandate, not a self. Each worker is a seat of its own, with its own name, harness
 and command (`harnesses/okafor/`, started as `okafor`), so it is spoken to by name like any other
-seat. Asked for several workers, seat each one in turn, through steps 2 to 4.
+seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and its birth.
 
 - Every worker gets the same mandate, standing order and charter, with only its name changed:
   build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
@@ -117,7 +119,10 @@ When something is outside your mandate, hand it back to the desk.
 4. Check the Wheelhouse with the `doctor` skill if it is available.
 
 The seat's first session is its **birth** (the `birth` skill): it reads its charter, meets the
-team and writes who it is, in its own words. Don't write its identity for it.
+team and writes who it is, in its own words. Don't write its identity for it. Whoever seats a
+seat wakes it for its birth, once it is installed: `ynh install harnesses/<command>`, then
+`<command> -- "This is your first session in <wheelhouse>."`, as its own session. For a crew seat,
+leave the birth to the human: they meet the seat themselves.
 
 ## 5. Report
 
