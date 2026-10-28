@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", or asked to /exit, quit or stop mid-work, and when a seat's session begins with a handoff waiting.
+description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", "we're done for today", or asked to /exit, quit or stop mid-work.
 ---
 
 # Handoff
@@ -9,7 +9,7 @@ A seat doesn't just stop. Stopping (`/exit`, closing the window) or compaction l
 or replaces it with someone else's summary. A handoff keeps it: **you** write the notes your next
 session wakes up with, while you are still sharp.
 
-You are your seat's command name, such as `gahan` (`BEADS_ACTOR` holds it). If you don't know it,
+You are your seat's command name (`BEADS_ACTOR` holds it). If you don't know it,
 ask.
 
 ## Handing off
@@ -41,7 +41,7 @@ ask.
    - **Open questions** for the human, if any.
 
 4. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
-   notes are saved in ynm (subject seat:gahan). Restart me when you're ready and I'll pick up from
+   notes are saved in ynm (subject seat:<name>). Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.
 
 ## When asked to /exit or stop mid-work
@@ -66,8 +66,8 @@ At the start of a seat's session, before anything else:
 3. If there are, read them, then check they still hold: `bd show <id> --json` for the bead in
    progress (still claimed by you, still open), and the repository state they describe.
 4. Carry on from **the exact next step**. Don't redo what the notes say is done. When you report
-   back, start with two or three lines on where you picked up: what the notes said was done, and
-   the step you took next.
+   back, open with the pick-up, in this shape: "Picking up from my notes: <what they say is done>.
+   Next: <the step I took>." Then the rest.
 5. Once you have picked up, retire the notes so they aren't read twice:
    `ynm forget --memory-id <memoryId> --reason "picked up"`.
 

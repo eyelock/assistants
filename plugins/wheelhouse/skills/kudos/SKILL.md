@@ -1,6 +1,6 @@
 ---
 name: kudos
-description: Record praise for a Wheelhouse seat's work, kept in ynm and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat ("tell Dredd that was spot on", "kudos to Tharg"), and at the start of a seat's session.
+description: Record praise for a Wheelhouse seat's work, kept in ynm and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat ("tell the release seat that was spot on", "kudos to the reviewer").
 ---
 
 # Kudos
@@ -19,8 +19,8 @@ Two rules keep Kudos honest:
 
 1. **Find the seat.** Read the roster (`skills/roster/assets/roster.json`, under `seats`). If the
    name isn't a seat there, say so and ask which seat was meant. Don't record anything yet.
-2. **Separate the praise from any request.** "Great release, Tharg, and bump the tap first next
-   time" is Kudos ("great release") plus a request ("bump the tap first"). The request is not
+2. **Separate the praise from any request.** "Great release, and update the changelog first next
+   time" is Kudos ("great release") plus a request ("update the changelog first"). The request is not
    Kudos: keep it as what it is, a procedural memory in ynm or a bead in the work graph, and say
    which you did.
 3. **Record the praise** as an episodic memory in the seat's own namespace, `seat/<command>`, in the giver's words as near as possible,

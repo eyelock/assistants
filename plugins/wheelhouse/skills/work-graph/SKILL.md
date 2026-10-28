@@ -10,7 +10,7 @@ holds **work only**. Memory (facts, preferences, what happened) goes to ynm.
 
 ## Who you are
 
-You are your seat's command name, such as `gahan`. The seat's harness sets `BEADS_ACTOR` to it, so
+You are your seat's command name. The seat's harness sets `BEADS_ACTOR` to it, so
 claims and closes are recorded as you. If `BEADS_ACTOR` is unset, pass `--actor <name>` on every
 command that changes a bead. If you don't know your seat's name, ask; never act as someone else.
 
@@ -51,8 +51,8 @@ reaching for the same bead. Other seats skip this section.
 
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
 2. Create each task under it: `bd create "<task>" --parent <epic> -l repo:<repo> -d "<what done looks like>" --json`.
-   Every task names the one repository it touches in a `repo:` label, such as `repo:ynh` or
-   `repo:homebrew-tap`. Split a task that touches two.
+   Every task names the one repository it touches in a `repo:` label, such as `repo:api` or
+   `repo:docs`. Split a task that touches two.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
    where the order matters; tasks that can run side by side stay unlinked.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.

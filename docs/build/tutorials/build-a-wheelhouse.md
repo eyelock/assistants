@@ -433,10 +433,6 @@ who it is. It takes a while: the desk wakes eight seats, each a session of its o
 carrying only what its job needs, and a charter, `AGENTS.md`, that says what it may and may not
 do. This function writes the shape; each seat then gets its own charter.
 
-Every seat has the same shape: a harness of its own in `harnesses/<command>/`, carrying only what
-its job needs, and a charter, `AGENTS.md`, that says what it may and may not do. This function
-writes the shape; each seat then gets its own charter.
-
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 seat() { # seat <command> <description> <focus> <focus prompt> [extra include as JSON]

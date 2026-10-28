@@ -20,7 +20,7 @@ A Wheelhouse is a bespoke set of named agents for one space, built to fit it. It
 You need the answers below. Take what the request already says, and ask for the rest **one question
 at a time**, in this order. Don't create anything until you have the first four.
 
-1. **The space and its purpose,** in a sentence: "developing and releasing the YN tools".
+1. **The space and its purpose,** in a sentence: "developing and releasing our command-line tools".
 2. **The name** of the Wheelhouse: short, lowercase, and free as a command (`command -v <name>`
    finds nothing). It names the desk, the folder and the bead prefix.
 3. **What it reaches:** the repositories and platforms the work touches.

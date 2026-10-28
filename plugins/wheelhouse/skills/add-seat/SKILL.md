@@ -18,15 +18,16 @@ You need three things. Ask for any you can't tell from the request, one question
 
 - **Group:** crew (designs work and reviews it), standing (one mandate, runs unattended) or
   worker (implements ready beads; workers are a fleet, see below).
-- **Mandate:** one sentence, the job and nothing else, such as "Cuts releases of the YN tools when
-  asked, and nothing else."
+- **Mandate:** one sentence, the job and nothing else, such as "Cuts releases when asked, and
+  nothing else."
 - **Reach:** the repositories and platforms the job touches, and whether it only reads them or
   also changes them.
 
 ## Workers are a fleet
 
 Workers are interchangeable, so they share **one** harness, `harnesses/worker/`, run as many named
-instances: `BEADS_ACTOR=mccoist ynh run harnesses/worker --focus next`. Each instance is a worker
+instances: `BEADS_ACTOR=<worker> ynh run harnesses/worker --focus next`, where `<worker>` is the
+worker's command, its name in lowercase (`BEADS_ACTOR=okafor`, never `Okafor`). Each instance is a worker
 from the workers pool, claiming and closing as its own name.
 
 - The first time workers are asked for, create the fleet harness (step 3, with `worker` as the
