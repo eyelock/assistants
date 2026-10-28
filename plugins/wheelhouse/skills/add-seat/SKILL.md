@@ -1,6 +1,6 @@
 ---
 name: add-seat
-description: Add a named seat to a Wheelhouse - a crew member, a worker slot or a standing role - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role or agent in a Wheelhouse (a release manager, a PR watcher, a designer), or to give a role a name.
+description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or the worker fleet - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name.
 ---
 
 # Add a seat
@@ -17,11 +17,27 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 You need three things. Ask for any you can't tell from the request, one question at a time:
 
 - **Group:** crew (designs work and reviews it), standing (one mandate, runs unattended) or
-  worker (implements ready beads; workers share slots and get no seat of their own).
+  worker (implements ready beads; workers are a fleet, see below).
 - **Mandate:** one sentence, the job and nothing else, such as "Cuts releases of the YN tools when
   asked, and nothing else."
 - **Reach:** the repositories and platforms the job touches, and whether it only reads them or
   also changes them.
+
+## Workers are a fleet
+
+Workers are interchangeable, so they share **one** harness, `harnesses/worker/`, run as many named
+instances: `BEADS_ACTOR=mccoist ynh run harnesses/worker --focus next`. Each instance is a worker
+from the workers pool, claiming and closing as its own name.
+
+- The first time workers are asked for, create the fleet harness (step 3, with `worker` as the
+  command and the charter below), and connect it (step 4). The roster's `seats` gets one entry
+  for the fleet: `{ "name": "Workers", "group": "workers", "command": "worker", "harness":
+  "harnesses/worker", "mandate": "..." }`.
+- After that, "add a worker" creates nothing: say which worker names the pool has, and how to
+  start each one. If the pool has fewer names than the human wants workers, ask for more names.
+- The fleet's charter says: you are the worker named by `BEADS_ACTOR` (or by whoever started
+  you; ask if neither says), you work only on beads assigned to you or unassigned, and you hand
+  review and design back to the crew.
 
 ## 2. Name it
 
@@ -50,6 +66,9 @@ rules. In short:
     { "git": "../..", "pick": ["skills/roster"] }
   ],
   "env_passthrough": ["BEADS_ACTOR"],
+  "hooks": {
+    "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }]
+  },
   "focuses": {
     "<order>": { "prompt": "You are <Name>, the <command> seat. <the standing order>" }
   }
@@ -63,6 +82,11 @@ rules. In short:
   MCP servers, and the environment variables they need in `env_passthrough`. A seat that only
   reads a platform gets its read-only server.
 - One focus per standing order. Each prompt names the seat, and says what to do and when to stop.
+- The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
+  `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
+  starts with who it is, where it left off, its Kudos and what is waiting for it. A named seat's
+  hook names it (`--seat <command>`); the worker fleet's leaves `--seat` out, so each worker is
+  named by `BEADS_ACTOR`.
 
 `harnesses/<command>/AGENTS.md` is the seat's charter:
 
@@ -89,6 +113,9 @@ When something is outside your mandate, hand it back to the desk.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
    path and mandate.
 4. Check the Wheelhouse with the `doctor` skill if it is available.
+
+The seat's first session is its **birth** (the `birth` skill): it reads its charter, meets the
+team and writes who it is, in its own words. Don't write its identity for it.
 
 ## 5. Report
 

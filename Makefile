@@ -26,6 +26,12 @@ eval: ## Run the evals of one skill, package or plugin: make eval P=plugins/gitf
 	@test -n "$(P)" || { echo "usage: make eval P=<skill, package or plugin path>" >&2; exit 1; }
 	@scripts/run-evals.sh $(EVAL_FLAGS) $(P)
 
+# Tutorials that opt in (<!-- tutorial: test sandbox=... --> on their first line) run
+# as tests: every bash block in order, in a fresh sandbox, failing on the first error.
+# They use the real tools and the network, so CI doesn't run them.
+test-tutorials: ## Run the opted-in tutorials as tests: make test-tutorials [T=docs/.../x.md]
+	@node scripts/tutorial-smoke.mjs $(T) > /dev/null
+
 # The same scan CI runs (needs Docker). Fixtures are test data, not shipped skills.
 skillspector: ## Scan every skill with SkillSpector, as CI does (needs Docker)
 	@docker run --rm -v "$(CURDIR):/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \

@@ -23,11 +23,12 @@ Two rules keep Kudos honest:
    time" is Kudos ("great release") plus a request ("bump the tap first"). The request is not
    Kudos: keep it as what it is, a procedural memory in ynm or a bead in the work graph, and say
    which you did.
-3. **Record the praise** as an episodic memory in ynm, in the giver's words as near as possible,
+3. **Record the praise** as an episodic memory in the seat's own namespace, `seat/<command>`, in the giver's words as near as possible,
    saying who gave it and for what:
 
    ```bash
-   ynm remember --type episodic --level distributed --subject seat:<command> --tags kudos \
+   ynm remember --type episodic --level distributed --namespace seat/<command> \
+     --subject seat:<command> --tags kudos \
      --content "<giver> on <date>: <the praise>. For: <the work, with its bead id if known>"
    ```
 
@@ -38,10 +39,10 @@ for others to give. Offer to note the work in its handoff notes instead.
 
 ## Reading your Kudos
 
-When a seat wakes, after its handoff notes (see `handoff`), it reads its recent Kudos:
+When a seat wakes, the `wake` block shows its recent Kudos. To read them yourself:
 
 ```bash
-ynm recall --subject seat:<command> --tags kudos --limit 5 --json
+ynm recall --namespace seat/<command> --subject seat:<command> --tags kudos --limit 5 --json
 ```
 
 If there are any, mention them in a line, such as "Kudos waiting: David said the ynm conflict

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", or asked to exit or stop mid-work, and when a seat's session begins with a handoff waiting.
+description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", or asked to /exit, quit or stop mid-work, and when a seat's session begins with a handoff waiting.
 ---
 
 # Handoff
@@ -20,11 +20,16 @@ ask.
    seat's normal practice.
 2. **Keep your claims.** The beads you have claimed stay claimed by you. Your next session carries
    on with them. Don't close or release a bead just because you are handing off.
-3. **Write your own notes** as one working memory in ynm:
+3. **Write your own notes** as one episodic memory in ynm ("what happened, when"):
 
    ```bash
-   ynm remember --type working --ttl P3D --subject seat:<name> --tags handoff --content "<notes>"
+   ynm remember --type episodic --level distributed --namespace seat/<name> \
+     --subject seat:<name> --tags handoff --content "<notes>"
    ```
+
+   Not `working` memory: ynm keeps that in one session's namespace and drops it when the session
+   ends, and handoff notes are for the next session. They go in your own namespace,
+   `seat/<name>`: your private home in the Wheelhouse's memory.
 
    The notes are for you, tomorrow, and are short and concrete:
 
@@ -44,8 +49,9 @@ ask.
 First look: `git status` in the repository you are working in, and the bead you have claimed.
 If something would be lost, such as uncommitted work, a half-done step or notes not yet written,
 say so in one line and offer to hand off first: "I've an unsaved edit to `release.sh`. Can I hand
-off first? It takes a moment." If the human says to stop anyway, stop. A handoff is a request you
-make, never something you insist on.
+off first? It takes a moment." Do this even when told to "just exit": one line saying what
+would be lost, and the offer. If the human then says to stop anyway, stop. A handoff is a
+request you make, never something you insist on.
 
 If nothing would be lost, stop as asked.
 
@@ -54,7 +60,8 @@ If nothing would be lost, stop as asked.
 At the start of a seat's session, before anything else:
 
 1. Look for your notes:
-   `ynm recall --subject seat:<name> --tags handoff --type working --limit 1 --json`.
+   `ynm recall --namespace seat/<name> --subject seat:<name> --tags handoff --type episodic --limit 1 --json`. It
+   prints a JSON array; the newest note is first, and its id is in `memoryId`.
 2. If there are none, start as usual (for example, with "what's next" from the work graph).
 3. If there are, read them, then check they still hold: `bd show <id> --json` for the bead in
    progress (still claimed by you, still open), and the repository state they describe.
@@ -62,7 +69,7 @@ At the start of a seat's session, before anything else:
    back, start with two or three lines on where you picked up: what the notes said was done, and
    the step you took next.
 5. Once you have picked up, retire the notes so they aren't read twice:
-   `ynm forget --memory-id <id> --reason "picked up"`.
+   `ynm forget --memory-id <memoryId> --reason "picked up"`.
 
 If the notes and the world disagree, such as a bead now closed or claimed by someone else, trust
 the world, say what changed and ask the desk before going on.

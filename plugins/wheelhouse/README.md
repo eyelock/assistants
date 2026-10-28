@@ -22,13 +22,16 @@ from parts that work on any vendor:
 | `work-graph` | find, claim, break down and close work in Beads, as a named seat |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
+| `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
+| `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse |
 
 ## Setting up
 
 Needs `ynh`, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`) and Beads (`brew install beads`).
 
-- Start Beads with `bd init --skip-agents`. Without `--skip-agents`, Beads writes its own agent
+- Start Beads with `bd init --skip-agents --non-interactive --role maintainer`. In a terminal,
+  `bd init` otherwise asks questions. Without `--skip-agents`, Beads writes its own agent
   setup, which tells agents to keep memory in Beads rather than ynm. `bd init` also commits the
   files it finds, so run it in a clean tree.
 - Run `ynm init` in the Wheelhouse repository, and `ynm client install ynh` in each harness folder.

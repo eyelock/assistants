@@ -11,6 +11,7 @@ hooks, and skill packages in `skills/`, which hold skills only. Skills are liste
 | `gitflow` | 0.2.0 | 6 | 1 | none |
 | `media-management` | 0.3.0 | 11 | 2 | yes: `SessionStart` config check, `PreToolUse` bash validation and auto-approval |
 | `vendor-harness` | 0.3.0 | 12 | 4 | none |
+| `wheelhouse` | 0.1.0 | 8 | none | none |
 
 ### gitflow
 
@@ -46,6 +47,17 @@ Lifecycle management for harness artifacts across Claude Code, Cursor, Codex and
   `subagent-artifact`, `submit-feedback`, `vendor-adapters`.
 - Agents: `harness-advisor` (entry point), `feedback-composer`, `provenance-detective`,
   `vendor-sync`.
+
+### wheelhouse
+
+A Wheelhouse: named agent seats for one space of work, each a ynh harness, sharing a Beads work
+graph and ynm memory.
+
+- Skills: `add-seat`, `birth`, `create-wheelhouse`, `doctor`, `handoff`, `kudos`, `wake`, `work-graph`.
+- Seats are born once, in their own words, and wake every session with purpose: `scripts/wake.sh`
+  runs from each seat's session-start hook.
+- Needs `ynh`, `ynm` and Beads (`bd`). The `doctor` skill checks they are set up right.
+- Walk through one in [Build a Wheelhouse](../../build/tutorials/build-a-wheelhouse.md).
 
 ## Skill packages (`skills/`)
 

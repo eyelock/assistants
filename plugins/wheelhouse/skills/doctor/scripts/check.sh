@@ -100,11 +100,11 @@ else
   add "beads installed" true info "$(bd version 2>/dev/null | head -1)"
   if [ ! -d "$dir/.beads" ]; then
     add "work graph" false error "no .beads/ in the Wheelhouse repository" \
-      "bd init --skip-agents --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"
+      "bd init --skip-agents --non-interactive --role maintainer --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"
   elif ! (cd "$dir" && bd ready --json >/dev/null 2>&1); then
     add "work graph" false error ".beads/ exists but bd cannot read it" "cd $dir && bd ready, and read the error"
   else
-    add "work graph" true info "$(cd "$dir" && bd list --all --json 2>/dev/null | jq length) beads"
+    add "work graph" true info "$(cd "$dir" && bd list --all --json 2>/dev/null | jq '.data? // . | length') beads"
   fi
 fi
 

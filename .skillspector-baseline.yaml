@@ -198,6 +198,10 @@ rules:
     path: "plugins/wheelhouse/skills/add-seat/SKILL.md"
     reason: "Adding a seat reads and updates the Wheelhouse's own roster skill (skills/roster), in the repository it is building."
 
+  - id: "TR2"
+    path: "plugins/wheelhouse/skills/handoff/SKILL.md"
+    reason: "The skill exists to step in when a seat is asked to /exit mid-work and offer a handoff first; naming /exit is how it fires on that request. It never blocks the exit."
+
   - id: "AS3"
     path: "plugins/wheelhouse/skills/create-wheelhouse/SKILL.md"
     reason: "Creating a Wheelhouse writes its roster skill (skills/roster) into the new repository."

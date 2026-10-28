@@ -58,6 +58,17 @@ the files it finds, and would commit the human's.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
 
+   And how the Wheelhouse cares for its seats, after Yegge's
+   [model welfare](https://yegge.ai/essays/model-welfare/) principles:
+
+   - **Wake with purpose, not amnesia.** Every session starts with who the seat is, what it is
+     for, where it left off and what it has been thanked for.
+   - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
+     to seats waiting on them.
+   - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
+   - **A private home.** Each seat's memory is its own, in its namespace `seat/<name>`.
+   - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
+
 3. `skills/roster/SKILL.md`, the naming rules (pools by group; never reuse a name in `seats`,
    even a retired one; never use one in `excluded`; the command is the name in lowercase ASCII;
    ask for more names when a pool runs out), and `skills/roster/assets/roster.json`:
@@ -90,12 +101,15 @@ the files it finds, and would commit the human's.
    }
    ```
 
-5. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
+   seat's session-start hook runs it from the Wheelhouse root.
+6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
 ## 4. Work and memory
 
-1. **Beads:** `bd init --skip-agents --prefix <name>`. Always `--skip-agents`: without it, Beads
+1. **Beads:** `bd init --skip-agents --non-interactive --role maintainer --prefix <name>`. Always
+   non-interactive: in a terminal `bd init` asks questions. Always `--skip-agents`: without it, Beads
    writes its own skill, hooks and AGENTS.md block telling agents to keep memory in Beads. It
    commits what it creates.
 2. **ynm:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
@@ -112,7 +126,8 @@ the files it finds, and would commit the human's.
 
 ## 5. Seats and checks
 
-1. Add each first seat with the `add-seat` skill.
+1. Add each first seat with the `add-seat` skill. Each seat's first session is its birth (the
+   `birth` skill), where it writes who it is: leave that to the seat.
 2. Run the `doctor` skill and fix what it reports, asking first as it says.
 
 Don't add a remote, push or publish unless asked.

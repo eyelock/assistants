@@ -11,6 +11,7 @@ Learn by building something small, start to finish.
 - [Build a persona harness](tutorials/build-a-persona-harness.md): compose a code-review persona from existing skills with includes, a profile and a focus, and run it
 - [Write a skill with evals](tutorials/write-a-skill-with-evals.md): write a small skill, prove it with evals, and lint it
 - [Give a harness a tool](tutorials/give-a-harness-a-tool.md): add an MCP server and a blocking hook to a harness, against a fake Messages database
+- [Build a Wheelhouse](tutorials/build-a-wheelhouse.md): a set of named agent seats sharing a Beads work graph and ynm memory, built by hand so you see each layer work
 
 ## How-to guides
 

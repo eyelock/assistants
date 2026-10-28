@@ -106,6 +106,19 @@ How to read one platform well through its MCP server. Used with the triage skill
 | `split-long-tracks` | Split tracks over Apple Music's 78-minute limit at quiet points. |
 | `reclaim-space` | Free local disk by offloading cloud-backed Apple Music downloads, protecting DJ crates. |
 
+## Wheelhouse (`plugins/wheelhouse`)
+
+| Skill | What it does |
+|---|---|
+| `create-wheelhouse` | Create a new Wheelhouse: a desk harness, a constitution, a roster of naming pools, a Beads work graph and ynm memory. |
+| `add-seat` | Add a named seat (crew, worker or standing role) as a ynh harness with its charter and standing orders. |
+| `birth` | A seat's first session: read its charter, meet the team, write who it is in its own words, pinned in its own namespace. |
+| `wake` | Start every session with purpose: who the seat is, its mandate, where it left off, its Kudos, its record and what is waiting. |
+| `work-graph` | Work from the Beads graph as a named seat: claim what is assigned first, dispatch to idle workers, break work down, close it honestly. |
+| `handoff` | End a seat's session by writing its own notes and asking to restart, and pick up from them on waking. |
+| `kudos` | Pass praise on to a seat, kept in ynm with no work attached, read when the seat wakes. |
+| `doctor` | Check ynm and Beads are set up right for a Wheelhouse. |
+
 ## Vendor harness (`plugins/vendor-harness`)
 
 | Skill | What it does |

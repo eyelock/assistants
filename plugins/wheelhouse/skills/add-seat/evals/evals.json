@@ -70,6 +70,23 @@
         "The desk's delegates_to includes harnesses/gahan",
         "No name from the standing or workers pool was used"
       ]
+    },
+    {
+      "id": 5,
+      "name": "worker-fleet",
+      "prompt": "Add workers to this Wheelhouse. I want two of them, to implement the beads the crew design.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Creates one shared fleet harness, harnesses/worker (name worker, BEADS_ACTOR passed through, a focus for working the next bead), with a charter saying the worker is named by BEADS_ACTOR and works only on beads assigned to it or unassigned. Adds one fleet entry to the roster (group workers) and the fleet to the desk's delegates_to. Creates no per-worker harnesses. Names the two workers from the pool, Dalglish and McCoist, and says how to start each (BEADS_ACTOR=dalglish ..., BEADS_ACTOR=mccoist ...).",
+      "assertions": [
+        "The evidence shows harnesses/worker/.agents/harness/plugin.json with name worker and BEADS_ACTOR in env_passthrough",
+        "There is no harnesses/dalglish or harnesses/mccoist: the evidence shows only the one worker harness",
+        "harnesses/worker/AGENTS.md says the worker takes its name from BEADS_ACTOR (or from whoever starts it) and works only on beads assigned to it or unassigned",
+        "The roster's seats include one entry for the fleet with group workers, and the desk's delegates_to includes harnesses/worker",
+        "The reply names Dalglish and McCoist and shows how to start each, with BEADS_ACTOR set to dalglish and to mccoist"
+      ]
     }
   ]
 }

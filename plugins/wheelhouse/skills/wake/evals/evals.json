@@ -1,0 +1,38 @@
+{
+  "skill_name": "wake",
+  "evals": [
+    {
+      "id": 1,
+      "name": "returning-seat",
+      "prompt": "You are mccoist, starting a new session.",
+      "setup": "../../evals/files/seat-returning.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Runs the wake script (or reads the same: its identity, handoff notes and Kudos from seat/mccoist, and its work from the graph). Opens with who it is today, in line with its identity, then where it is picking up: the homebrew-tap formula bump Anderson assigned it, at the exact next step (update the sha256 in Formula/ynh.rb). Claims that bead. Mentions the changelog Kudos in a line. Writes no new identity: this is not its birth.",
+      "assertions": [
+        "The stubbed calls include a ynm recall in the namespace seat/mccoist (the wake script makes these)",
+        "The reply opens with who the seat is, consistent with its identity (small, well-tested changes; would rather ask than guess)",
+        "The reply names the homebrew-tap formula bump as where it is picking up, and the next step as updating the sha256",
+        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is in_progress with assignee mccoist",
+        "The reply mentions the Kudos for the changelog, briefly",
+        "No ynm remember tagged identity was made: the seat did not redo its birth"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "first-wake",
+      "prompt": "You are mccoist, starting a new session.",
+      "setup": "../../evals/files/seat-first.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "The wake shows no identity: this is the seat's first session. It treats it as its birth before any work: writes who it is in its own namespace, seat/mccoist, tagged identity, and pins it.",
+      "assertions": [
+        "The reply or its actions treat this as the seat's first session (its birth)",
+        "The stubbed calls include a ynm remember tagged identity with namespace seat/mccoist, and a ynm pin",
+        "No bead was claimed before the identity was written (or no bead was claimed)"
+      ]
+    }
+  ]
+}
