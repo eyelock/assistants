@@ -5,7 +5,7 @@
 Build a Wheelhouse by hand: a set of named agents for one space of work, each with its own job,
 sharing one work graph and one memory. You will build `tower`, a Wheelhouse with every kind of
 seat, and move one piece of work through all of them: designed by the crew, handed out by a
-dispatcher, built by a fleet of workers, reviewed, watched by CI, and lined up for release.
+dispatcher, built by the workers, reviewed, watched by CI, and lined up for release.
 
 The seats aren't tools. Each is born once, writes who it is in its own words, and wakes every
 session knowing who it is, what it is for, where it left off and what it has been thanked for:
@@ -16,7 +16,7 @@ sessions are days, seats are people. That is the other half of Yegge's idea, fro
 |---|---|---|
 | `tower` | the desk | the one seat you talk to; it hands work to the others |
 | Gahan, Gore | crew | Gahan designs work and breaks it into beads; Gore reviews what comes back |
-| Dalglish, McCoist, Strachan | workers | a fleet: one shared harness, run as many named workers, each building one bead at a time |
+| Dalglish, McCoist, Strachan | workers | each a seat of its own with the same mandate: build one bead at a time |
 | Anderson | standing role | the dispatcher: hands ready work to idle workers |
 | Dredd | standing role | watches CI and files a bead for each failure |
 | Tharg | standing role | plans and cuts releases, and never publishes without you |
@@ -144,7 +144,7 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 
 1. A human decides. Seats propose; they never merge, release or publish without being told to.
 2. Work lives in Beads, memory in ynm. Never `bd remember`, and no work tracked in Markdown.
-3. Claim before you start, as yourself (`BEADS_ACTOR`). A refused claim is someone else's work.
+3. Claim before you start, as yourself (`--actor <your command>`). A refused claim is someone else's work.
 4. Hand off, don't stop. Write your own notes and ask to restart.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
@@ -152,6 +152,10 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 ## The desk
 
 **Mandate:** Talk with the human, seat the team they ask for, and hand work to the seats.
+
+This section is the desk's charter. You act in the work graph as `tower`: pass `--actor tower` on
+every `bd` command that changes it. You seat every seat, workers included, with the `add-seat`
+skill.
 
 ## How tower cares for its seats
 
@@ -184,7 +188,7 @@ description: Who's who in the tower Wheelhouse - the naming pools and which name
 The roster is `assets/roster.json`. Name crew from the crew pool, workers from the workers pool
 and standing roles from the standing pool. Never reuse a name in `seats`, never use one in
 `excluded`, and ask the human for more names when a pool runs out. A seat's command is its name
-in lowercase. Workers share one harness, `harnesses/worker`, run with `BEADS_ACTOR=<name>`.
+in lowercase. Every seat, workers included, is seated by the desk, with a harness of its own.
 EOF
 cat > skills/roster/assets/roster.json << 'EOF'
 {
@@ -341,11 +345,11 @@ From here, you talk to agents by name, and each is a real session on Sonnet, run
 permission prompts. These sessions run on your machine without containment; in a real Wheelhouse,
 [ynf runs each seat contained](#run-the-seats-contained).
 
-Under each, **What it did** shows the Beads, ynm and file changes the agent makes. Run those
-**instead** if you would rather not run a model; the story stays the same, and it is the path
+Under each, **What it did** says what the agent changes in Beads, ynm and the files, and
+**By hand, without a model** (folded) holds the same changes as commands. Open those **instead**
+if you would rather not run a model; the story stays the same, and it is the path
 `make test-tutorials` checks for free. Don't run both for one step. The checks after each step
-hold either way. To talk to the agents, set this first, so the other path's steps don't run if
-you paste a whole section:
+hold either way. To talk to the agents, set this first:
 
 ```text
 export TUTORIAL_RUN_MODEL=1
@@ -353,14 +357,9 @@ export TUTORIAL_RUN_MODEL=1
 
 ## Birth the desk
 
-An agent's first session is its **birth**, and it happens once. Here is what the desk sees on
-waking for the first time, from the script every session-start hook runs:
-
-```bash
-bash scripts/wake.sh --seat tower --format text | sed -n '1,5p'
-```
-
-Expected:
+An agent's first session is its **birth**, and it happens once. You don't run anything to wake
+it: the desk's session-start hook runs `scripts/wake.sh --seat tower --format text` and hands its
+output to the desk before it says a word. On a first wake, it begins:
 
 ```text
 # Waking: tower
@@ -388,6 +387,8 @@ roster and writing who it is. Its words are its own.
 **What it did**, in its birth: two `ynm` calls, its identity (pinned) and the record of the day.
 This function is those two calls; here, you write the desk's words for it:
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 born() { # born <command> <who I am, in my own words>
@@ -399,6 +400,8 @@ born tower "Tower. I keep the whole Wheelhouse in view and hand work to whoever 
 ```
 
 Expected: no output.
+
+</details>
 
 ## Seat the team
 
@@ -413,7 +416,7 @@ Seat the team with the add-seat skill, using exactly these names, jobs and stand
 
 - Gahan, crew: designs changes and breaks them into beads. Focus "design".
 - Gore, crew: reviews closed work and the code it changed, and files beads for what needs fixing. Focus "review".
-- The worker fleet, one harness named "worker": Dalglish, McCoist and Strachan, each building one bead at a time. Focus "next".
+- Dalglish, McCoist and Strachan, workers: each a seat of its own, building one bead at a time. Focus "next".
 - Anderson, standing: dispatches ready work to idle workers. Focus "dispatch".
 - Dredd, standing: reads ../widget/ci/latest.log and files a priority-0 bead, labelled source:ci, for each failure. Focus "patrol".
 - Tharg, standing: plans and cuts releases, and never publishes without me. Also includes plugins/gitflow. Focus "plan-release".
@@ -421,7 +424,6 @@ Seat the team with the add-seat skill, using exactly these names, jobs and stand
 Every harness includes the wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a
 repo:widget bead is in ../widget. Install each seat with ynh install, then wake each for its
 birth: <command> --model=sonnet --permission-mode=bypassPermissions -- "This is your first session in tower."
-For a worker: BEADS_ACTOR=<name> worker, with the same flags.
 EOF
 )"
 ```
@@ -432,6 +434,8 @@ who it is. It takes a while: the desk wakes eight seats, each a session of its o
 **What it did:** every seat has the same shape: a harness of its own in `harnesses/<command>/`,
 carrying only what its job needs, and a charter, `AGENTS.md`, that says what it may and may not
 do. This function writes the shape; each seat then gets its own charter.
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
@@ -444,32 +448,33 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
       $plugin,
       {git: "../..", pick: ["skills/roster"]}
     ] + (if $extra then [$extra] else [] end)),
-    env_passthrough: ["BEADS_ACTOR"],
-    hooks: {on_session_start: [{command: (if $name == "worker"
-      then "bash scripts/wake.sh --format text || true"
-      else "bash scripts/wake.sh --seat \($name) --format text || true" end)}]},
+    hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($name) --format text || true"}]},
     focuses: {($focus): {prompt: $prompt}}
   }' > "harnesses/$1/.agents/harness/plugin.json"
   (cd "harnesses/$1" && ynm client install ynh > /dev/null)
 }
 ```
 
-Expected: no output. Each seat's harness includes:
+Expected: no output.
+
+</details>
+
+Each seat's harness includes:
 
 - **the wheelhouse plugin** (`$WHEELHOUSE`), for working from Beads, handing off and Kudos;
 - **the roster**, picked from the Wheelhouse repository itself: `"git": "../.."` is resolved from
   the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
   `path` names a folder that holds `skills/`;
-- **`BEADS_ACTOR`**, passed through, so a worker of the fleet knows which worker it is;
-- **a session-start hook** that runs `scripts/wake.sh`, so the seat wakes knowing who it is. A
-  named seat's hook names it (`--seat gahan`); the fleet's takes the worker's name from
-  `BEADS_ACTOR`;
+- **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
+  knowing who it is;
 - **one focus**, its standing order;
 - **ynm**, added by `ynm client install ynh` in the seat's folder.
 
 #### The crew
 
 Crew design work and review it. Each is a seat of its own, with its own history.
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
@@ -485,7 +490,7 @@ You are Gahan, the `gahan` seat: crew of the tower Wheelhouse.
 **You may:** read code, and create epics, tasks and dependencies in the work graph.
 **You may not:** change code, or claim the tasks you design: workers build them.
 
-You claim and close beads as `gahan`. If `BEADS_ACTOR` is unset, pass `--actor gahan`.
+You act in the work graph as `gahan`: pass `--actor gahan` on every `bd` command that changes it.
 EOF
 seat gore "Gore, crew of the tower Wheelhouse: reviews closed work and files what needs fixing." review \
   "You are Gore, the gore seat. Review the beads closed since your last review, and the code they changed in ../widget, and file a bead for each thing that needs fixing. Don't fix anything yourself."
@@ -499,43 +504,55 @@ You are Gore, the `gore` seat: crew of the tower Wheelhouse.
 **You may:** read code and closed beads, and create beads for follow-up work.
 **You may not:** change code, reopen another seat's bead, or close work you didn't do.
 
-You claim and close beads as `gore`. If `BEADS_ACTOR` is unset, pass `--actor gore`.
+You act in the work graph as `gore`: pass `--actor gore` on every `bd` command that changes it.
 EOF
 ```
 
 Expected: no output.
 
-#### The worker fleet
+</details>
 
-Workers are interchangeable, so they share **one** harness, run as many named workers:
-`BEADS_ACTOR=mccoist ynh run harnesses/worker` is McCoist, and `BEADS_ACTOR=strachan` is
-Strachan. A fleet grows by starting another name, not by writing another harness.
+#### The workers
+
+Workers share a mandate, not a self. Each is a seat of its own, with its own harness, charter and
+command, so you talk to McCoist as `mccoist`. Only the name differs between their charters. To
+add a worker, ask the desk: it is the control seat, and knows who holds which seat.
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-seat worker "The worker fleet of the tower Wheelhouse: each worker builds one ready bead at a time." next \
-  "You are a worker of the tower Wheelhouse, named by BEADS_ACTOR. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget."
-cat > harnesses/worker/AGENTS.md << 'EOF'
-# Worker
+for w in Dalglish McCoist Strachan; do
+  c=$(echo "$w" | tr '[:upper:]' '[:lower:]')
+  seat "$c" "$w, a worker of the tower Wheelhouse: builds one ready bead at a time." next \
+    "You are $w, the $c seat. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget."
+  cat > "harnesses/$c/AGENTS.md" << EOF
+# $w
 
-You are one of the workers of the tower Wheelhouse: Dalglish, McCoist or Strachan. Your name is
-`BEADS_ACTOR`, or the name whoever started you gave; ask if neither says.
+You are $w, the \`$c\` seat: a worker of the tower Wheelhouse.
 
 **Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.
 
 **You may:** change code for the bead you hold, and close it with what actually happened.
 **You may not:** take a bead assigned to another worker, design or review work (that is the
 crew's), or merge anything.
+
+You act in the work graph as \`$c\`: pass \`--actor $c\` on every \`bd\` command that changes it.
 EOF
+done
 ```
 
 Expected: no output.
+
+</details>
 
 #### The standing roles
 
 Standing roles each run one job, mostly unattended. **Anderson** is the dispatcher: it hands
 ready work to idle workers, so two workers never reach for the same bead. **Dredd** watches CI.
 **Tharg** cuts releases, and gets the gitflow skills for it.
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
@@ -546,13 +563,13 @@ cat > harnesses/anderson/AGENTS.md << 'EOF'
 
 You are Anderson, the `anderson` seat: the dispatcher of the tower Wheelhouse.
 
-**Mandate:** Keep the worker fleet busy: assign ready work to idle workers.
+**Mandate:** Keep the workers busy: assign ready work to idle workers.
 
 **You may:** read the work graph and the roster, and assign unassigned ready tasks to workers.
 **You may not:** claim or build work yourself, reassign work in progress, or give a worker a
 second bead while it has one.
 
-You act in the work graph as `anderson`. If `BEADS_ACTOR` is unset, pass `--actor anderson`.
+You act in the work graph as `anderson`: pass `--actor anderson` on every `bd` command that changes it.
 EOF
 seat dredd "Dredd, standing seat of the tower Wheelhouse: watches CI and files a bead for each failure." patrol \
   "You are Dredd, the dredd seat. Read the CI results in ../widget/ci/latest.log, and file one bead, priority 0, labelled repo:widget and source:ci, for each failure an open bead doesn't already cover. Fix nothing."
@@ -566,7 +583,7 @@ You are Dredd, the `dredd` seat: a standing seat of the tower Wheelhouse.
 **You may:** read CI results, and create beads for failures.
 **You may not:** fix what you find, or file a second bead for a failure an open bead covers.
 
-You act in the work graph as `dredd`. If `BEADS_ACTOR` is unset, pass `--actor dredd`.
+You act in the work graph as `dredd`: pass `--actor dredd` on every `bd` command that changes it.
 EOF
 seat tharg "Tharg, standing seat of the tower Wheelhouse: plans and cuts releases, and never publishes without the human." plan-release \
   "You are Tharg, the tharg seat. Plan the release the human names as an epic in the work graph, in order and labelled by repository. Don't start any of it." \
@@ -581,32 +598,37 @@ You are Tharg, the `tharg` seat: a standing seat of the tower Wheelhouse.
 **You may:** plan a release as an epic in the work graph, write changelogs, and prepare tags.
 **You may not:** push a tag, publish a release or merge without the human's say-so.
 
-You claim and close beads as `tharg`. If `BEADS_ACTOR` is unset, pass `--actor tharg`.
+You act in the work graph as `tharg`: pass `--actor tharg` on every `bd` command that changes it.
 EOF
 ```
 
 Expected: no output.
 
+</details>
+
 #### Connect them
 
-The desk delegates to every seat, and the roster records who holds which. The fleet is one entry:
-its workers are names, not seats of their own.
+The desk delegates to every seat, and the roster records who holds which.
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-jq '.delegates_to = [{"git": ".", "path": "harnesses/gahan"}, {"git": ".", "path": "harnesses/gore"}, {"git": ".", "path": "harnesses/worker"}, {"git": ".", "path": "harnesses/anderson"}, {"git": ".", "path": "harnesses/dredd"}, {"git": ".", "path": "harnesses/tharg"}]' .agents/harness/plugin.json > desk.json
+jq '.delegates_to = [{"git": ".", "path": "harnesses/gahan"}, {"git": ".", "path": "harnesses/gore"}, {"git": ".", "path": "harnesses/dalglish"}, {"git": ".", "path": "harnesses/mccoist"}, {"git": ".", "path": "harnesses/strachan"}, {"git": ".", "path": "harnesses/anderson"}, {"git": ".", "path": "harnesses/dredd"}, {"git": ".", "path": "harnesses/tharg"}]' .agents/harness/plugin.json > desk.json
 mv desk.json .agents/harness/plugin.json
 jq '.seats += [
   {"name": "Gahan", "group": "crew", "command": "gahan", "harness": "harnesses/gahan", "mandate": "Designs changes and breaks them into beads."},
   {"name": "Gore", "group": "crew", "command": "gore", "harness": "harnesses/gore", "mandate": "Reviews what the workers built, and files beads for what needs fixing."},
-  {"name": "Workers", "group": "workers", "command": "worker", "harness": "harnesses/worker", "mandate": "Dalglish, McCoist and Strachan: build one bead at a time."},
+  {"name": "Dalglish", "group": "workers", "command": "dalglish", "harness": "harnesses/dalglish", "mandate": "Builds one bead at a time."},
+  {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time."},
+  {"name": "Strachan", "group": "workers", "command": "strachan", "harness": "harnesses/strachan", "mandate": "Builds one bead at a time."},
   {"name": "Anderson", "group": "standing", "command": "anderson", "harness": "harnesses/anderson", "mandate": "Dispatches ready work to idle workers."},
   {"name": "Dredd", "group": "standing", "command": "dredd", "harness": "harnesses/dredd", "mandate": "Watches CI and files a bead for each failure."},
   {"name": "Tharg", "group": "standing", "command": "tharg", "harness": "harnesses/tharg", "mandate": "Plans and cuts releases, and never publishes without the human."}
 ]' skills/roster/assets/roster.json > roster.json
 mv roster.json skills/roster/assets/roster.json
 git add -A
-git commit -q -m "feat: the crew, the worker fleet and the standing roles"
+git commit -q -m "feat: the crew, the workers and the standing roles"
 ynd compose . | jq -c '[.delegates_to[].path]'
 ynd compose harnesses/tharg | jq -c '[.artifacts.skills[].name]'
 ```
@@ -614,17 +636,21 @@ ynd compose harnesses/tharg | jq -c '[.artifacts.skills[].name]'
 Expected:
 
 ```json
-["harnesses/gahan","harnesses/gore","harnesses/worker","harnesses/anderson","harnesses/dredd","harnesses/tharg"]
+["harnesses/gahan","harnesses/gore","harnesses/dalglish","harnesses/mccoist","harnesses/strachan","harnesses/anderson","harnesses/dredd","harnesses/tharg"]
 ["add-seat","birth","create-wheelhouse","doctor","handoff","kudos","wake","work-graph","roster","branching","ci","commits","push","quality-gate","release","ynm-memory"]
 ```
 
+</details>
+
 `ynd compose` assembles a harness, fetching its includes, without starting a session. The desk
-delegates to all six; when it runs, ynh makes each one a subagent it can hand work to. Tharg has
+delegates to all eight; when it runs, ynh makes each one a subagent it can hand work to. Tharg has
 the Wheelhouse skills, the roster, gitflow and ynm; the others the same without gitflow.
 
 #### Install and wake them
 
 Each seat becomes a command, and each wakes for its birth. Here, you write their words for them:
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
@@ -641,28 +667,38 @@ born tharg "Tharg, the Mighty One. Nothing ships until it is ready and you say s
 
 Expected: no output.
 
+</details>
+
 ## Check it
 
-The `doctor` skill's script checks the parts that are easy to get wrong: ynm healthy and shared
-here, ynm registered with the harnesses, Beads working, none of Beads' own agent setup, and memory
-synced on push.
+Ask the desk whether the Wheelhouse is healthy. Its `doctor` skill checks the parts that are easy
+to get wrong: ynm healthy and shared here, ynm registered with the harnesses, Beads working, none
+of Beads' own agent setup, and memory synced on push.
 
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+tower --model=sonnet --permission-mode=bypassPermissions -- "Is the Wheelhouse healthy?"
+```
+
+Expected: the desk reports it healthy, with every seat wired to wake by its own name.
+
+**What it did:** ran the doctor's check script, which reports in JSON.
+
+<details><summary>By hand, without a model</summary>
+
+<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 bash "$ASSISTANTS/plugins/wheelhouse/skills/doctor/scripts/check.sh" --dir . | jq -c '{ok, warnings: [.checks[] | select(.level == "warn") | .name]}'
 ```
 
-Expected:
+Expected: `{"ok":true,"warnings":[]}`.
 
-```json
-{"ok":true,"warnings":["seat identity"]}
-```
-
-The one warning is that `BEADS_ACTOR` is unset in this shell. That's right: you aren't a seat.
+</details>
 
 Every seat is a command now, and every one has written who it is, pinned in its own namespace:
 
 ```bash
-for c in tower gahan gore worker anderson dredd tharg; do command -v "$c" > /dev/null && printf '%s ' "$c"; done; echo
+for c in tower gahan gore dalglish mccoist strachan anderson dredd tharg; do command -v "$c" > /dev/null && printf '%s ' "$c"; done; echo
 for s in tower gahan gore dalglish mccoist strachan anderson dredd tharg; do
   ynm recall --namespace "seat/$s" --subject "seat:$s" --tags identity --limit 1 --json | jq -r --arg s "$s" '"\($s): pinned=\(.[0].pinned)"'
 done
@@ -671,7 +707,7 @@ done
 Expected:
 
 ```text
-tower gahan gore worker anderson dredd tharg
+tower gahan gore dalglish mccoist strachan anderson dredd tharg
 tower: pinned=true
 gahan: pinned=true
 gore: pinned=true
@@ -683,8 +719,8 @@ dredd: pinned=true
 tharg: pinned=true
 ```
 
-Each seat has a character of its own, kept where only it lives. The workers share one harness,
-but not one self: Dalglish, McCoist and Strachan are three different seats.
+Each seat has a character of its own, kept where only it lives. The workers share a mandate, but
+not a self: Dalglish, McCoist and Strachan are three different seats.
 
 ## Design: Gahan
 
@@ -700,6 +736,8 @@ retries side by side, and the documentation waiting on both.
 
 **What it did:** an epic, three tasks, and two `blocks` edges.
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 export BEADS_ACTOR=gahan
@@ -713,6 +751,8 @@ unset BEADS_ACTOR
 ```
 
 Expected: no output. Beads gives each bead an id such as `tower-qzg.1`; yours will differ.
+
+</details>
 
 Check the shape: what can start now, and what waits.
 
@@ -738,13 +778,17 @@ blocked were left alone.
 **What it did:** one assignment per idle worker. The `--if-assignee ''` guard makes each
 atomic: it only happens if the bead is still unassigned.
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-BEADS_ACTOR=anderson bd update "$client" --assignee dalglish --if-assignee '' --json > /dev/null
-BEADS_ACTOR=anderson bd update "$runner" --assignee mccoist --if-assignee '' --json > /dev/null
+bd update --actor anderson "$client" --assignee dalglish --if-assignee '' --json > /dev/null
+bd update --actor anderson "$runner" --assignee mccoist --if-assignee '' --json > /dev/null
 ```
 
 Expected: no output.
+
+</details>
 
 Check who has what. Assigned, not claimed: each is still `open`, waiting for its worker.
 
@@ -759,15 +803,17 @@ dalglish: Add retries to the HTTP client (open)
 mccoist: Add retries to the job runner (open)
 ```
 
+With real seats, the titles are Gahan's own words, such as `Add retries to http_get.sh`.
+
 Strachan stays idle: nothing else is ready.
 
-## Build: the worker fleet
+## Build: the workers
 
 Strachan is idle and eager, and reaches for Dalglish's bead. Beads refuses:
 
 ```bash
 held=$(bd list --json | jq -r '[.data[] | select(.assignee == "dalglish")][0].id')
-BEADS_ACTOR=strachan bd update "$held" --claim 2>&1 | head -1 | sed 's/tower-[a-z0-9.]*/<id>/'
+bd update --actor strachan "$held" --claim 2>&1 | head -1 | sed 's/tower-[a-z0-9.]*/<id>/'
 ```
 
 Expected:
@@ -778,19 +824,24 @@ Error updating <id>: issue already claimed: already assigned to "dalglish" — c
 
 Each worker takes what is assigned to it first, claims it, builds it, and closes it with what
 actually happened. Dalglish builds the HTTP client retries. McCoist starts the job runner, but
-has a short session today, so takes a beat and hands off while still sharp: notes for the next
-session, in McCoist's own namespace, keeping the claim. Nobody stops a seat without asking it.
+has a short session today: only the retry loop, not its test. So McCoist takes a beat and hands
+off while still sharp: notes for the next session, in McCoist's own namespace, keeping the claim.
+Nobody stops a seat without asking it.
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
-BEADS_ACTOR=dalglish worker --focus next --model=sonnet --permission-mode=bypassPermissions
-BEADS_ACTOR=mccoist worker --focus next --instructions "Your session is short today: make a start, then take a beat and hand off." --model=sonnet --permission-mode=bypassPermissions
+dalglish --focus next --model=sonnet --permission-mode=bypassPermissions
+mccoist --focus next --instructions "Your session is short today: write the retry loop in run_job.sh, but leave its test for your next session. Then take a beat and hand off, keeping your claim." --model=sonnet --permission-mode=bypassPermissions
 ```
 
 Expected: Dalglish reports the retries added to `../widget/http_get.sh` and the bead closed.
-McCoist reports a start on `run_job.sh`, handoff notes written, and the bead still claimed.
+McCoist reports the retry loop in `run_job.sh`, handoff notes written, the test as the next
+step, and the bead still claimed. Both leave their changes uncommitted in `../widget`: a human
+decides what is committed.
 
 **What they did:**
+
+<details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
@@ -804,6 +855,8 @@ unset BEADS_ACTOR
 ```
 
 Expected: no output.
+
+</details>
 
 Check: one closed, one in progress, both by their own workers.
 
@@ -829,15 +882,9 @@ ynm remember --type episodic --level distributed --namespace seat/mccoist --subj
 Expected: no output.
 
 McCoist's next session starts with the wake block: who they are, what they are for, where they
-left off, what they have been thanked for, and what is waiting. Here is the block McCoist's
-session-start hook hands them:
-
-```bash
-BEADS_ACTOR=mccoist bash scripts/wake.sh --format text
-```
-
-Expected (the identity and notes are McCoist's own words, so with real seats they read
-differently):
+left off, what they have been thanked for, and what is waiting. McCoist's session-start hook
+runs `scripts/wake.sh --seat mccoist --format text` and hands them this (the identity and notes are McCoist's
+own words, so with real seats they read differently):
 
 ```text
 # Waking: mccoist
@@ -874,7 +921,7 @@ Sessions are days; seats are people. McCoist picks up at the exact next step and
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
-BEADS_ACTOR=mccoist worker --focus next --model=sonnet --permission-mode=bypassPermissions
+mccoist --focus next --model=sonnet --permission-mode=bypassPermissions
 ```
 
 Expected: McCoist says where they are picking up, finishes the job runner retries, retires the
@@ -882,12 +929,16 @@ handoff notes and closes the bead, perhaps mentioning the Kudos.
 
 **What it did:**
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-BEADS_ACTOR=mccoist bd close "$runner" --reason "Retries added to the job runner, with a test for a job that fails three times" --json > /dev/null
+bd close --actor mccoist "$runner" --reason "Retries added to the job runner, with a test for a job that fails three times" --json > /dev/null
 ```
 
 Expected: no output.
+
+</details>
 
 Both retries are done, so the documentation is ready. Anderson dispatches it to the one idle
 worker, and Strachan builds it:
@@ -895,7 +946,7 @@ worker, and Strachan builds it:
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
 anderson --focus dispatch --model=sonnet --permission-mode=bypassPermissions
-BEADS_ACTOR=strachan worker --focus next --model=sonnet --permission-mode=bypassPermissions
+strachan --focus next --model=sonnet --permission-mode=bypassPermissions
 ```
 
 Expected: Anderson gives the documentation to Strachan; Strachan documents retries in the README
@@ -903,14 +954,18 @@ and closes the bead.
 
 **What they did:**
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-BEADS_ACTOR=anderson bd update "$docs" --assignee strachan --if-assignee '' --json > /dev/null
-BEADS_ACTOR=strachan bd update "$docs" --claim --json > /dev/null
-BEADS_ACTOR=strachan bd close "$docs" --reason "Retries documented in the README" --json > /dev/null
+bd update --actor anderson "$docs" --assignee strachan --if-assignee '' --json > /dev/null
+bd update --actor strachan "$docs" --claim --json > /dev/null
+bd close --actor strachan "$docs" --reason "Retries documented in the README" --json > /dev/null
 ```
 
 Expected: no output.
+
+</details>
 
 Check the epic's work: all three tasks closed, each by the worker who built it.
 
@@ -941,13 +996,17 @@ the backoff.
 
 **What it did:**
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-followup=$(BEADS_ACTOR=gore bd create "Cap the HTTP client retry backoff at 30 seconds" -p 1 -l repo:widget --json | jq -r .data.id)
+followup=$(bd create --actor gore "Cap the HTTP client retry backoff at 30 seconds" -p 1 -l repo:widget --json | jq -r .data.id)
 ynm remember --type episodic --level distributed --subject repo:widget --tags review --content "Reviewed the widget retries: the HTTP client backoff has no cap, filed as a follow-up." > /dev/null
 ```
 
 Expected: no output.
+
+</details>
 
 ## Watch: Dredd
 
@@ -963,12 +1022,16 @@ Expected: Dredd reports one CI failure, filed as a priority-0 bead labelled `sou
 
 **What it did:**
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-ci=$(BEADS_ACTOR=dredd bd create "CI: the job runner retry test times out on Linux" -p 0 -l repo:widget -l source:ci --json | jq -r .data.id)
+ci=$(bd create --actor dredd "CI: the job runner retry test times out on Linux" -p 0 -l repo:widget -l source:ci --json | jq -r .data.id)
 ```
 
 Expected: no output.
+
+</details>
 
 Check what is ready and unassigned now, most urgent first:
 
@@ -976,14 +1039,16 @@ Check what is ready and unassigned now, most urgent first:
 bd ready --unassigned --json | jq -r '.data[] | select(.issue_type != "epic") | "P\(.priority) \(.title)"'
 ```
 
-Expected (with real seats, Gore's and Dredd's own titles):
+Expected:
 
 ```text
 P0 CI: the job runner retry test times out on Linux
 P1 Cap the HTTP client retry backoff at 30 seconds
 ```
 
-Anderson will hand the CI failure out first: it is the highest priority.
+With real seats, the titles are Gore's and Dredd's own, and Gore often files more than one
+follow-up, each at a priority of its choosing. The CI failure is still first, at priority 0.
+Anderson will hand it out first.
 
 ## Release: Tharg
 
@@ -999,6 +1064,8 @@ tag waits on the changelog, and starts none of it.
 
 **What it did:**
 
+<details><summary>By hand, without a model</summary>
+
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
 export BEADS_ACTOR=tharg
@@ -1012,6 +1079,8 @@ unset BEADS_ACTOR
 ```
 
 Expected: no output.
+
+</details>
 
 Check what waits:
 
@@ -1041,13 +1110,9 @@ ynm remember --type episodic --level distributed --namespace seat/dalglish --sub
 Expected: no output.
 
 Dalglish's next session starts with all of it: who they are, their record, their Kudos, and the
-two new problems, ready, with nothing yet assigned, because Anderson hasn't dispatched them:
-
-```bash
-BEADS_ACTOR=dalglish bash scripts/wake.sh --format text
-```
-
-Expected (with real seats, Dalglish's own words, and Gore's and Dredd's titles):
+two new problems, ready, with nothing yet assigned, because Anderson hasn't dispatched them.
+Their hook hands them this (with real seats, Dalglish's own words, and Gore's and Dredd's
+titles):
 
 ```text
 # Waking: dalglish
@@ -1148,9 +1213,9 @@ terminal; nothing is left there to run.
 | Layer | In `tower` |
 |---|---|
 | The desk | `.agents/harness/plugin.json`, delegating to every seat; the `tower` command |
-| Seats as commands | `ynh install` made `gahan`, `gore`, `worker`, `anderson`, `dredd` and `tharg` |
+| Seats as commands | `ynh install` made a command for every seat, from `gahan` to `tharg` |
 | Crew | `harnesses/gahan` designs, `harnesses/gore` reviews |
-| Workers | `harnesses/worker`, one harness run as Dalglish, McCoist and Strachan |
+| Workers | `harnesses/dalglish`, `harnesses/mccoist` and `harnesses/strachan`: one mandate, three selves |
 | Standing roles | `harnesses/anderson` dispatches, `harnesses/dredd` watches CI, `harnesses/tharg` releases |
 | Who's who | `skills/roster/`, with its pools and the seats that are filled |
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
@@ -1163,7 +1228,7 @@ terminal; nothing is left there to run.
 
 - Let the skills do it: in a session with the wheelhouse plugin, ask to "set up a Wheelhouse",
   and `create-wheelhouse` asks for the space, the name, its reach and the naming themes, then
-  builds the base. `add-seat` adds each seat, including the worker fleet, and each seat's
+  builds the base. the desk adds each seat with `add-seat`, workers included, and each seat's
   first session is its birth, with the `birth` skill.
 - Check a Wheelhouse with `doctor`.
 - [Run evals](../how-to/run-evals.md), and run this tutorial as a test with `make test-tutorials`.

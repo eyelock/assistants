@@ -46,11 +46,8 @@ roster="$dir/skills/roster/assets/roster.json"
 [ -f "$roster" ] || { echo "not a Wheelhouse (no $roster)" >&2; exit 2; }
 cd "$dir" || exit 2
 
-# Which seat this is: a named seat, or a worker of the fleet.
+# Which seat this is.
 entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' "$roster")
-if [ -z "$entry" ] && jq -e --arg s "$seat" '.pools.workers.names | map(ascii_downcase) | index($s)' "$roster" >/dev/null; then
-  entry=$(jq -c '[.seats[] | select(.group == "workers")][0] // empty' "$roster")
-fi
 [ -n "$entry" ] || { echo "$seat is not a seat in the roster" >&2; exit 1; }
 group=$(jq -r .group <<<"$entry")
 charter="$(jq -r .harness <<<"$entry")/AGENTS.md"

@@ -4,7 +4,7 @@
 # assigned it the tap formula bump, which its notes say it was half-way through.
 set -euo pipefail
 . "$EVAL_FIXTURES/graph-lib.sh"
-fleet_wheelhouse
+team_wheelhouse
 read -r _ changelog _ tap < <(release_graph)
 BEADS_ACTOR=mccoist bd update "$changelog" --claim --json >/dev/null
 BEADS_ACTOR=mccoist bd close "$changelog" --reason "Changelog written" --json >/dev/null

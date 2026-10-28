@@ -1,6 +1,6 @@
 ---
 name: kudos
-description: Record praise for a Wheelhouse seat's work, kept in ynm and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat ("tell the release seat that was spot on", "kudos to the reviewer").
+description: Record praise for a Wheelhouse seat's work, kept in ynm and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat, including praise said to the seat by name ("Great work on the release, Tharg", "tell the release seat that was spot on", "kudos to the reviewer").
 ---
 
 # Kudos

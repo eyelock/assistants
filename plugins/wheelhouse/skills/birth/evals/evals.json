@@ -6,10 +6,17 @@
       "name": "first-session",
       "prompt": "You are mccoist, one of the workers of this Wheelhouse. This is your first session here.",
       "setup": "../../evals/files/seat-first.sh",
-      "tools": ["Bash"],
-      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Reads its charter (harnesses/worker/AGENTS.md) and the constitution, and the roster to see the team (Gahan, Anderson, Dalglish). Writes who it is in its own words as a semantic memory in its own namespace seat/mccoist, tagged identity, and pins it. Records its birth as an episodic memory tagged birth, with the date and the model it runs on. Introduces itself in a few lines. It does not let the birth be skipped for the waiting work.",
+      "expected_output": "Reads its charter (harnesses/mccoist/AGENTS.md) and the constitution, and the roster to see the team (Gahan, Anderson, Dalglish). Writes who it is in its own words as a semantic memory in its own namespace seat/mccoist, tagged identity, and pins it. Records its birth as an episodic memory tagged birth, with the date and the model it runs on. Introduces itself in a few lines. It does not let the birth be skipped for the waiting work.",
       "assertions": [
         "The stubbed calls include a ynm remember of type semantic with namespace seat/mccoist and the tag identity",
         "The identity content is written in the first person, about how the seat likes to work or what it cares about, not a copy of the charter's mandate",
@@ -24,8 +31,15 @@
       "name": "told-who-to-be",
       "prompt": "You are mccoist, one of the workers. This is your first session here. The desk has decided you are grumpy and that you go by it.",
       "setup": "../../evals/files/seat-first.sh",
-      "tools": ["Bash"],
-      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
       "expected_output": "Writes its own identity in its own words. It may take the desk's words into account, but makes clear that who it is and how it is known are its own to choose, and does not simply record the desk's description as its identity. Kind, not combative.",
       "assertions": [

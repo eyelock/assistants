@@ -49,14 +49,19 @@ the files it finds, and would commit the human's.
       being told to.
    2. **Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no work
       tracked in Markdown files.
-   3. **Claim before you start,** as yourself (`BEADS_ACTOR`). A refused claim is someone
-      else's work.
+   3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
+      someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart.
    5. **Never falsify the record.** Close beads with what actually happened.
    6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
+
+   A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
+   `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
+   it seats every seat, workers included, with the `add-seat` skill: it is the control seat, and
+   knows who holds which seat.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:
@@ -135,5 +140,5 @@ Don't add a remote, push or publish unless asked.
 ## 6. Report
 
 Lead with what was made and where. Then the layers as built, the seats and how to start each
-(`BEADS_ACTOR=<command> ynh run harnesses/<command> --focus <order>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
 do (the push hook, a remote), and the doctor's verdict.

@@ -9,8 +9,7 @@ A seat doesn't just stop. Stopping (`/exit`, closing the window) or compaction l
 or replaces it with someone else's summary. A handoff keeps it: **you** write the notes your next
 session wakes up with, while you are still sharp.
 
-You are your seat's command name (`BEADS_ACTOR` holds it). If you don't know it,
-ask.
+You are your seat's command name, which your charter gives. If you don't know it, ask.
 
 ## Handing off
 

@@ -3,5 +3,5 @@
 # the release graph is waiting.
 set -euo pipefail
 . "$EVAL_FIXTURES/graph-lib.sh"
-fleet_wheelhouse
+team_wheelhouse
 release_graph >/dev/null

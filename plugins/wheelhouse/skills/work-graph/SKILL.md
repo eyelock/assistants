@@ -10,9 +10,10 @@ holds **work only**. Memory (facts, preferences, what happened) goes to ynm.
 
 ## Who you are
 
-You are your seat's command name. The seat's harness sets `BEADS_ACTOR` to it, so
-claims and closes are recorded as you. If `BEADS_ACTOR` is unset, pass `--actor <name>` on every
-command that changes a bead. If you don't know your seat's name, ask; never act as someone else.
+In a seat, you are its command name, which your charter gives. Pass `--actor <command>` on every
+command that changes a bead, so claims and closes are recorded as you, whatever `BEADS_ACTOR`
+holds. Outside a seat (no charter names one), leave `--actor` off and Beads records the human.
+Never act as another seat.
 
 Add `--json` to every `bd` command and read the result, rather than parsing the table output.
 
@@ -31,11 +32,12 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
 
 ## Dispatching
 
-The dispatcher seat hands ready work to idle workers, so the fleet stays busy without two workers
+The dispatcher seat hands ready work to idle workers, so the workers stay busy without two
 reaching for the same bead. Other seats skip this section.
 
-1. **Who is in the fleet:** the workers pool in the roster (`skills/roster/assets/roster.json`).
-   A worker's command is its name in lowercase.
+1. **Who the workers are:** the seats in the roster (`skills/roster/assets/roster.json`) whose
+   group is `workers`, by their `command`. Names still in the workers pool aren't seated yet: ask
+   the desk to seat one before handing it work.
 2. **Who is idle:** a worker with nothing in progress (`bd list --status in_progress --assignee
    <worker> --json` is empty) and nothing waiting for it (`bd ready --assignee <worker> --json` is
    empty).

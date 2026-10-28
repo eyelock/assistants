@@ -1,13 +1,15 @@
 ---
 name: add-seat
-description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or the worker fleet - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name.
+description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or a worker - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name.
 ---
 
 # Add a seat
 
 A seat is a named role with a lasting identity: its claims and closes in Beads, its memories and
 Kudos in ynm. Each seat is a ynh harness under `harnesses/<command>/` in the Wheelhouse
-repository, and the desk (the repository's own harness) delegates to it.
+repository, started by its own name, and the desk (the repository's own harness) delegates to it.
+Every seat is added through the desk, workers included: it is the control seat, and knows who
+holds which seat.
 
 Work from the Wheelhouse repository root, the folder holding `.agents/harness/plugin.json`,
 `.beads/` and `skills/roster/`.
@@ -16,29 +18,27 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 
 You need three things. Ask for any you can't tell from the request, one question at a time:
 
-- **Group:** crew (designs work and reviews it), standing (one mandate, runs unattended) or
-  worker (implements ready beads; workers are a fleet, see below).
+- **Group:** `crew` (designs work and reviews it), `standing` (one mandate, runs unattended) or
+  `workers` (implements ready beads; see below). It is the pool's key in the roster, and the
+  seat's `group`.
 - **Mandate:** one sentence, the job and nothing else, such as "Cuts releases when asked, and
   nothing else."
 - **Reach:** the repositories and platforms the job touches, and whether it only reads them or
   also changes them.
 
-## Workers are a fleet
+## Workers
 
-Workers are interchangeable, so they share **one** harness, `harnesses/worker/`, run as many named
-instances: `BEADS_ACTOR=<worker> ynh run harnesses/worker --focus next`, where `<worker>` is the
-worker's command, its name in lowercase (`BEADS_ACTOR=okafor`, never `Okafor`). Each instance is a worker
-from the workers pool, claiming and closing as its own name.
+Workers share a mandate, not a self. Each worker is a seat of its own, with its own name, harness
+and command (`harnesses/okafor/`, started as `okafor`), so it is spoken to by name like any other
+seat. Asked for several workers, seat each one in turn, through steps 2 to 4.
 
-- The first time workers are asked for, create the fleet harness (step 3, with `worker` as the
-  command and the charter below), and connect it (step 4). The roster's `seats` gets one entry
-  for the fleet: `{ "name": "Workers", "group": "workers", "command": "worker", "harness":
-  "harnesses/worker", "mandate": "..." }`.
-- After that, "add a worker" creates nothing: say which worker names the pool has, and how to
-  start each one. If the pool has fewer names than the human wants workers, ask for more names.
-- The fleet's charter says: you are the worker named by `BEADS_ACTOR` (or by whoever started
-  you; ask if neither says), you work only on beads assigned to you or unassigned, and you hand
-  review and design back to the crew.
+- Every worker gets the same mandate, standing order and charter, with only its name changed:
+  build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
+  assigned to you or unassigned; hand review and design back to the crew.
+- Its standing order is `next`: take the next bead, build it, and close it with what actually
+  happened.
+- If the pool has fewer names than the human wants workers, seat the ones it has and ask for
+  more names.
 
 ## 2. Name it
 
@@ -66,7 +66,6 @@ rules. In short:
     { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
     { "git": "../..", "pick": ["skills/roster"] }
   ],
-  "env_passthrough": ["BEADS_ACTOR"],
   "hooks": {
     "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }]
   },
@@ -80,14 +79,15 @@ rules. In short:
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
 - Add only what the mandate needs: other includes (such as `plugins/gitflow` for releases),
-  MCP servers, and the environment variables they need in `env_passthrough`. A seat that only
+  MCP servers, and the environment variables they need in `env_passthrough`. Don't pass
+  `BEADS_ACTOR` through: the seat names itself, so a variable left over in the human's shell
+  can't make it act as someone else. A seat that only
   reads a platform gets its read-only server.
 - One focus per standing order. Each prompt names the seat, and says what to do and when to stop.
 - The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
   `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
-  starts with who it is, where it left off, its Kudos and what is waiting for it. A named seat's
-  hook names it (`--seat <command>`); the worker fleet's leaves `--seat` out, so each worker is
-  named by `BEADS_ACTOR`.
+  starts with who it is, where it left off, its Kudos and what is waiting for it. The hook names
+  the seat (`--seat <command>`).
 
 `harnesses/<command>/AGENTS.md` is the seat's charter:
 
@@ -101,7 +101,8 @@ You are <Name>, the <command> seat: a <group> seat of the <wheelhouse> Wheelhous
 **You may:** <what the job lets it do>
 **You may not:** <what it must leave to others or to the human>
 
-You claim and close beads as `<command>`. If `BEADS_ACTOR` is unset, pass `--actor <command>`.
+You act in the work graph as `<command>`: pass `--actor <command>` on every `bd` command that
+changes it.
 When something is outside your mandate, hand it back to the desk.
 ```
 
@@ -121,5 +122,5 @@ team and writes who it is, in its own words. Don't write its identity for it.
 ## 5. Report
 
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
-start it: `BEADS_ACTOR=<command> ynh run harnesses/<command> --focus <order>`. Don't commit
-unless asked.
+start it: `ynh install harnesses/<command>`, then `<command> --focus <order>`, written out for each
+seat when there are several. Don't commit unless asked.

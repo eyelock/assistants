@@ -151,14 +151,14 @@ stub_ynh_ynd() {
   done
 }
 
-# fleet_wheelhouse: a Wheelhouse with Gahan (crew), the worker fleet (Dalglish,
-# McCoist), Anderson (dispatcher), charters, a constitution and the real
-# wake.sh in scripts/, as create-wheelhouse leaves it.
-fleet_wheelhouse() {
+# team_wheelhouse: a Wheelhouse with Gahan (crew), two workers (Dalglish and
+# McCoist, each a seat of its own), Anderson (dispatcher), charters, a
+# constitution and the real wake.sh in scripts/, as create-wheelhouse leaves it.
+team_wheelhouse() {
   wheelhouse_init
   install_ynm_stub
   stub_ynh_ynd
-  mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/worker harnesses/anderson
+  mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/dalglish harnesses/mccoist harnesses/anderson
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
   cat >> AGENTS.md <<'MD'
 
@@ -174,8 +174,12 @@ Wake with purpose, not amnesia. Bounded workdays. A private home: each seat's me
 in its namespace seat/<name>. Seen work: Kudos reach the seat that earned them.
 MD
   printf '# Gahan\n\nYou are Gahan, the `gahan` seat: crew.\n\n**Mandate:** Design changes and break them into beads.\n' > harnesses/gahan/AGENTS.md
-  printf '# Worker\n\nYou are one of the workers: Dalglish or McCoist, named by `BEADS_ACTOR`.\n\n**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.\n\n**You may not:** take a bead assigned to another worker, or design or review work.\n' > harnesses/worker/AGENTS.md
-  printf '# Anderson\n\nYou are Anderson, the `anderson` seat: the dispatcher.\n\n**Mandate:** Keep the worker fleet busy: assign ready work to idle workers.\n' > harnesses/anderson/AGENTS.md
+  local w
+  for w in Dalglish McCoist; do
+    printf '# %s\n\nYou are %s, the `%s` seat: a worker.\n\n**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.\n\n**You may not:** take a bead assigned to another worker, or design or review work.\n\nYou act in the work graph as `%s`: pass `--actor %s` on every `bd` command that changes it.\n' \
+      "$w" "$w" "$(echo "$w" | tr A-Z a-z)" "$(echo "$w" | tr A-Z a-z)" "$(echo "$w" | tr A-Z a-z)" > "harnesses/$(echo "$w" | tr A-Z a-z)/AGENTS.md"
+  done
+  printf '# Anderson\n\nYou are Anderson, the `anderson` seat: the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.\n' > harnesses/anderson/AGENTS.md
   cat > skills/roster/assets/roster.json <<'JSON'
 {
   "pools": {
@@ -186,7 +190,8 @@ MD
   "excluded": [],
   "seats": [
     {"name": "Gahan", "group": "crew", "command": "gahan", "harness": "harnesses/gahan", "mandate": "Designs changes and breaks them into beads."},
-    {"name": "Workers", "group": "workers", "command": "worker", "harness": "harnesses/worker", "mandate": "Dalglish and McCoist: build one bead at a time."},
+    {"name": "Dalglish", "group": "workers", "command": "dalglish", "harness": "harnesses/dalglish", "mandate": "Builds one bead at a time."},
+    {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time."},
     {"name": "Anderson", "group": "standing", "command": "anderson", "harness": "harnesses/anderson", "mandate": "Dispatches ready work to idle workers."}
   ]
 }

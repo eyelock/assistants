@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Checks that a Wheelhouse repository is set up right: ynm installed, healthy,
 # with a distributed mount here and registered with ynh; Beads installed, with
-# a work graph here and none of its own agent setup. Read-only: it changes
+# a work graph here and none of its own agent setup; every seat started by its
+# own name. Read-only: it changes
 # nothing, and prints each fix for the caller to run.
 #
 # Output: JSON on stdout, {"ok": bool, "dir": path, "checks": [{name, ok,
@@ -127,11 +128,26 @@ else
   add "no Beads agent setup" true info "none found"
 fi
 
-# --- this session --------------------------------------------------------------
-if [ -n "${BEADS_ACTOR:-}" ]; then
-  add "seat identity" true info "BEADS_ACTOR=$BEADS_ACTOR"
-else
-  add "seat identity" true warn "BEADS_ACTOR is unset: fine outside a seat; a seat's harness sets it to the seat's name"
+# --- seats -------------------------------------------------------------------
+# Every seat in the roster but the desk has a harness of its own whose wake hook
+# names it, and none passes BEADS_ACTOR through (a seat names itself).
+roster="$dir/skills/roster/assets/roster.json"
+if [ -f "$roster" ]; then
+  unwired=""
+  while IFS=$'\t' read -r cmd harness; do
+    [ "$harness" = "." ] && continue
+    manifest="$dir/$harness/.agents/harness/plugin.json"
+    if [ ! -f "$manifest" ] || ! jq -e --arg s "--seat $cmd " '[.hooks.on_session_start[]?.command | contains($s)] | any' "$manifest" >/dev/null 2>&1 \
+      || jq -e '(.env_passthrough // []) | index("BEADS_ACTOR")' "$manifest" >/dev/null 2>&1; then
+      unwired="$unwired $cmd"
+    fi
+  done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
+  if [ -n "$unwired" ]; then
+    add "seats wired" false warn "seats without a harness of their own that wakes them by name:$unwired" \
+      "give each its own harnesses/<command>/ whose on_session_start hook runs scripts/wake.sh --seat <command>, with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
+  else
+    add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
+  fi
 fi
 
 jq -n --arg dir "$dir" --argjson checks "$checks" \
