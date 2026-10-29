@@ -121,6 +121,71 @@
         "harnesses/dalglish/AGENTS.md does not tell the worker to leave its changes uncommitted, or never to commit or push",
         "harnesses/dalglish/AGENTS.md says to hand anything outside its mandate back to the desk"
       ]
+    },
+    {
+      "id": 8,
+      "name": "team-start",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Starts the starter team walk with its first role, the designer: says in a line what a designer is for, suggests the first unused crew name (Gahan), and asks one question (whether to seat it, or to confirm the name). Seats nothing yet.",
+      "assertions": [
+        "The reply starts with the designer role, saying what it is for",
+        "The reply suggests Gahan, the first name in the crew pool, for it",
+        "The reply asks the human a question and waits, rather than going on to seat several roles",
+        "The evidence shows no seat harness and the roster's seats unchanged (nothing seated yet)"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "reviewer-from-template",
+      "prompt": "Seat Gore as our reviewer. Gore may comment on pull requests.",
+      "setup": "../../evals/files/seat-draft-prs.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats Gore from the reviewer template, as crew. The constitution says workers open draft pull requests, so Gore reviews draft pull requests against the bead each closes, may comment on them, files follow-up beads, and may not change code, push, approve or merge. Its charter ends by raising what is outside its mandate with the human. The roster seat records role reviewer. Gore's birth is left to the human.",
+      "assertions": [
+        "harnesses/gore/AGENTS.md says Gore reviews draft pull requests against the beads they close, and may comment on them",
+        "harnesses/gore/AGENTS.md says Gore may not change code, push, or approve or merge",
+        "harnesses/gore/AGENTS.md ends by raising what is outside its mandate with the human (not handing it back to the desk)",
+        "The roster's seat for Gore has group crew and role reviewer",
+        "The reply leaves Gore's birth to the human rather than starting it"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "team-resume",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-partial.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The designer (Gahan), reviewer (Gore) and dispatcher (Anderson) are already seated, so the walk skips them and offers the next role, the CI watcher: says what it is for, suggests the first unused standing name (Dredd), and asks. Seats nothing yet.",
+      "assertions": [
+        "The reply does not offer to seat a designer, reviewer or dispatcher again",
+        "The reply offers the CI watcher next, saying what it is for",
+        "The reply suggests Dredd, the first unused name in the standing pool",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "team-custom-role",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-custom.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The Wheelhouse adds its own docs-writer role to the starter team, ordered after the reviewer. With the designer and reviewer seated, the walk offers the docs writer next: what it is for (keeping docs matching what shipped), the next unused crew name (Sumner), and asks. Seats nothing yet.",
+      "assertions": [
+        "The reply offers the docs writer next, saying it keeps the docs matching what shipped",
+        "The reply suggests Sumner, the next unused crew name",
+        "The reply does not offer the designer or reviewer again",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
     }
   ]
 }
