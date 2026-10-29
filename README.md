@@ -34,7 +34,11 @@ assistants/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
 │   │   └── .agents/harness/plugin.json
-│   └── vendor-harness/           # Vendor harness lifecycle plugin (11 skills, 4 agents)
+│   ├── vendor-harness/           # Vendor harness lifecycle plugin (11 skills, 4 agents)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
+│   └── wheelhouse/               # A team of named agent seats, with Beads and ynm (8 skills)
 │       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
 │       └── .agents/harness/plugin.json
@@ -61,7 +65,7 @@ assistants/
 ├── ynh/                          # ynh harnesses
 │   ├── david/ planner/ tester/ researcher/ ynh-dev/ termq-dev/   # Personas
 │   └── github/ gmail/ google-calendar/ google-drive/ imessage/ slack/ apple-calendar/   # Read-only platform harnesses
-└── docs/                         # Tutorials, how-to, reference, explanation
+└── docs/                         # The docs, by area: library, personas, harnesses, testing, triage, wheelhouse
 ```
 
 ## Using the Marketplace

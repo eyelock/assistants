@@ -1,39 +1,50 @@
 * **Start**
   * [Overview](/README.md)
+  * [What is in the repo](/start/whats-in-the-repo.md)
+  * [Agentic features](/start/agentic-features.md)
+  * [Architecture](/start/architecture.md)
+  * [Glossary](/start/glossary.md)
 
-* **Use**
-  * [Overview](/use/README.md)
-  * [What is in the repo](/use/explanation/whats-in-the-repo.md)
-  * [Install a plugin](/use/tutorials/install-a-plugin.md)
-  * [Run a persona](/use/tutorials/run-a-persona.md)
-  * [Install in Cursor and Copilot](/use/how-to/install-in-cursor-and-copilot.md)
-  * [Connect a platform](/use/how-to/connect-a-platform.md)
-  * [Ask a triage question](/use/how-to/ask-a-triage-question.md)
-  * [Skills](/use/reference/skills.md)
-  * [Plugins](/use/reference/plugins.md)
-  * [Harnesses](/use/reference/harnesses.md)
-  * [Triage questions](/use/reference/triage-questions.md)
+* **Library**
+  * [Overview](/library/README.md)
+  * [Install a plugin](/library/install-a-plugin.md)
+  * [Write a skill with evals](/library/write-a-skill-with-evals.md)
+  * [Install in Cursor and Copilot](/library/install-in-cursor-and-copilot.md)
+  * [Add a skill to a plugin](/library/add-a-skill-to-a-plugin.md)
+  * [Skills](/library/skills.md)
+  * [Plugins](/library/plugins.md)
+  * [Skill layout](/library/skill-layout.md)
 
-* **Build**
-  * [Overview](/build/README.md)
-  * [Build a persona harness](/build/tutorials/build-a-persona-harness.md)
-  * [Write a skill with evals](/build/tutorials/write-a-skill-with-evals.md)
-  * [Give a harness a tool](/build/tutorials/give-a-harness-a-tool.md)
-  * [Build a Wheelhouse](/build/tutorials/build-a-wheelhouse.md)
-  * [Add a skill to a plugin](/build/how-to/add-a-skill-to-a-plugin.md)
-  * [Add a hook](/build/how-to/add-a-hook.md)
-  * [Add a platform](/build/how-to/add-a-platform.md)
-  * [Add a triage question](/build/how-to/add-a-triage-question.md)
-  * [Run evals](/build/how-to/run-evals.md)
-  * [Run SkillSpector](/build/how-to/run-skillspector.md)
-  * [Harness manifest](/build/reference/harness-manifest.md)
-  * [Skill layout](/build/reference/skill-layout.md)
+* **Personas**
+  * [Overview](/personas/README.md)
+  * [Run a persona](/personas/run-a-persona.md)
+  * [Build a persona harness](/personas/build-a-persona-harness.md)
+  * [Persona harnesses](/personas/harnesses.md)
 
-* **Learn**
-  * [Overview](/learn/README.md)
-  * [Follow a request](/learn/tutorials/follow-a-request.md)
-  * [Architecture](/learn/explanation/architecture.md)
-  * [Agentic features](/learn/explanation/agentic-features.md)
-  * [Safety](/learn/explanation/safety.md)
-  * [Vendors](/learn/explanation/vendors.md)
-  * [Glossary](/learn/reference/glossary.md)
+* **Harnesses in depth**
+  * [Overview](/harnesses/README.md)
+  * [Follow a request](/harnesses/follow-a-request.md)
+  * [Give a harness a tool](/harnesses/give-a-harness-a-tool.md)
+  * [Add a hook](/harnesses/add-a-hook.md)
+  * [Harness manifest](/harnesses/harness-manifest.md)
+  * [Vendors](/harnesses/vendors.md)
+  * [Safety](/harnesses/safety.md)
+
+* **Testing and CI**
+  * [Overview](/testing/README.md)
+  * [Run evals](/testing/run-evals.md)
+  * [Run SkillSpector](/testing/run-skillspector.md)
+
+* **Advanced: Triage**
+  * [Overview](/triage/README.md)
+  * [Connect a platform](/triage/connect-a-platform.md)
+  * [Ask a triage question](/triage/ask-a-triage-question.md)
+  * [Add a platform](/triage/add-a-platform.md)
+  * [Add a triage question](/triage/add-a-triage-question.md)
+  * [Triage questions](/triage/triage-questions.md)
+  * [Platform harnesses](/triage/harnesses.md)
+  * [How triage works](/triage/how-triage-works.md)
+
+* **Advanced: Wheelhouse**
+  * [Overview](/wheelhouse/README.md)
+  * [Build a Wheelhouse](/wheelhouse/build-a-wheelhouse.md)

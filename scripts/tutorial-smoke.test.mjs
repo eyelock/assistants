@@ -103,7 +103,7 @@ test("rewrites apply in order, so a repository's .git URL goes before its bare U
 });
 
 test("every opted-in tutorial has a sandbox and at least one step", () => {
-  const path = join(root, "docs", "build", "tutorials", "build-a-wheelhouse.md");
+  const path = join(root, "docs", "wheelhouse", "build-a-wheelhouse.md");
   const markdown = readFileSync(path, "utf8");
   assert.equal(optIn(markdown), "/tmp/wheelhouse-tutorial");
   assert.ok(steps(markdown).length > 10);
@@ -111,7 +111,7 @@ test("every opted-in tutorial has a sandbox and at least one step", () => {
 
 test("the runner refuses a tutorial that has not opted in, and explains --help", () => {
   const runner = join(root, "scripts", "tutorial-smoke.mjs");
-  const notOptedIn = join(root, "docs", "build", "tutorials", "write-a-skill-with-evals.md");
+  const notOptedIn = join(root, "docs", "library", "write-a-skill-with-evals.md");
   assert.equal(spawnSync("node", [runner, notOptedIn], { encoding: "utf8" }).status, 1);
   assert.equal(spawnSync("node", [runner, join(root, "nope.md")], { encoding: "utf8" }).status, 2);
   const help = spawnSync("node", [runner, "--help"], { encoding: "utf8" });
