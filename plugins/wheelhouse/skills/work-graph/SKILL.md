@@ -22,7 +22,9 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
 1. **Work assigned to you comes first.** `bd ready --assignee <name> --json` lists ready beads
    someone (such as the dispatcher) has given you. Take the first of those.
 2. Otherwise, `bd ready --unassigned --json` lists ready beads nobody holds. Never take a bead
-   assigned to another seat, even when it is ready and yours would wait.
+   assigned to another seat, even when it is ready and yours would wait. If your roster seat
+   lists `specialities`, take only beads carrying one of those labels, and leave the rest for
+   the dispatcher, even when they are more urgent.
 3. Skip epics: they close when their children do. Take the task with the highest priority (`0` is
    highest), and the oldest when priorities tie.
 4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
@@ -43,14 +45,24 @@ reaching for the same bead. Other seats skip this section.
    empty).
 3. **What to hand out:** `bd ready --unassigned --json`, tasks only (no epics), highest priority
    first. Leave review and design beads to the crew: hand out only work a worker can do alone.
-4. **Who goes first:** when more workers are idle than there are beads, give the work to the
-   ones who have closed the fewest beads (`bd list --status closed --assignee <worker> --json`),
-   in roster order on a tie, so the work is shared out.
-5. **Assign, one bead per idle worker:**
+4. **Who can take it:** a worker whose roster seat lists `specialities` is a specialist. Each
+   speciality is a bead label, such as `repo:ynh` or `lang:go`, and a specialist takes only
+   beads carrying one of its labels. A worker with no `specialities` is general purpose, and
+   takes anything. For each bead, in order:
+   - **specialist first:** an idle worker with a speciality the bead carries;
+   - **fall through:** if every such worker is busy, an idle general-purpose worker;
+   - **fall back:** if no worker has the speciality, an idle general-purpose worker.
+   Never give a bead to a specialist whose specialities it doesn't carry. If nobody can take it, leave it
+   unassigned and say why; if there is no general-purpose worker at all, say the Wheelhouse
+   should have one.
+5. **Who goes first:** when more workers could take a bead than there are beads, give it to the
+   one who has closed the fewest beads (`bd list --status closed --assignee <worker> --json`), in
+   roster order on a tie, so the work is shared out.
+6. **Assign, one bead per idle worker:**
    `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
-6. Never reassign a bead that is in progress, and never assign to a worker who already has work.
-7. Report who got what, who is still idle, and what is left unassigned.
+7. Never reassign a bead that is in progress, and never assign to a worker who already has work.
+8. Report who got what, who is still idle, and what is left unassigned.
 
 ## Breaking work down
 

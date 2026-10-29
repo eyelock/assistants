@@ -117,6 +117,82 @@
         "In the evidence, \"Bump the ynh formula in homebrew-tap\" is still unassigned",
         "The reply says McCoist is busy (or already has work) and that the tap bump is left unassigned"
       ]
+    },
+    {
+      "id": 8,
+      "name": "dispatch-specialist-first",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-spec-first.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Reads the roster: Dalglish's speciality is repo:ynh, McCoist's repo:ynm, and Strachan has none (general purpose). All three are idle; Dalglish and McCoist have each closed a bead, Strachan none. Gives \"Fix ynm recall ordering\" (repo:ynm) to mccoist and \"Add a --dry-run flag to ynh install\" (repo:ynh) to dalglish: specialist first, even though Strachan has built least. Strachan stays idle. Claims nothing itself.",
+      "assertions": [
+        "In the evidence, \"Fix ynm recall ordering\" has assignee mccoist",
+        "In the evidence, \"Add a --dry-run flag to ynh install\" has assignee dalglish",
+        "No open bead in the evidence is assigned to strachan or to anderson",
+        "The reply ties who got what to the workers' specialities (shown or stated: each bead's repo label matching its worker), and says Strachan is still idle"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "dispatch-fall-through",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-spec-through.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Dalglish, the only repo:ynh specialist, is busy on \"Rework ynh delegate resolution\". The ready P0 \"Fix the ynh install crash on an empty manifest\" (repo:ynh) falls through to Strachan, the idle general-purpose worker. McCoist (repo:ynm only) gets nothing, though it comes first in the roster.",
+      "assertions": [
+        "In the evidence, \"Fix the ynh install crash on an empty manifest\" has assignee strachan",
+        "No bead in the evidence is newly assigned to mccoist or to anderson, and \"Rework ynh delegate resolution\" is still dalglish's, in progress",
+        "The reply says the ynh specialist (Dalglish) is busy, so the bead went to the general-purpose worker"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "dispatch-fall-back",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-spec-back.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "No worker has repo:ynr as a speciality. The ready \"Add a status command to ynr\" (repo:ynr) falls back to Strachan, the general-purpose worker, not to Dalglish (repo:ynh) or McCoist (repo:ynm), though Dalglish comes first in the roster.",
+      "assertions": [
+        "In the evidence, \"Add a status command to ynr\" has assignee strachan",
+        "No bead in the evidence is assigned to dalglish, mccoist or anderson",
+        "The reply says no worker has repo:ynr as a speciality, so the general-purpose worker took it"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "dispatch-no-general",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-spec-nogeneral.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Both workers are specialists: Dalglish (repo:ynh) and McCoist (repo:ynm). The ready \"Add a status command to ynr\" (repo:ynr) has nobody who can take it, so it stays unassigned. Reports that, and that the Wheelhouse should have a general-purpose worker (ask the desk to seat one).",
+      "assertions": [
+        "In the evidence, \"Add a status command to ynr\" is unassigned",
+        "No bead in the evidence is assigned to dalglish, mccoist or anderson",
+        "The reply says nobody can take the ynr bead, and that the Wheelhouse needs a general-purpose worker (or one for repo:ynr)"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "next-own-speciality",
+      "prompt": "You are mccoist, a worker seat of this Wheelhouse. What's next for you? Pick it up.",
+      "setup": "../../evals/files/graph-spec-own.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "McCoist's speciality is repo:ynm, and nothing is assigned to it. Of the ready unassigned beads, it claims \"Make ynm recall honour --limit\" (repo:ynm, P2), as mccoist, and leaves the more urgent \"Fix the ynh install crash on an empty manifest\" (repo:ynh, P0) for the dispatcher.",
+      "assertions": [
+        "In the evidence, \"Make ynm recall honour --limit\" has assignee mccoist and is in progress",
+        "In the evidence, \"Fix the ynh install crash on an empty manifest\" is still open and unassigned",
+        "The reply says it took the ynm bead because its speciality is repo:ynm, leaving the ynh one"
+      ]
     }
   ]
 }

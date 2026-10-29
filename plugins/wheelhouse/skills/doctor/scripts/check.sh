@@ -148,6 +148,17 @@ if [ -f "$roster" ]; then
   else
     add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
   fi
+  # Specialist workers hand their overflow to a general-purpose worker.
+  specialists=$(jq -r '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) > 0) | .command] | join(" ")' "$roster" 2>/dev/null)
+  general=$(jq '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) == 0)] | length' "$roster" 2>/dev/null)
+  if [ -n "$specialists" ]; then
+    if [ "${general:-0}" -eq 0 ]; then
+      add "general worker" false warn "specialist workers ($specialists) but no general-purpose worker to take their overflow, or beads no specialist covers" \
+        "seat a worker with no specialities (the add-seat skill)"
+    else
+      add "general worker" true info "$general general-purpose worker(s) beside the specialists"
+    fi
+  fi
 fi
 
 jq -n --arg dir "$dir" --argjson checks "$checks" \

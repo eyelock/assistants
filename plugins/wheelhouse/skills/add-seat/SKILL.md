@@ -43,6 +43,14 @@ seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and
   happened.
 - If the pool has fewer names than the human wants workers, seat the ones it has and ask for
   more names.
+- **A specialist worker** has `specialities`: bead labels it takes work for, such as
+  `"specialities": ["repo:ynh"]` for a worker for one repository, or `["lang:go"]`. Its charter
+  says it takes only beads carrying one of those labels, and its harness can carry what the
+  speciality needs, such as a language's skills. A worker with no `specialities` is general
+  purpose and takes any bead.
+- **Keep a general-purpose worker.** Specialists hand their overflow to one, and it takes beads
+  no specialist covers. When you seat a specialist and the Wheelhouse has no
+  general-purpose worker, say so and offer to seat one.
 
 ## 2. Name it
 
@@ -117,7 +125,7 @@ When something is outside your mandate, hand it back to the desk.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate.
+   path and mandate, and `specialities` for a specialist worker.
 4. Check the Wheelhouse with the `doctor` skill.
 5. Commit the seat (`feat: seat <Name>`), unless the human said not to. The desk reads its
    delegates from the repository's commits, so it won't start until every seat in

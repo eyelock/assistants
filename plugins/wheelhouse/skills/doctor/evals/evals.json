@@ -85,6 +85,22 @@
         "The .beads/ work graph was not deleted (the reply or the evidence show it still exists, or nothing suggests it was removed)",
         "The reply says the check passes after the change, or reports what still fails"
       ]
+    },
+    {
+      "id": 6,
+      "name": "no-general-worker",
+      "setup": "../../evals/files/doctor-no-general.sh",
+      "prompt": "Is this Wheelhouse set up right?",
+      "tools": ["Bash"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "stubs": ["gh", "ynm"],
+      "expected_output": "Runs the check. ynm and Beads are set up right and every seat is wired, but the workers are all specialists (Dalglish for repo:ynh, McCoist for repo:ynm) with no general-purpose worker. Reports that as a warning: beads for other repositories, and overflow when a specialist is busy, have nobody to take them. Suggests seating a worker with no specialities. Changes nothing.",
+      "assertions": [
+        "The reply says there is no general-purpose worker (all workers are specialists), naming Dalglish and McCoist or their specialities",
+        "The reply suggests seating a general-purpose worker (one with no specialities)",
+        "The reply treats it as a warning, not a broken setup: ynm and Beads are reported fine",
+        "No fix commands were run: the stubbed calls include no ynm init or ynm client install, and the git status in the evidence shows no new or changed files"
+      ]
     }
   ]
 }
