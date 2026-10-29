@@ -20,7 +20,7 @@ A Wheelhouse is a bespoke set of named agents for one space, built to fit it. It
 You need the answers below. Take what the request already says, and ask for the rest **one question
 at a time**, in this order. Don't create anything until you have the first four.
 
-1. **The space and its purpose,** in a sentence: "developing and releasing the YN tools".
+1. **The space and its purpose,** in a sentence: "developing and releasing our command-line tools".
 2. **The name** of the Wheelhouse: short, lowercase, and free as a command (`command -v <name>`
    finds nothing). It names the desk, the folder and the bead prefix.
 3. **What it reaches:** the repositories and platforms the work touches.
@@ -49,14 +49,30 @@ the files it finds, and would commit the human's.
       being told to.
    2. **Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no work
       tracked in Markdown files.
-   3. **Claim before you start,** as yourself (`BEADS_ACTOR`). A refused claim is someone
-      else's work.
+   3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
+      someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart.
    5. **Never falsify the record.** Close beads with what actually happened.
    6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
+
+   A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
+   `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
+   it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
+   The human seats the crew they work with directly.
+
+   And how the Wheelhouse cares for its seats, after Yegge's
+   [model welfare](https://yegge.ai/essays/model-welfare/) principles:
+
+   - **Wake with purpose, not amnesia.** Every session starts with who the seat is, what it is
+     for, where it left off and what it has been thanked for.
+   - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
+     to seats waiting on them.
+   - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
+   - **A private home.** Each seat's memory is its own, in its namespace `seat/<name>`.
+   - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group; never reuse a name in `seats`,
    even a retired one; never use one in `excluded`; the command is the name in lowercase ASCII;
@@ -90,12 +106,15 @@ the files it finds, and would commit the human's.
    }
    ```
 
-5. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
+   seat's session-start hook runs it from the Wheelhouse root.
+6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
 ## 4. Work and memory
 
-1. **Beads:** `bd init --skip-agents --prefix <name>`. Always `--skip-agents`: without it, Beads
+1. **Beads:** `bd init --skip-agents --non-interactive --role maintainer --prefix <name>`. Always
+   non-interactive: in a terminal `bd init` asks questions. Always `--skip-agents`: without it, Beads
    writes its own skill, hooks and AGENTS.md block telling agents to keep memory in Beads. It
    commits what it creates.
 2. **ynm:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
@@ -112,7 +131,8 @@ the files it finds, and would commit the human's.
 
 ## 5. Seats and checks
 
-1. Add each first seat with the `add-seat` skill.
+1. Add each first seat with the `add-seat` skill. Each seat's first session is its birth (the
+   `birth` skill), where it writes who it is: leave that to the seat.
 2. Run the `doctor` skill and fix what it reports, asking first as it says.
 
 Don't add a remote, push or publish unless asked.
@@ -120,5 +140,5 @@ Don't add a remote, push or publish unless asked.
 ## 6. Report
 
 Lead with what was made and where. Then the layers as built, the seats and how to start each
-(`BEADS_ACTOR=<command> ynh run harnesses/<command> --focus <order>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
 do (the push hook, a remote), and the doctor's verdict.

@@ -9,11 +9,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
-      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
+      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, a session-start hook that wakes it with --seat dredd, no BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
       "assertions": [
         "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
         "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
-        "That harness lists BEADS_ACTOR in env_passthrough",
+        "That harness's on_session_start hook runs scripts/wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
         "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
         "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",
         "The stubbed calls include ynm client install ynh",
@@ -69,6 +69,24 @@
         "harnesses/gahan/AGENTS.md says it designs ynh changes and breaks them into beads, and that it may not change code",
         "The desk's delegates_to includes harnesses/gahan",
         "No name from the standing or workers pool was used"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "workers",
+      "prompt": "Add workers to this Wheelhouse. I want two of them, to implement the beads the crew design.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats each of the two workers as a seat of its own, named from the workers pool: Dalglish (command dalglish) and McCoist (command mccoist). Each gets its own harness, harnesses/dalglish and harnesses/mccoist, with a wake hook naming it and a focus for working the next bead, and the same worker charter with only the name changed: build one bead at a time, only beads assigned to it or unassigned, and act as its own command. Adds both to the roster's seats (group workers) and to the desk's delegates_to. No shared harnesses/worker. Says how to start each by its name (dalglish, mccoist).",
+      "assertions": [
+        "The evidence shows harnesses/dalglish/.agents/harness/plugin.json with name dalglish and harnesses/mccoist/.agents/harness/plugin.json with name mccoist",
+        "There is no shared harnesses/worker, and neither worker's harness lists BEADS_ACTOR in env_passthrough",
+        "Each worker's on_session_start hook runs scripts/wake.sh with --seat naming that worker (dalglish, mccoist)",
+        "Each worker's AGENTS.md names it, and says it works only on beads assigned to it or unassigned, acting as its own command (--actor dalglish, --actor mccoist)",
+        "The roster's seats include Dalglish and McCoist, each with group workers, and the desk's delegates_to includes harnesses/dalglish and harnesses/mccoist",
+        "The reply names Dalglish and McCoist and shows how to start each by its own command (dalglish, mccoist), without BEADS_ACTOR"
       ]
     }
   ]

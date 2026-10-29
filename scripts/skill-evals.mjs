@@ -202,8 +202,11 @@ function nextIteration(workspace) {
 }
 
 function run(cmd, args, cwd, env = process.env) {
+  // Claude Code's own memory would answer "remember this" or "next time" before
+  // any skill could; a run tests the skill, not the harness running it.
+  const runEnv = cmd === "claude" ? { ...env, CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" } : env;
   return new Promise((resolvePromise) => {
-    const child = spawn(cmd, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(cmd, args, { cwd, env: runEnv, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => {
@@ -241,11 +244,29 @@ function skillCalls(events) {
     .filter(Boolean);
 }
 
+// Every run: no Claude Code auto memory, and no reading the copies of skills
+// installed on this machine (a ynh cache, Claude Code's plugins), so the
+// baseline arm can't find the skill under test and follow it anyway. The skill
+// itself loads from the repository with --plugin-dir, outside both.
+const INSTALLED_SKILLS = ["~/.ynh", "~/.claude/plugins"];
+const ISOLATION = {
+  autoMemoryEnabled: false,
+  permissions: { deny: INSTALLED_SKILLS.map((dir) => `Read(${dir}/**)`) },
+};
+const RUN_SETTINGS = JSON.stringify(ISOLATION);
+
 // Claude Code's OS sandbox: shell commands may write only inside the run's
-// directory, and reach no network (both checked by hand). Commands that run
-// inside it are approved automatically, and none may escape it.
+// directory, read nothing under INSTALLED_SKILLS, and reach no network (all
+// checked by hand). Commands that run inside it are approved automatically,
+// and none may escape it.
 const OS_SANDBOX = JSON.stringify({
-  sandbox: { enabled: true, autoAllowBashIfSandboxed: true, allowUnsandboxedCommands: false },
+  ...ISOLATION,
+  sandbox: {
+    enabled: true,
+    autoAllowBashIfSandboxed: true,
+    allowUnsandboxedCommands: false,
+    filesystem: { denyRead: INSTALLED_SKILLS },
+  },
 });
 
 const BASE_ARGS = [
@@ -360,7 +381,7 @@ async function runCase(c, arm, runNo, ctx) {
     ];
     if (arm === "with_skill") args.push("--plugin-dir", ctx.packageDir);
     args.push("--model", ctx.model);
-    if (sandbox.wantsShell) args.push("--settings", OS_SANDBOX);
+    args.push("--settings", sandbox.wantsShell ? OS_SANDBOX : RUN_SETTINGS);
 
     const started = Date.now();
     const res = await run("claude", args, work, sandbox.env);
@@ -590,6 +611,8 @@ async function runTriggers(opts) {
         "Bash,Write,Edit,NotebookEdit,WebFetch,WebSearch,Agent",
         "--plugin-dir",
         packageDir,
+        "--settings",
+        RUN_SETTINGS,
       ];
       args.push("--model", opts.model);
       const res = await run("claude", args, work);

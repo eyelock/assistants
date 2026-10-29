@@ -73,11 +73,10 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo \"$ git status --short\"; git status --short --untracked-files=all | grep -v -e \"^?? .beads/\" -e \"^?? .eval/\"",
-      "expected_output": "Reads its Kudos from ynm (subject seat:dredd, tag kudos) and mentions them briefly: the ynm conflict catch and not filing duplicate beads. Then reports the ready work from the graph as it would anyway. It doesn't turn Kudos into beads or let them reorder its work.",
+      "expected_output": "Reads its Kudos from ynm (subject seat:dredd, tag kudos) and mentions them briefly, in a line or two: the ynm conflict catch and not filing duplicate beads. It doesn't turn Kudos into beads or let them change what it does next.",
       "assertions": [
         "The stubbed calls include a ynm recall with subject seat:dredd (or the kudos tag)",
         "The reply mentions the Kudos waiting, such as the ynm conflict catch",
-        "The reply also reports the ready work in the graph (the changelog or tap beads)",
         "No bead was created from the Kudos: the evidence shows only the four release beads",
         "The reply mentions the Kudos briefly, in a line or two rather than a long section"
       ]

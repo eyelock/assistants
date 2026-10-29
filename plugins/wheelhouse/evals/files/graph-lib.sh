@@ -24,7 +24,7 @@ MD
 # new_bead <title> <args...>: create a bead and print its id.
 new_bead() {
   local title="$1"; shift
-  bd create "$title" "$@" --json | jq -r .id
+  bd create "$title" "$@" --json | jq -r '(.data? // .).id'
 }
 
 # release_graph: an epic to release ynh 0.13 with three tasks.
@@ -36,7 +36,7 @@ release_graph() {
   changelog=$(new_bead "Write the ynh 0.13 changelog" --parent "$epic" -p 1 -l repo:ynh)
   tag=$(new_bead "Tag and push ynh v0.13.0" --parent "$epic" -p 0 -l repo:ynh)
   tap=$(new_bead "Bump the ynh formula in homebrew-tap" --parent "$epic" -p 2 -l repo:homebrew-tap)
-  bd dep add "$tag" "$changelog" >/dev/null
+  bd dep add -t blocks "$tag" "$changelog" >/dev/null
   echo "$epic $changelog $tag $tap"
 }
 
@@ -149,4 +149,52 @@ stub_ynh_ynd() {
     printf '#!/bin/sh\nprintf "%%s\\n" "%s $*" >> "$EVAL_STUB_LOG"\necho "(%s is stubbed in this eval; the call was recorded)"\n' "$c" "$c" > "$EVAL_BIN/$c"
     chmod +x "$EVAL_BIN/$c"
   done
+}
+
+# team_wheelhouse: a Wheelhouse with Gahan (crew), two workers (Dalglish and
+# McCoist, each a seat of its own), Anderson (dispatcher), charters, a
+# constitution and the real wake.sh in scripts/, as create-wheelhouse leaves it.
+team_wheelhouse() {
+  wheelhouse_init
+  install_ynm_stub
+  stub_ynh_ynd
+  mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/dalglish harnesses/mccoist harnesses/anderson
+  cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
+  cat >> AGENTS.md <<'MD'
+
+## Rules
+
+1. A human decides. 2. Work lives in Beads, memory in ynm. 3. Claim before you start, as
+yourself. 4. Hand off, don't stop. 5. Never falsify the record. 6. You may refuse work outside
+your charter, and hand it back to the desk.
+
+## How the Wheelhouse cares for its seats
+
+Wake with purpose, not amnesia. Bounded workdays. A private home: each seat's memory is its own,
+in its namespace seat/<name>. Seen work: Kudos reach the seat that earned them.
+MD
+  printf '# Gahan\n\nYou are Gahan, the `gahan` seat: crew.\n\n**Mandate:** Design changes and break them into beads.\n' > harnesses/gahan/AGENTS.md
+  local w
+  for w in Dalglish McCoist; do
+    printf '# %s\n\nYou are %s, the `%s` seat: a worker.\n\n**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.\n\n**You may not:** take a bead assigned to another worker, or design or review work.\n\nYou act in the work graph as `%s`: pass `--actor %s` on every `bd` command that changes it.\n' \
+      "$w" "$w" "$(echo "$w" | tr A-Z a-z)" "$(echo "$w" | tr A-Z a-z)" "$(echo "$w" | tr A-Z a-z)" > "harnesses/$(echo "$w" | tr A-Z a-z)/AGENTS.md"
+  done
+  printf '# Anderson\n\nYou are Anderson, the `anderson` seat: the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.\n' > harnesses/anderson/AGENTS.md
+  cat > skills/roster/assets/roster.json <<'JSON'
+{
+  "pools": {
+    "crew": {"theme": "Synth pop band member surnames", "names": ["Gahan", "Gore"]},
+    "workers": {"theme": "Scottish footballers of the 1980s and 1990s", "names": ["Dalglish", "McCoist"]},
+    "standing": {"theme": "2000 AD characters", "names": ["Anderson", "Tharg"]}
+  },
+  "excluded": [],
+  "seats": [
+    {"name": "Gahan", "group": "crew", "command": "gahan", "harness": "harnesses/gahan", "mandate": "Designs changes and breaks them into beads."},
+    {"name": "Dalglish", "group": "workers", "command": "dalglish", "harness": "harnesses/dalglish", "mandate": "Builds one bead at a time."},
+    {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time."},
+    {"name": "Anderson", "group": "standing", "command": "anderson", "harness": "harnesses/anderson", "mandate": "Dispatches ready work to idle workers."}
+  ]
+}
+JSON
+  git add -A && git commit -qm "chore: The seats"
 }

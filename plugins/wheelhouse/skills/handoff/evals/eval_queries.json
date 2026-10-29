@@ -13,7 +13,7 @@
   },
   {
     "query": "you are the mccoist seat, starting a new session",
-    "should_trigger": true
+    "should_trigger": false
   },
   {
     "query": "just /exit, we are done for today",

@@ -13,7 +13,7 @@
   },
   {
     "query": "you are the dredd seat, starting a new session",
-    "should_trigger": true
+    "should_trigger": false
   },
   {
     "query": "write a thank-you email to the ynf contributors",

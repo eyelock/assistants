@@ -26,7 +26,7 @@ changes nothing. `ok` is false when any check has level `error`.
 | ynm registered with ynh | seats are ynh harnesses; without `ynm client install ynh` they get none of ynm's tools or hooks, on any vendor |
 | Beads installed, work graph readable | all work lives in Beads |
 | no Beads agent setup | `bd init` without `--skip-agents` writes skills, hooks and AGENTS.md blocks that tell agents to keep memory in `bd remember`, splitting it from ynm |
-| seat identity | a seat claims work as `BEADS_ACTOR`; unset is fine outside a seat |
+| seats wired (once the roster has seats) | each seat is started by its own name and wakes as itself: a harness of its own whose wake hook names it, and no `BEADS_ACTOR` passed through for a stray shell variable to override |
 
 ## Reporting
 
@@ -55,3 +55,6 @@ else in those files as it is.
 under: an edit or delete from inside a session doesn't stick. Don't try. Tell the human the exact
 entry to remove (the hook whose command is `bd prime --hook-json`), and run the check again after
 they have. Never report it removed while the check still finds it.
+
+After any fix, run the check again before you reply, even when part of the fix is left to the
+human, and report what it still finds.

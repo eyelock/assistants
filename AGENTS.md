@@ -34,7 +34,9 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 - `stubs`: commands replaced by recorders, such as `gh` (the default once any shell access is granted). Nothing reaches a real service.
 - `evidence`: a command run afterwards, for example `git log --all` or `find . -type f`. Its output and the stub calls go to the judge, so assertions can check what was actually done.
 
-Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads. See `plugins/gitflow/skills/push/evals/` for a worked example.
+Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read most files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads.
+
+Every run, with or without the skill, has Claude Code's own memory off and cannot read the copies of skills installed on the machine (`~/.ynh`, `~/.claude/plugins`): otherwise a baseline can find the skill under test and follow it, and a "remember this" goes to the harness's memory rather than the skill. See `plugins/gitflow/skills/push/evals/` for a worked example.
 
 `pnpm test` fails when a new skill has no evals. Skills that predate the rule are listed in `scripts/skills-without-evals.txt`; that list only shrinks.
 

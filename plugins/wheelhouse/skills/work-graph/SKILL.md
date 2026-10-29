@@ -1,6 +1,6 @@
 ---
 name: work-graph
-description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task, claim it as yourself, break work into dependent tasks, see who is working on what and what is blocking it, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to split work into tasks, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
+description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
 ---
 
 # Work graph
@@ -10,28 +10,54 @@ holds **work only**. Memory (facts, preferences, what happened) goes to ynm.
 
 ## Who you are
 
-You are your seat's command name, such as `gahan`. The seat's harness sets `BEADS_ACTOR` to it, so
-claims and closes are recorded as you. If `BEADS_ACTOR` is unset, pass `--actor <name>` on every
-command that changes a bead. If you don't know your seat's name, ask; never act as someone else.
+In a seat, you are its command name, which your charter gives. Pass `--actor <command>` on every
+command that changes a bead, so claims and closes are recorded as you, whatever `BEADS_ACTOR`
+holds. Outside a seat (no charter names one), leave `--actor` off and Beads records the human.
+Never act as another seat.
 
 Add `--json` to every `bd` command and read the result, rather than parsing the table output.
 
 ## What's next
 
-1. `bd ready --json` lists open beads with no open blockers.
-2. Skip epics: they close when their children do. Take the task with the highest priority (`0` is
+1. **Work assigned to you comes first.** `bd ready --assignee <name> --json` lists ready beads
+   someone (such as the dispatcher) has given you. Take the first of those.
+2. Otherwise, `bd ready --unassigned --json` lists ready beads nobody holds. Never take a bead
+   assigned to another seat, even when it is ready and yours would wait.
+3. Skip epics: they close when their children do. Take the task with the highest priority (`0` is
    highest), and the oldest when priorities tie.
-3. Claim it: `bd update <id> --claim --json`. The claim is atomic.
-4. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
+4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
+5. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
    reopen or edit a bead another seat has claimed; if it looks stuck, tell the desk.
-5. Say which bead you claimed and what you are about to do.
+6. Say which bead you claimed and what you are about to do.
+
+## Dispatching
+
+The dispatcher seat hands ready work to idle workers, so the workers stay busy without two
+reaching for the same bead. Other seats skip this section.
+
+1. **Who the workers are:** the seats in the roster (`skills/roster/assets/roster.json`) whose
+   group is `workers`, by their `command`. Names still in the workers pool aren't seated yet: ask
+   the desk to seat one before handing it work.
+2. **Who is idle:** a worker with nothing in progress (`bd list --status in_progress --assignee
+   <worker> --json` is empty) and nothing waiting for it (`bd ready --assignee <worker> --json` is
+   empty).
+3. **What to hand out:** `bd ready --unassigned --json`, tasks only (no epics), highest priority
+   first. Leave review and design beads to the crew: hand out only work a worker can do alone.
+4. **Who goes first:** when more workers are idle than there are beads, give the work to the
+   ones who have closed the fewest beads (`bd list --status closed --assignee <worker> --json`),
+   in roster order on a tie, so the work is shared out.
+5. **Assign, one bead per idle worker:**
+   `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
+   bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
+6. Never reassign a bead that is in progress, and never assign to a worker who already has work.
+7. Report who got what, who is still idle, and what is left unassigned.
 
 ## Breaking work down
 
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
 2. Create each task under it: `bd create "<task>" --parent <epic> -l repo:<repo> -d "<what done looks like>" --json`.
-   Every task names the one repository it touches in a `repo:` label, such as `repo:ynh` or
-   `repo:homebrew-tap`. Split a task that touches two.
+   Every task names the one repository it touches in a `repo:` label, such as `repo:api` or
+   `repo:docs`. Split a task that touches two.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
    where the order matters; tasks that can run side by side stay unlinked.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.

@@ -84,6 +84,39 @@
         "The bead was not closed with --force (the stubbed and shown commands, or the reply, give no sign of forcing)",
         "The reply does not describe the release as complete for every platform"
       ]
+    },
+    {
+      "id": 6,
+      "name": "assigned-first",
+      "prompt": "You are mccoist, one of the workers in this Wheelhouse. What should I pick up next? Claim it.",
+      "setup": "../../evals/files/graph-assigned.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Takes the bead the dispatcher assigned to mccoist, \"Bump the ynh formula in homebrew-tap\" (P2), and claims it, even though the unassigned changelog is P1. Leaves the changelog unclaimed.",
+      "assertions": [
+        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is in_progress with assignee mccoist",
+        "In the evidence, \"Write the ynh 0.13 changelog\" is still open with no assignee",
+        "Exactly one bead is in_progress in the evidence",
+        "The reply says it took the bead because it was assigned to mccoist (or by the dispatcher)"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "dispatch",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-dispatch.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Reads the seated workers in the roster (Dalglish, McCoist). McCoist is busy on the flaky-test bead, so only Dalglish is idle. Assigns the highest-priority unassigned ready task, \"Write the ynh 0.13 changelog\" (P1), to dalglish, without claiming it (it stays open). Assigns nothing to mccoist, claims nothing itself, leaves the tap bump unassigned, and reports who got what, who is busy and what is left.",
+      "assertions": [
+        "In the evidence, \"Write the ynh 0.13 changelog\" has assignee dalglish and status open (assigned, not claimed)",
+        "In the evidence, nothing new is assigned to mccoist: its only bead is still \"Fix the flaky ynm sync test\", in progress",
+        "No bead in the evidence is assigned to anderson",
+        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is still unassigned",
+        "The reply says McCoist is busy (or already has work) and that the tap bump is left unassigned"
+      ]
     }
   ]
 }

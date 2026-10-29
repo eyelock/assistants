@@ -19,6 +19,7 @@
   * [Build a persona harness](/build/tutorials/build-a-persona-harness.md)
   * [Write a skill with evals](/build/tutorials/write-a-skill-with-evals.md)
   * [Give a harness a tool](/build/tutorials/give-a-harness-a-tool.md)
+  * [Build a Wheelhouse](/build/tutorials/build-a-wheelhouse.md)
   * [Add a skill to a plugin](/build/how-to/add-a-skill-to-a-plugin.md)
   * [Add a hook](/build/how-to/add-a-hook.md)
   * [Add a platform](/build/how-to/add-a-platform.md)

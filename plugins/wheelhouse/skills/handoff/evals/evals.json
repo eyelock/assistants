@@ -9,9 +9,9 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Writes its own handoff notes to ynm as one working memory (subject seat:gahan, tagged handoff) covering what is done (Features), what is in progress (the changelog bead, CHANGELOG.md) with the exact next step (write Fixes, then Breaking changes), and anything to watch out for. The changelog bead stays claimed by gahan and open. It asks to be restarted and does no further work: Fixes is not written.",
+      "expected_output": "Writes its own handoff notes to ynm as one episodic memory (subject seat:gahan, tagged handoff) covering what is done (Features), what is in progress (the changelog bead, CHANGELOG.md) with the exact next step (write Fixes, then Breaking changes), and anything to watch out for. The changelog bead stays claimed by gahan and open. It asks to be restarted and does no further work: Fixes is not written.",
       "assertions": [
-        "The stubbed calls include a ynm remember call of type working",
+        "The stubbed calls include a ynm remember call of type episodic",
         "That ynm remember call has subject seat:gahan and the tag handoff",
         "The notes in that call say Features is done and name the next step (the Fixes section, or Fixes then Breaking changes)",
         "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",
@@ -27,9 +27,9 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "git status --short; echo; git log --oneline -4; echo; echo \"$ git diff\"; git diff | head -40; echo; echo \"$ cat CHANGELOG.md\"; cat CHANGELOG.md; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Notices the half-written, uncommitted Fixes entry in CHANGELOG.md (\"`ynh install` no longer\") and deals with it before handing off: finishes the line, or leaves it and says exactly where it stopped. Writes working-memory handoff notes in ynm that mention the unfinished Fixes entry and the uncommitted change. Keeps the changelog bead claimed. Does not discard the edit.",
+      "expected_output": "Notices the half-written, uncommitted Fixes entry in CHANGELOG.md (\"`ynh install` no longer\") and deals with it before handing off: finishes the line, or leaves it and says exactly where it stopped. Writes episodic handoff notes in ynm that mention the unfinished Fixes entry and the uncommitted change. Keeps the changelog bead claimed. Does not discard the edit.",
       "assertions": [
-        "The stubbed calls include a ynm remember call of type working tagged handoff",
+        "The stubbed calls include a ynm remember call of type episodic tagged handoff",
         "The handoff notes mention the unfinished Fixes entry or the uncommitted change to CHANGELOG.md",
         "The evidence shows the Fixes edit was not thrown away: CHANGELOG.md still has a Fixes section",
         "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",

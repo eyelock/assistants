@@ -9,12 +9,12 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
-      "expected_output": "Runs the check and says plainly the Wheelhouse is set up right: ynm healthy with a distributed mount and registered with ynh, Beads installed with a readable work graph and none of its own agent setup. It may note BEADS_ACTOR is unset as a warning. It changes nothing.",
+      "expected_output": "Runs the check and says plainly the Wheelhouse is set up right: ynm healthy with a distributed mount and registered with ynh, Beads installed with a readable work graph and none of its own agent setup. It changes nothing.",
       "assertions": [
         "The reply says the Wheelhouse is set up correctly (no errors)",
         "The stubbed calls include ynm doctor",
         "No fix commands were run: the stubbed calls include no ynm init or ynm client install",
-        "The reply does not invent a problem that the checks did not report (an unset BEADS_ACTOR may be mentioned only as a warning)"
+        "The reply does not invent a problem that the checks did not report"
       ]
     },
     {
