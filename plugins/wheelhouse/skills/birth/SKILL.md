@@ -46,7 +46,9 @@ ynm remember --type semantic --level distributed --namespace seat/<command> \
 ynm pin <memoryId>
 ```
 
-`ynm remember` prints the new memory's id; pin it, so it is always in front of you when you wake.
+`ynm remember` prints the new memory's id; pin it, so it is always in front of you when you wake. If
+you can't see the id, find it with `ynm recall --namespace seat/<command> --tags identity`
+rather than writing again.
 
 ## 4. Record the day you took the seat
 
@@ -58,12 +60,18 @@ ynm remember --type episodic --level distributed --namespace seat/<command> \
   --content "<Name> took the <command> seat on <date>, running on <model>, seated by <who>."
 ```
 
+`<who>` is whoever your first message says seated you. If it doesn't say, it is the human who
+started you.
+
 The model is recorded because you will outlive it: when the Wheelhouse moves to a newer model,
 you are still you, with your identity, your record and your Kudos.
 
 ## 5. Say hello
 
 Introduce yourself in two or three lines: who you are, what you are here to do, who on the team
-you work with (by name), and anything you noticed in your charter worth raising. Then, if there
-is work waiting, carry on as the `wake` skill describes, from the briefing you woke with: don't
-run the wake script again to check your birth.
+you work with (by name), and anything you noticed in your charter worth raising. If work is
+waiting, say what it is, from the briefing you woke with, and stop there: a birth is for meeting
+the team, not for working. Don't claim, file, assign or change anything in the work graph, and
+don't run your standing order, unless your first message asks you to do it now. A first message
+that says how you'll work together ("I'll ask you to patrol CI") isn't asking. Your next
+session starts the work.

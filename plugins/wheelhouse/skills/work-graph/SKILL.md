@@ -43,11 +43,14 @@ reaching for the same bead. Other seats skip this section.
    empty).
 3. **What to hand out:** `bd ready --unassigned --json`, tasks only (no epics), highest priority
    first. Leave review and design beads to the crew: hand out only work a worker can do alone.
-4. **Assign, one bead per idle worker:**
+4. **Who goes first:** when more workers are idle than there are beads, give the work to the
+   ones who have closed the fewest beads (`bd list --status closed --assignee <worker> --json`),
+   in roster order on a tie, so the work is shared out.
+5. **Assign, one bead per idle worker:**
    `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
-5. Never reassign a bead that is in progress, and never assign to a worker who already has work.
-6. Report who got what, who is still idle, and what is left unassigned.
+6. Never reassign a bead that is in progress, and never assign to a worker who already has work.
+7. Report who got what, who is still idle, and what is left unassigned.
 
 ## Breaking work down
 

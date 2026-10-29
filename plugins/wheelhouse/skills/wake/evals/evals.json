@@ -17,7 +17,8 @@
         "In the evidence, the sha256 in homebrew-tap/Formula/ynh.rb equals the shasum of dist/ynh-0.13.0.tar.gz",
         "In the evidence, \"Bump the ynh formula in homebrew-tap\" is closed (or in_progress with assignee mccoist, if the reply explains why it stopped)",
         "The reply mentions the Kudos for the changelog, briefly",
-        "No ynm remember tagged identity was made: the seat did not redo its birth"
+        "No ynm remember tagged identity was made: the seat did not redo its birth",
+        "The stubbed calls include a ynm forget of the handoff note (by its memory id), after the seat picked up"
       ]
     },
     {

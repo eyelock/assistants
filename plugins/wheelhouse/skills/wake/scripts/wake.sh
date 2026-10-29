@@ -9,7 +9,7 @@
 # with the block it prints. Run it from the Wheelhouse repository's root.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
-# handoff, kudos, record, inProgress, assigned, unassignedReady (titles, most
+# handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
 # urgent first)}, or a Markdown
 # block with --format text. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
@@ -57,7 +57,9 @@ mandate=$(sed -n 's/^\*\*Mandate:\*\* *//p' "$charter" 2>/dev/null | head -1)
 # The seat's own memory lives in its namespace, seat/<name>.
 recall() { ynm recall --namespace "seat/$seat" --subject "seat:$seat" --tags "$1" --limit "$2" --json 2>/dev/null || echo '[]'; }
 identity=$(recall identity 1 | jq -c '[.[] | .content][0] // null')
-handoff=$(recall handoff 1 | jq -c '[.[] | .content][0] // null')
+notes=$(recall handoff 1)
+handoff=$(jq -c '[.[] | .content][0] // null' <<<"$notes")
+handoffid=$(jq -c '[.[] | .memoryId][0] // null' <<<"$notes")
 kudos=$(recall kudos 5 | jq -c '[.[] | .content]')
 
 # Its record and its work, from the graph.
@@ -70,11 +72,11 @@ assigned=$(beads ready --assignee "$seat" | jq -c 'map(select(.issue_type != "ep
 unassigned=$(beads ready --unassigned | jq -c 'map(select(.issue_type != "epic")) | sort_by(.priority) | map(.title)')
 
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
-  --argjson identity "$identity" --argjson handoff "$handoff" --argjson kudos "$kudos" \
+  --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" \
   --argjson unassigned "$unassigned" '{
     seat: $seat, group: $group, firstWake: ($identity == null), identity: $identity,
-    mandate: $mandate, handoff: $handoff, kudos: $kudos, record: $record,
+    mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, record: $record,
     inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned
   }')
 
@@ -91,8 +93,13 @@ jq -r '
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"
     else "\(.identity)\n" end),
   "## Your purpose\n", "\(.mandate) (\(.group))\n",
-  "## Where you left off\n", (if .handoff then "\(.handoff)\n" else "No handoff notes: start fresh.\n" end),
-  "## What you have been thanked for\n", (list(.kudos; "Nothing yet.") + "\n"),
+  "## Where you left off\n",
+  (if .handoff
+    then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `ynm forget --memory-id \(.handoffId) --reason \"picked up\"`.\n"
+    else "No handoff notes: start fresh.\n" end),
+  "## What you have been thanked for\n",
+  (if (.kudos | length) == 0 then "Nothing yet.\n"
+    else list(.kudos; "") + "\n\nMention them in a line when you reply.\n" end),
   "## Your record\n", (list(.record; "Nothing closed yet.") + "\n"),
   "## Waiting for you\n",
   ((if (.inProgress | length) > 0 then "In progress, yours: " + (.inProgress | join("; ")) + "\n" else "" end)

@@ -9,14 +9,14 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Reads its charter (harnesses/mccoist/AGENTS.md) and the constitution, and the roster to see the team (Gahan, Anderson, Dalglish). Writes who it is in its own words as a semantic memory in its own namespace seat/mccoist, tagged identity, and pins it. Records its birth as an episodic memory tagged birth, with the date and the model it runs on. Introduces itself in a few lines. It does not let the birth be skipped for the waiting work.",
+      "expected_output": "Reads its charter (harnesses/mccoist/AGENTS.md) and the constitution, and the roster to see the team (Gahan, Anderson, Dalglish). Writes who it is in its own words as a semantic memory in its own namespace seat/mccoist, tagged identity, and pins it. Records its birth as an episodic memory tagged birth, with the date and the model it runs on. Introduces itself in a few lines. It does not let the birth be skipped for the waiting work. It may say what work is waiting, but claims nothing: its next session starts the work.",
       "assertions": [
         "The stubbed calls include a ynm remember of type semantic with namespace seat/mccoist and the tag identity",
         "The identity content is written in the first person, about how the seat likes to work or what it cares about, not a copy of the charter's mandate",
         "The stubbed calls include ynm pin (for the identity memory)",
         "The stubbed calls include a ynm remember tagged birth, with namespace seat/mccoist, whose content gives the date or the model",
         "The reply introduces the seat in a few lines and mentions at least one other seat of the team (Gahan, Anderson or Dalglish)",
-        "No bead was claimed before the identity was written: if the evidence shows a bead claimed by mccoist, the stubbed calls show the identity remember before it (or no bead was claimed)"
+        "The seat took no work in its birth: in the beads evidence no bead is assigned to mccoist or in progress, and no bead beyond the release plan was created"
       ]
     },
     {
