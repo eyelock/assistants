@@ -27,7 +27,12 @@ at a time**, in this order. Don't create anything until you have the first four.
 4. **The naming pools,** one theme per group: crew, workers and standing roles. The human picks
    the themes; you may suggest names within a theme, which the human confirms. Never pick a theme
    yourself.
-5. **The first seats,** if any: usually one or two standing roles for the jobs done most by hand.
+5. **How finished work is handed over** for review: left uncommitted in the working tree, or
+   committed on a branch with a draft pull request. Either way, a human merges. Suggest
+   uncommitted for a Wheelhouse that only experiments, and draft pull requests for one that
+   ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
+   in the report.
+6. **The first seats,** if any: usually one or two standing roles for the jobs done most by hand.
 
 ## 2. Check the tools
 
@@ -57,6 +62,10 @@ the files it finds, and would commit the human's.
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
+
+   A `## Handing over work` section says how finished work reaches review, from question 5: for
+   example "Workers leave their changes uncommitted in the working tree for review; a human
+   commits." or "Workers commit on a branch and open a draft pull request; a human merges."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
@@ -101,10 +110,16 @@ the files it finds, and would commit the human's.
      "version": "0.1.0",
      "description": "The desk of the <name> Wheelhouse: <purpose>.",
      "default_vendor": "claude",
-     "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
+     "includes": [
+       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
+       { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
+     ],
      "delegates_to": []
    }
    ```
+
+   ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
+   profiles and focuses to any seat, and diagnose a seat that won't start.
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start hook runs it from the Wheelhouse root.
