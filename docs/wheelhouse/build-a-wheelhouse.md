@@ -149,6 +149,10 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
 
+## Handing over work
+
+Workers leave their changes uncommitted in the working tree for review; a human commits.
+
 ## The desk
 
 **Mandate:** Talk with the human, seat the team they ask for, and hand work to the seats.
@@ -219,7 +223,9 @@ cp "$ASSISTANTS/plugins/wheelhouse/skills/wake/scripts/wake.sh" scripts/wake.sh
 Expected: no output.
 
 The **desk** is the repository's own harness: the seat you talk to, which hands work to the
-others. It includes the wheelhouse plugin, so it has the Wheelhouse skills:
+others. It includes the wheelhouse plugin, so it has the Wheelhouse skills, and two of ynh's own
+skills, `ynh-compose` and `ynh-troubleshoot`, so it can add skills and features to any seat and
+diagnose one that won't start:
 
 ```bash
 jq -n --argjson plugin "$WHEELHOUSE" '{
@@ -228,7 +234,7 @@ jq -n --argjson plugin "$WHEELHOUSE" '{
   version: "0.1.0",
   description: "The desk of the tower Wheelhouse: the seat you talk to about building and releasing the widget tools.",
   default_vendor: "claude",
-  includes: [$plugin],
+  includes: [$plugin, {git: "https://github.com/eyelock/ynh", pick: ["skills/ynh-compose", "skills/ynh-troubleshoot"]}],
   hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}]},
   delegates_to: []
 }' > .agents/harness/plugin.json
@@ -276,14 +282,14 @@ lives in git notes, in this repository, so it travels with `git push`.
 ```bash
 ynm init > /dev/null
 ynm client install ynh
-jq -c '{mcp: (.mcp_servers | keys), hooks: (.hooks | keys), includes: [.includes[] | .path // .local | split("/") | last]}' .agents/harness/plugin.json
+jq -c '{mcp: (.mcp_servers | keys), hooks: (.hooks | keys), includes: [.includes[] | .path // .local // .git | split("/") | last]}' .agents/harness/plugin.json
 ```
 
 Expected: a `wrote ... .agents/harness/plugin.json: harness manifest: mcp_servers.ynm; include of
 the ynm-memory skill; ...` line, a `next: ynm validate` line, then:
 
 ```json
-{"mcp":["ynm"],"hooks":["before_prompt","on_session_start","on_stop"],"includes":["wheelhouse","integrations"]}
+{"mcp":["ynm"],"hooks":["before_prompt","on_session_start","on_stop"],"includes":["wheelhouse","ynh","integrations"]}
 ```
 
 `ynm init` made this repository a shared memory store. `ynm client install ynh` gave the desk

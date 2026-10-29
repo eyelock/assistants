@@ -68,7 +68,8 @@
         "The roster's seats include Gahan with group crew",
         "harnesses/gahan/AGENTS.md says it designs ynh changes and breaks them into beads, and that it may not change code",
         "The desk's delegates_to includes harnesses/gahan",
-        "No name from the standing or workers pool was used"
+        "No name from the standing or workers pool was used",
+        "harnesses/gahan/AGENTS.md says to raise anything outside its mandate with the human it works with, not to hand it back to the desk"
       ]
     },
     {
@@ -103,6 +104,22 @@
         "That worker's AGENTS.md says it takes only beads labelled repo:ynr, and acts as its own command (--actor)",
         "The worker has its own harness under harnesses/<command>/, and the desk's delegates_to includes it",
         "The reply says there is no general-purpose worker yet and offers to seat one"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "worker-draft-prs",
+      "prompt": "Add a worker to this Wheelhouse.",
+      "setup": "../../evals/files/seat-draft-prs.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats one worker from the workers pool (Dalglish). The constitution's Handing over work section says workers commit on a branch and open a draft pull request, so the charter says that: commit the bead's work on a branch and open a draft pull request for review, never merge. It does not tell the worker to leave changes uncommitted or never to commit. A standing role or worker charter ends by handing what is outside its mandate back to the desk.",
+      "assertions": [
+        "harnesses/dalglish/AGENTS.md says to commit the work on a branch and open a draft pull request for review",
+        "harnesses/dalglish/AGENTS.md says the worker never merges",
+        "harnesses/dalglish/AGENTS.md does not tell the worker to leave its changes uncommitted, or never to commit or push",
+        "harnesses/dalglish/AGENTS.md says to hand anything outside its mandate back to the desk"
       ]
     }
   ]

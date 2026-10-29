@@ -37,8 +37,12 @@ seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and
 
 - Every worker gets the same mandate, standing order and charter, with only its name changed:
   build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
-  assigned to you or unassigned; leave your changes uncommitted in the working tree, for the
-  crew to review; never commit, push or merge; hand review and design back to the crew.
+  assigned to you or unassigned; hand finished work over for review as the constitution's
+  `## Handing over work` says; never merge; hand review and design back to the crew.
+- **Handing over** follows the constitution, written into the charter in its own words: either
+  leave changes uncommitted in the working tree (never commit or push), or commit them on a
+  branch and open a **draft** pull request. If the constitution says nothing, leave them
+  uncommitted.
 - Its standing order is `next`: take the next bead, build it, and close it with what actually
   happened.
 - If the pool has fewer names than the human wants workers, seat the ones it has and ask for
@@ -115,8 +119,11 @@ You are <Name>, the <command> seat: a <group> seat of the <wheelhouse> Wheelhous
 
 You act in the work graph as `<command>`: pass `--actor <command>` on every `bd` command that
 changes it.
-When something is outside your mandate, hand it back to the desk.
+When something is outside your mandate, <where it goes>.
 ```
+
+Where it goes depends on who the seat works with: a crew seat raises it with the human it works
+with; a standing role or a worker hands it back to the desk.
 
 ## 4. Connect it
 
