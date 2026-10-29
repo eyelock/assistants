@@ -32,7 +32,8 @@ at a time**, in this order. Don't create anything until you have the first four.
    uncommitted for a Wheelhouse that only experiments, and draft pull requests for one that
    ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
    in the report.
-6. **The first seats,** if any: usually one or two standing roles for the jobs done most by hand.
+6. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
+   walks through with the human role by role.
 
 ## 2. Check the tools
 
@@ -70,7 +71,8 @@ the files it finds, and would commit the human's.
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
-   The human seats the crew they work with directly.
+   The human seats the crew they work with directly. Asked to set up the team, the desk walks the
+   human through the starter team, role by role, with the `add-seat` skill.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:
@@ -146,8 +148,8 @@ the files it finds, and would commit the human's.
 
 ## 5. Seats and checks
 
-1. Add each first seat with the `add-seat` skill. Each seat's first session is its birth (the
-   `birth` skill), where it writes who it is: leave that to the seat.
+1. Add any first seats the human named with the `add-seat` skill. Each seat's first session is its
+   birth (the `birth` skill), where it writes who it is: leave that to the seat.
 2. Run the `doctor` skill and fix what it reports, asking first as it says.
 
 Don't add a remote, push or publish unless asked.
@@ -156,4 +158,5 @@ Don't add a remote, push or publish unless asked.
 
 Lead with what was made and where. Then the layers as built, the seats and how to start each
 (`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
-do (the push hook, a remote), and the doctor's verdict.
+do (the push hook, a remote), and the doctor's verdict. End by offering to set up the starter team
+next, role by role, with the `add-seat` skill.

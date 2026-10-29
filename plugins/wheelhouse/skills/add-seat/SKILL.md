@@ -1,6 +1,6 @@
 ---
 name: add-seat
-description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or a worker - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name.
+description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or a worker - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name, or to set up a Wheelhouse's team (its starter team) role by role.
 ---
 
 # Add a seat
@@ -10,12 +10,48 @@ Kudos in ynm. Each seat is a ynh harness under `harnesses/<command>/` in the Whe
 repository, started by its own name, and the desk (the repository's own harness) delegates to it.
 Who seats a seat depends on who works with it. The human seats the crew they work with directly.
 The desk seats the standing roles. The human is there for the births of both, since they talk to
-both. The dispatcher seats the
-workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
+both. The dispatcher seats the workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
 the human lets you; if asked for a seat that is someone else's to make, say whose it is.
 
 Work from the Wheelhouse repository root, the folder holding `.agents/harness/plugin.json`,
 `.beads/` and `skills/roster/`.
+
+## The starter team
+
+Most Wheelhouses need the same first seats. Each is a template, one Markdown file per role, in
+this skill's `assets/starter-team/`: `designer`, `reviewer`, `dispatcher`, `ci-watcher`,
+`releaser`, `worker` and `specialist-worker`. A file's frontmatter gives its `order`, `group`,
+`focus` and who seats it (`seated-by`); its body gives the mandate, what the seat may and may not
+do, the focus prompt, and under `## Ask`, the questions to ask before seating it.
+
+A Wheelhouse can change its team: a file of the same name in its own
+`skills/roster/assets/starter-team/` replaces the template, and a new file adds a role. Read both
+folders, the Wheelhouse's winning.
+
+**Asked to set up the team,** walk the templates in `order` (a Wheelhouse's file with no `order`
+goes last), one role at a time:
+
+1. Skip a role that is already seated: a seat in the roster with that `role`, or, for a seat with
+   no `role`, one whose mandate is clearly the same job.
+2. Say in a line what the role is for, and ask one question: whether to seat it, under the first
+   name in the group's pool that no seat holds and `excluded` doesn't list, in the pool's order
+   ("Seat a designer, as Gahan?"). The human can change the name in the answer. A template with
+   `optional: true` is offered, not assumed. Never seat a role the human hasn't agreed to. Then
+   stop and wait for the answer: one question per message.
+3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
+   request, the constitution or the roster already answers.
+4. Don't change anything else while you walk, such as the constitution or the scripts; mention
+   what you'd fix, and leave it to the human.
+5. Seat it from the template, through sections 2 to 4 below, and record `"role": "<template>"` on
+   its roster seat. In the walk, the workers are the dispatcher's to seat: if you are the desk,
+   ask the dispatcher; if there is no dispatcher yet, say the workers come after one.
+6. Then go on to the next role.
+
+**Asked for a particular seat** ("Seat Gore as our reviewer", "Add two workers", "Add a worker for
+the api repository"), don't walk the team: seat what was asked, straight away, starting from the
+role's template if there is one. The human asking is the human letting you. Ask only for what you
+can't tell and the seat can't do without; take everything else from the template, the
+constitution and the roster.
 
 ## 1. Pin down the role
 
@@ -132,7 +168,8 @@ with; a standing role or a worker hands it back to the desk.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate, and `specialities` for a specialist worker.
+   path and mandate, `role` when it was seated from a starter-team template, and `specialities`
+   for a specialist worker.
 4. Check the Wheelhouse with the `doctor` skill.
 5. Commit the seat (`feat: seat <Name>`), unless the human said not to. The desk reads its
    delegates from the repository's commits, so it won't start until every seat in
