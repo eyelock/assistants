@@ -7,7 +7,7 @@ This is a reference repository of sample plugins, skills, and personas. It is no
 - `plugins/` — Self-contained plugins with manifests (`.agents/harness/plugin.json`, `.claude-plugin/`, `.cursor-plugin/`)
 - `skills/` — Shared skill plugins organized by domain, each with its own plugin manifests
 - `ynh/` — ynh harnesses: personas that compose skills, and read-only platform harnesses that add an MCP server
-- `docs/` — Tutorials, how-to guides, reference and explanation, split as on diataxis.fr. View them with `make docs` (http://localhost:3000)
+- `docs/` — The docs, one folder per area (`start/`, `library/`, `personas/`, `harnesses/`, `testing/`, `triage/`, `wheelhouse/`); inside each, pages are tutorials, how-to guides, reference or explanation, as on diataxis.fr. Every link must resolve (`pnpm test` checks). View them with `make docs` (http://localhost:3000)
 - `.claude-plugin/marketplace.json` — Claude Code marketplace index
 - `.cursor-plugin/marketplace.json` — Cursor marketplace index
 - `.github/plugin/marketplace.json` — GitHub Copilot CLI marketplace index

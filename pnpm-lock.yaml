@@ -27,6 +27,8 @@ importers:
 
   plugins/vendor-harness: {}
 
+  plugins/wheelhouse: {}
+
   skills/dev: {}
 
   skills/infra: {}
