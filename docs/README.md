@@ -35,4 +35,5 @@ The terms are in the [Glossary](start/glossary.md).
 
 ## Viewing these docs
 
-Run `make docs` in the repository root and open http://localhost:3000.
+They are published at https://eyelock.github.io/assistants/, from `develop`. To view a local
+copy as you edit, run `make docs` in the repository root and open http://localhost:3000.
