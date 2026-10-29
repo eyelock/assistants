@@ -35,7 +35,7 @@ the story without a model.
 
 ## Prerequisites
 
-- `ynh` and `ynd` 0.12 or later, `ynm` 0.4.1 or later, and Beads (`bd`) 1.3 or later, on your PATH
+- `ynh` and `ynd` 0.13 or later, `ynm` 0.4.1 or later, and Beads (`bd`) 1.3 or later, on your PATH
 - `git` and `jq`, and a network connection (the seats include skills from GitHub)
 - To talk to the agents: Claude Code (`claude`), signed in. About twenty Sonnet sessions in all,
   most of them short. Without it, follow the "what it did" path instead.
@@ -48,7 +48,7 @@ ynm --version
 bd --version
 ```
 
-Expected: a 0.12 version twice (such as `0.12.1`), then a line starting `@ynm/cli/0.4.` and a
+Expected: a 0.13 version twice (such as `0.13.0`), then a line starting `@ynm/cli/0.4.` and a
 line starting `bd version 1.3.`
 
 To install what's missing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`.
@@ -495,15 +495,13 @@ connect Gahan crew "Designs changes and breaks them into beads."
 connect Gore crew "Reviews what the workers built, and files beads for what needs fixing."
 git add -A
 git commit -q -m "feat: the crew, Gahan and Gore"
-ynh update local/tower > /dev/null
 for c in gahan gore; do ynh install "./harnesses/$c" > /dev/null; done
 ```
 
 Expected: no output. `gahan` and `gore` are commands now.
 
-`ynh update local/tower` refreshes ynh's copy of the Wheelhouse. The desk finds its seats in that
-copy, not in your working folder, so it needs a commit and a refresh each time a seat is added;
-the `add-seat` skill does both.
+The desk finds its seats in the Wheelhouse's commits, not in your working folder, so a seat
+must be committed before the desk can start; the `add-seat` skill commits each one it adds.
 
 Be there for their births. Each is a session of its own: the seat wakes, finds nothing in its
 namespace, reads the charter you wrote, meets the team, and writes who it is. Introduce yourself:
@@ -624,7 +622,6 @@ connect Dredd standing "Watches CI and files a bead for each failure."
 connect Tharg standing "Plans and cuts releases, and never publishes without the human."
 git add -A
 git commit -q -m "feat: the standing roles"
-ynh update local/tower > /dev/null
 for c in anderson dredd tharg; do ynh install "./harnesses/$c" > /dev/null; done
 ynd compose harnesses/tharg | jq -c '[.artifacts.skills[].name]'
 ```
@@ -724,7 +721,6 @@ EOF
 done
 git add -A
 git commit -q -m "feat: the workers"
-ynh update local/tower > /dev/null
 born mccoist "I'm McCoist. I like small, well-tested changes, and I'd rather ask than guess. I go by they/them."
 born dalglish "Dalglish. Quiet, quick, tidy. I finish what I start, and I leave the code cleaner than I found it."
 born strachan "I'm Strachan. Eager, maybe too eager: tell me if I'm reaching. I learn by doing."

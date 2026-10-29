@@ -119,10 +119,9 @@ When something is outside your mandate, hand it back to the desk.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
    path and mandate.
 4. Check the Wheelhouse with the `doctor` skill.
-5. Commit the seat (`feat: seat <Name>`), unless the human said not to, then refresh the desk:
-   `ynh update local/<desk>`, where the desk is the roster seat whose harness is `.`. The desk
-   reads its delegates from ynh's cached copy of the repository's commits, so it won't start
-   until every seat in `delegates_to` is committed and that copy is refreshed.
+5. Commit the seat (`feat: seat <Name>`), unless the human said not to. The desk reads its
+   delegates from the repository's commits, so it won't start until every seat in
+   `delegates_to` is committed.
 
 The seat's first session is its **birth** (the `birth` skill): it reads its charter, meets the
 team and writes who it is, in its own words. Don't write its identity for it. A
@@ -141,4 +140,4 @@ it, but don't start it.
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
 start it: `ynh install harnesses/<command>`, then `<command> --focus <order>`, written out for each
 seat when there are several. If you left the seat uncommitted, say that the desk won't start
-until it is committed and refreshed with `ynh update local/<desk>`.
+until it is committed.
