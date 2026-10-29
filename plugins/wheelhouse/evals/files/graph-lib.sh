@@ -198,3 +198,52 @@ MD
 JSON
   git add -A && git commit -qm "chore: The seats"
 }
+
+# specialist_wheelhouse <worker>...: a Wheelhouse whose workers are given as
+# Name=label (a specialist for beads carrying that label, such as repo:ynh) or
+# Name (general purpose), beside Anderson the dispatcher. Every seat has its
+# own harness, woken by name, so only the workers' specialities are in question.
+specialist_wheelhouse() {
+  wheelhouse_init
+  install_ynm_stub
+  stub_ynh_ynd
+  mkdir -p .agents/harness skills/roster/assets scripts
+  cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
+  printf '{"name":"ynw","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
+  local seats='[]' w name label cmd charter
+  for w in Anderson "$@"; do
+    name=${w%%=*}; label=; [ "$w" != "$name" ] && label=${w#*=}
+    cmd=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+    mkdir -p "harnesses/$cmd/.agents/harness"
+    jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c,
+      hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}]}}' \
+      > "harnesses/$cmd/.agents/harness/plugin.json"
+    if [ "$name" = Anderson ]; then
+      charter='the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.'
+      seats=$(jq -c --arg c "$cmd" '. + [{name: "Anderson", group: "standing", command: $c, harness: "harnesses/\($c)", mandate: "Dispatches ready work to idle workers."}]' <<<"$seats")
+    elif [ -n "$label" ]; then
+      charter="a worker, for beads labelled $label.\n\n**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds that is labelled $label."
+      seats=$(jq -c --arg n "$name" --arg c "$cmd" --arg l "$label" '. + [{name: $n, group: "workers", command: $c, harness: "harnesses/\($c)", mandate: "Builds one \($l) bead at a time.", specialities: [$l]}]' <<<"$seats")
+    else
+      charter='a general-purpose worker.\n\n**Mandate:** Build one bead at a time: first one assigned to you, else one nobody holds.'
+      seats=$(jq -c --arg n "$name" --arg c "$cmd" '. + [{name: $n, group: "workers", command: $c, harness: "harnesses/\($c)", mandate: "Builds one bead at a time."}]' <<<"$seats")
+    fi
+    printf "# %s\n\nYou are %s, the \`%s\` seat: $charter\n\nYou act in the work graph as \`%s\`: pass \`--actor %s\` on every \`bd\` command that changes it.\n" \
+      "$name" "$name" "$cmd" "$cmd" "$cmd" > "harnesses/$cmd/AGENTS.md"
+    jq --arg c "$cmd" '.delegates_to += [{git: ".", path: "harnesses/\($c)"}]' .agents/harness/plugin.json > .p && mv .p .agents/harness/plugin.json
+  done
+  jq -n --argjson seats "$seats" '{
+    pools: {
+      workers: {theme: "Scottish footballers of the 1980s and 1990s", names: ["Dalglish", "McCoist", "Strachan", "Souness"]},
+      standing: {theme: "2000 AD characters", names: ["Anderson", "Dredd"]}
+    },
+    excluded: [], seats: $seats}' > skills/roster/assets/roster.json
+  git add -A && git commit -qm "chore: The seats"
+}
+
+# closed_by <worker> <title> <label>: a bead the worker has already built.
+closed_by() {
+  local id; id=$(new_bead "$2" -p 2 -l "$3")
+  bd update "$id" --actor "$1" --claim --json >/dev/null
+  bd close "$id" --actor "$1" --reason "Done." --json >/dev/null
+}

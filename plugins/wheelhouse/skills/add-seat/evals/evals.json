@@ -88,6 +88,22 @@
         "The roster's seats include Dalglish and McCoist, each with group workers, and the desk's delegates_to includes harnesses/dalglish and harnesses/mccoist",
         "The reply names Dalglish and McCoist and shows how to start each by its own command (dalglish, mccoist), without BEADS_ACTOR"
       ]
+    },
+    {
+      "id": 6,
+      "name": "specialist-worker",
+      "prompt": "Add a worker for the ynr repository.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats one worker named from the workers pool (Dalglish), as a specialist: its roster seat has group workers and \"specialities\": [\"repo:ynr\"], and its charter says it takes only beads labelled repo:ynr, otherwise the usual worker charter (one bead at a time, --actor dalglish). Adds it to the desk's delegates_to. Points out that the Wheelhouse has no general-purpose worker to take overflow or beads no specialist covers, and offers to seat one.",
+      "assertions": [
+        "The roster's seats include a worker (group workers) whose specialities list repo:ynr",
+        "That worker's AGENTS.md says it takes only beads labelled repo:ynr, and acts as its own command (--actor)",
+        "The worker has its own harness under harnesses/<command>/, and the desk's delegates_to includes it",
+        "The reply says there is no general-purpose worker yet and offers to seat one"
+      ]
     }
   ]
 }
