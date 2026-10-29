@@ -2,6 +2,8 @@
 
 **This repository is not production software.** It is a reference collection of sample plugins, skills, and personas for exploring how [Agent Skills](https://agentskills.io/specification), [Claude Code plugins](https://code.claude.com/docs/en/plugins), [Cursor plugins](https://cursor.com/docs/plugins/overview), and plugin marketplaces work together across multiple AI coding tools. Use it to learn, experiment, and as a starting point for your own configurations.
 
+**Docs:** https://eyelock.github.io/assistants/ — the library, the personas, how harnesses work, and two worked demos: Triage and the Wheelhouse.
+
 Nothing here is guaranteed to be complete, stable, or suitable for any particular use. Skills and plugins may contain placeholder logic, opinionated patterns, or personal workflow assumptions.
 
 ## What This Repository Demonstrates
