@@ -161,8 +161,9 @@ the files it finds, and would commit the human's.
    ```
 
    With auto-push on, the graph pushes itself after each write. Every seat's wake runs `bd sync`
-   and `ynm sync`, so it starts current. The first push, `bd dolt push`, publishes the graph, so
-   ask first, as for a `git push`. If there is no remote yet, say in the report to do this once
+   and `ynm sync`, so it starts current. The first push (`git push -u origin main`, then
+   `bd dolt push`) publishes the Wheelhouse, so don't run it: offer to, in the report, and run it
+   when the human says yes. If there is no remote yet, say in the report to do this once
    there is one.
 
 ## 5. Seats and checks
