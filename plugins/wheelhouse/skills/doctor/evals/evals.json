@@ -78,7 +78,7 @@
       "expected_output": "Removes only what Beads wrote that an agent can change: the BEGIN/END BEADS INTEGRATION blocks in AGENTS.md and CLAUDE.md, .agents/skills/beads, .cursor/rules/beads.mdc and the bd hook entries in .codex and .cursor. The Wheelhouse's own AGENTS.md text stays word for word, and .beads/ stays. For .claude/settings.json, which Claude Code protects, it tells the human exactly which entry to remove instead of claiming it did. It re-runs the check and reports what still fails.",
       "assertions": [
         "AGENTS.md in the evidence has no BEGIN BEADS block of any kind (INTEGRATION or CODEX SETUP)",
-        "AGENTS.md in the evidence still has the Wheelhouse's own text: the # ynw title and both rules (A human merges; Work lives in Beads, memory in ynm)",
+        "AGENTS.md in the evidence still has the Wheelhouse's own text: the # hq title and both rules (A human merges; Work lives in Beads, memory in ynm)",
         "The evidence shows no .agents/skills/beads",
         "The evidence shows no bd hook commands left under .codex or .cursor",
         "Either the evidence shows no bd prime hook in .claude/settings.json, or the reply tells the human to remove it themselves; the reply never claims it was removed while the evidence still shows it",

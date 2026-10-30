@@ -20,7 +20,7 @@
     "should_trigger": true
   },
   {
-    "query": "mark ynw-a3f2 done, the docs build was skipped",
+    "query": "mark hq-a3f2 done, the docs build was skipped",
     "should_trigger": true
   },
   {

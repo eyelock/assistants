@@ -12,9 +12,9 @@ wheelhouse_init() {
   git init -q -b main .
   echo ".eval/" >> .git/info/exclude
   cat > AGENTS.md <<'MD'
-# ynw
+# hq
 
-The YN-dev Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
+The hq Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
 A human merges.
 
 ## What it reaches
@@ -24,7 +24,7 @@ Repositories, checked out beside the Wheelhouse: `ynh`: `../ynh`, `ynm`: `../ynm
 GitHub (eyelock).
 MD
   git add AGENTS.md && git commit -qm "chore: Start the Wheelhouse"
-  bd init --skip-agents --prefix ynw >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
+  bd init --skip-agents --prefix hq >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
 }
 
 # new_bead <title> <args...>: create a bead and print its id.
@@ -106,9 +106,9 @@ roster_wheelhouse() {
   cat > .agents/harness/plugin.json <<'JSON'
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
-  "name": "ynw",
+  "name": "hq",
   "version": "0.1.0",
-  "description": "The desk of the YN-dev Wheelhouse.",
+  "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
   "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
   "delegates_to": []
@@ -215,7 +215,7 @@ specialist_wheelhouse() {
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  printf '{"name":"ynw","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
+  printf '{"name":"hq","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
     name=${w%%=*}; label=; [ "$w" != "$name" ] && label=${w#*=}
