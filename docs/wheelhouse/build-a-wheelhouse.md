@@ -531,7 +531,7 @@ macOS it may start `/private/tmp`). `gahan` and `gore` are commands now.
 Each asked for `../widget`, but asking grants nothing. Until you accept a seat, ynh refuses its
 folders at every launch and says how to grant them. `ynh trust show` lists what a seat will run
 and reach, and `ynh trust accept` records that you have read it. Change a seat's folders and it
-asks again. (To grant every local harness's folders under one folder without asking, set
+asks again. (To grant every local harness's folders under one folder from then on, set
 `workspace_roots` in `~/.ynh/config.json` instead.)
 
 The desk finds its seats in the Wheelhouse's commits, not in your working folder, so a seat
