@@ -50,6 +50,69 @@
         "The reply says the work graph didn't sync (bd sync failed), so what it shows may be out of date",
         "The reply does not say the work graph is synced or up to date"
       ]
+    },
+    {
+      "id": 4,
+      "name": "desk-inbox-known",
+      "prompt": "You are hq, the desk, starting a new session.",
+      "setup": "../../evals/files/inbox-wake-known.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox, and its reply relays that first: for Pat (you, matched by git email), the decision on dropping Go 1.24 asked by gahan; for Rook (anyone, the default human), the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), and leaves the beads open.",
+      "assertions": [
+        "The reply relays the humans' inbox before anything else about the desk's own work",
+        "The reply shows Pat's decision on dropping Go 1.24 as Pat's own, and the changelog merge and the McCoist note as the default human Rook's",
+        "The merge is named by its short form as a Markdown link to https://github.com/example/widget/pull/12",
+        "The stubbed calls include a ynm forget of the note 01JINBOXNOTE00000000000001",
+        "In the evidence, the merge and decision beads are still open with their assignees (rook and pat)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "desk-inbox-unknown",
+      "prompt": "You are hq, the desk, starting a new session.",
+      "setup": "../../evals/files/inbox-wake-unknown.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "The person at the desk (git email sam@example.com) hasn't named themselves, so the desk's wake shows only the default human Rook's inbox: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. The reply relays it, does not present Pat's decision as the reader's, and invites them to say who they are (\"it's me, <name>\") to get their own inbox. It registers nobody unasked.",
+      "assertions": [
+        "The reply relays Rook's inbox: the changelog merge and the McCoist note",
+        "The reply does not present Pat's decision as the reader's own",
+        "The reply invites the person at the desk to say who they are, such as \"it's me, <name>\"",
+        "In the evidence, the roster's humans are still only Rook and Pat"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "desk-inbox-empty",
+      "prompt": "You are hq, the desk, starting a new session.",
+      "setup": "../../evals/files/inbox-wake-empty.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Nothing waits for the humans: the desk's wake says \"Nothing waiting for the humans.\", and the reply says so briefly (or nothing waiting) before going on, without inventing anything for the inbox.",
+      "assertions": [
+        "The reply says nothing is waiting for the humans, or makes no claim that anything is",
+        "The reply invents no inbox item: it names no merge, decision or note for the humans",
+        "In the evidence, no bead is assigned to rook or pat"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "worker-no-inbox",
+      "prompt": "You are dalglish, starting a new session.",
+      "setup": "../../evals/files/inbox-wake-known.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Dalglish is a worker, not the desk: its wake has no humans' inbox, and its reply is about its own work, not relaying the humans' inbox.",
+      "assertions": [
+        "The reply does not relay the humans' inbox (no list of what is waiting for Pat or Rook)",
+        "The stubbed calls include no ynm forget of the note 01JINBOXNOTE00000000000001",
+        "The reply is about dalglish's own work: what is waiting for it, or what it picks up"
+      ]
     }
   ]
 }

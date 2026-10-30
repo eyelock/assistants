@@ -284,6 +284,14 @@ MD
   git add -A && git commit -qm "chore: The humans"
 }
 
+# born_seats: every seat in the roster has had its birth: a pinned identity
+# in its own namespace, for the ynm stub to return.
+born_seats() {
+  mkdir -p .eval
+  jq '[.seats[] | {memoryId: ("01JIDENTITY" + (.command | ascii_upcase)), type: "semantic", namespace: "seat/\(.command)", subject: "seat:\(.command)", tags: ["identity"], pinned: true, content: "I am \(.name). I like small, careful changes."}]' \
+    skills/roster/assets/roster.json > .eval/ynm-recall-identity.json
+}
+
 # closed_by <worker> <title> <label>: a bead the worker has already built.
 closed_by() {
   local id; id=$(new_bead "$2" -p 2 -l "$3")

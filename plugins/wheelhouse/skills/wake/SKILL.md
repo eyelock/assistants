@@ -38,6 +38,7 @@ your charter, and your work with `bd list --status in_progress --assignee <comma
 
 | Section | Where it comes from |
 |---|---|
+| For the humans (the desk only) | the humans' inbox, from `scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
 | Where you left off | your latest handoff notes |
@@ -47,6 +48,16 @@ your charter, and your work with `bd list --status in_progress --assignee <comma
 
 ## Then
 
+0. **For the humans** (the desk only): the desk's block opens with the humans' inbox, a
+   section for the human at the desk (`<name> (you)`, matched by their git email) and one for
+   the default human (`<name> (anyone)`): the ready beads assigned to them, each with who asked
+   and how many beads it unblocks, then the notes left for them. Relay it to the human first,
+   before anything else, naming each pull request or page by its short form as a Markdown link.
+   Once a note is relayed, retire it: `ynm forget --memory-id <memoryId> --reason "relayed"`.
+   Leave the beads: the human closes them, or tells you to. If the block says the human hasn't
+   said who they are, pass on its invitation; when they answer "it's me, <name>", register them
+   with `bash scripts/inbox.sh register --name <Name>`. If the inbox couldn't be read, say so
+   and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    **and pinned** (`ynm pin <memoryId>`), so it is in front of you every time you wake.
