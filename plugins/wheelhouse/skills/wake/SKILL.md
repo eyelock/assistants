@@ -14,6 +14,12 @@ bash path/to/wake/scripts/wake.sh --seat <command> --format text
 
 `--seat` defaults to `BEADS_ACTOR`. Without `--format text` it prints the same as JSON.
 
+It syncs first, so you wake to what other machines and seats wrote: ynm's memory (`ynm sync`)
+when the repository has a git remote, and the work graph (`bd sync`, which pulls and then pushes)
+when it has a Dolt remote. A sync never stops the wake. If one fails, the block opens with
+**Not synced**: say so in your reply, and run that sync yourself before relying on what the block
+shows. `--no-sync` skips both.
+
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
 rather than starting blind: your identity, handoff notes and Kudos with
 `ynm recall --namespace seat/<command> --subject seat:<command> --tags <identity|handoff|kudos> --json`

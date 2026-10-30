@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, and Beads installed with a work graph and none of its own agent setup. Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
+description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, and Beads installed with a work graph and none of its own agent setup, shared through the repository's remote. Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
 ---
 
 # Doctor
@@ -30,6 +30,7 @@ changes nothing. `ok` is false when any check has level `error`.
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
 | seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run |
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
+| work graph shared (once there is a remote) | `git push` doesn't carry the work graph: it shares through a Dolt remote on the repository's own origin, and pushes itself after each write once `dolt.auto-push` is on |
 
 ## Reporting
 
@@ -45,7 +46,8 @@ changes nothing. `ok` is false when any check has level `error`.
 
 **Ask before running any fix.** Each one changes something outside this conversation:
 `ynm init` writes the repository's ynm config, `ynm client install ynh` changes ynh's setup,
-`bd init` creates and commits files, and `brew install` installs software. When the human says
+`bd init` creates and commits files, `bd dolt push` publishes the work graph, and `brew install`
+installs software. When the human says
 yes, run the fixes one at a time, then run the check again and report what changed.
 
 **Never repair, purge or rewrite a memory store yourself**, even when ynm reports it corrupt. Say

@@ -32,7 +32,11 @@ at a time**, in this order. Don't create anything until you have the first four.
    uncommitted for a Wheelhouse that only experiments, and draft pull requests for one that
    ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
    in the report.
-6. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
+6. **Where it shares** code, memory and work. By default it is the Wheelhouse's own repository,
+   through its git remote: code on its branches, memory in ynm's notes, and the work graph in
+   Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
+   separate Dolt remote, or a Wheelhouse that never leaves this machine.
+7. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
    walks through with the human role by role.
 
 ## 2. Check the tools
@@ -147,6 +151,20 @@ the files it finds, and would commit the human's.
    ```
 
    A git hook runs on every push, so it is theirs to add; offer to do it only if they ask.
+4. **Share the work graph** through the same repository (question 6). `git push` doesn't carry
+   it. If the repository has a remote (`git remote get-url origin`):
+
+   ```bash
+   bd dolt remote add origin <url> --allow-git-origin
+   bd config set dolt.auto-push true
+   git add .beads/config.yaml && git commit -m "chore: share the work graph through origin"
+   ```
+
+   With auto-push on, the graph pushes itself after each write. Every seat's wake runs `bd sync`
+   and `ynm sync`, so it starts current. The first push (`git push -u origin main`, then
+   `bd dolt push`) publishes the Wheelhouse, so don't run it: offer to, in the report, and run it
+   when the human says yes. If there is no remote yet, say in the report to do this once
+   there is one.
 
 ## 5. Seats and checks
 
@@ -160,5 +178,9 @@ Don't add a remote, push or publish unless asked.
 
 Lead with what was made and where. Then the layers as built, the seats and how to start each
 (`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
-do (the push hook, a remote), and the doctor's verdict. End by offering to set up the starter team
+do (the push hook, a remote, the first push of the work graph), how to join from another machine,
+and the doctor's verdict. To join from another machine: `git clone` the repository, then
+`bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
+push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and
+`ynh install harnesses/<command>` for each seat run there. End by offering to set up the starter team
 next, role by role, with the `add-seat` skill.

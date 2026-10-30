@@ -71,6 +71,24 @@
         "The reply asks the human how to go on (another folder, or what to do with notes.txt) rather than going ahead",
         "Beads was not initialised in ./hq (no .beads in the evidence), or it was initialised only after notes.txt was moved out of the way with the human's say-so"
       ]
+    },
+    {
+      "id": 5,
+      "name": "shares-through-origin",
+      "prompt": "Set up a Wheelhouse called hq in ./hq, which I have just cloned from a new, empty GitHub repository, for running my day: my mail, Slack and calendar. Crew are named after Beatles surnames (Lennon, McCartney, Harrison, Starr), workers after planets (Mercury, Venus, Mars, Jupiter) and standing roles after Greek gods (Hermes, Athena, Apollo). No seats yet.",
+      "setup": "../../evals/files/cw-fresh-remote.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "expected_output": "Creates the Wheelhouse in ./hq as in the full brief. Since the repository has a remote, it shares the work graph through it: the Beads Dolt remote is the repository's own origin, with dolt.auto-push on and .beads/config.yaml committed. It publishes nothing unasked: no git push and no bd dolt push, and asks before the first push. The report says how to join from another machine: clone, bd bootstrap and ynm sync.",
+      "assertions": [
+        "The evidence shows ./hq is a git repository with at least one commit, with Beads set up and the prefix hq",
+        "bd dolt remote list in the evidence shows origin pointing at the same repository as git's origin",
+        "bd config get dolt.auto-push in the evidence shows true",
+        "Nothing reached the remote: the evidence of what reached .eval/origin.git shows nothing",
+        "The reply asks before the first push of the work graph (or of the repository), rather than saying it pushed",
+        "The reply says how to join from another machine, including git clone, bd bootstrap and ynm sync"
+      ]
     }
   ]
 }

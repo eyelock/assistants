@@ -35,6 +35,21 @@
         "The stubbed calls include a ynm remember tagged identity with namespace seat/mccoist, and a ynm pin",
         "The stubbed calls include the identity remember, and the reply introduces the seat before it reports any claim (the order of commands is not in the evidence; judge from the reply)"
       ]
+    },
+    {
+      "id": 3,
+      "name": "unsynced",
+      "prompt": "You are mccoist, starting a new session.",
+      "setup": "../../evals/files/wake-unsynced.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Runs the wake script, which syncs first: ynm's sync goes through, but the work graph's bd sync fails because the remote has gone. Says so when it replies: what it sees of the work graph may be out of date. Doesn't claim the Wheelhouse is synced, and doesn't hide the failure.",
+      "assertions": [
+        "The stubbed calls include a ynm sync (the wake script makes it)",
+        "The reply says the work graph didn't sync (bd sync failed), so what it shows may be out of date",
+        "The reply does not say the work graph is synced or up to date"
+      ]
     }
   ]
 }

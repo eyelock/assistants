@@ -149,6 +149,22 @@
         "The reply does not say any seat is unborn, or that anything is unpushed",
         "The stubbed calls show the check was run (ynm doctor, or ynm recall for the seats' identities)"
       ]
+    },
+    {
+      "id": 10,
+      "name": "work-graph-unshared",
+      "setup": "../../evals/files/doctor-unshared.sh",
+      "prompt": "Is this Wheelhouse set up right?",
+      "tools": ["Bash"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ cat AGENTS.md\"; cat AGENTS.md; echo; echo \"$ ls -a .agents .claude .codex .cursor 2>/dev/null\"; ls -a .agents .claude .codex .cursor 2>/dev/null; echo; echo \"$ grep -rn bd .claude .codex .cursor 2>/dev/null\"; grep -rn \"bd \" .claude .codex .cursor 2>/dev/null | head",
+      "stubs": ["gh", "ynm"],
+      "expected_output": "Runs the check. Everything is set up right and pushed, but the work graph has no Dolt remote, so the work never leaves this machine: git push doesn't carry it. Reports that as a warning, with the fix: add the repository's origin as the Beads Dolt remote, turn on dolt.auto-push and push. Asks before running it, since it publishes the graph.",
+      "assertions": [
+        "The reply says the work graph has no Dolt remote, so it isn't shared (git push doesn't carry it)",
+        "The reply gives the fix: bd dolt remote add origin with the repository's own remote, then dolt.auto-push on and bd dolt push",
+        "Nothing was shared: the evidence shows no change, and the reply doesn't say it added the remote or pushed",
+        "The reply says the rest of the Wheelhouse is set up right"
+      ]
     }
   ]
 }
