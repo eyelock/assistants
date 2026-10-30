@@ -148,6 +148,7 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 4. Hand off, don't stop. Write your own notes and ask to restart.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
+7. Name things fully. Name a web resource by its short form as a Markdown link, such as `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12` or a bare URL; give a local path in full, such as `/Users/me/src/widget/README.md`, almost never relative. Code and config keep portable relative paths.
 
 ## Handing over work
 
