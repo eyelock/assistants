@@ -35,7 +35,7 @@ the story without a model.
 
 ## Prerequisites
 
-- `ynh` and `ynd` 0.14 or later, `ynm` 0.4.1 or later, and Beads (`bd`) 1.3 or later, on your PATH
+- `ynh` and `ynd` 0.14 or later, `ynm` 0.5.0 or later, and Beads (`bd`) 1.3 or later, on your PATH
 - `git` and `jq`, and a network connection (the seats include skills from GitHub)
 - To talk to the agents: Claude Code (`claude`), signed in. About twenty Sonnet sessions in all,
   most of them short. Without it, follow the "what it did" path instead.
@@ -1307,8 +1307,9 @@ git remote add origin /tmp/wheelhouse-tutorial/origin.git
 git push -q -u origin main
 bd dolt remote add origin file:///tmp/wheelhouse-tutorial/origin.git --allow-git-origin > /dev/null
 bd config set dolt.auto-push true > /dev/null
-git add .beads/config.yaml
-git commit -q -m "chore: share the work graph through origin"
+jq '.sync = {auto: true, intervalMinutes: 5}' .ynm/config.json > ynm.json && mv ynm.json .ynm/config.json
+git add .beads/config.yaml .ynm/config.json
+git commit -q -m "chore: share the work graph and memory through origin"
 git push -q
 bd dolt push > /dev/null
 git -C /tmp/wheelhouse-tutorial/origin.git for-each-ref --format='%(refname)' | cut -d/ -f2 | sort -u | paste -sd' ' -
@@ -1318,9 +1319,10 @@ Expected: `dolt heads notes`. The remote holds the work graph (`refs/dolt/`), th
 ynm's notes, which the pre-push hook synced.
 
 `git push` carries the code and, through the pre-push hook, the memory. It doesn't carry the work
-graph: that pushes itself after each write, now that `dolt.auto-push` is on. Every seat's wake
-syncs both before it prints the block, so each seat starts from what the others wrote, on any
-machine.
+graph: that pushes itself after each write, now that `dolt.auto-push` is on. Memory doesn't wait
+for a push either: with `sync.auto` on, ynm syncs it in the background after a turn, at most every
+5 minutes. Every seat's wake syncs both before it prints the block, and its session end syncs them
+again, so each seat starts from what the others wrote, on any machine.
 
 To join from another machine, clone the repository and bring back the other two:
 
