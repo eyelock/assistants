@@ -198,5 +198,20 @@ else
   fi
 fi
 
+# The work graph isn't in git: a push doesn't carry it. With a git remote, the
+# graph shares through a Dolt remote on the same repository, and pushes itself
+# after each write once dolt.auto-push is on.
+if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ] && url=$(git -C "$dir" remote get-url origin 2>/dev/null); then
+  share="bd dolt remote add origin $url --allow-git-origin, then bd config set dolt.auto-push true and commit .beads/config.yaml, then bd dolt push"
+  if ! (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
+    add "work graph shared" false warn "the repository has a git remote but the work graph has no Dolt remote, so work stays on this machine (git push doesn't carry it)" "$share"
+  elif [ "$(cd "$dir" && bd config get dolt.auto-push --json 2>/dev/null | jq -r '.value // empty')" != "true" ]; then
+    add "work graph shared" false warn "the work graph has a Dolt remote but dolt.auto-push is off, so writes wait for a bd sync or a seat's next wake" \
+      "bd config set dolt.auto-push true, and commit .beads/config.yaml"
+  else
+    add "work graph shared" true info "the work graph has a Dolt remote and pushes after each write"
+  fi
+fi
+
 jq -n --arg dir "$dir" --argjson checks "$checks" \
   '{ok: ([$checks[] | select(.level == "error" and .ok == false)] | length == 0), dir: $dir, checks: $checks}'

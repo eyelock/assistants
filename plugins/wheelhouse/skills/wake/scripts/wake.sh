@@ -3,14 +3,20 @@
 # identity, pinned in its ynm namespace), what it is for (its charter's
 # mandate), where it left off (its handoff notes), what it has been thanked for
 # (its Kudos), its record (what it closed lately) and what is waiting for it.
-# Read-only: it changes nothing.
+#
+# First it syncs, so the seat wakes to what other machines and seats wrote:
+# ynm's memory when the repository has a git remote, and the Beads work graph
+# when it has a Dolt remote (bd sync pulls, then pushes). Each sync is skipped
+# when there is no remote, gives up after 60 seconds, and never stops the
+# wake; one that fails is named in the block. --no-sync skips both. It
+# changes nothing else.
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
-# urgent first)}, or a Markdown
+# urgent first), sync {memory, work: synced|skipped|failed}}, or a Markdown
 # block with --format text. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
@@ -18,21 +24,24 @@ set -uo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text]
+Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
 
-Prints what a seat should know as it wakes. --seat defaults to $BEADS_ACTOR;
---dir to the current directory; --format to json.
+Syncs memory and work, then prints what a seat should know as it wakes.
+--seat defaults to $BEADS_ACTOR; --dir to the current directory; --format to
+json. --no-sync skips the sync.
 EOF
 }
 
 seat="${BEADS_ACTOR:-}"
 dir="."
 format="json"
+sync=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; shift 2 ;;
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
+    --no-sync) sync=0; shift ;;
     --help | -h) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -54,6 +63,22 @@ charter="$(jq -r .harness <<<"$entry")/AGENTS.md"
 mandate=$(sed -n 's/^\*\*Mandate:\*\* *//p' "$charter" 2>/dev/null | head -1)
 [ -n "$mandate" ] || mandate=$(jq -r .mandate <<<"$entry")
 
+# Sync first, so what follows is current. A sync that hangs gives up after 60
+# seconds (perl's alarm: macOS has no timeout).
+limited() {
+  if command -v perl >/dev/null 2>&1; then perl -e 'alarm shift; exec @ARGV' -- 60 "$@"; else "$@"; fi
+}
+memsync=skipped
+worksync=skipped
+if [ "$sync" = 1 ]; then
+  if git remote 2>/dev/null | grep -q .; then
+    if limited ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
+  fi
+  if bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
+    if limited bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
+  fi
+fi
+
 # The seat's own memory lives in its namespace, seat/<name>.
 recall() { ynm recall --namespace "seat/$seat" --subject "seat:$seat" --tags "$1" --limit "$2" --json 2>/dev/null || echo '[]'; }
 identity=$(recall identity 1 | jq -c '[.[] | .content][0] // null')
@@ -74,10 +99,11 @@ unassigned=$(beads ready --unassigned | jq -c 'map(select(.issue_type != "epic")
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" \
-  --argjson unassigned "$unassigned" '{
+  --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" '{
     seat: $seat, group: $group, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, record: $record,
-    inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned
+    inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned,
+    sync: {memory: $memsync, work: $worksync}
   }')
 
 if [ "$format" = json ]; then
@@ -88,6 +114,11 @@ fi
 jq -r '
   def list(xs; empty_text): if (xs | length) == 0 then empty_text else (xs | map("- " + .) | join("\n")) end;
   "# Waking: \(.seat)\n",
+  ([if .sync.memory == "failed" then "memory (ynm sync)" else empty end,
+    if .sync.work == "failed" then "the work graph (bd sync)" else empty end] as $failed
+   | if ($failed | length) > 0
+     then "**Not synced:** \($failed | join(" and ")) failed, so what follows may be out of date. Say so when you reply, and run the sync by hand before relying on it.\n"
+     else empty end),
   "## Who you are\n",
   (if .firstWake
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"

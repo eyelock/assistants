@@ -251,3 +251,14 @@ closed_by() {
   bd update "$id" --actor "$1" --claim --json >/dev/null
   bd close "$id" --actor "$1" --reason "Done." --json >/dev/null
 }
+
+# share_work_graph: give the work graph a Dolt remote on the repository's own
+# origin (a local bare repository, pushed to once already), with auto-push on,
+# and push it. Commits the config; push again after.
+share_work_graph() {
+  bd dolt remote add origin "file://$(git remote get-url origin)" --allow-git-origin >/dev/null 2>&1 ||
+    { echo "bd dolt remote add failed" >&2; exit 3; }
+  bd config set dolt.auto-push true >/dev/null 2>&1
+  bd dolt push >/dev/null 2>&1 || { echo "bd dolt push failed" >&2; exit 3; }
+  git add .beads/config.yaml && git commit -qm "chore: share the work graph" || true
+}

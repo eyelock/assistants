@@ -1287,6 +1287,50 @@ ynf can't run them yet. Today each of its runs belongs to a forge repository and
 request, and it reads work from GitHub Issues or JIRA, not Beads. Turns that change the work
 graph rather than code, and a Beads tracker, are the gaps to close first.
 
+## Share it
+
+So far everything lives on this machine. A Wheelhouse shares through its own repository: the code
+on its branches, memory in ynm's notes and the work graph in Beads' Dolt refs, all side by side.
+A local bare repository stands in for GitHub here:
+
+```bash
+git init -q --bare /tmp/wheelhouse-tutorial/origin.git
+git remote add origin /tmp/wheelhouse-tutorial/origin.git
+git push -q -u origin main
+bd dolt remote add origin file:///tmp/wheelhouse-tutorial/origin.git --allow-git-origin > /dev/null
+bd config set dolt.auto-push true > /dev/null
+git add .beads/config.yaml
+git commit -q -m "chore: share the work graph through origin"
+git push -q
+bd dolt push > /dev/null
+git -C /tmp/wheelhouse-tutorial/origin.git for-each-ref --format='%(refname)' | cut -d/ -f2 | sort -u | paste -sd' ' -
+```
+
+Expected: `dolt heads notes`. The remote holds the work graph (`refs/dolt/`), the branch, and
+ynm's notes, which the pre-push hook synced.
+
+`git push` carries the code and, through the pre-push hook, the memory. It doesn't carry the work
+graph: that pushes itself after each write, now that `dolt.auto-push` is on. Every seat's wake
+syncs both before it prints the block, so each seat starts from what the others wrote, on any
+machine.
+
+To join from another machine, clone the repository and bring back the other two:
+
+```bash
+git clone -q /tmp/wheelhouse-tutorial/origin.git /tmp/wheelhouse-tutorial/tower-2
+cd /tmp/wheelhouse-tutorial/tower-2
+bd bootstrap > /dev/null 2>&1
+git config core.hooksPath .beads/hooks
+ynm sync --quiet
+bd list --all --json | jq '.data | length > 0'
+ynm recall --namespace seat/gahan --subject seat:gahan --tags identity --limit 1 --json | jq 'length'
+cd /tmp/wheelhouse-tutorial/tower
+```
+
+Expected: `true`, then `1`. The clone has the work graph and Gahan's identity. On a real second
+machine, also run `ynm client install ynh` once, and `ynh install harnesses/<command>` for each seat
+you run there.
+
 ## Clean up
 
 ```bash
@@ -1312,8 +1356,9 @@ terminal; nothing is left there to run.
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
 | Waking | `scripts/wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record |
 | Care | the constitution's principles: purpose, bounded days, a private home, seen work, no blame |
-| Work | Beads in `.beads/`, started with `--skip-agents` |
+| Work | Beads in `.beads/`, started with `--skip-agents`, shared through the repository's Dolt refs and pushed after each write |
 | Memory | ynm, shared through this repository and synced on push |
+| Sync | every seat's wake syncs memory and work first, so it starts current on any machine |
 
 ## Next steps
 
