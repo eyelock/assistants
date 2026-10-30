@@ -45,8 +45,8 @@ node scripts/skill-evals.mjs skills/voice/skills/voice-warm --help
 Results are in `.evals/<skill>-workspace/iteration-<N>/` (gitignored). CI does not run evals.
 
 Each run has Claude Code's own memory off, and can't read skills installed on your machine
-(`~/.ynh`, `~/.claude/plugins`), so the run without the skill can't find and follow an installed
-copy of it.
+(`~/.ynh`, `~/.claude/plugins`). The run without the skill can't read this checkout either. So it
+can't find a copy of the skill, installed or in the source, and follow it.
 
 To write the evals this runs, see [Write a skill with evals](../library/write-a-skill-with-evals.md).
 
