@@ -36,7 +36,7 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 
 Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read most files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads.
 
-Every run, with or without the skill, has Claude Code's own memory off and cannot read the copies of skills installed on the machine (`~/.ynh`, `~/.claude/plugins`): otherwise a baseline can find the skill under test and follow it, and a "remember this" goes to the harness's memory rather than the skill. See `plugins/gitflow/skills/push/evals/` for a worked example.
+Every run, with or without the skill, has Claude Code's own memory off and cannot read the copies of skills installed on the machine (`~/.ynh`, `~/.claude/plugins`). The run without the skill cannot read this checkout either, where the skill's source is. Otherwise a baseline can find the skill under test and follow it, and a "remember this" goes to the harness's memory rather than the skill. A case never needs the checkout: runs work in a temporary directory, and the runner gathers the evidence. See `plugins/gitflow/skills/push/evals/` for a worked example.
 
 `pnpm test` fails when a new skill has no evals. Skills that predate the rule are listed in `scripts/skills-without-evals.txt`; that list only shrinks.
 

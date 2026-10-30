@@ -246,28 +246,36 @@ function skillCalls(events) {
 
 // Every run: no Claude Code auto memory, and no reading the copies of skills
 // installed on this machine (a ynh cache, Claude Code's plugins), so the
-// baseline arm can't find the skill under test and follow it anyway. The skill
-// itself loads from the repository with --plugin-dir, outside both.
+// baseline arm can't find the skill under test and follow it anyway. The
+// baseline arm can't read this checkout either: the skill's source is here,
+// and a search for its name finds it. The with_skill arm loads the skill from
+// the checkout with --plugin-dir, and runs its scripts from there. Every run
+// works in its own temporary directory, outside the checkout, and the runner
+// gathers evidence itself, so no case needs to read the checkout.
 const INSTALLED_SKILLS = ["~/.ynh", "~/.claude/plugins"];
-const ISOLATION = {
+const hidden = (arm) => (arm === "without_skill" ? [...INSTALLED_SKILLS, ROOT] : INSTALLED_SKILLS);
+// Read rules take an absolute path as //path; ~/ paths as they are.
+const readRule = (dir) => `Read(${dir.startsWith("/") ? `/${dir}` : dir}/**)`;
+const isolation = (arm) => ({
   autoMemoryEnabled: false,
-  permissions: { deny: INSTALLED_SKILLS.map((dir) => `Read(${dir}/**)`) },
-};
-const RUN_SETTINGS = JSON.stringify(ISOLATION);
+  permissions: { deny: hidden(arm).map(readRule) },
+});
+const RUN_SETTINGS = JSON.stringify(isolation("with_skill"));
 
 // Claude Code's OS sandbox: shell commands may write only inside the run's
-// directory, read nothing under INSTALLED_SKILLS, and reach no network (all
-// checked by hand). Commands that run inside it are approved automatically,
-// and none may escape it.
-const OS_SANDBOX = JSON.stringify({
-  ...ISOLATION,
-  sandbox: {
-    enabled: true,
-    autoAllowBashIfSandboxed: true,
-    allowUnsandboxedCommands: false,
-    filesystem: { denyRead: INSTALLED_SKILLS },
-  },
-});
+// directory, read nothing the arm hides, and reach no network (all checked
+// by hand). Commands that run inside it are approved automatically, and none
+// may escape it.
+const osSandbox = (arm) =>
+  JSON.stringify({
+    ...isolation(arm),
+    sandbox: {
+      enabled: true,
+      autoAllowBashIfSandboxed: true,
+      allowUnsandboxedCommands: false,
+      filesystem: { denyRead: hidden(arm) },
+    },
+  });
 
 const BASE_ARGS = [
   "--setting-sources",
@@ -381,7 +389,7 @@ async function runCase(c, arm, runNo, ctx) {
     ];
     if (arm === "with_skill") args.push("--plugin-dir", ctx.packageDir);
     args.push("--model", ctx.model);
-    args.push("--settings", sandbox.wantsShell ? OS_SANDBOX : RUN_SETTINGS);
+    args.push("--settings", sandbox.wantsShell ? osSandbox(arm) : JSON.stringify(isolation(arm)));
 
     const started = Date.now();
     const res = await run("claude", args, work, sandbox.env);
