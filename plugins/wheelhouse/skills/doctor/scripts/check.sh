@@ -63,6 +63,7 @@ else
     project=$(jq -c '[.checks[] | select(.name == "mount project (git-notes)" or .name == "project initialised")][0] // empty' <<<"$report")
     if [ -n "$project" ] && [ "$(jq -r .ok <<<"$project")" = "true" ]; then
       add "ynm distributed mount" true info "$(jq -r '.detail | .[0:200]' <<<"$project")"
+      projectmount=1
     else
       add "ynm distributed mount" false error \
         "the Wheelhouse repository has no distributed ynm mount, so seats cannot share memory" "ynm init"
@@ -177,16 +178,24 @@ if [ -f "$roster" ]; then
 
   # A seat is born once its identity is pinned in its own namespace. Until then
   # its birth is owed: the human's for the desk, crew and standing roles, the
-  # dispatcher's for a worker.
-  if command -v ynm >/dev/null 2>&1; then
+  # dispatcher's for a worker. It reads only the repository's own mount, which
+  # ynm always names project, so a slow remote mount can't hold it up. Without
+  # that mount (reported above) it doesn't run: ynm returns nothing, not an
+  # error, for a mount that isn't there, and every seat would look unborn.
+  if command -v ynm >/dev/null 2>&1 && [ "${projectmount:-0}" = 1 ]; then
     unborn=""
+    unread=""
     while IFS=$'\t' read -r cmd by; do
-      if ! (cd "$dir" && ynm recall --namespace "seat/$cmd" --tags identity --json 2>/dev/null) |
-        jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' >/dev/null 2>&1; then
+      if ! found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null); then
+        unread="$unread $cmd"
+      elif ! jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' <<<"$found" >/dev/null 2>&1; then
         unborn="$unborn $cmd (birth: $by)"
       fi
     done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
-    if [ -n "$unborn" ]; then
+    if [ -n "$unread" ]; then
+      add "seats born" false warn "ynm couldn't recall the identities of:$unread, so whether they are born is unknown" \
+        "run ynm recall --mount project --namespace seat/<command> --tags identity from the Wheelhouse root, and see ynm doctor"
+    elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
     else
@@ -225,6 +234,21 @@ if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ] && url=$(git -C "$dir" 
       "bd config set dolt.auto-push true, and commit .beads/config.yaml"
   else
     add "work graph shared" true info "the work graph has a Dolt remote and pushes after each write"
+  fi
+fi
+
+# Memory pushes itself too once sync.auto is on (ynm 0.5.0): ynm's stop hook
+# syncs in the background after a turn, at most once an interval. ynm layers
+# its config files, and the last one with a sync block wins.
+if [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/null 2>&1; then
+  syncblock=$(for f in "${YNM_HOME:-$HOME/.ynm}/config.json" "$dir/.ynm/config.json" "$dir/.ynm/config.local.json"; do
+    [ -f "$f" ] && jq -c 'select(has("sync")) | .sync' "$f" 2>/dev/null
+  done | tail -1)
+  if [ "$(jq -r '.auto // false' <<<"${syncblock:-null}" 2>/dev/null)" = "true" ]; then
+    add "memory syncs itself" true info "sync.auto is on: memory syncs after a turn, at most every $(jq -r '.intervalMinutes // 5' <<<"$syncblock") minutes"
+  else
+    add "memory syncs itself" false warn "sync.auto is off, so memory written mid-session waits for a git push, a wake or the session's end (which a crash skips)" \
+      "add \"sync\": {\"auto\": true, \"intervalMinutes\": 5} to .ynm/config.json and commit it (ynm 0.5.0 or later)"
   fi
 fi
 

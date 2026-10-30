@@ -152,8 +152,10 @@ the files it finds, and would commit the human's.
    writes its own skill, hooks and AGENTS.md block telling agents to keep memory in Beads. It
    commits what it creates.
 2. **ynm:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
-   at the root (ynm's server, hooks and memory skill for the desk). Commit `.ynm/config.json` and
-   the desk's manifest.
+   at the root (ynm's server, hooks and memory skill for the desk). Add
+   `"sync": { "auto": true, "intervalMinutes": 5 }` to `.ynm/config.json` (ynm 0.5.0 or later), so
+   memory syncs itself after a turn, as the work graph does after a write. Commit
+   `.ynm/config.json` and the desk's manifest.
 3. **Push sync:** Beads points the git hooks at `.beads/hooks`, so `ynm init` can't add its
    pre-push sync. Ask the human to append, after the Beads block in `.beads/hooks/pre-push`:
 

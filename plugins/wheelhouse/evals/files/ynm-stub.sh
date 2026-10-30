@@ -5,8 +5,8 @@
 # just wrote. recall returns the case's .eval/ynm-recall-<tag>.json for a recall
 # tagged identity, handoff, kudos or birth (.eval/ynm-recall.json for any
 # other), when the case set one up, plus what this run remembered with that
-# tag, keeping only the asked namespace's and tag's memories, as ynm does. pin and
-# forget succeed. Nothing reaches a real memory store.
+# tag, keeping only the asked namespace's and tag's memories, as ynm does. init
+# writes .ynm/config.json; pin and forget succeed. Nothing reaches a real memory store.
 printf '%s\n' "ynm $*" >> "$EVAL_STUB_LOG"
 store=.eval/ynm-store.jsonl
 mkdir -p .eval
@@ -32,6 +32,11 @@ case "$1" in
       --arg tags "$(flag tags "$@")" --arg type "$(flag type "$@")" --arg content "$(flag content "$@")" \
       '{memoryId: $id, namespace: $ns, subject: $subject, type: $type, tags: ($tags | split(",")), content: $content, pinned: false}' >> "$store"
     echo "remembered $id in project" ;;
+  # Like ynm, init writes the repository's config, .ynm/config.json.
+  init)
+    mkdir -p .ynm
+    [ -f .ynm/config.json ] || printf '{\n  "anchor": "0000000"\n}\n' > .ynm/config.json
+    echo "initialised project mount in $PWD" ;;
   forget | pin) echo '{"ok":true}' ;;
   recall | list)
     f=.eval/ynm-recall.json
