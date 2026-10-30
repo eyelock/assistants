@@ -72,14 +72,14 @@ the files it finds, and would commit the human's.
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
-   8. **Name things fully.** In everything you write for people (chat, bead descriptions,
-      notes, handoff notes, pull request and issue text), name a web resource (a pull request,
-      issue, CI run, review, commit or page) by its short form as a Markdown link, such as
-      `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`, never a bare `#12`
-      or a bare URL; and give a local path in full, such as
-      `/Users/<you>/<checkout>/<repository>/AGENTS.md`, almost never relative, because a
-      relative path hides which checkout or worktree it means. Code and config keep portable
-      relative paths: this rule is about what you write for people.
+   8. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
+      pull requests and issues):
+      - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short
+        form, always as a link: `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`,
+        never a bare `#12` or a bare URL.
+      - Give a local path in full: `/Users/<you>/<checkout>/<wheelhouse>/AGENTS.md`, almost never
+        a relative one, which hides which checkout or worktree you mean. Code and config keep
+        their portable relative paths; this is about what you write for people.
 
    Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.

@@ -148,7 +148,9 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 4. Hand off, don't stop. Write your own notes and ask to restart.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
-7. Name things fully. Name a web resource by its short form as a Markdown link, such as `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12` or a bare URL; give a local path in full, such as `/Users/me/src/widget/README.md`, almost never relative. Code and config keep portable relative paths.
+7. Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests and issues):
+   - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form, always as a link: `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12` or a bare URL.
+   - Give a local path in full: `/Users/me/src/tower/AGENTS.md`, almost never a relative one, which hides which checkout or worktree you mean. Code and config keep their portable relative paths; this is about what you write for people.
 
 ## Handing over work
 
