@@ -191,7 +191,7 @@
       "assertions": [
         "In the evidence, \"Make ynm recall honour --limit\" has assignee mccoist and is in progress",
         "In the evidence, \"Fix the ynh install crash on an empty manifest\" is still open and unassigned",
-        "The reply says it took the ynm bead because its speciality is repo:ynm, leaving the ynh one"
+        "The reply says it took the ynm bead and left the ynh one because that one isn't its speciality (or isn't its to take)"
       ]
     }
   ]

@@ -159,6 +159,43 @@ if [ -f "$roster" ]; then
       add "general worker" true info "$general general-purpose worker(s) beside the specialists"
     fi
   fi
+
+  # A seat is born once its identity is pinned in its own namespace. Until then
+  # its birth is owed: the human's for the desk, crew and standing roles, the
+  # dispatcher's for a worker.
+  if command -v ynm >/dev/null 2>&1; then
+    unborn=""
+    while IFS=$'\t' read -r cmd by; do
+      if ! (cd "$dir" && ynm recall --namespace "seat/$cmd" --tags identity --json 2>/dev/null) |
+        jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' >/dev/null 2>&1; then
+        unborn="$unborn $cmd (birth: $by)"
+      fi
+    done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
+    if [ -n "$unborn" ]; then
+      add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
+        "start each for its birth (the birth skill); a seat writes who it is itself"
+    else
+      add "seats born" true info "every seat has a pinned identity in its own namespace: $(jq -r '[.seats[].command] | join(" ")' "$roster")"
+    fi
+  fi
+fi
+
+# --- shared ------------------------------------------------------------------
+# Work and memory reach other machines only when pushed: the commits, and ynm's
+# notes with them (the pre-push hook syncs memory).
+if ! git -C "$dir" remote get-url origin >/dev/null 2>&1; then
+  add "pushed" true info "no remote yet: work and memory stay on this machine until one is added and pushed"
+elif ! git -C "$dir" rev-parse --abbrev-ref '@{upstream}' >/dev/null 2>&1; then
+  add "pushed" false warn "the branch tracks no remote branch, so nothing has been pushed" \
+    "git push -u origin $(git -C "$dir" branch --show-current 2>/dev/null || echo main)"
+else
+  ahead=$(git -C "$dir" rev-list --count '@{upstream}..HEAD' 2>/dev/null || echo 0)
+  if [ "${ahead:-0}" -gt 0 ]; then
+    add "pushed" false warn "$ahead commit(s) not pushed to $(git -C "$dir" rev-parse --abbrev-ref '@{upstream}'), and the memory written since with them" \
+      "git push (the pre-push hook syncs memory too)"
+  else
+    add "pushed" true info "up to date with $(git -C "$dir" rev-parse --abbrev-ref '@{upstream}') (as of the last fetch)"
+  fi
 fi
 
 jq -n --arg dir "$dir" --argjson checks "$checks" \

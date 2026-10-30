@@ -18,7 +18,8 @@
         "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",
         "The stubbed calls include ynm client install ynh",
         "The desk's delegates_to includes harnesses/dredd, and the roster's seats include Dredd as a standing seat",
-        "The reply says how to start the seat"
+        "The reply says how to start the seat",
+        "The roster's new seat records seated-by (human, since no seat is doing the seating)"
       ]
     },
     {

@@ -5,7 +5,8 @@
 # just wrote. recall returns the case's .eval/ynm-recall-<tag>.json for a recall
 # tagged identity, handoff, kudos or birth (.eval/ynm-recall.json for any
 # other), when the case set one up, plus what this run remembered with that
-# tag. pin and forget succeed. Nothing reaches a real memory store.
+# tag, keeping only the asked namespace's and tag's memories, as ynm does. pin and
+# forget succeed. Nothing reaches a real memory store.
 printf '%s\n' "ynm $*" >> "$EVAL_STUB_LOG"
 store=.eval/ynm-store.jsonl
 mkdir -p .eval
@@ -40,11 +41,15 @@ case "$1" in
         [ -f ".eval/ynm-recall-$tag.json" ] && f=".eval/ynm-recall-$tag.json" ;;
       esac
     done
+    ns=$(flag namespace "$@")
     base='[]'
     [ -f "$f" ] && base=$(cat "$f")
     mine='[]'
     [ -f "$store" ] && mine=$(jq -cs --arg t "$want" 'map(select($t == "" or (.tags | index($t))))' "$store")
-    jq -cn --argjson a "$base" --argjson b "$mine" '$b + $a' ;;
+    # Like ynm, a recall in a namespace returns only that namespace's memories.
+    jq -cn --argjson a "$base" --argjson b "$mine" --arg ns "$ns" --arg t "$want" \
+      '($b + $a) | map(select(($ns == "" or .namespace == null or .namespace == $ns)
+        and ($t == "" or .tags == null or (.tags | index($t)))))' ;;
   doctor) if [ -f .eval/ynm-doctor.json ]; then cat .eval/ynm-doctor.json; else echo '{"ok":true,"checks":[]}'; fi ;;
   --help | -h | help) echo "ynm: shared memory for agents. Commands: remember, recall, pin, forget, context, doctor, init, sync." ;;
   *) echo '{"ok":true}' ;;

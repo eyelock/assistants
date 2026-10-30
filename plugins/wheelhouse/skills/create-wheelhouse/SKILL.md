@@ -72,7 +72,9 @@ the files it finds, and would commit the human's.
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
    The human seats the crew they work with directly. Asked to set up the team, the desk walks the
-   human through the starter team, role by role, with the `add-seat` skill.
+   human through the starter team, role by role, with the `add-seat` skill. It answers questions
+   about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
+   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:

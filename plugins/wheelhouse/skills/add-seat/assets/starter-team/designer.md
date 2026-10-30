@@ -21,4 +21,6 @@ and stop once the human has seen the beads.
 
 ## Ask
 
-- Where the repositories are checked out, if the Wheelhouse has no shared record of it yet.
+- Where the repositories are checked out, if the Wheelhouse keeps no shared record of it yet.
+  Seating doesn't wait for this: seat it, then offer to record the paths, once, as a memory every
+  seat can find.

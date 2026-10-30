@@ -160,7 +160,9 @@ Workers leave their changes uncommitted in the working tree for review; a human 
 This section is the desk's charter. You act in the work graph as `tower`: pass `--actor tower` on
 every `bd` command that changes it. You seat the standing roles with the `add-seat` skill, and
 ask Anderson to seat workers. The human seats the crew. Asked to set up the team, walk the human
-through the starter team, role by role, with the `add-seat` skill.
+through the starter team, role by role, with the `add-seat` skill. Answer questions about the
+Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
+memory.
 
 ## How tower cares for its seats
 
