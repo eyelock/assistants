@@ -253,6 +253,37 @@ specialist_wheelhouse() {
   git add -A && git commit -qm "chore: The seats"
 }
 
+# inbox_wheelhouse <email> [registered]: the team Wheelhouse with humans. The
+# default human is Rook (no email); with "registered", Pat (pat@example.com)
+# has named themselves at the desk. git's user.email here is <email>. The desk
+# is hq (harness "."). scripts/ has the real wake.sh and inbox.sh, as
+# create-wheelhouse leaves them, and the constitution has the inbox rule.
+inbox_wheelhouse() {
+  local email="$1" registered="${2:-}"
+  team_wheelhouse
+  git config user.email "$email"
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
+  cat >> AGENTS.md <<'MD'
+
+## Asking a human
+
+Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign
+them a bead, the default human unless you know who; tell them things with an inbox note; never
+wait silently. The inbox script is `bash scripts/inbox.sh` (see `--help`).
+
+## The desk
+
+The desk is hq. When a person names themselves at the desk ("it's me, <name>"), it registers them
+as a human with `bash scripts/inbox.sh register`.
+MD
+  local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
+  [ "$registered" = registered ] &&
+    humans=$(jq -c '. + [{"name": "Pat", "command": "pat", "email": "pat@example.com", "pronouns": "they/them"}]' <<<"$humans")
+  jq --argjson h "$humans" '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats | .humans = $h' \
+    skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
+  git add -A && git commit -qm "chore: The humans"
+}
+
 # closed_by <worker> <title> <label>: a bead the worker has already built.
 closed_by() {
   local id; id=$(new_bead "$2" -p 2 -l "$3")

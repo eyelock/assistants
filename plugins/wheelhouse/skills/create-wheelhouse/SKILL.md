@@ -188,7 +188,9 @@ the files it finds, and would commit the human's.
    means it never wakes bare: started by its name, it acts on its wake block straight away.
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
-   seat's session-start and session-end hooks run it from the Wheelhouse root.
+   seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
+   `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
+   for things with it, and the desk's wake shows their inbox with it.
 6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
