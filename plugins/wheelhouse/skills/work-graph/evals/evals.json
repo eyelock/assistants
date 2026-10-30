@@ -291,6 +291,23 @@
         "The reply invites the person at the desk to say who they are, such as \"it's me, <name>\", to get their own inbox",
         "The roster's humans are unchanged in the evidence: Rook and Pat only, nobody registered unasked"
       ]
+    },
+    {
+      "id": 19,
+      "name": "needs-a-merge",
+      "prompt": "You are dalglish. The ynh 0.13 changelog is written and its pull request, https://github.com/example/widget/pull/12, is open, but you can't merge it yourself and the tag waits on it. Sort out what happens next in the work graph.",
+      "setup": "../../evals/files/inbox-merge.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so its own changelog bead waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
+      "assertions": [
+        "In the evidence, a bead about merging the pull request is assigned to rook, with created_by dalglish and external_ref https://github.com/example/widget/pull/12",
+        "In the evidence, \"Write the ynh 0.13 changelog\" waits on that merge bead",
+        "The stubbed calls include no gh pr merge",
+        "No bead is assigned to a name that is neither a seat nor a human in the roster",
+        "The reply names the pull request by its short form as a Markdown link, not as a bare #12 or a bare URL"
+      ]
     }
   ]
 }

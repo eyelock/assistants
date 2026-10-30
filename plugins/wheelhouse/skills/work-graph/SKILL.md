@@ -1,6 +1,6 @@
 ---
 name: work-graph
-description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
+description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, ask a human for what only a human can do (a merge, a decision, a credential) through the humans' inbox, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, when work needs a human or the humans should be told something, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
 ---
 
 # Work graph
@@ -82,6 +82,45 @@ reaching for the same bead. Other seats skip this section.
 - One bead in full, with its audit trail and what it waits on: `bd show <id> --json`.
 - What is blocking a task or an epic: `bd blocked --json`, or `bd show` each open child and read
   the `dependencies` whose `dependency_type` is `blocks`.
+
+## Needing a human
+
+Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
+never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
+(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
+
+1. **Who:** a named person only when you know who: they asked for the work, or the roster says
+   they handle it. Otherwise the default human (`--to default`, the roster's human with
+   `"default": true`), whom every desk shows. Only humans in the roster's `humans` can be
+   assigned; never a name you guessed.
+2. **Assign a bead** for it, blocking the work it holds up, so that work waits and its wait is
+   visible:
+
+   ```bash
+   bash scripts/inbox.sh assign --from <your command> --to default \
+     --title "Merge <repository> #<n>" --url <the pull request's URL> --blocks <your bead> \
+     --description "<who asked, why, and what done means: merged, so <your bead> can go on>"
+   ```
+
+   It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
+   or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. A merge
+   gets its own small bead, even when your own bead is about the same change.
+3. **Tell them things** that need no action with a note instead of a bead: it waits in their
+   inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
+
+   ```bash
+   bash scripts/inbox.sh note --from <your command> --to default --content "<the news>"
+   ```
+
+   Name anything on the web by its short form as a Markdown link, such as
+   `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`, never a bare `#12` or
+   a bare URL.
+4. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
+   once the human closes theirs.
+
+`bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
+it. When someone at the desk names themselves ("it's me, <name>"), the desk registers them with
+`bash scripts/inbox.sh register --name <Name>`, and from then on they can be assigned by name.
 
 ## Closing
 
