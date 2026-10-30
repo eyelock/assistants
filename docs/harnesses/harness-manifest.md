@@ -32,7 +32,7 @@ Plugins and skills packages also carry `.claude-plugin/plugin.json` and `.cursor
 | `profiles` | object | `ynh/imessage` and others | Named variants. See below |
 | `focuses` | object | platform harnesses | Named `prompt` plus optional `profile`. See below |
 | `mcp_servers` | object | platform harnesses | The tool a harness is given. See below |
-| `hooks` | object | harnesses that must refuse something | `before_tool`, `after_tool`, `before_prompt`, `on_stop`, `on_session_start`. See [Add a hook](add-a-hook.md) |
+| `hooks` | object | harnesses that must refuse something | `before_tool`, `after_tool`, `before_prompt`, `on_stop`, `on_session_start`, `on_session_end` (ynh 0.14). See [Add a hook](add-a-hook.md) |
 | `env_passthrough` | string[] | harnesses with credentials | Variables the harness may see; a `${VAR}` in `mcp_servers` must be listed here |
 | `agent` | object | platform harnesses | Defaults for `ynh agent run`: `max_turns`, `effort` (`low`, `medium`, `high`), also `max_tokens`, `max_wall`. Platform harnesses use `{ "max_turns": 25, "effort": "low" }` |
 | `reads` | object | not used here | Declares files an artifact tells the agent to read; `ynd lint` checks they ship |

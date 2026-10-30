@@ -120,7 +120,8 @@ rules. In short:
     { "git": "../..", "pick": ["skills/roster"] }
   ],
   "hooks": {
-    "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }]
+    "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }],
+    "on_session_end": [{ "command": "bash scripts/wake.sh --seat <command> --end || true", "timeout": 30 }]
   },
   "focuses": {
     "<order>": { "prompt": "You are <Name>, the <command> seat. <the standing order>" }
@@ -141,6 +142,9 @@ rules. In short:
   `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
   starts with who it is, where it left off, its Kudos and what is waiting for it. The hook names
   the seat (`--seat <command>`).
+- The `on_session_end` hook pushes what the session wrote (`--end`: memory and the work graph),
+  so nothing is left on this machine. Keep its `timeout`: without one, Claude Code gives it
+  about 1.5 seconds. It is best effort; the next wake's sync catches anything it misses.
 
 `harnesses/<command>/AGENTS.md` is the seat's charter:
 

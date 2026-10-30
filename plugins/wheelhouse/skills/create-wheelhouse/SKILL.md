@@ -42,7 +42,9 @@ at a time**, in this order. Don't create anything until you have the first four.
 ## 2. Check the tools
 
 `ynh`, `ynm`, `bd` (Beads) and `jq` must be on the PATH. If any is missing, say which and ask
-before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`.
+before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`. Seats' session-end
+hooks need ynh 0.14.0 or later: if `ynh version` reports an older one, say so and offer
+`brew upgrade ynh`.
 
 ## 3. Lay it out
 
@@ -103,9 +105,13 @@ the files it finds, and would commit the human's.
        "standing": { "theme": "<theme>", "names": ["..."] }
      },
      "excluded": [],
-     "seats": []
+     "seats": [
+       { "name": "<Name>", "group": "desk", "command": "<name>", "harness": ".", "mandate": "<the desk's mandate>" }
+     ]
    }
    ```
+
+   The desk is the first seat: it wakes from the roster like the others.
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 
@@ -122,15 +128,20 @@ the files it finds, and would commit the human's.
        { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
      ],
+     "hooks": {
+       "on_session_start": [{ "command": "bash scripts/wake.sh --seat <name> --format text || true" }],
+       "on_session_end": [{ "command": "bash scripts/wake.sh --seat <name> --end || true", "timeout": 30 }]
+     },
      "delegates_to": []
    }
    ```
 
    ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
-   profiles and focuses to any seat, and diagnose a seat that won't start.
+   profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
+   seat's: it wakes with purpose, and pushes what it wrote when its session ends.
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
-   seat's session-start hook runs it from the Wheelhouse root.
+   seat's session-start and session-end hooks run it from the Wheelhouse root.
 6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
@@ -161,7 +172,7 @@ the files it finds, and would commit the human's.
    ```
 
    With auto-push on, the graph pushes itself after each write. Every seat's wake runs `bd sync`
-   and `ynm sync`, so it starts current. The first push (`git push -u origin main`, then
+   and `ynm sync`, so it starts current, and its session-end hook pushes both stores. The first push (`git push -u origin main`, then
    `bd dolt push`) publishes the Wheelhouse, so don't run it: offer to, in the report, and run it
    when the human says yes. If there is no remote yet, say in the report to do this once
    there is one.

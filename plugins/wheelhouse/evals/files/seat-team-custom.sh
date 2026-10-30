@@ -12,7 +12,8 @@ jq '.seats = [
 # Each seated role has its own harness, woken by name.
 for c in $(jq -r '.seats[].command' "$r"); do
   mkdir -p "harnesses/$c/.agents/harness"
-  jq -n --arg c "$c" '{name: $c, version: "0.1.0", description: $c, hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}]}}' > "harnesses/$c/.agents/harness/plugin.json"
+  jq -n --arg c "$c" '{name: $c, version: "0.1.0", description: $c, hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
+      on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]}}' > "harnesses/$c/.agents/harness/plugin.json"
   printf '# %s\n\nYou are the `%s` seat.\n' "$c" "$c" > "harnesses/$c/AGENTS.md"
   jq --arg c "$c" '.delegates_to += [{git: ".", path: "harnesses/\($c)"}]' .agents/harness/plugin.json > .p && mv .p .agents/harness/plugin.json
 done

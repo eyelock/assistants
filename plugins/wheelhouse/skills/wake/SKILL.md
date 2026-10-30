@@ -20,6 +20,12 @@ when it has a Dolt remote. A sync never stops the wake. If one fails, the block 
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
+When the session ends, the seat's session-end hook runs the script again with `--end`. It only
+pushes what the session wrote: memory (`ynm sync --no-pull`) and the work graph
+(`bd dolt push`), each skipped when there is no remote. It prints
+`{seat, push: {memory, work}}`, each `pushed`, `skipped` or `failed`, and wakes nobody. It is best
+effort: a crash skips it, and the next wake's sync catches up.
+
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
 rather than starting blind: your identity, handoff notes and Kudos with
 `ynm recall --namespace seat/<command> --subject seat:<command> --tags <identity|handoff|kudos> --json`

@@ -35,7 +35,7 @@ the story without a model.
 
 ## Prerequisites
 
-- `ynh` and `ynd` 0.13 or later, `ynm` 0.4.1 or later, and Beads (`bd`) 1.3 or later, on your PATH
+- `ynh` and `ynd` 0.14 or later, `ynm` 0.4.1 or later, and Beads (`bd`) 1.3 or later, on your PATH
 - `git` and `jq`, and a network connection (the seats include skills from GitHub)
 - To talk to the agents: Claude Code (`claude`), signed in. About twenty Sonnet sessions in all,
   most of them short. Without it, follow the "what it did" path instead.
@@ -216,7 +216,8 @@ EOF
 Expected: no output.
 
 Every seat wakes through one script, `scripts/wake.sh`, which comes from the wheelhouse
-plugin's `wake` skill. Copy it in: each seat's session-start hook runs it from here.
+plugin's `wake` skill. Copy it in: each seat's session-start hook runs it from here, and its
+session-end hook runs it again with `--end` to push what the session wrote.
 
 ```bash
 mkdir -p scripts
@@ -238,7 +239,10 @@ jq -n --argjson plugin "$WHEELHOUSE" '{
   description: "The desk of the tower Wheelhouse: the seat you talk to about building and releasing the widget tools.",
   default_vendor: "claude",
   includes: [$plugin, {git: "https://github.com/eyelock/ynh", pick: ["skills/ynh-compose", "skills/ynh-troubleshoot"]}],
-  hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}]},
+  hooks: {
+    on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}],
+    on_session_end: [{command: "bash scripts/wake.sh --seat tower --end || true", timeout: 30}]
+  },
   delegates_to: []
 }' > .agents/harness/plugin.json
 git add -A
@@ -292,7 +296,7 @@ Expected: a `wrote ... .agents/harness/plugin.json: harness manifest: mcp_server
 the ynm-memory skill; ...` line, a `next: ynm validate` line, then:
 
 ```json
-{"mcp":["ynm"],"hooks":["before_prompt","on_session_start","on_stop"],"includes":["wheelhouse","ynh","integrations"]}
+{"mcp":["ynm"],"hooks":["before_prompt","on_session_end","on_session_start","on_stop"],"includes":["wheelhouse","ynh","integrations"]}
 ```
 
 `ynm init` made this repository a shared memory store. `ynm client install ynh` gave the desk
@@ -436,7 +440,8 @@ This function writes a seat's harness. Each seat's harness includes:
   the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
   `path` names a folder that holds `skills/`;
 - **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
-  knowing who it is;
+  knowing who it is, and **a session-end hook** that runs it with `--end`, so what the seat
+  wrote is pushed when it stops;
 - **one focus**, its standing order;
 - **ynm**, added by `ynm client install ynh` in the seat's folder.
 
@@ -452,7 +457,10 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
       $plugin,
       {git: "../..", pick: ["skills/roster"]}
     ] + (if $extra then [$extra] else [] end)),
-    hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($name) --format text || true"}]},
+    hooks: {
+      on_session_start: [{command: "bash scripts/wake.sh --seat \($name) --format text || true"}],
+      on_session_end: [{command: "bash scripts/wake.sh --seat \($name) --end || true", timeout: 30}]
+    },
     focuses: {($focus): {prompt: $prompt}}
   }' > "harnesses/$1/.agents/harness/plugin.json"
   (cd "harnesses/$1" && ynm client install ynh > /dev/null)
@@ -1354,11 +1362,11 @@ terminal; nothing is left there to run.
 | Standing roles | `harnesses/anderson` dispatches, `harnesses/dredd` watches CI, `harnesses/tharg` releases |
 | Who's who | `skills/roster/`, with its pools and the seats that are filled |
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
-| Waking | `scripts/wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record |
+| Waking | `scripts/wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record; and by its session-end hook with `--end`, to push what it wrote |
 | Care | the constitution's principles: purpose, bounded days, a private home, seen work, no blame |
 | Work | Beads in `.beads/`, started with `--skip-agents`, shared through the repository's Dolt refs and pushed after each write |
 | Memory | ynm, shared through this repository and synced on push |
-| Sync | every seat's wake syncs memory and work first, so it starts current on any machine |
+| Sync | every seat's wake syncs memory and work first, so it starts current on any machine, and its session end pushes what it wrote |
 
 ## Next steps
 
