@@ -244,7 +244,12 @@ if [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/n
   syncblock=$(for f in "${YNM_HOME:-$HOME/.ynm}/config.json" "$dir/.ynm/config.json" "$dir/.ynm/config.local.json"; do
     [ -f "$f" ] && jq -c 'select(has("sync")) | .sync' "$f" 2>/dev/null
   done | tail -1)
-  if [ "$(jq -r '.auto // false' <<<"${syncblock:-null}" 2>/dev/null)" = "true" ]; then
+  # ynm's config is strict: before 0.5.0 it refuses a sync block outright.
+  ynmver=$(ynm --version 2>/dev/null | sed -n 's|^@ynm/cli/\([0-9]*\)\.\([0-9]*\)\..*|\1 \2|p')
+  if [ -n "$syncblock" ] && [ -n "$ynmver" ] && [ "${ynmver% *}" -eq 0 ] && [ "${ynmver#* }" -lt 5 ]; then
+    add "memory syncs itself" false error "ynm $(ynm --version 2>/dev/null | cut -d' ' -f1 | cut -d/ -f3) is older than 0.5.0, which refuses the config's sync block, so ynm can't read its config at all" \
+      "brew upgrade ynm (0.5.0 or later)"
+  elif [ "$(jq -r '.auto // false' <<<"${syncblock:-null}" 2>/dev/null)" = "true" ]; then
     add "memory syncs itself" true info "sync.auto is on: memory syncs after a turn, at most every $(jq -r '.intervalMinutes // 5' <<<"$syncblock") minutes"
   else
     add "memory syncs itself" false warn "sync.auto is off, so memory written mid-session waits for a git push, a wake or the session's end (which a crash skips)" \

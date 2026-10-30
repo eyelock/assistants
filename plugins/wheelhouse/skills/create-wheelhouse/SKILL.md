@@ -43,8 +43,9 @@ at a time**, in this order. Don't create anything until you have the first four.
 
 `ynh`, `ynm`, `bd` (Beads) and `jq` must be on the PATH. If any is missing, say which and ask
 before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`. Seats' session-end
-hooks need ynh 0.14.0 or later: if `ynh version` reports an older one, say so and offer
-`brew upgrade ynh`.
+hooks need ynh 0.14.0 or later, and memory's own sync needs ynm 0.5.0 or later (an older ynm
+refuses the config that turns it on): if `ynh version` or `ynm --version` reports an older one,
+say so and offer `brew upgrade ynh ynm`.
 
 ## 3. Lay it out
 
