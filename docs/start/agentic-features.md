@@ -136,9 +136,9 @@ and `changelog`, some tied to a profile. The platform harnesses give each triage
 ## Hooks
 
 **What.** A hook is a command the vendor runs at a point in the session: before or after a tool
-call, before a prompt, at session start or stop. A hook can block an action. Vendors name the
-events differently; ynh defines five canonical events (`before_tool`, `after_tool`,
-`before_prompt`, `on_stop`, `on_session_start`) and translates.
+call, before a prompt, after each turn, at session start or end. A hook can block an action. Vendors name the
+events differently; ynh defines six canonical events (`before_tool`, `after_tool`,
+`before_prompt`, `on_stop`, `on_session_start`, `on_session_end`) and translates.
 
 **Why.** Instructions to a model are advice; a hook is enforced by the vendor, not the model.
 Use one where being wrong costs something.

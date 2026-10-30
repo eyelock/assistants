@@ -216,7 +216,8 @@ specialist_wheelhouse() {
     cmd=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     mkdir -p "harnesses/$cmd/.agents/harness"
     jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c,
-      hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}]}}' \
+      hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
+      on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]}}' \
       > "harnesses/$cmd/.agents/harness/plugin.json"
     if [ "$name" = Anderson ]; then
       charter='the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.'

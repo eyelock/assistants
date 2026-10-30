@@ -40,7 +40,7 @@ There are two places a hook can live in this repo. Pick by what you are building
    }
    ```
 
-   The events are `before_tool`, `after_tool`, `before_prompt`, `on_stop` and `on_session_start`. `matcher` scopes a tool event to tool names (a pattern, not a glob).
+   The events are `before_tool`, `after_tool`, `before_prompt`, `on_stop` (after every turn), `on_session_start` and, from ynh 0.14, `on_session_end` (best effort, with a short budget). `matcher` scopes a tool event to tool names (a pattern, not a glob), and an optional `timeout` gives the command that many seconds.
 
 3. Test the script on its own, with the JSON a vendor would send:
 

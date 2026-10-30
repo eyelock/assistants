@@ -148,6 +148,21 @@ if [ -f "$roster" ]; then
   else
     add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
   fi
+
+  # Every seat, the desk too, pushes what it wrote when its session ends.
+  unpushed=""
+  while IFS=$'\t' read -r cmd harness; do
+    manifest="$dir/$harness/.agents/harness/plugin.json"
+    if ! jq -e --arg s "--seat $cmd " '[.hooks.on_session_end[]?.command | contains($s) and contains("--end")] | any' "$manifest" >/dev/null 2>&1; then
+      unpushed="$unpushed $cmd"
+    fi
+  done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
+  if [ -n "$unpushed" ]; then
+    add "seats push at end" false warn "seats whose session end leaves their writes on this machine until the next push or wake:$unpushed" \
+      "add to each harness's hooks: \"on_session_end\": [{\"command\": \"bash scripts/wake.sh --seat <command> --end || true\", \"timeout\": 30}] (needs ynh 0.14.0 or later), then ynh update"
+  else
+    add "seats push at end" true info "every seat's session-end hook pushes memory and work"
+  fi
   # Specialist workers hand their overflow to a general-purpose worker.
   specialists=$(jq -r '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) > 0) | .command] | join(" ")' "$roster" 2>/dev/null)
   general=$(jq '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) == 0)] | length' "$roster" 2>/dev/null)

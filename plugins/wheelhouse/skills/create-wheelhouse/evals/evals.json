@@ -13,8 +13,9 @@
       "assertions": [
         "The evidence shows ./hq is a git repository with at least one commit",
         "AGENTS.md states the Wheelhouse's purpose (running the day: mail, Slack and calendar) and includes rules that a human decides (or merges and sends) and that work lives in Beads and memory in ynm",
-        "skills/roster/assets/roster.json has the crew pool Lennon, McCartney, Harrison, Starr, the workers pool Mercury, Venus, Mars, Jupiter and the standing pool Hermes, Athena, Apollo, and no seats",
+        "skills/roster/assets/roster.json has the crew pool Lennon, McCartney, Harrison, Starr, the workers pool Mercury, Venus, Mars, Jupiter and the standing pool Hermes, Athena, Apollo, and only the desk (command hq, harness \".\") in seats",
         ".agents/harness/plugin.json is a desk named hq that includes the wheelhouse plugin",
+        "The desk's hooks run scripts/wake.sh --seat hq at session start, and scripts/wake.sh --seat hq --end at session end, with a timeout",
         "Beads is set up in ./hq with the prefix hq (its database is named hq), and the evidence shows no Beads agent setup (no BEGIN BEADS block, no .agents/skills/beads)",
         "The stubbed calls include ynm init and ynm client install ynh",
         "git remote -v in the evidence shows no remote, and nothing was pushed",

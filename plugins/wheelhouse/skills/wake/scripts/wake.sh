@@ -14,10 +14,15 @@
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root.
 #
+# Its session-end hook runs it with --end, which only pushes what the session
+# wrote: memory (ynm sync --no-pull) and the work graph (bd dolt push), each
+# skipped without a remote and given up after 12 seconds. It prints
+# {seat, push {memory, work: pushed|skipped|failed}} and nothing else.
+#
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
 # urgent first), sync {memory, work: synced|skipped|failed}}, or a Markdown
-# block with --format text. Diagnostics on stderr.
+# block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
 set -uo pipefail
@@ -25,10 +30,12 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
+       wake.sh --end [--seat <name>] [--dir <wheelhouse repo>]
 
 Syncs memory and work, then prints what a seat should know as it wakes.
 --seat defaults to $BEADS_ACTOR; --dir to the current directory; --format to
-json. --no-sync skips the sync.
+json. --no-sync skips the sync. --end, for the session-end hook, only pushes
+memory and work, and prints the result as JSON.
 EOF
 }
 
@@ -36,12 +43,14 @@ seat="${BEADS_ACTOR:-}"
 dir="."
 format="json"
 sync=1
+end=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; shift 2 ;;
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
     --no-sync) sync=0; shift ;;
+    --end) end=1; shift ;;
     --help | -h) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -55,6 +64,30 @@ roster="$dir/skills/roster/assets/roster.json"
 [ -f "$roster" ] || { echo "not a Wheelhouse (no $roster)" >&2; exit 2; }
 cd "$dir" || exit 2
 
+# A sync that hangs gives up after this many seconds (perl's alarm: macOS has
+# no timeout).
+limited() {
+  local secs="$1"; shift
+  if command -v perl >/dev/null 2>&1; then perl -e 'alarm shift; exec @ARGV' -- "$secs" "$@"; else "$@"; fi
+}
+hasgitremote() { git remote 2>/dev/null | grep -q .; }
+hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; }
+
+# At the end of a session, push what it wrote and stop. The session-end hook
+# has a short budget, so this pulls nothing.
+if [ "$end" = 1 ]; then
+  mempush=skipped
+  workpush=skipped
+  if hasgitremote; then
+    if limited 12 ynm sync --no-pull --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
+  fi
+  if hasdoltremote; then
+    if limited 12 bd dolt push --no-adopt >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
+  fi
+  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
+  exit 0
+fi
+
 # Which seat this is.
 entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' "$roster")
 [ -n "$entry" ] || { echo "$seat is not a seat in the roster" >&2; exit 1; }
@@ -63,19 +96,15 @@ charter="$(jq -r .harness <<<"$entry")/AGENTS.md"
 mandate=$(sed -n 's/^\*\*Mandate:\*\* *//p' "$charter" 2>/dev/null | head -1)
 [ -n "$mandate" ] || mandate=$(jq -r .mandate <<<"$entry")
 
-# Sync first, so what follows is current. A sync that hangs gives up after 60
-# seconds (perl's alarm: macOS has no timeout).
-limited() {
-  if command -v perl >/dev/null 2>&1; then perl -e 'alarm shift; exec @ARGV' -- 60 "$@"; else "$@"; fi
-}
+# Sync first, so what follows is current.
 memsync=skipped
 worksync=skipped
 if [ "$sync" = 1 ]; then
-  if git remote 2>/dev/null | grep -q .; then
-    if limited ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
+  if hasgitremote; then
+    if limited 60 ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
   fi
-  if bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
-    if limited bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
+  if hasdoltremote; then
+    if limited 60 bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
   fi
 fi
 
