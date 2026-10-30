@@ -21,8 +21,9 @@ when it has a Dolt remote. A sync never stops the wake. If one fails, the block 
 shows. `--no-sync` skips both.
 
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
-pushes what the session wrote: memory (`ynm sync --no-pull`) and the work graph
-(`bd dolt push`), each skipped when there is no remote. It prints
+syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
+when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
+alone is rejected until it merges. It prints
 `{seat, push: {memory, work}}`, each `pushed`, `skipped` or `failed`, and wakes nobody. It is best
 effort: a crash skips it, and the next wake's sync catches up.
 
