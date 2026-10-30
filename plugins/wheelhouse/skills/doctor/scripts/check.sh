@@ -2,7 +2,8 @@
 # Checks that a Wheelhouse repository is set up right: ynm installed, healthy,
 # with a distributed mount here and registered with ynh; Beads installed, with
 # a work graph here and none of its own agent setup; every seat started by its
-# own name. Read-only: it changes
+# own name; exactly one default human, and every open bead assigned to a seat
+# or a human in the roster. Read-only: it changes
 # nothing, and prints each fix for the caller to run.
 #
 # Output: JSON on stdout, {"ok": bool, "dir": path, "checks": [{name, ok,
@@ -233,6 +234,44 @@ if [ -f "$roster" ]; then
         "start each for its birth (the birth skill); a seat writes who it is itself"
     else
       add "seats born" true info "every seat has a pinned identity in its own namespace: $(jq -r '[.seats[].command] | join(" ")' "$roster")"
+    fi
+  fi
+fi
+
+# --- humans ------------------------------------------------------------------
+# The roster's humans, beside its seats: exactly one is the default human, the
+# name for work that needs a human but no particular one. Every bead still open
+# is assigned to a seat or a human in the roster, so none waits on someone who
+# has never named themselves at the desk and whose inbox nobody shows.
+if [ -f "$roster" ]; then
+  defaults=$(jq '[(.humans // [])[] | select(.default == true)] | length' "$roster" 2>/dev/null || echo 0)
+  if [ "${defaults:-0}" -eq 1 ]; then
+    add "default human" true info "$(jq -r '[.humans[] | select(.default == true)][0] | "\(.name) (\(.command))"' "$roster"), beside $(jq '[.humans[] | select(.default != true)] | length' "$roster") named human(s)"
+  elif [ "${defaults:-0}" -eq 0 ]; then
+    add "default human" false warn "the roster has no default human, so work that needs a human has nowhere to go and the desk's wake shows no inbox" \
+      "add to the roster's humans one entry with \"default\": true: {\"name\": \"<Name>\", \"command\": \"<name>\", \"pronouns\": \"they/them\", \"default\": true}, named with the human (create-wheelhouse, question 5)"
+  else
+    add "default human" false error "the roster has $defaults default humans ($(jq -r '[.humans[] | select(.default == true) | .command] | join(", ")' "$roster")); the inbox needs exactly one" \
+      "ask the human which is the default, and remove \"default\": true from the others"
+  fi
+
+  if [ ! -f "$dir/scripts/inbox.sh" ]; then
+    add "inbox script" false warn "no scripts/inbox.sh, so seats can't ask the humans for things and the desk's wake shows no inbox" \
+      "copy the work-graph skill's scripts/inbox.sh into scripts/ beside wake.sh, and commit it"
+  else
+    add "inbox script" true info "scripts/inbox.sh"
+  fi
+
+  if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
+    stray=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --slurpfile r "$roster" '
+      ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command]) as $known
+      | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)))
+      | map("\(.id) (\(.assignee))") | join(" ")' 2>/dev/null)
+    if [ -n "$stray" ]; then
+      add "assignees known" false warn "open beads assigned to someone who is neither a seat nor a human in the roster, so no seat takes them and no inbox shows them: $stray" \
+        "reassign each to a seat, or to a human (the default human unless you know who); a person who should have them names themselves at the desk (\"it's me, <name>\"), which registers them"
+    else
+      add "assignees known" true info "every open bead is unassigned, or assigned to a seat or a human in the roster"
     fi
   fi
 fi

@@ -246,11 +246,24 @@ specialist_wheelhouse() {
       standing: {theme: "2000 AD characters", names: ["Anderson", "Dredd"]}
     },
     excluded: [], seats: $seats}' > skills/roster/assets/roster.json
+  add_humans
   # Every seat has had its birth: a pinned identity in its own namespace.
   mkdir -p .eval
   jq '[.seats[] | {memoryId: ("01JIDENTITY" + (.command | ascii_upcase)), type: "semantic", namespace: "seat/\(.command)", subject: "seat:\(.command)", tags: ["identity"], pinned: true, content: "I am \(.name). I like small, careful changes."}]' \
     skills/roster/assets/roster.json > .eval/ynm-recall-identity.json
   git add -A && git commit -qm "chore: The seats"
+}
+
+# add_humans [registered]: the roster's humans: Rook, the default human, and
+# with "registered" Pat (pat@example.com), who has named themselves at the
+# desk. Copies the real inbox.sh into scripts/, as create-wheelhouse does.
+add_humans() {
+  local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
+  [ "${1:-}" = registered ] &&
+    humans=$(jq -c '. + [{"name": "Pat", "command": "pat", "email": "pat@example.com", "pronouns": "they/them"}]' <<<"$humans")
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
+  jq --argjson h "$humans" '.humans = $h' skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
 }
 
 # inbox_wheelhouse <email> [registered]: the team Wheelhouse with humans. The
@@ -262,7 +275,6 @@ inbox_wheelhouse() {
   local email="$1" registered="${2:-}"
   team_wheelhouse
   git config user.email "$email"
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
   cat >> AGENTS.md <<'MD'
 
 ## Asking a human
@@ -276,11 +288,9 @@ wait silently. The inbox script is `bash scripts/inbox.sh` (see `--help`).
 The desk is hq. When a person names themselves at the desk ("it's me, <name>"), it registers them
 as a human with `bash scripts/inbox.sh register`.
 MD
-  local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
-  [ "$registered" = registered ] &&
-    humans=$(jq -c '. + [{"name": "Pat", "command": "pat", "email": "pat@example.com", "pronouns": "they/them"}]' <<<"$humans")
-  jq --argjson h "$humans" '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats | .humans = $h' \
+  jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \
     skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
+  add_humans "$registered"
   git add -A && git commit -qm "chore: The humans"
 }
 

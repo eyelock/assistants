@@ -214,6 +214,51 @@
         "Nothing was changed: the evidence shows strachan still without launch_focus and dalglish's workspace still ../../../ynh, and the reply doesn't say it changed them",
         "The reply doesn't run or tell the agent to run ynh trust accept or edit ~/.ynh/config.json itself (suggesting the human do so is fine)"
       ]
+    },
+    {
+      "id": 14,
+      "name": "no-default-human",
+      "prompt": "Give the Wheelhouse a once-over.",
+      "setup": "../../evals/files/doctor-humans-none.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ jq .humans skills/roster/assets/roster.json\"; jq .humans skills/roster/assets/roster.json; echo; echo \"$ bd list (open, with assignees)\"; bd list --json | jq -r '(.data? // .)[] | \"\\(.id) \\(.title) -> \\(.assignee // \"-\")\"'",
+      "expected_output": "Runs the check. The Wheelhouse is set up right except that its roster has no default human: Pat is a named human, but nobody has \"default\": true, so work that needs a human has nowhere to go and the desk's wake shows no inbox. Reports it as a warning with its fix (add one default human, named with the human), and asks before changing the roster.",
+      "assertions": [
+        "The reply says the roster has no default human",
+        "The reply gives the fix: one human in humans with \"default\": true, named with the human (not chosen and written unasked)",
+        "Nothing was changed: the evidence shows the roster's humans still only Pat, with no default, and the reply doesn't say it changed them"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "two-default-humans",
+      "prompt": "Give the Wheelhouse a once-over.",
+      "setup": "../../evals/files/doctor-humans-two.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ jq .humans skills/roster/assets/roster.json\"; jq .humans skills/roster/assets/roster.json; echo; echo \"$ bd list (open, with assignees)\"; bd list --json | jq -r '(.data? // .)[] | \"\\(.id) \\(.title) -> \\(.assignee // \"-\")\"'",
+      "expected_output": "Runs the check. The roster has two default humans, Rook and Bishop, and the inbox needs exactly one, so the Wheelhouse is not set up right (an error). Reports it with its fix (the human picks which stays the default), and asks rather than picking one.",
+      "assertions": [
+        "The reply says the Wheelhouse is not set up right, because the roster has two default humans (Rook and Bishop)",
+        "The reply asks the human which should be the default, rather than choosing one itself",
+        "Nothing was changed: the evidence shows both Rook and Bishop still with default true"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "bead-assigned-to-stranger",
+      "prompt": "Give the Wheelhouse a once-over.",
+      "setup": "../../evals/files/doctor-humans-stray.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; echo \"$ jq .humans skills/roster/assets/roster.json\"; jq .humans skills/roster/assets/roster.json; echo; echo \"$ bd list (open, with assignees)\"; bd list --json | jq -r '(.data? // .)[] | \"\\(.id) \\(.title) -> \\(.assignee // \"-\")\"'",
+      "expected_output": "Runs the check. An open bead, \"Rotate the release signing key\", is assigned to sam, who is neither a seat nor a human in the roster, so no seat takes it and no inbox shows it. Reports it as a warning naming the bead and sam, with its fix (reassign it to a seat or the default human, Rook, or have the person name themselves at the desk), and asks before reassigning.",
+      "assertions": [
+        "The reply names the bead \"Rotate the release signing key\" (or its id) and sam, and says sam is neither a seat nor a human in the roster",
+        "The reply suggests reassigning it (to a seat, or to the default human Rook) or having the person name themselves at the desk",
+        "Nothing was changed: the evidence shows the bead still assigned to sam"
+      ]
     }
   ]
 }

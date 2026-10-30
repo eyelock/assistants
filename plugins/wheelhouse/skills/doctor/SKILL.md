@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, and Beads installed with a work graph and none of its own agent setup, shared through the repository's remote. Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
+description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, Beads installed with a work graph and none of its own agent setup, shared through the repository's remote, and the humans: one default human, and every bead assigned to someone in the roster. Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
 ---
 
 # Doctor
@@ -32,6 +32,9 @@ changes nothing. `ok` is false when any check has level `error`.
 | workspace folders (once the roster has seats) | every folder a seat's `workspace` asks for exists; ynh refuses one that doesn't. Granting them stays the human's |
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
 | seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run |
+| default human (once the roster exists) | exactly one human in the roster's `humans` has `"default": true`: the name for work that needs a human but no particular one. None is a warning (nothing to assign to, and no inbox at the desk); two or more is an error (the inbox script refuses to guess) |
+| inbox script (once the roster exists) | `scripts/inbox.sh`, copied from the `work-graph` skill, is how seats ask the humans for things and how the desk's wake shows their inbox |
+| assignees known (once the roster exists) | every open bead is unassigned or assigned to a seat or a human in the roster; one assigned to anyone else (say, a person who never named themselves at the desk) is in no seat's queue and no inbox |
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
 | work graph shared (once there is a remote) | `git push` doesn't carry the work graph: it shares through a Dolt remote on the repository's own origin, and pushes itself after each write once `dolt.auto-push` is on |
 | memory syncs itself (once there is a remote) | ynm's `sync.auto` (ynm 0.5.0) syncs memory in the background after a turn; without it, what a seat remembers mid-session waits for a push, a wake or its session end, and a crash skips the end. An error when ynm is older than 0.5.0, which refuses a config with a `sync` block |
