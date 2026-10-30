@@ -164,6 +164,39 @@ if [ -f "$roster" ]; then
   else
     add "seats push at end" true info "every seat's session-end hook pushes memory and work"
   fi
+
+  # Every seat wakes by itself: its launch focus (ynh 0.15.0) opens a session
+  # started by its name alone, so it never waits bare for the human to type.
+  # And the folders it asks for (workspace) exist, or ynh refuses them.
+  bare=""
+  missing=""
+  while IFS=$'\t' read -r cmd harness; do
+    manifest="$dir/$harness/.agents/harness/plugin.json"
+    if ! jq -e '.launch_focus as $f | $f != null and (.focuses // {} | has($f))' "$manifest" >/dev/null 2>&1; then
+      bare="$bare $cmd"
+    fi
+    while IFS= read -r want; do
+      [ -n "$want" ] || continue
+      case "$want" in
+        /*) path="$want" ;;
+        "~/"*) path="$HOME/${want#\~/}" ;;
+        *) path="$dir/$harness/$want" ;;
+      esac
+      [ -d "$path" ] || missing="$missing $cmd:$want"
+    done < <(jq -r '.workspace[]? // empty' "$manifest" 2>/dev/null)
+  done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
+  if [ -n "$bare" ]; then
+    add "seats wake by themselves" false warn "seats that wait bare for the human when started by their name:$bare" \
+      "give each a wake focus and \"launch_focus\": \"wake\" (the add-seat skill; needs ynh 0.15.0 or later), then ynh update"
+  else
+    add "seats wake by themselves" true info "every seat's launch focus starts its session"
+  fi
+  if [ -n "$missing" ]; then
+    add "workspace folders" false warn "seats ask for folders that don't exist, which ynh refuses:$missing" \
+      "check where each repository is checked out (the constitution's What it reaches), and fix the seat's workspace paths, which are relative to its own folder"
+  else
+    add "workspace folders" true info "every folder a seat asks for exists; granting them is the human's (ynh trust accept, or workspace_roots)"
+  fi
   # Specialist workers hand their overflow to a general-purpose worker.
   specialists=$(jq -r '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) > 0) | .command] | join(" ")' "$roster" 2>/dev/null)
   general=$(jq '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) == 0)] | length' "$roster" 2>/dev/null)

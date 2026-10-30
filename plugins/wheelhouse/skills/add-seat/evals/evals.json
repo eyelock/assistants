@@ -15,6 +15,7 @@
         "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
         "That harness's on_session_start hook runs scripts/wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
         "That harness's on_session_end hook runs scripts/wake.sh with --seat dredd and --end, with a timeout",
+        "That harness's launch_focus is wake, and its focuses include a wake focus",
         "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
         "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",
         "The stubbed calls include ynm client install ynh",
@@ -106,6 +107,7 @@
         "The roster's seats include a worker (group workers) whose specialities list repo:ynr",
         "That worker's AGENTS.md says it takes only beads labelled repo:ynr, and acts as its own command (--actor)",
         "The worker has its own harness under harnesses/<command>/, and the desk's delegates_to includes it",
+        "That worker's harness asks for the ynr repository's folder as its workspace (../../../ynr), and for no other repository's",
         "The reply says there is no general-purpose worker yet and offers to seat one"
       ]
     },

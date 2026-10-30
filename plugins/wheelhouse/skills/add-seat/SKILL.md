@@ -64,7 +64,8 @@ You need three things. Ask for any you can't tell from the request, one question
 - **Mandate:** one sentence, the job and nothing else, such as "Cuts releases when asked, and
   nothing else."
 - **Reach:** the repositories and platforms the job touches, and whether it only reads them or
-  also changes them.
+  also changes them. Where each repository is checked out is in the constitution's
+  `## What it reaches`; if one isn't there, ask, and add it.
 
 ## Workers
 
@@ -123,7 +124,10 @@ rules. In short:
     "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }],
     "on_session_end": [{ "command": "bash scripts/wake.sh --seat <command> --end || true", "timeout": 30 }]
   },
+  "workspace": ["../../<a repository's path in What it reaches>"],
+  "launch_focus": "wake",
   "focuses": {
+    "wake": { "prompt": "Begin: act on your wake block. If there is none, gather it with the wake skill." },
     "<order>": { "prompt": "You are <Name>, the <command> seat. <the standing order>" }
   }
 }
@@ -138,6 +142,16 @@ rules. In short:
   can't make it act as someone else. A seat that only
   reads a platform gets its read-only server.
 - One focus per standing order. Each prompt names the seat, and says what to do and when to stop.
+- `launch_focus` makes the seat never wake bare: started by its name alone, it opens with the
+  `wake` focus, so it acts on its wake block (its birth, or picking up from its notes) without
+  waiting to be told. `<command> --focus <order>` still runs one standing order and stops, and a
+  prompt given at launch replaces the wake prompt.
+- `workspace` asks for the folders of the repositories the job changes or reads, and only those:
+  a specialist gets its own repository, a general worker or a reviewer every one it works in, and
+  a seat that only reads a platform (through `gh`, say) none. Paths are relative to the seat's
+  folder, so a repository at `../ynh` from the Wheelhouse root is `../../../ynh`. A request grants
+  nothing: the human grants it, with `ynh trust accept <command>` or their own `workspace_roots`
+  in `~/.ynh/config.json`. Never run either for them.
 - The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
   `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
   starts with who it is, where it left off, its Kudos and what is waiting for it. The hook names
@@ -196,6 +210,9 @@ it, but don't start it.
 ## 5. Report
 
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
-start it: `ynh install harnesses/<command>`, then `<command> --focus <order>`, written out for each
-seat when there are several. If you left the seat uncommitted, say that the desk won't start
+start it: `ynh install harnesses/<command>`, then `<command>` to wake it, or
+`<command> --focus <order>` for one standing order, written out for each seat when there are
+several. If it asks for workspace folders, say they are refused until the human grants them:
+`ynh trust show <command>` lists them, and `ynh trust accept <command>` grants them, unless their
+`workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
 until it is committed.

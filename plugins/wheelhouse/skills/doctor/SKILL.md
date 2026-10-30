@@ -28,6 +28,8 @@ changes nothing. `ok` is false when any check has level `error`.
 | no Beads agent setup | `bd init` without `--skip-agents` writes skills, hooks and AGENTS.md blocks that tell agents to keep memory in `bd remember`, splitting it from ynm |
 | seats wired (once the roster has seats) | each seat is started by its own name and wakes as itself: a harness of its own whose wake hook names it, and no `BEADS_ACTOR` passed through for a stray shell variable to override |
 | seats push at end (once the roster has seats) | each seat's session-end hook (`wake.sh --end`) pushes the memory and work it wrote; without it, they wait on this machine for the next `git push`, write or wake |
+| seats wake by themselves (once the roster has seats) | each seat's `launch_focus` (ynh 0.15.0) names a focus it has, so started by its name it acts on its wake block instead of waiting bare |
+| workspace folders (once the roster has seats) | every folder a seat's `workspace` asks for exists; ynh refuses one that doesn't. Granting them stays the human's |
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
 | seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run |
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
