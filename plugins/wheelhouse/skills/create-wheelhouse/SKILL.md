@@ -23,7 +23,9 @@ at a time**, in this order. Don't create anything until you have the first four.
 1. **The space and its purpose,** in a sentence: "developing and releasing our command-line tools".
 2. **The name** of the Wheelhouse: short, lowercase, and free as a command (`command -v <name>`
    finds nothing). It names the desk, the folder and the bead prefix.
-3. **What it reaches:** the repositories and platforms the work touches.
+3. **What it reaches:** the repositories and platforms the work touches, and where each
+   repository is checked out on this machine. Suggest a sibling of the Wheelhouse
+   (`../<repository>`) if it isn't said.
 4. **The naming pools,** one theme per group: crew, workers and standing roles. The human picks
    the themes; you may suggest names within a theme, which the human confirms. Never pick a theme
    yourself.
@@ -42,8 +44,8 @@ at a time**, in this order. Don't create anything until you have the first four.
 ## 2. Check the tools
 
 `ynh`, `ynm`, `bd` (Beads) and `jq` must be on the PATH. If any is missing, say which and ask
-before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`. Seats' session-end
-hooks need ynh 0.14.0 or later, and memory's own sync needs ynm 0.5.0 or later (an older ynm
+before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`. Seats' launch focus
+and workspace folders need ynh 0.15.0 or later, and memory's own sync needs ynm 0.5.0 or later (an older ynm
 refuses the config that turns it on): if `ynh version` or `ynm --version` reports an older one,
 say so and offer `brew upgrade ynh ynm`.
 
@@ -70,6 +72,10 @@ the files it finds, and would commit the human's.
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
+
+   A `## What it reaches` section lists the repositories, each with where it is checked out
+   relative to the Wheelhouse root (such as "`ynh`: `../ynh`"), and the platforms. Seats ask for
+   their repositories' folders from it.
 
    A `## Handing over work` section says how finished work reaches review, from question 5: for
    example "Workers leave their changes uncommitted in the working tree for review; a human
@@ -133,13 +139,18 @@ the files it finds, and would commit the human's.
        "on_session_start": [{ "command": "bash scripts/wake.sh --seat <name> --format text || true" }],
        "on_session_end": [{ "command": "bash scripts/wake.sh --seat <name> --end || true", "timeout": 30 }]
      },
+     "launch_focus": "wake",
+     "focuses": {
+       "wake": { "prompt": "Begin: act on your wake block. If there is none, gather it with the wake skill." }
+     },
      "delegates_to": []
    }
    ```
 
    ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
    profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
-   seat's: it wakes with purpose, and pushes what it wrote when its session ends.
+   seat's: it wakes with purpose, and pushes what it wrote when its session ends. Its launch focus
+   means it never wakes bare: started by its name, it acts on its wake block straight away.
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root.
@@ -190,9 +201,17 @@ Don't add a remote, push or publish unless asked.
 
 ## 6. Report
 
+Seats ask for their repositories' folders (`workspace`), and ynh grants them only when the human
+says so, in one of two ways. Explain both and leave the choice to them: `ynh trust accept <command>`
+for each seat, after `ynh trust show <command>` lists what it asks for, which they repeat whenever a
+seat's folders change; or `workspace_roots` in their own `~/.ynh/config.json`, naming the folder
+the repositories live in, which grants any local harness's folders under it from then on. Never
+edit `~/.ynh/config.json` or run `ynh trust accept` for them.
+
 Lead with what was made and where. Then the layers as built, the seats and how to start each
 (`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
-do (the push hook, a remote, the first push of the work graph), how to join from another machine,
+do (the push hook, a remote, the first push of the work graph, and granting each seat's
+workspace folders), how to join from another machine,
 and the doctor's verdict. To join from another machine: `git clone` the repository, then
 `bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
 push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and

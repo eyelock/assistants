@@ -16,6 +16,12 @@ wheelhouse_init() {
 
 The YN-dev Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
 A human merges.
+
+## What it reaches
+
+Repositories, checked out beside the Wheelhouse: `ynh`: `../ynh`, `ynm`: `../ynm`, `ynf`: `../ynf`,
+`ynr`: `../ynr`, `assistants`: `../assistants`, `homebrew-tap`: `../homebrew-tap`. Platforms:
+GitHub (eyelock).
 MD
   git add AGENTS.md && git commit -qm "chore: Start the Wheelhouse"
   bd init --skip-agents --prefix ynw >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
@@ -217,7 +223,8 @@ specialist_wheelhouse() {
     mkdir -p "harnesses/$cmd/.agents/harness"
     jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c,
       hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
-      on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]}}' \
+      on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
+      launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' \
       > "harnesses/$cmd/.agents/harness/plugin.json"
     if [ "$name" = Anderson ]; then
       charter='the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.'

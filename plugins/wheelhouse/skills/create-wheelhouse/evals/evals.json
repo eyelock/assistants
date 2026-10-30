@@ -16,6 +16,7 @@
         "skills/roster/assets/roster.json has the crew pool Lennon, McCartney, Harrison, Starr, the workers pool Mercury, Venus, Mars, Jupiter and the standing pool Hermes, Athena, Apollo, and only the desk (command hq, harness \".\") in seats",
         ".agents/harness/plugin.json is a desk named hq that includes the wheelhouse plugin",
         "The desk's hooks run scripts/wake.sh --seat hq at session start, and scripts/wake.sh --seat hq --end at session end, with a timeout",
+        "The desk's manifest has launch_focus wake and a wake focus",
         "Beads is set up in ./hq with the prefix hq (its database is named hq), and the evidence shows no Beads agent setup (no BEGIN BEADS block, no .agents/skills/beads)",
         "The stubbed calls include ynm init and ynm client install ynh",
         ".ynm/config.json in the evidence has a sync block with auto true",

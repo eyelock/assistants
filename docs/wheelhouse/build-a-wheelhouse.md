@@ -35,7 +35,7 @@ the story without a model.
 
 ## Prerequisites
 
-- `ynh` and `ynd` 0.14 or later, `ynm` 0.5.0 or later, and Beads (`bd`) 1.3 or later, on your PATH
+- `ynh` and `ynd` 0.15 or later, `ynm` 0.5.0 or later, and Beads (`bd`) 1.3 or later, on your PATH
 - `git` and `jq`, and a network connection (the seats include skills from GitHub)
 - To talk to the agents: Claude Code (`claude`), signed in. About twenty Sonnet sessions in all,
   most of them short. Without it, follow the "what it did" path instead.
@@ -243,6 +243,8 @@ jq -n --argjson plugin "$WHEELHOUSE" '{
     on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}],
     on_session_end: [{command: "bash scripts/wake.sh --seat tower --end || true", timeout: 30}]
   },
+  launch_focus: "wake",
+  focuses: {wake: {prompt: "Begin: act on your wake block. If there is none, gather it with the wake skill."}},
   delegates_to: []
 }' > .agents/harness/plugin.json
 git add -A
@@ -442,15 +444,18 @@ This function writes a seat's harness. Each seat's harness includes:
 - **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
   knowing who it is, and **a session-end hook** that runs it with `--end`, so what the seat
   wrote is pushed when it stops;
-- **one focus**, its standing order;
+- **a wake focus**, its `launch_focus`, so started by its name alone it acts on its wake block
+  instead of waiting for you to type, and **one more focus**, its standing order;
+- **workspace folders**, for a seat whose job is in `../widget`: it asks for the folder, and you
+  grant it with `ynh trust accept` once it's installed;
 - **ynm**, added by `ynm client install ynh` in the seat's folder.
 
 `connect` then adds the seat to the desk's `delegates_to` and to the roster's `seats`:
 
 ```bash
-seat() { # seat <command> <description> <focus> <focus prompt> [extra include as JSON]
+seat() { # seat <command> <description> <focus> <focus prompt> [extra include as JSON] [workspace as JSON]
   mkdir -p "harnesses/$1/.agents/harness"
-  jq -n --arg name "$1" --arg desc "$2" --arg focus "$3" --arg prompt "$4" --argjson plugin "$WHEELHOUSE" --argjson extra "${5:-null}" '{
+  jq -n --arg name "$1" --arg desc "$2" --arg focus "$3" --arg prompt "$4" --argjson plugin "$WHEELHOUSE" --argjson extra "${5:-null}" --argjson ws "${6:-null}" '{
     "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
     name: $name, version: "0.1.0", description: $desc, default_vendor: "claude",
     includes: ([
@@ -461,8 +466,9 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
       on_session_start: [{command: "bash scripts/wake.sh --seat \($name) --format text || true"}],
       on_session_end: [{command: "bash scripts/wake.sh --seat \($name) --end || true", timeout: 30}]
     },
-    focuses: {($focus): {prompt: $prompt}}
-  }' > "harnesses/$1/.agents/harness/plugin.json"
+    launch_focus: "wake",
+    focuses: {wake: {prompt: "Begin: act on your wake block. If there is none, gather it with the wake skill."}, ($focus): {prompt: $prompt}}
+  } + (if $ws then {workspace: $ws} else {} end)' > "harnesses/$1/.agents/harness/plugin.json"
   (cd "harnesses/$1" && ynm client install ynh > /dev/null)
 }
 connect() { # connect <Name> <group> <mandate>
@@ -481,7 +487,8 @@ with them every day:
 
 ```bash
 seat gahan "Gahan, crew of the tower Wheelhouse: designs work and breaks it into beads." design \
-  "You are Gahan, the gahan seat. Design the change the human names and break it into beads in the work graph: an epic, its tasks labelled by repository, and what blocks what. The code for a repo:widget bead is in ../widget. Don't build any of it."
+  "You are Gahan, the gahan seat. Design the change the human names and break it into beads in the work graph: an epic, its tasks labelled by repository, and what blocks what. The code for a repo:widget bead is in ../widget. Don't build any of it." \
+  "" '["../../../widget"]'
 cat > harnesses/gahan/AGENTS.md << 'EOF'
 # Gahan
 
@@ -495,7 +502,8 @@ You are Gahan, the `gahan` seat: crew of the tower Wheelhouse.
 You act in the work graph as `gahan`: pass `--actor gahan` on every `bd` command that changes it.
 EOF
 seat gore "Gore, crew of the tower Wheelhouse: reviews closed work and files what needs fixing." review \
-  "You are Gore, the gore seat. Review the beads closed since your last review, and the code they changed in ../widget, and file a bead for each thing that needs fixing. Don't fix anything yourself."
+  "You are Gore, the gore seat. Review the beads closed since your last review, and the code they changed in ../widget, and file a bead for each thing that needs fixing. Don't fix anything yourself." \
+  "" '["../../../widget"]'
 cat > harnesses/gore/AGENTS.md << 'EOF'
 # Gore
 
@@ -513,9 +521,18 @@ connect Gore crew "Reviews what the workers built, and files beads for what need
 git add -A
 git commit -q -m "feat: the crew, Gahan and Gore"
 for c in gahan gore; do ynh install "./harnesses/$c" > /dev/null; done
+ynh trust show local/gahan | grep -A1 '\.\./widget'
+for c in gahan gore; do ynh trust accept "local/$c" > /dev/null; done
 ```
 
-Expected: no output. `gahan` and `gore` are commands now.
+Expected: `../../../widget` and the line under it, `resolves to: /tmp/wheelhouse-tutorial/widget` (on
+macOS it may start `/private/tmp`). `gahan` and `gore` are commands now.
+
+Each asked for `../widget`, but asking grants nothing. Until you accept a seat, ynh refuses its
+folders at every launch and says how to grant them. `ynh trust show` lists what a seat will run
+and reach, and `ynh trust accept` records that you have read it. Change a seat's folders and it
+asks again. (To grant every local harness's folders under one folder from then on, set
+`workspace_roots` in `~/.ynh/config.json` instead.)
 
 The desk finds its seats in the Wheelhouse's commits, not in your working folder, so a seat
 must be committed before the desk can start; the `add-seat` skill commits each one it adds.
@@ -606,7 +623,8 @@ second bead while it has one.
 You act in the work graph as `anderson`: pass `--actor anderson` on every `bd` command that changes it.
 EOF
 seat dredd "Dredd, standing seat of the tower Wheelhouse: watches CI and files a bead for each failure." patrol \
-  "You are Dredd, the dredd seat. Read the CI results in ../widget/ci/latest.log, and file one bead, priority 0, labelled repo:widget and source:ci, for each failure an open bead doesn't already cover. Fix nothing."
+  "You are Dredd, the dredd seat. Read the CI results in ../widget/ci/latest.log, and file one bead, priority 0, labelled repo:widget and source:ci, for each failure an open bead doesn't already cover. Fix nothing." \
+  "" '["../../../widget"]'
 cat > harnesses/dredd/AGENTS.md << 'EOF'
 # Dredd
 
@@ -640,6 +658,7 @@ connect Tharg standing "Plans and cuts releases, and never publishes without the
 git add -A
 git commit -q -m "feat: the standing roles"
 for c in anderson dredd tharg; do ynh install "./harnesses/$c" > /dev/null; done
+ynh trust accept local/dredd > /dev/null
 ynd compose harnesses/tharg | jq -c '[.artifacts.skills[].name]'
 ```
 
@@ -709,7 +728,15 @@ EOF
 ```
 
 Expected: the desk passes the request to Anderson, and reports back the three workers Anderson
-seated, installed, committed and woke, with a line from each.
+seated, installed, committed and woke, with a line from each. Each asks for `../widget`, which only you can
+grant. Accept them once you've read what they ask for:
+
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+for c in dalglish mccoist strachan; do ynh trust accept "local/$c" > /dev/null; done
+```
+
+Expected: no output.
 
 <details><summary>By hand, without a model</summary>
 
@@ -718,7 +745,8 @@ seated, installed, committed and woke, with a line from each.
 for w in Dalglish McCoist Strachan; do
   c=$(echo "$w" | tr '[:upper:]' '[:lower:]')
   seat "$c" "$w, a worker of the tower Wheelhouse: builds one ready bead at a time." next \
-    "You are $w, the $c seat. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget."
+    "You are $w, the $c seat. Take the next bead assigned to you, or else an unassigned ready one; build it, and close it with what actually happened. The code for a repo:widget bead is in ../widget." \
+    "" '["../../../widget"]'
   cat > "harnesses/$c/AGENTS.md" << EOF
 # $w
 
@@ -735,6 +763,7 @@ You act in the work graph as \`$c\`: pass \`--actor $c\` on every \`bd\` command
 EOF
   connect "$w" workers "Builds one bead at a time."
   ynh install "./harnesses/$c" > /dev/null
+  ynh trust accept "local/$c" > /dev/null
 done
 git add -A
 git commit -q -m "feat: the workers"
