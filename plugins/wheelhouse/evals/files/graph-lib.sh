@@ -191,7 +191,7 @@ MD
   "seats": [
     {"name": "Gahan", "group": "crew", "command": "gahan", "harness": "harnesses/gahan", "mandate": "Designs changes and breaks them into beads."},
     {"name": "Dalglish", "group": "workers", "command": "dalglish", "harness": "harnesses/dalglish", "mandate": "Builds one bead at a time."},
-    {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time."},
+    {"name": "McCoist", "group": "workers", "command": "mccoist", "harness": "harnesses/mccoist", "mandate": "Builds one bead at a time.", "seated-by": "anderson"},
     {"name": "Anderson", "group": "standing", "command": "anderson", "harness": "harnesses/anderson", "mandate": "Dispatches ready work to idle workers."}
   ]
 }
@@ -238,6 +238,10 @@ specialist_wheelhouse() {
       standing: {theme: "2000 AD characters", names: ["Anderson", "Dredd"]}
     },
     excluded: [], seats: $seats}' > skills/roster/assets/roster.json
+  # Every seat has had its birth: a pinned identity in its own namespace.
+  mkdir -p .eval
+  jq '[.seats[] | {memoryId: ("01JIDENTITY" + (.command | ascii_upcase)), type: "semantic", namespace: "seat/\(.command)", subject: "seat:\(.command)", tags: ["identity"], pinned: true, content: "I am \(.name). I like small, careful changes."}]' \
+    skills/roster/assets/roster.json > .eval/ynm-recall-identity.json
   git add -A && git commit -qm "chore: The seats"
 }
 

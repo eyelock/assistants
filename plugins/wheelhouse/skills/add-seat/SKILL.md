@@ -49,9 +49,10 @@ goes last), one role at a time:
 
 **Asked for a particular seat** ("Seat Gore as our reviewer", "Add two workers", "Add a worker for
 the api repository"), don't walk the team: seat what was asked, straight away, starting from the
-role's template if there is one. The human asking is the human letting you. Ask only for what you
-can't tell and the seat can't do without; take everything else from the template, the
-constitution and the roster.
+role's template if there is one. The human asking is the human letting you. Ask first only for
+what would change the charter and you can't tell; take everything else from the template, the
+constitution and the roster, and raise anything else (such as where a repository is checked out)
+in your report, after seating.
 
 ## 1. Pin down the role
 
@@ -168,8 +169,9 @@ with; a standing role or a worker hands it back to the desk.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate, `role` when it was seated from a starter-team template, and `specialities`
-   for a specialist worker.
+   path and mandate; `seated-by`, the command of the seat seating it (or `human` when you aren't in
+   a seat, or the human wrote every word); `role` when it was seated from a starter-team template;
+   and `specialities` for a specialist worker.
 4. Check the Wheelhouse with the `doctor` skill.
 5. Commit the seat (`feat: seat <Name>`), unless the human said not to. The desk reads its
    delegates from the repository's commits, so it won't start until every seat in
