@@ -14,9 +14,10 @@
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root.
 #
-# Its session-end hook runs it with --end, which only pushes what the session
-# wrote: memory (ynm sync --no-pull) and the work graph (bd dolt push), each
-# skipped without a remote and given up after 12 seconds. It prints
+# Its session-end hook runs it with --end, which only syncs what the session
+# wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
+# remote and given up after 12 seconds. A full sync, not a push alone: when
+# another seat has pushed since, a push alone is rejected until it merges. It prints
 # {seat, push {memory, work: pushed|skipped|failed}} and nothing else.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
@@ -34,7 +35,7 @@ Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text] [-
 
 Syncs memory and work, then prints what a seat should know as it wakes.
 --seat defaults to $BEADS_ACTOR; --dir to the current directory; --format to
-json. --no-sync skips the sync. --end, for the session-end hook, only pushes
+json. --no-sync skips the sync. --end, for the session-end hook, only syncs
 memory and work, and prints the result as JSON.
 EOF
 }
@@ -73,16 +74,15 @@ limited() {
 hasgitremote() { git remote 2>/dev/null | grep -q .; }
 hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; }
 
-# At the end of a session, push what it wrote and stop. The session-end hook
-# has a short budget, so this pulls nothing.
+# At the end of a session, sync what it wrote and stop.
 if [ "$end" = 1 ]; then
   mempush=skipped
   workpush=skipped
   if hasgitremote; then
-    if limited 12 ynm sync --no-pull --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
+    if limited 12 ynm sync --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
   fi
   if hasdoltremote; then
-    if limited 12 bd dolt push --no-adopt >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
+    if limited 12 bd sync >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
   fi
   jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
   exit 0
