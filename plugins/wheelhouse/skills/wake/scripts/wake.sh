@@ -201,7 +201,10 @@ jq -r '
           (if .notes == null then "Their notes couldn'"'"'t be read.\n" else empty end),
           (if .beads != null and .notes != null and (.beads | length) == 0 and (.notes | length) == 0 then "Nothing waiting.\n"
            else
-             (if (.beads // [] | length) > 0 then (.beads | map(bead) | join("\n")) + "\n" else empty end),
+             ((.beads // []) | map(select(.kind != "report"))) as $todo
+             | ((.beads // []) | map(select(.kind == "report"))) as $reports
+             | (if ($todo | length) > 0 then ($todo | map(bead) | join("\n")) + "\n" else empty end),
+             (if ($reports | length) > 0 then "Reports:\n" + ($reports | map(bead) | join("\n")) + "\n" else empty end),
              (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
            end)),
         "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"

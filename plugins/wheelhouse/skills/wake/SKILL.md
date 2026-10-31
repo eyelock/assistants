@@ -53,7 +53,8 @@ read, never that nothing is waiting.
 0. **For the humans** (the desk only): the desk's block opens with the humans' inbox, a
    section for the human at the desk (`<name> (you)`, matched by their git email) and one for
    the default human (`<name> (anyone)`): the ready beads assigned to them, each with who asked
-   and how many beads it unblocks, then the notes left for them. Your reply opens with it, before
+   and how many beads it unblocks, then any reports to read under `Reports:`, then the notes left
+   for them. Your reply opens with it, before
    anything else, even your own introduction, naming each pull request or page by its short form
    as a Markdown link. Your reply is how the human sees a note, so putting it there is relaying
    it, and the note's job is done: retire each note you relay in the same turn, before you

@@ -36,7 +36,7 @@ if [ "$1" = create ]; then
     if [ -n "$value" ]; then value=; continue; fi
     case "$a" in
       --json) ;;
-      --title | --actor | --assignee | --labels | --description | --external-ref | --deps) value=1 ;;
+      --title | --actor | --assignee | --labels | --description | --priority | --external-ref | --deps) value=1 ;;
       -*) echo "Error: unknown flag: $a" >&2; exit 1 ;;
     esac
   done
@@ -250,6 +250,53 @@ for (const repo of ["widget,gadget", "../widget", "-widget", "wid get"]) {
     inbox([...merge, "--repo", repo], (out, { bdArgs }) => {
       assert.equal(out.status, 1);
       assert.match(out.stderr, /is not a repository name/);
+      assert.equal(bdArgs, null);
+    });
+  });
+}
+
+// ef8.15: a report is something for a human to read, such as a weekly roadmap report. It needs no
+// --url or repository, is labelled inbox:report, and gets priority 3 unless --priority says
+// otherwise.
+const report = ["assign", "--title", "Weekly roadmap report: review of the milestones", "--from", "dalglish", "--kind", "report"];
+const priorityOf = (bdArgs) => bdArgs[bdArgs.indexOf("--priority") + 1];
+
+test("assign: a report needs no --url or repository, and gets priority 3", () => {
+  inbox(report, (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    const json = JSON.parse(out.stdout);
+    assert.equal(json.kind, "report");
+    assert.equal(json.priority, 3);
+    assert.deepEqual(labels(bdArgs), ["inbox", "inbox:report"]);
+    assert.equal(priorityOf(bdArgs), "3");
+  });
+});
+
+test("assign: --priority overrides a report's default", () => {
+  inbox([...report, "--priority", "P1"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).priority, 1);
+    assert.equal(priorityOf(bdArgs), "1");
+  });
+});
+
+test("assign: --priority works for any kind, and without it bd's default stands", () => {
+  inbox([...merge, "--repo", "widget", "--priority", "0"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(priorityOf(bdArgs), "0");
+  });
+  inbox([...merge, "--repo", "widget"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).priority, null);
+    assert.ok(!bdArgs.includes("--priority"));
+  });
+});
+
+for (const p of ["5", "-1", "high", "1,2"]) {
+  test(`assign: refuses --priority ${JSON.stringify(p)}`, () => {
+    inbox([...report, "--priority", p], (out, { bdArgs }) => {
+      assert.equal(out.status, 1);
+      assert.match(out.stderr, /--priority must be 0 to 4/);
       assert.equal(bdArgs, null);
     });
   });

@@ -40,8 +40,11 @@ When work needs a human (a merge, a decision, a credential), a seat doesn't wait
 itself: it assigns a bead to that human, or to the default human, with `scripts/inbox.sh assign`,
 blocking the work it holds up. The bead carries the `repo:` label of the repository it touches,
 from `--repo` or else from the bead it blocks; a merge or review needs one, and its pull request's
-URL. Things that need no action go to the human as a note, kept in ynm. The desk's wake opens with
-this inbox: what waits for the human at the desk, and what waits for the default human.
+URL. Something for the human to read, such as a weekly report, is a report (`--kind report`): a
+bead labelled `inbox:report`, priority 3 by default, listed after the merges, reviews and
+decisions until the human closes it. Things that need no action go to the human as a note, kept in
+ynm. The desk's wake opens with this inbox: what waits for the human at the desk, and what waits
+for the default human.
 
 It builds on [Personas](../personas/README.md), since every seat is a harness, and on the hooks and
 includes of [Harnesses in depth](../harnesses/README.md): each seat wakes from a session-start hook,
