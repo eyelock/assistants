@@ -16,6 +16,7 @@ to decide whether to load it. Packages and plugins are in [Plugins](plugins.md).
 | `dev-backend` | Backend approach: API design, data flow, error handling and service architecture. |
 | `dev-ui` | UI approach: component architecture, state management, accessibility and user experience. |
 | `dev-debug` | Debugging a bug that resists fixing: visibility first, a safe local git workflow, pairing with the user. |
+| `docs-sync` | Check that the docs (user docs, reference, tutorials, help text, skills, `AGENTS.md`, comments and the PR description) still match the code after a change, and report what is missing or stale. |
 | `gh-cli` | GitHub operations via the `gh` CLI, instead of GitHub MCP tools, for PRs, issues, releases and CI. |
 | `skill-creator` | Author agent skills that conform to the agentskills.io spec. |
 
