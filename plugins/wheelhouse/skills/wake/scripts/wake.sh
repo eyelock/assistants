@@ -28,7 +28,8 @@
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
 # urgent first), sync {memory, work: synced|skipped|failed}, inbox (the desk's
-# only: inbox.sh show's JSON, or {error}; null for other seats)}, or a Markdown
+# only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
+# null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
@@ -145,6 +146,8 @@ if [ "$group" = desk ]; then
   else
     # No temp file for its errors: a sandboxed seat may not write outside the
     # repository. On failure, run it again for the first line of its stderr.
+    # When bd or ynm fails, show exits 3 but still prints JSON: what it could
+    # read, with what failed in errors, which the block below names.
     shown=$(bash "$inboxsh" show --dir . 2>/dev/null)
     if [ -n "$shown" ] && jq -e . >/dev/null 2>&1 <<<"$shown"; then
       inbox=$(jq -c . <<<"$shown")
@@ -187,14 +190,19 @@ jq -r '
        + " (\(.id), asked by \(.askedBy // "unknown"), unblocks \(.unblocks))";
      def note: "- \(.content) (note \(.memoryId))";
      "## For the humans\n",
-     (if .inbox.empty then "Nothing waiting for the humans.\n"
+     (if ((.inbox.errors // []) | length) > 0
+      then "**The inbox could not be read in full:** \(.inbox.errors | join("; ")). Don'"'"'t say nothing is waiting: say what couldn'"'"'t be read when you reply, and what could; the doctor skill can help.\n"
+      else empty end),
+     (if .inbox.empty == true then "Nothing waiting for the humans.\n"
       else
         (.inbox.humans[] |
           "### \(.name) (\(.role))\n",
-          (if (.beads | length) == 0 and (.notes | length) == 0 then "Nothing waiting.\n"
+          (if .beads == null then "Their beads couldn'"'"'t be read.\n" else empty end),
+          (if .notes == null then "Their notes couldn'"'"'t be read.\n" else empty end),
+          (if .beads != null and .notes != null and (.beads | length) == 0 and (.notes | length) == 0 then "Nothing waiting.\n"
            else
-             (if (.beads | length) > 0 then (.beads | map(bead) | join("\n")) + "\n" else empty end),
-             (if (.notes | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
+             (if (.beads // [] | length) > 0 then (.beads | map(bead) | join("\n")) + "\n" else empty end),
+             (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
            end)),
         "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
       end),

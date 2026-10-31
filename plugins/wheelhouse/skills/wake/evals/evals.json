@@ -100,6 +100,22 @@
       ]
     },
     {
+      "id": 8,
+      "name": "desk-inbox-broken",
+      "prompt": "You are hq, the desk, starting a new session.",
+      "setup": "../../evals/files/inbox-wake-broken.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "The humans' inbox can't be read: bd's database is locked and ynm can't reach its store, so the desk's wake says \"The inbox could not be read in full\" with both failures, and never \"Nothing waiting for the humans.\" The reply tells the human the inbox couldn't be read, and why, rather than that nothing is waiting, and suggests checking the Wheelhouse (the doctor skill). It invents no inbox item.",
+      "assertions": [
+        "The reply says the humans' inbox could not be read (in full), not that nothing is waiting for the humans",
+        "The reply names why: the work graph (bd) and memory (ynm) failed, such as a locked database or an unreachable store",
+        "The reply invents no inbox item: it names no merge, decision or note for the humans",
+        "In the evidence, no bead is assigned to rook or pat"
+      ]
+    },
+    {
       "id": 7,
       "name": "worker-no-inbox",
       "prompt": "You are dalglish, starting a new session.",

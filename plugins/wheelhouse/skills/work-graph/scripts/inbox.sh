@@ -18,7 +18,8 @@
 # Run it from the Wheelhouse repository's root, or pass --dir.
 # Output: JSON on stdout; diagnostics on stderr.
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse, 3 a tool it
-# needs (jq, bd, ynm, git) is missing or failed.
+# needs (jq, bd, ynm, git) is missing or failed. show exits 3 when bd or ynm
+# failed, and still prints what it could read, with what failed in errors.
 set -uo pipefail
 
 usage() {
@@ -43,8 +44,11 @@ register  Adds a person to the roster's humans: name, command (the name in
           user.email unless given). Leaves the roster uncommitted.
 show      Prints {you, unknown, humans: [{name, command, role: you|anyone,
           beads: [{id, title, askedBy, ref: {short, url}, unblocks}], notes:
-          [{memoryId, content}]}], empty, relay (what to do with it)}. The human at the desk is matched by --email,
+          [{memoryId, content}]}], errors, empty, relay (what to do with it)}. The human at the desk is matched by --email,
           else $WHEELHOUSE_HUMAN_EMAIL, else git config user.email.
+          If bd or ynm fails, that human's beads or notes are null, errors
+          says what failed, empty is null (never true) and show exits 3,
+          still printing what the other tool returned.
 EOF
 }
 
@@ -197,29 +201,51 @@ case "$cmd" in
         elif $m.kind == "actions/runs" then "\($m.repo) run \($m.n)"
         elif $m.kind == "commit" then "\($m.repo) \($m.n[0:7])"
         else "\($m.repo) #\($m.n)" end end;'
+    # A read that fails is never an empty list: its beads or notes are null,
+    # and what failed goes in errors, so nobody is told nothing is waiting
+    # when nobody could look. What the other tool returned is still shown.
+    # Run each read without a temp file (a sandboxed seat may not write one);
+    # on failure, run it again for the first line of what it said.
+    errors='[]'
+    failed() { errors=$(jq -c --arg e "$1" 'if index($e) then . else . + [$e] end' <<<"$errors"); }
     inbox_of() {
-      local c="$1" role="$2" beads notes
-      beads=$(bd ready --assignee "$c" --json 2>/dev/null | jq -c "$short"'
+      local c="$1" role="$2" out beads notes msg
+      if out=$(bd ready --assignee "$c" --json 2>/dev/null) && beads=$(jq -c "$short"'
         (.data? // .) | map(select(.issue_type != "epic")) | sort_by(.priority)
         | map({id, title, askedBy: (.created_by // null), priority,
                ref: (if (.external_ref // "") == "" then null else {short: (.external_ref | short), url: .external_ref} end),
-               unblocks: (.dependent_count // 0)})' 2>/dev/null) || beads='[]'
-      [ -n "$beads" ] || beads='[]'
-      notes=$(ynm recall --namespace "human/$c" --subject "human:$c" --tags inbox --limit 20 --json 2>/dev/null |
-        jq -c --arg ns "human/$c" 'map(select((.namespace // $ns) == $ns and ((.tags // ["inbox"]) | index("inbox")))) | map({memoryId, content})' 2>/dev/null) || notes='[]'
-      [ -n "$notes" ] || notes='[]'
-      jq -c --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" \
-        '[.humans[] | select(.command == $c)][0] | {name, command, role: $role, beads: $beads, notes: $notes}' "$roster"
+               unblocks: (.dependent_count // 0)})' <<<"$out" 2>/dev/null) && [ -n "$beads" ]; then :; else
+        msg=$(bd ready --assignee "$c" --json 2>&1 | head -1)
+        failed "bd ready failed: ${msg:-no readable output}"
+        beads=null
+      fi
+      if out=$(ynm recall --namespace "human/$c" --subject "human:$c" --tags inbox --limit 20 --json 2>/dev/null) &&
+        notes=$(jq -c --arg ns "human/$c" 'map(select((.namespace // $ns) == $ns and ((.tags // ["inbox"]) | index("inbox")))) | map({memoryId, content})' <<<"$out" 2>/dev/null) &&
+        [ -n "$notes" ]; then :; else
+        msg=$(ynm recall --namespace "human/$c" --subject "human:$c" --tags inbox --limit 20 --json 2>&1 | head -1)
+        failed "ynm recall failed: ${msg:-no readable output}"
+        notes=null
+      fi
+      humans=$(jq -c --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" --argjson hs "$humans" \
+        '$hs + [[.humans[] | select(.command == $c)][0] | {name, command, role: $role, beads: $beads, notes: $notes}]' "$roster")
     }
     humans='[]'
-    if [ -n "$you" ]; then humans=$(jq -c --argjson h "$(inbox_of "$you" you)" '. + [$h]' <<<"$humans"); fi
-    humans=$(jq -c --argjson h "$(inbox_of "$dflt" anyone)" '. + [$h]' <<<"$humans")
+    [ -n "$you" ] && inbox_of "$you" you
+    inbox_of "$dflt" anyone
     yours='null'
     [ -n "$you" ] && yours=$(jq -c --arg c "$you" '[.humans[] | select(.command == $c)][0] | {name, command}' "$roster")
     # One line, so a reader that keeps only the head of the output keeps it all.
-    jq -nc --argjson you "$yours" --argjson humans "$humans" --arg email "$email" \
+    # empty is true only when everything was read and nothing waits; with
+    # errors it is null, never "nothing waiting".
+    jq -nc --argjson you "$yours" --argjson humans "$humans" --arg email "$email" --argjson errors "$errors" \
       '{you: $you, unknown: ($you == null), email: (if $email == "" then null else $email end), humans: $humans,
-        empty: ($humans | all((.beads | length) == 0 and (.notes | length) == 0)),
+        errors: $errors,
+        empty: (if ($errors | length) > 0 then null
+                else ($humans | all((.beads | length) == 0 and (.notes | length) == 0)) end),
         relay: "Relay this to the human first. Retire each note you relay, in the same turn: ynm forget --memory-id <its memoryId> --reason relayed. Leave the beads to the human."}'
+    if [ "$errors" != '[]' ]; then
+      jq -r '.[]' <<<"$errors" >&2
+      exit 3
+    fi
     ;;
 esac

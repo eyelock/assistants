@@ -121,7 +121,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    once the human closes theirs.
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
-it. When someone at the desk names themselves ("it's me, <name>"), the desk registers them with
+it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other
+returned: a broken tool never reads as an empty inbox. When someone at the desk names themselves ("it's me, <name>"), the desk registers them with
 `bash scripts/inbox.sh register --name <Name>`, and from then on they can be assigned by name.
 
 ## Closing

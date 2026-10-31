@@ -59,8 +59,9 @@ your charter, and your work with `bd list --status in_progress --assignee <comma
    wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. If the block says the human
    hasn't said who they are, show only the default human's inbox as theirs to see, keep any other
    human's beads out of it, and pass on its invitation; when they answer "it's me, <name>", register
-   them with `bash scripts/inbox.sh register --name <Name>`. If the inbox couldn't be read, say
-   so and check the Wheelhouse with the `doctor` skill.
+   them with `bash scripts/inbox.sh register --name <Name>`. If the inbox couldn't be read, or
+   couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,
+   relay what could be read, and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    **and pinned** (`ynm pin <memoryId>`), so it is in front of you every time you wake.
