@@ -63,6 +63,9 @@ reaching for the same bead. Other seats skip this section.
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
 7. Never reassign a bead that is in progress, and never assign to a worker who already has work.
 8. Report who got what, who is still idle, and what is left unassigned.
+9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
+   parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
+   `scripts/model.sh --seat <worker>`.
 
 ## Breaking work down
 

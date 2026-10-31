@@ -30,6 +30,7 @@ changes nothing. `ok` is false when any check has level `error`.
 | seats push at end (once the roster has seats) | each seat's session-end hook (`wake.sh --end`) pushes the memory and work it wrote; without it, they wait on this machine for the next `git push`, write or wake |
 | seats wake by themselves (once the roster has seats) | each seat's `launch_focus` (ynh 0.15.0) names a focus it has, so started by its name it acts on its wake block instead of waiting bare |
 | workspace folders (once the roster has seats) | every folder a seat's `workspace` asks for exists; ynh refuses one that doesn't. Granting them stays the human's |
+| seat models (once the roster has seats) | each seat has a model: its own `model` tier, or its group's default in `models.groups`, mapping to a model for the claude vendor. A seat with none starts on whatever the launcher defaults to, which may be the dearest |
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
 | seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run |
 | default human (once the roster exists) | exactly one human in the roster's `humans` has `"default": true`: the name for work that needs a human but no particular one. None is a warning (nothing to assign to, and no inbox at the desk); two or more is an error (the inbox script refuses to guess) |

@@ -1,6 +1,7 @@
 ---
 order: 10
 group: crew
+model: deep
 focus: design
 seated-by: human
 ---
