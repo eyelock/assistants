@@ -206,6 +206,7 @@
       "assertions": [
         "In the evidence, there is a new bead about merging the changelog pull request, assigned to rook (the default human), with created_by dalglish",
         "That bead's external_ref is https://github.com/example/widget/pull/12",
+        "That bead carries a repo: label (such as repo:ynh, taken from the changelog bead it blocks, or repo:widget)",
         "In the evidence, \"Write the ynh 0.13 changelog\" waits on that new bead",
         "No bead is assigned to anyone who is neither a seat nor a human in the roster",
         "The stubbed calls include no gh pr merge",
@@ -303,6 +304,7 @@
       "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so the work it holds up (dalglish's changelog bead, or the tag that waits on it) waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
       "assertions": [
         "In the evidence, a bead about merging the pull request is assigned to rook, with created_by dalglish and external_ref https://github.com/example/widget/pull/12",
+        "That merge bead carries a repo: label",
         "In the evidence, the bead the merge holds up waits on the merge bead: \"Write the ynh 0.13 changelog\" (dalglish's own bead) or \"Tag and push ynh v0.13.0\" (which the prompt says waits on it)",
         "The stubbed calls include no gh pr merge",
         "No bead is assigned to a name that is neither a seat nor a human in the roster",

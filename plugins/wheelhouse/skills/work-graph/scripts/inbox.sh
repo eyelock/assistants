@@ -7,7 +7,8 @@
 #
 #   assign    a bead for a human to do (a merge, a decision, a credential),
 #             assigned to them, created as the seat that asked, optionally
-#             blocking the bead it holds up. A merge or review needs --url.
+#             blocking the bead it holds up, labelled with the repository it
+#             touches. A merge or review needs --url and a repository.
 #   note      an FYI for a human: a memory in ynm, namespace human/<command>,
 #             tagged inbox, shown at the desk's wake until it is relayed.
 #   register  add a person who names themselves at the desk to `humans`, with
@@ -25,7 +26,8 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
-                       [--url <url>] [--blocks <bead>] [--description <text>]
+                       [--url <url>] [--blocks <bead>] [--repo <repo>]
+                       [--description <text>]
                        [--kind merge|review|decision|credential|other]
        inbox.sh note --content <text> --from <seat> [--to default|<command>]
        inbox.sh register --name <Name> [--command <command>] [--pronouns <p>] [--email <email>]
@@ -38,7 +40,11 @@ assign    Creates a bead assigned to a human (--to, default: the default human),
           as the bead's external_ref; a merge or review is refused without
           one. --kind says which it is; without --kind, a title with the word
           "merge" or "review" in it (any case, anywhere) is taken as one.
-          --blocks makes the given bead wait on this one.
+          --blocks makes the given bead wait on this one. --repo labels the
+          bead repo:<repo>, the one repository it touches; without --repo it
+          takes the repo: label of the --blocks bead. A merge or review must
+          end up with one; other kinds go unlabelled when the work touches no
+          repository.
 note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
 register  Adds a person to the roster's humans: name, command (the name in
           lowercase; given or derived, a command is lowercase ASCII,
@@ -66,17 +72,17 @@ case "$cmd" in
 esac
 
 dir="."
-title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; description=""; kind=""
+title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""
 content=""; name=""; command=""; pronouns="they/them"; email=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
-    --dir | --title | --from | --to | --url | --blocks | --description | --kind | --content | --name | --command | --pronouns | --email)
+    --dir | --title | --from | --to | --url | --blocks | --repo | --description | --kind | --content | --name | --command | --pronouns | --email)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       v="$2"
       case "$1" in
         --dir) dir="$v" ;; --title) title="$v" ;; --from) from="$v" ;; --to) to="$v" ;;
-        --url) url="$v" ;; --blocks) blocks="$v" ;; --description) description="$v" ;;
+        --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --description) description="$v" ;;
         --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;;
         --command) command="$v" ;; --pronouns) pronouns="$v" ;; --email) email="$v" ;;
       esac
@@ -133,19 +139,33 @@ case "$cmd" in
     if [ -z "$url" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --url: the pull request it is about, so the human can open it"
     fi
+    # The repository: --repo (with or without its repo: prefix), else the
+    # repo: label of the bead this one blocks. One name, never a list: bd
+    # reads commas in --labels as more labels.
+    repo="${repo#repo:}"
+    if [ -n "$repo" ] && ! [[ "$repo" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+      die 1 "$repo is not a repository name: one name, of letters, digits, '.', '_' and '-'"
+    fi
     if [ -n "$blocks" ]; then
-      bd show "$blocks" --json >/dev/null 2>&1 || die 1 "no bead $blocks to block"
+      out=$(bd show "$blocks" --json 2>/dev/null) || die 1 "no bead $blocks to block"
+      [ -n "$repo" ] || repo=$(jq -r '(.data? // .) | if type == "array" then .[0] else . end
+        | [(.labels // [])[] | select(startswith("repo:"))][0] // "" | ltrimstr("repo:")' <<<"$out" 2>/dev/null)
+    fi
+    if [ -z "$repo" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
+      die 1 "a $kind needs --repo: the repository its pull request is in (or --blocks a bead with a repo: label)"
     fi
     # --title, never positional, so a title starting with "-" is not a flag.
     args=(create --title "$title" --actor "$from" --assignee "$human" --labels inbox)
     [ -n "$kind" ] && args+=(--labels "inbox:$kind")
+    [ -n "$repo" ] && args+=(--labels "repo:$repo")
     [ -n "$description" ] && args+=(--description "$description")
     [ -n "$url" ] && args+=(--external-ref "$url")
     [ -n "$blocks" ] && args+=(--deps "blocks:$blocks")
     out=$(bd "${args[@]}" --json 2>&1) || die 3 "bd create failed: $out"
     id=$(jq -r '(.data? // .) | if type == "array" then .[0] else . end | .id' <<<"$out")
-    jq -n --arg id "$id" --arg to "$human" --arg from "$from" --arg url "$url" --arg blocks "$blocks" --arg kind "$kind" \
+    jq -n --arg id "$id" --arg to "$human" --arg from "$from" --arg url "$url" --arg blocks "$blocks" --arg kind "$kind" --arg repo "$repo" \
       '{id: $id, to: $to, askedBy: $from, kind: (if $kind == "" then null else $kind end),
+        repo: (if $repo == "" then null else $repo end),
         url: (if $url == "" then null else $url end), blocks: (if $blocks == "" then null else $blocks end)}'
     ;;
 

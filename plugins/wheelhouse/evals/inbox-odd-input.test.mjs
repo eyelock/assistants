@@ -2,7 +2,8 @@
 // inbox.sh against a small Wheelhouse, with bd replaced by a stub that keeps the arguments it was
 // given: a title starting with "-" is created, not read as a flag; a merge or review named anywhere
 // in the title needs --url; register refuses a command that isn't lowercase ASCII, given or
-// derived; and an email registered in one case is the same email in another.
+// derived; an email registered in one case is the same email in another; and an inbox bead carries
+// the repo: label of the one repository it touches, which a merge or review must have.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -23,7 +24,8 @@ const roster = {
 };
 
 // bd: `create` keeps its arguments, one per line, in bd-args and refuses a flag it doesn't know,
-// as the real bd does; anything else answers with an empty list.
+// as the real bd does; `show` knows wh-7 (labelled repo:widget) and wh-8 (no repo: label); anything
+// else answers with an empty list.
 const bdStub = `#!/bin/sh
 if [ "$1" = create ]; then
   shift
@@ -40,6 +42,13 @@ if [ "$1" = create ]; then
   done
   echo '{"id":"wh-1"}'
   exit 0
+fi
+if [ "$1" = show ]; then
+  case "$2" in
+    wh-7) echo '[{"id":"wh-7","labels":["release","repo:widget"]}]'; exit 0 ;;
+    wh-8) echo '[{"id":"wh-8","labels":["release"]}]'; exit 0 ;;
+    *) echo "Error: no issue $2" >&2; exit 1 ;;
+  esac
 fi
 echo '[]'
 `;
@@ -100,7 +109,17 @@ for (const title of ["Merge: widget #13", "Please merge widget #13", "widget #13
 
 test("assign: a merge named in the title, with --url, is labelled as a merge", () => {
   inbox(
-    ["assign", "--title", "Please merge widget #13", "--from", "dalglish", "--url", "https://github.com/example/widget/pull/13"],
+    [
+      "assign",
+      "--title",
+      "Please merge widget #13",
+      "--from",
+      "dalglish",
+      "--url",
+      "https://github.com/example/widget/pull/13",
+      "--repo",
+      "widget",
+    ],
     (out, { bdArgs }) => {
       assert.equal(out.status, 0, out.stderr);
       assert.equal(JSON.parse(out.stdout).kind, "merge");
@@ -162,3 +181,76 @@ test("register: the same person, with their email in another case, is already re
     assert.deepEqual(after, roster);
   });
 });
+
+// ef8.12: every bead names the one repository it touches in a repo: label, inbox beads too.
+const prUrl = "https://github.com/example/widget/pull/13";
+const merge = ["assign", "--title", "Merge widget #13", "--from", "dalglish", "--url", prUrl];
+const labels = (bdArgs) => bdArgs.filter((a, i) => bdArgs[i - 1] === "--labels");
+
+test("assign: --repo labels the bead repo:<repo>", () => {
+  inbox([...merge, "--repo", "widget"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).repo, "widget");
+    assert.deepEqual(labels(bdArgs), ["inbox", "inbox:merge", "repo:widget"]);
+  });
+});
+
+test("assign: --repo given as repo:<repo> is the same repository", () => {
+  inbox([...merge, "--repo", "repo:widget"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.ok(labels(bdArgs).includes("repo:widget"));
+  });
+});
+
+test("assign: without --repo, the bead takes the repo: label of the bead it blocks", () => {
+  inbox([...merge, "--blocks", "wh-7"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).repo, "widget");
+    assert.ok(labels(bdArgs).includes("repo:widget"));
+  });
+});
+
+test("assign: --repo wins over the blocked bead's label", () => {
+  inbox([...merge, "--blocks", "wh-7", "--repo", "gadget"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.deepEqual(labels(bdArgs), ["inbox", "inbox:merge", "repo:gadget"]);
+  });
+});
+
+for (const [why, extra] of [
+  ["no --repo and nothing blocked", []],
+  ["no --repo and a blocked bead with no repo: label", ["--blocks", "wh-8"]],
+]) {
+  test(`assign: a merge is refused with ${why}`, () => {
+    inbox([...merge, ...extra], (out, { bdArgs }) => {
+      assert.equal(out.status, 1);
+      assert.match(out.stderr, /a merge needs --repo/);
+      assert.equal(bdArgs, null, "nothing was created");
+    });
+  });
+}
+
+test("assign: a review needs a repository too", () => {
+  inbox(["assign", "--title", "Look at widget #13", "--kind", "review", "--from", "dalglish", "--url", prUrl], (out) => {
+    assert.equal(out.status, 1);
+    assert.match(out.stderr, /a review needs --repo/);
+  });
+});
+
+test("assign: a decision that touches no repository goes unlabelled", () => {
+  inbox(["assign", "--title", "Pick the release date", "--kind", "decision", "--from", "dalglish"], (out, { bdArgs }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).repo, null);
+    assert.ok(!labels(bdArgs).some((l) => l.startsWith("repo:")));
+  });
+});
+
+for (const repo of ["widget,gadget", "../widget", "-widget", "wid get"]) {
+  test(`assign: refuses --repo ${JSON.stringify(repo)}`, () => {
+    inbox([...merge, "--repo", repo], (out, { bdArgs }) => {
+      assert.equal(out.status, 1);
+      assert.match(out.stderr, /is not a repository name/);
+      assert.equal(bdArgs, null);
+    });
+  });
+}

@@ -69,7 +69,8 @@ reaching for the same bead. Other seats skip this section.
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
 2. Create each task under it: `bd create "<task>" --parent <epic> -l repo:<repo> -d "<what done looks like>" --json`.
    Every task names the one repository it touches in a `repo:` label, such as `repo:api` or
-   `repo:docs`. Split a task that touches two.
+   `repo:docs`. Split a task that touches two. The one exception is a bead for a human (see
+   "Needing a human") whose work touches no repository, such as a decision.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
    where the order matters; tasks that can run side by side stay unlinked.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.
@@ -99,13 +100,17 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    ```bash
    bash scripts/inbox.sh assign --from <your command> --to default \
      --title "Merge <repository> #<n>" --url <the pull request's URL> --blocks <your bead> \
+     --repo <repository> \
      --description "<who asked, why, and what done means: merged, so <your bead> can go on>"
    ```
 
    It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
-   or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. A merge
-   gets its own small bead, even when your own bead is about the same change. When you report it,
-   name the pull request by its short form as a Markdown link, such as
+   or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. Like
+   every task, it carries the `repo:` label of the one repository it touches: `--repo`, or, left
+   out, the `repo:` label of the bead it blocks. A merge or review is refused without one; a
+   decision or credential that touches no repository goes without. A merge gets its own small
+   bead, even when your own bead is about the same change. When you report it, name the pull
+   request by its short form as a Markdown link, such as
    `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`.
 3. **Tell them things** that need no action with a note instead of a bead: it waits in their
    inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
