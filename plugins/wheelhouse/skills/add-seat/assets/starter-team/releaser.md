@@ -1,6 +1,7 @@
 ---
 order: 50
 group: standing
+model: fast
 focus: plan-release
 seated-by: desk
 ---

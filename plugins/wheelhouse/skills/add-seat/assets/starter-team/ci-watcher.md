@@ -1,6 +1,7 @@
 ---
 order: 40
 group: standing
+model: fast
 focus: patrol
 seated-by: desk
 ---
