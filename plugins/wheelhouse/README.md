@@ -25,6 +25,7 @@ from parts that work on any vendor:
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
 | `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
+| `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, a synopsis beside every bead id, the outcome first |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, and no bead assigned to anyone outside the roster |
 
 ## Setting up

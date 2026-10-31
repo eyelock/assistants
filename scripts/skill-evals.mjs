@@ -33,6 +33,10 @@
 //               log their calls to $EVAL_STUB_LOG.
 //   "evidence": a shell command run after the agent; its output, with the
 //               stub log, is saved and shown to the judge.
+//   "tool_calls": tools whose calls the judge should see, with their input,
+//               such as ["AskUserQuestion"] for a case about how the agent
+//               asks: the calls go to the judge with the evidence. Grant
+//               the tool in "tools" too.
 //   "max_turns": this case's turn cap, for a long workflow (default: the
 //               --max-turns option).
 // The sandbox also points git at an empty global config and gh at a host that
@@ -244,6 +248,19 @@ function skillCalls(events) {
     .filter(Boolean);
 }
 
+// The calls to the tools a case names in "tool_calls", with their input, so
+// the judge can see how the agent used them (say, the questions it asked
+// through a question tool, which never reach the final answer).
+function toolCallsShown(c, events) {
+  if (!c.tool_calls?.length) return "";
+  const calls = events
+    .filter((e) => e.type === "assistant")
+    .flatMap((e) => e.message?.content ?? [])
+    .filter((b) => b.type === "tool_use" && c.tool_calls.includes(b.name))
+    .map((b) => `${b.name} ${JSON.stringify(b.input)}`);
+  return `Calls to ${c.tool_calls.join(", ")}:\n${calls.join("\n") || "(none)"}`;
+}
+
 // Every run: no Claude Code auto memory, and no reading the copies of skills
 // installed on this machine (a ynh cache, Claude Code's plugins), so the
 // baseline arm can't find the skill under test and follow it anyway. The
@@ -394,10 +411,12 @@ async function runCase(c, arm, runNo, ctx) {
     const started = Date.now();
     const res = await run("claude", args, work, sandbox.env);
     writeFileSync(join(outDir, "transcript.jsonl"), res.stdout);
-    const evidence = await collectEvidence(c, work, sandbox);
+    const events = parseEvents(res.stdout);
+    const evidence = [await collectEvidence(c, work, sandbox), toolCallsShown(c, events)]
+      .filter(Boolean)
+      .join("\n\n");
     if (evidence) writeFileSync(join(outDir, "evidence.txt"), evidence);
 
-    const events = parseEvents(res.stdout);
     const result = events.findLast((e) => e.type === "result");
     const skillsUsed = skillCalls(events);
 

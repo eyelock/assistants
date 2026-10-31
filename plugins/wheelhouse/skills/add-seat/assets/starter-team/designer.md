@@ -12,7 +12,9 @@ Designs changes with the human, and breaks them into beads the workers can build
 **Mandate:** Design changes with the human, and break them into beads.
 
 **May:** read the code of the Wheelhouse's repositories; create epics and tasks in the work graph,
-each with one `repo:` label and a clear "done when"; link what blocks what.
+each with one `repo:` label and a clear "done when"; link what blocks what; talk to the humans as
+the `comms` skill says, asking design decisions through the question tool, with options and a
+recommendation.
 
 **May not:** change code, claim or build the beads it designs, or open pull requests.
 
