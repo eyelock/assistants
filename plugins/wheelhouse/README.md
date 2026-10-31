@@ -11,7 +11,8 @@ from parts that work on any vendor:
 | The desk: the seat you talk to | the Wheelhouse repository's own harness, delegating to the seats |
 | Work: tasks, dependencies, claims, an honest record | [Beads](https://github.com/steveyegge/beads), one graph per Wheelhouse |
 | Memory: facts, handoff notes, what happened | [ynm](https://github.com/eyelock/ynm) |
-| Who's who | a `roster` skill in the Wheelhouse repository, with its naming pools |
+| Who's who | a `roster` skill in the Wheelhouse repository: its naming pools, the seats, and the humans who work with it, one of them the default human |
+| The humans' inbox | beads assigned to a human and notes left for them in ynm, through `scripts/inbox.sh`, shown at the desk's wake |
 
 ## Skills
 
@@ -19,12 +20,12 @@ from parts that work on any vendor:
 |---|---|
 | `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
 | `add-seat` | add a named seat: its harness, charter, standing orders and roster entry |
-| `work-graph` | find, claim, break down and close work in Beads, as a named seat |
+| `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches, and leave them notes |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
-| `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work |
-| `doctor` | check ynm and Beads are set up right for a Wheelhouse |
+| `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
+| `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, and no bead assigned to anyone outside the roster |
 
 ## Setting up
 

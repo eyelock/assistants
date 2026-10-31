@@ -31,6 +31,18 @@ The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and r
 | standing roles | one job each, such as dispatching, watching CI or releasing | the desk |
 | workers | each a seat of its own, building one task at a time | the dispatcher |
 
+Beside the seats are the **humans**: the people who work with the Wheelhouse, listed in the
+roster's `humans`, never as seats. One of them is the **default human**, the name for work that
+needs a human but no particular one. A person who names themselves at the desk ("it's me, Pat") is
+registered with their git email, so the desk knows them from then on.
+
+When work needs a human (a merge, a decision, a credential), a seat doesn't wait silently or do it
+itself: it assigns a bead to that human, or to the default human, with `scripts/inbox.sh assign`,
+blocking the work it holds up. The bead carries the `repo:` label of the repository it touches,
+from `--repo` or else from the bead it blocks; a merge or review needs one, and its pull request's
+URL. Things that need no action go to the human as a note, kept in ynm. The desk's wake opens with
+this inbox: what waits for the human at the desk, and what waits for the default human.
+
 It builds on [Personas](../personas/README.md), since every seat is a harness, and on the hooks and
 includes of [Harnesses in depth](../harnesses/README.md): each seat wakes from a session-start hook,
 and picks the roster from the Wheelhouse repository itself.

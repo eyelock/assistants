@@ -32,7 +32,9 @@ rather than starting blind: your identity, handoff notes and Kudos with
 `ynm recall --namespace seat/<command> --subject seat:<command> --tags <identity|handoff|kudos> --json`
 (older notes may be outside the namespace: if nothing comes back, try without `--namespace`),
 your charter, and your work with `bd list --status in_progress --assignee <command> --json` and
-`bd ready --assignee <command> --json`.
+`bd ready --assignee <command> --json`. The desk also runs `bash scripts/inbox.sh show` for the
+humans' inbox and opens its reply with it, as below; if that fails too, say the inbox couldn't be
+read, never that nothing is waiting.
 
 ## What the block holds
 

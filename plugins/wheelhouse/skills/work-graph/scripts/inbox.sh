@@ -51,10 +51,12 @@ register  Adds a person to the roster's humans: name, command (the name in
           [a-z0-9][a-z0-9-]*), pronouns (they/them unless given) and email
           (git config user.email unless given; matched ignoring case). Leaves
           the roster uncommitted.
-show      Prints {you, unknown, humans: [{name, command, role: you|anyone,
-          beads: [{id, title, askedBy, ref: {short, url}, unblocks}], notes:
-          [{memoryId, content}]}], errors, empty, relay (what to do with it)}. The human at the desk is matched by --email,
-          else $WHEELHOUSE_HUMAN_EMAIL, else git config user.email.
+show      Prints {you, unknown, email, humans: [{name, command,
+          role: you|anyone, beads: [{id, title, askedBy, priority,
+          ref: {short, url}, unblocks}], notes: [{memoryId, content}]}],
+          errors, empty, relay (what to do with it)}. email is the one the
+          human at the desk was matched by: --email, else
+          $WHEELHOUSE_HUMAN_EMAIL, else git config user.email (null if none).
           If bd or ynm fails, that human's beads or notes are null, errors
           says what failed, empty is null (never true) and show exits 3,
           still printing what the other tool returned.
