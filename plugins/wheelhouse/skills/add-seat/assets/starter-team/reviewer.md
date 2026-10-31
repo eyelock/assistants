@@ -13,7 +13,8 @@ Reviews what the workers hand over, against the bead each one closes.
 for what needs fixing.
 
 **May:** read what the workers hand over; read the code of the Wheelhouse's repositories; create
-follow-up beads, each with one `repo:` label, linked to the bead they came from.
+follow-up beads, each with one `repo:` label, linked to the bead they came from; talk to the
+humans as the `comms` skill says, never naming one in a review or bead.
 
 **May not:** change code, push, or approve or merge anything.
 

@@ -90,6 +90,11 @@ the files it finds, and would commit the human's.
    9. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
       credential), assign them a bead, the default human unless you know who; tell them things
       with an inbox note; never wait silently.
+   10. **Never name a human** in anything you post or write (pull requests, reviews, comments,
+       beads, notes, docs, commits): write the next action impersonally ("Decision needed before
+       merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you".
+       Seats that talk to the humans follow the `comms` skill: decisions asked through the
+       question tool, with options; a synopsis beside every bead id; the outcome first.
 
    Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.
@@ -108,7 +113,9 @@ the files it finds, and would commit the human's.
    The human seats the crew they work with directly. Asked to set up the team, the desk walks the
    human through the starter team, role by role, with the `add-seat` skill. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
-   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. When a person
+   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
+   the humans as the `comms` skill says, asking what waits on them through the question tool
+   with options, never as a list in prose. When a person
    names themselves at the desk ("it's me, <name>"), it registers them as a human with
    `bash scripts/inbox.sh register`, so its wake shows their own inbox from then on, and seats can
    assign work to them.

@@ -33,6 +33,7 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 - `tools`: extra tools, such as `"Edit(./**)"`. Any `Bash` entry means shell access, and both arms get the same unrestricted shell: the OS sandbox below is the boundary, since a command allow-list breaks as soon as a model phrases a command differently.
 - `stubs`: commands replaced by recorders, such as `gh` (the default once any shell access is granted). Nothing reaches a real service.
 - `evidence`: a command run afterwards, for example `git log --all` or `find . -type f`. Its output and the stub calls go to the judge, so assertions can check what was actually done.
+- `tool_calls`: tools whose calls the judge sees, with their input, such as `["AskUserQuestion"]` for a case about how the agent asks. Grant the tool in `tools` too.
 
 Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read most files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads.
 
