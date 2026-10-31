@@ -135,7 +135,7 @@ See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 | `gitflow` | 6 | Gitflow branching, conventional commits, quality gate, tag-driven release, push/PR workflow |
 | `media-management` | 11 | Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports |
 | `vendor-harness` | 12 | Lifecycle management for LLM vendor harness artifacts across Claude Code, Cursor, Codex, and GitHub Copilot CLI |
-| `dev-skills` | 9 | Project setup, code quality, review, debugging, backend, UI, security, and skill authoring |
+| `dev-skills` | 10 | Project setup, code quality, review, docs sync, debugging, backend, UI, security, and skill authoring |
 | `tech-skills` | 4 | Go, Java, Swift, and SwiftUI development workflows |
 | `infra-skills` | 2 | GitHub repository setup, Terraform backend provisioning |
 | `pause-skills` | 2 | Guided elicitation and context checkpoints for alignment |
