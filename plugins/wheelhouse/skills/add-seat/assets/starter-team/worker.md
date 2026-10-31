@@ -1,6 +1,7 @@
 ---
 order: 60
 group: workers
+model: fast
 focus: next
 seated-by: dispatcher
 ---

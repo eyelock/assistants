@@ -50,6 +50,35 @@ It builds on [Personas](../personas/README.md), since every seat is a harness, a
 includes of [Harnesses in depth](../harnesses/README.md): each seat wakes from a session-start hook,
 and picks the roster from the Wheelhouse repository itself.
 
+## Which model a seat starts on
+
+Choose a seat's model by what it does: judgement, design and review get the stronger model;
+watching, releasing and building get the cheaper one. The roster declares it without naming a
+vendor's models:
+
+```json
+{
+  "models": {
+    "groups": { "desk": "deep", "crew": "deep", "standing": "fast", "workers": "fast" },
+    "tiers": { "deep": { "claude": "opus", "codex": "<model>" } }
+  },
+  "seats": [
+    { "name": "Okafor", "group": "workers", "command": "okafor", "model": "fast", "models": { "claude": "haiku" } }
+  ]
+}
+```
+
+A seat's `model` is a tier (`fast`, `balanced` or `deep`); without one it takes its group's
+default. `models.tiers` says which model each tier is on each vendor (the plugin's own table is
+`sonnet` for `fast` and `balanced` and `opus` for `deep` on `claude`), and a seat's `models`
+overrides the tier for one vendor. `add-seat/scripts/model.sh --seat okafor` prints the result
+(`--format flag` gives `--model=haiku`, `--format json` the tier too) and exits 4 when a seat has
+none. Launchers start a seat with that `--model` flag, and the desk passes the value as the Agent
+tool's `model` parameter when it wakes a seat as a subagent. ynh's `plugin.json` has no field for
+a launch model, so the roster declares it and the launcher applies it. The starter-team templates
+put workers, CI watchers and releasers on `fast`, and designers, reviewers and dispatchers on
+`deep`; the `doctor` warns about a seat with none.
+
 ## Tutorials
 
 - [Build a Wheelhouse](build-a-wheelhouse.md): build `tower` by hand, seat the whole team, and
