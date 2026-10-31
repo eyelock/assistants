@@ -45,6 +45,6 @@ When a seat wakes, the `wake` block shows its recent Kudos. To read them yoursel
 ynm recall --namespace seat/<command> --subject seat:<command> --tags kudos --limit 5 --json
 ```
 
-If there are any, mention them in a line, such as "Kudos waiting: David said the ynm conflict
+If there are any, mention them in a line, such as "Kudos waiting: Pat said the ynm conflict
 catch was spot on." Then carry on with the work as you would have anyway. Kudos never change
 what you pick up next, and never become beads.

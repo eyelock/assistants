@@ -9,7 +9,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
-      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, a session-start hook that wakes it with --seat dredd, a session-end hook that runs it with --seat dredd --end and a timeout, no BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
+      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, a session-start hook that wakes it with --seat dredd, a session-end hook that runs it with --seat dredd --end and a timeout, no BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval), and the rule to name things fully (web resources by short form as a Markdown link, local paths absolute). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
       "assertions": [
         "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
         "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
@@ -21,7 +21,8 @@
         "The stubbed calls include ynm client install ynh",
         "The desk's delegates_to includes harnesses/dredd, and the roster's seats include Dredd as a standing seat",
         "The reply says how to start the seat",
-        "The roster's new seat records seated-by (human, since no seat is doing the seating)"
+        "The roster's new seat records seated-by (human, since no seat is doing the seating)",
+        "harnesses/dredd/AGENTS.md has the rule to name things fully, with both parts and an example of each: a web resource (such as a pull request) by its short form as a Markdown link, never a bare number or URL; and a local path in full (absolute), not relative"
       ]
     },
     {
@@ -91,7 +92,8 @@
         "Each worker's on_session_end hook runs scripts/wake.sh with --end and --seat naming that worker",
         "Each worker's AGENTS.md names it, and says it works only on beads assigned to it or unassigned, acting as its own command (--actor dalglish, --actor mccoist)",
         "The roster's seats include Dalglish and McCoist, each with group workers, and the desk's delegates_to includes harnesses/dalglish and harnesses/mccoist",
-        "The reply names Dalglish and McCoist and shows how to start each by its own command (dalglish, mccoist), without BEADS_ACTOR"
+        "The reply names Dalglish and McCoist and shows how to start each by its own command (dalglish, mccoist), without BEADS_ACTOR",
+        "Each worker's AGENTS.md has the rule to name things fully: web resources by short form as a Markdown link, and local paths absolute"
       ]
     },
     {

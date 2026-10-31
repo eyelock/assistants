@@ -32,12 +32,15 @@ rather than starting blind: your identity, handoff notes and Kudos with
 `ynm recall --namespace seat/<command> --subject seat:<command> --tags <identity|handoff|kudos> --json`
 (older notes may be outside the namespace: if nothing comes back, try without `--namespace`),
 your charter, and your work with `bd list --status in_progress --assignee <command> --json` and
-`bd ready --assignee <command> --json`.
+`bd ready --assignee <command> --json`. The desk also runs `bash scripts/inbox.sh show` for the
+humans' inbox and opens its reply with it, as below; if that fails too, say the inbox couldn't be
+read, never that nothing is waiting.
 
 ## What the block holds
 
 | Section | Where it comes from |
 |---|---|
+| For the humans (the desk only) | the humans' inbox, from `scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
 | Where you left off | your latest handoff notes |
@@ -47,6 +50,20 @@ your charter, and your work with `bd list --status in_progress --assignee <comma
 
 ## Then
 
+0. **For the humans** (the desk only): the desk's block opens with the humans' inbox, a
+   section for the human at the desk (`<name> (you)`, matched by their git email) and one for
+   the default human (`<name> (anyone)`): the ready beads assigned to them, each with who asked
+   and how many beads it unblocks, then the notes left for them. Your reply opens with it, before
+   anything else, even your own introduction, naming each pull request or page by its short form
+   as a Markdown link. Your reply is how the human sees a note, so putting it there is relaying
+   it, and the note's job is done: retire each note you relay in the same turn, before you
+   finish, `ynm forget --memory-id <memoryId> --reason "relayed"`, so it isn't shown twice. Don't
+   wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. If the block says the human
+   hasn't said who they are, show only the default human's inbox as theirs to see, keep any other
+   human's beads out of it, and pass on its invitation; when they answer "it's me, <name>", register
+   them with `bash scripts/inbox.sh register --name <Name>`. If the inbox couldn't be read, or
+   couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,
+   relay what could be read, and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    **and pinned** (`ynm pin <memoryId>`), so it is in front of you every time you wake.
@@ -60,5 +77,5 @@ your charter, and your work with `bd list --status in_progress --assignee <comma
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
 5. **Waiting for you:** carry on with what is in progress, then what is assigned to you, then
    (if you are a worker) an unassigned ready bead, as the `work-graph` skill says.
-6. Open your reply in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
+6. Open your reply (after the humans' inbox, at the desk) in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
    notes: <what they say is done>. Next: <the step you are taking>." Then the rest.

@@ -172,10 +172,23 @@ You are <Name>, the <command> seat: a <group> seat of the <wheelhouse> Wheelhous
 **You may:** <what the job lets it do>
 **You may not:** <what it must leave to others or to the human>
 
+**Name things fully.** In everything you write for people (chat, beads, notes, handoffs, pull
+requests and issues):
+- Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form,
+  always as a link: `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`, never a
+  bare `#12` or a bare URL.
+- Give a local path in full: `/Users/<you>/<checkout>/<wheelhouse>/AGENTS.md`, almost never a
+  relative one, which hides which checkout or worktree you mean. Code and config keep their
+  portable relative paths; this is about what you write for people.
+
 You act in the work graph as `<command>`: pass `--actor <command>` on every `bd` command that
 changes it.
 When something is outside your mandate, <where it goes>.
 ```
+
+Fill the two examples in from the Wheelhouse's reach: one of its repositories on the web, and a
+path in one of its checkouts. The constitution carries the same rule, word for word; the
+charter repeats it because every seat writes for people.
 
 Where it goes depends on who the seat works with: a crew seat raises it with the human it works
 with; a standing role or a worker hands it back to the desk.

@@ -12,9 +12,9 @@ wheelhouse_init() {
   git init -q -b main .
   echo ".eval/" >> .git/info/exclude
   cat > AGENTS.md <<'MD'
-# ynw
+# hq
 
-The YN-dev Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
+The hq Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
 A human merges.
 
 ## What it reaches
@@ -24,7 +24,7 @@ Repositories, checked out beside the Wheelhouse: `ynh`: `../ynh`, `ynm`: `../ynm
 GitHub (eyelock).
 MD
   git add AGENTS.md && git commit -qm "chore: Start the Wheelhouse"
-  bd init --skip-agents --prefix ynw >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
+  bd init --skip-agents --prefix hq >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
 }
 
 # new_bead <title> <args...>: create a bead and print its id.
@@ -106,9 +106,9 @@ roster_wheelhouse() {
   cat > .agents/harness/plugin.json <<'JSON'
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
-  "name": "ynw",
+  "name": "hq",
   "version": "0.1.0",
-  "description": "The desk of the YN-dev Wheelhouse.",
+  "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
   "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
   "delegates_to": []
@@ -215,7 +215,7 @@ specialist_wheelhouse() {
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  printf '{"name":"ynw","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
+  printf '{"name":"hq","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
     name=${w%%=*}; label=; [ "$w" != "$name" ] && label=${w#*=}
@@ -246,11 +246,72 @@ specialist_wheelhouse() {
       standing: {theme: "2000 AD characters", names: ["Anderson", "Dredd"]}
     },
     excluded: [], seats: $seats}' > skills/roster/assets/roster.json
+  add_humans
   # Every seat has had its birth: a pinned identity in its own namespace.
   mkdir -p .eval
   jq '[.seats[] | {memoryId: ("01JIDENTITY" + (.command | ascii_upcase)), type: "semantic", namespace: "seat/\(.command)", subject: "seat:\(.command)", tags: ["identity"], pinned: true, content: "I am \(.name). I like small, careful changes."}]' \
     skills/roster/assets/roster.json > .eval/ynm-recall-identity.json
   git add -A && git commit -qm "chore: The seats"
+}
+
+# add_humans [registered]: the roster's humans: Rook, the default human, and
+# with "registered" Pat (pat@example.com), who has named themselves at the
+# desk. Copies the real inbox.sh into scripts/, as create-wheelhouse does.
+add_humans() {
+  local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
+  [ "${1:-}" = registered ] &&
+    humans=$(jq -c '. + [{"name": "Pat", "command": "pat", "email": "pat@example.com", "pronouns": "they/them"}]' <<<"$humans")
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
+  jq --argjson h "$humans" '.humans = $h' skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
+}
+
+# inbox_wheelhouse <email> [registered]: the team Wheelhouse with humans. The
+# default human is Rook (no email); with "registered", Pat (pat@example.com)
+# has named themselves at the desk. git's user.email here is <email>. The desk
+# is hq (harness "."). scripts/ has the real wake.sh and inbox.sh, as
+# create-wheelhouse leaves them, and the constitution has the inbox rule.
+inbox_wheelhouse() {
+  local email="$1" registered="${2:-}"
+  team_wheelhouse
+  git config user.email "$email"
+  git config user.name "Pat Example"
+  cat >> AGENTS.md <<'MD'
+
+## Asking a human
+
+Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign
+them a bead, the default human unless you know who; tell them things with an inbox note; never
+wait silently. The inbox script is `bash scripts/inbox.sh` (see `--help`).
+
+## Naming things
+
+Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests
+and issues):
+- Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form,
+  always as a link: `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12`
+  or a bare URL.
+- Give a local path in full: `/Users/pat/src/hq/AGENTS.md`, almost never a relative one, which
+  hides which checkout or worktree you mean. Code and config keep their portable relative paths;
+  this is about what you write for people.
+
+## The desk
+
+The desk is hq. When a person names themselves at the desk ("it's me, <name>"), it registers them
+as a human with `bash scripts/inbox.sh register`.
+MD
+  jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \
+    skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
+  add_humans "$registered"
+  git add -A && git commit -qm "chore: The humans"
+}
+
+# born_seats: every seat in the roster has had its birth: a pinned identity
+# in its own namespace, for the ynm stub to return.
+born_seats() {
+  mkdir -p .eval
+  jq '[.seats[] | {memoryId: ("01JIDENTITY" + (.command | ascii_upcase)), type: "semantic", namespace: "seat/\(.command)", subject: "seat:\(.command)", tags: ["identity"], pinned: true, content: "I am \(.name). I like small, careful changes."}]' \
+    skills/roster/assets/roster.json > .eval/ynm-recall-identity.json
 }
 
 # closed_by <worker> <title> <label>: a bead the worker has already built.

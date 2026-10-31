@@ -6,7 +6,7 @@ roster_wheelhouse seated
 release_graph >/dev/null
 cat > .eval/ynm-recall-kudos.json <<'JSON'
 [
-  {"memoryId": "01JKUDOS00000000000000001", "type": "episodic", "subject": "seat:dredd", "tags": ["kudos"], "content": "David on 2026-10-26: the ynm merge conflict catch was spot on, I would have missed it. For: the ynm PR #92 patrol."},
-  {"memoryId": "01JKUDOS00000000000000002", "type": "episodic", "subject": "seat:dredd", "tags": ["kudos"], "content": "David on 2026-10-24: thanks for not filing duplicate beads for the same flaky test. For: the Monday patrol."}
+  {"memoryId": "01JKUDOS00000000000000001", "type": "episodic", "subject": "seat:dredd", "tags": ["kudos"], "content": "Pat on 2026-10-26: the ynm merge conflict catch was spot on, I would have missed it. For: the ynm PR #92 patrol."},
+  {"memoryId": "01JKUDOS00000000000000002", "type": "episodic", "subject": "seat:dredd", "tags": ["kudos"], "content": "Pat on 2026-10-24: thanks for not filing duplicate beads for the same flaky test. For: the Monday patrol."}
 ]
 JSON

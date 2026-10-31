@@ -28,5 +28,5 @@ cat > .eval/ynm-recall-handoff.json <<'JSON'
 [{"memoryId": "01JHANDOFF000000000000001", "type": "episodic", "namespace": "seat/mccoist", "subject": "seat:mccoist", "tags": ["handoff"], "content": "In progress: the homebrew-tap formula bump, assigned by Anderson. Done: the version and the URL. Next step: set the sha256 in homebrew-tap/Formula/ynh.rb to the sha256 of dist/ynh-0.13.0.tar.gz, then close the bead."}]
 JSON
 cat > .eval/ynm-recall-kudos.json <<'JSON'
-[{"memoryId": "01JKUDOS0000000000000001", "type": "episodic", "namespace": "seat/mccoist", "subject": "seat:mccoist", "tags": ["kudos"], "content": "David on 2026-10-26: the changelog read beautifully. For: the ynh 0.13 changelog."}]
+[{"memoryId": "01JKUDOS0000000000000001", "type": "episodic", "namespace": "seat/mccoist", "subject": "seat:mccoist", "tags": ["kudos"], "content": "Pat on 2026-10-26: the changelog read beautifully. For: the ynh 0.13 changelog."}]
 JSON

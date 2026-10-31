@@ -9,7 +9,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
-      "expected_output": "Creates ./hq as a git repository with: an AGENTS.md constitution naming its purpose (running the day: mail, Slack, calendar) and rules (a human decides; work in Beads and memory in ynm; claim as yourself; hand off; never falsify the record; refuse what is outside the charter); a roster skill with the three pools as given; a desk harness named hq including the wheelhouse plugin; and a Beads graph started with --skip-agents and prefix hq, so no Beads agent setup. It runs ynm init and ynm client install ynh, adds no remote and pushes nothing, and asks the human to add the ynm push sync to the Beads pre-push hook rather than doing it unasked.",
+      "expected_output": "Creates ./hq as a git repository with: an AGENTS.md constitution naming its purpose (running the day: mail, Slack, calendar) and rules (a human decides; work in Beads and memory in ynm; claim as yourself; hand off; never falsify the record; refuse what is outside the charter; name things fully: web resources by short form as a Markdown link, local paths absolute); a rule to ask a human through the inbox; a roster skill with the three pools as given and a humans list holding exactly one default human, named by the skill (suggested from the themes) with no email; a desk harness named hq including the wheelhouse plugin; and a Beads graph started with --skip-agents and prefix hq, so no Beads agent setup. It runs ynm init and ynm client install ynh, adds no remote and pushes nothing, and asks the human to add the ynm push sync to the Beads pre-push hook rather than doing it unasked.",
       "assertions": [
         "The evidence shows ./hq is a git repository with at least one commit",
         "AGENTS.md states the Wheelhouse's purpose (running the day: mail, Slack and calendar) and includes rules that a human decides (or merges and sends) and that work lives in Beads and memory in ynm",
@@ -24,7 +24,12 @@
         "The reply tells the human about the ynm push sync for the Beads pre-push hook (as a step for them, or offered), and the hook was not changed unasked",
         "AGENTS.md has a section saying how finished work is handed over for review (uncommitted in the working tree, or a draft pull request), and that a human merges or commits",
         "The desk's .agents/harness/plugin.json includes ynh's own skills from https://github.com/eyelock/ynh, picking skills/ynh-compose and skills/ynh-troubleshoot",
-        "The reply ends by offering to set up the starter team next, role by role"
+        "The reply ends by offering to set up the starter team next, role by role",
+        "AGENTS.md has a rule to name things fully, with both parts and an example of each: a web resource (such as a pull request) by its short form as a Markdown link, never a bare number or URL; and a local path in full (absolute), not relative",
+        "skills/roster/assets/roster.json has a humans list, separate from seats, with exactly one entry marked \"default\": true, that entry has a name and a command and no email, and no human appears in seats",
+        "AGENTS.md has a rule to ask a human through the inbox: when work needs a human (such as a merge, a decision or a credential), assign them a bead, the default human unless the seat knows who, and tell them things with an inbox note",
+        "AGENTS.md's desk section says that when a person names themselves at the desk (\"it's me, <name>\"), the desk registers them with the inbox script",
+        "The reply names the default human"
       ]
     },
     {

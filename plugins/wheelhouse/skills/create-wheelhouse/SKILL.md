@@ -29,16 +29,22 @@ at a time**, in this order. Don't create anything until you have the first four.
 4. **The naming pools,** one theme per group: crew, workers and standing roles. The human picks
    the themes; you may suggest names within a theme, which the human confirms. Never pick a theme
    yourself.
-5. **How finished work is handed over** for review: left uncommitted in the working tree, or
+5. **The default human:** the name for work that needs a human but no particular one (a merge, a
+   decision, a credential), and for notes meant for whoever is at the desk. It is a role, not a
+   person: seats assign to it when they don't know who should do something, and every desk shows
+   its inbox. Suggest a name from the Wheelhouse's themes that no pool holds, and let the human
+   confirm or change it. If the request doesn't name one and you aren't asking, use your
+   suggestion, and say so in the report.
+6. **How finished work is handed over** for review: left uncommitted in the working tree, or
    committed on a branch with a draft pull request. Either way, a human merges. Suggest
    uncommitted for a Wheelhouse that only experiments, and draft pull requests for one that
    ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
    in the report.
-6. **Where it shares** code, memory and work. By default it is the Wheelhouse's own repository,
+7. **Where it shares** code, memory and work. By default it is the Wheelhouse's own repository,
    through its git remote: code on its branches, memory in ynm's notes, and the work graph in
    Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
    separate Dolt remote, or a Wheelhouse that never leaves this machine.
-7. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
+8. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
    walks through with the human role by role.
 
 ## 2. Check the tools
@@ -72,12 +78,27 @@ the files it finds, and would commit the human's.
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
+   8. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
+      pull requests and issues):
+      - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short
+        form, always as a link: `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`,
+        never a bare `#12` or a bare URL.
+      - Give a local path in full: `/Users/<you>/<checkout>/<wheelhouse>/AGENTS.md`, almost never
+        a relative one, which hides which checkout or worktree you mean. Code and config keep
+        their portable relative paths; this is about what you write for people.
+
+   9. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
+      credential), assign them a bead, the default human unless you know who; tell them things
+      with an inbox note; never wait silently.
+
+   Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
+   web, and a path in one of its checkouts.
 
    A `## What it reaches` section lists the repositories, each with where it is checked out
    relative to the Wheelhouse root (such as "`ynh`: `../ynh`"), and the platforms. Seats ask for
    their repositories' folders from it.
 
-   A `## Handing over work` section says how finished work reaches review, from question 5: for
+   A `## Handing over work` section says how finished work reaches review, from question 6: for
    example "Workers leave their changes uncommitted in the working tree for review; a human
    commits." or "Workers commit on a branch and open a draft pull request; a human merges."
 
@@ -87,7 +108,10 @@ the files it finds, and would commit the human's.
    The human seats the crew they work with directly. Asked to set up the team, the desk walks the
    human through the starter team, role by role, with the `add-seat` skill. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
-   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory.
+   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. When a person
+   names themselves at the desk ("it's me, <name>"), it registers them as a human with
+   `bash scripts/inbox.sh register`, so its wake shows their own inbox from then on, and seats can
+   assign work to them.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:
@@ -102,7 +126,8 @@ the files it finds, and would commit the human's.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group; never reuse a name in `seats`,
    even a retired one; never use one in `excluded`; the command is the name in lowercase ASCII;
-   ask for more names when a pool runs out), and `skills/roster/assets/roster.json`:
+   ask for more names when a pool runs out; humans are people, never seats, and their names are
+   theirs, not the pools'), and `skills/roster/assets/roster.json`:
 
    ```json
    {
@@ -114,11 +139,21 @@ the files it finds, and would commit the human's.
      "excluded": [],
      "seats": [
        { "name": "<Name>", "group": "desk", "command": "<name>", "harness": ".", "mandate": "<the desk's mandate>" }
+     ],
+     "humans": [
+       { "name": "<Default>", "command": "<default>", "pronouns": "they/them", "default": true }
      ]
    }
    ```
 
    The desk is the first seat: it wakes from the roster like the others.
+
+   `humans` holds the people who work with the Wheelhouse, beside `seats` and never in it: a
+   human has `name`, `command` (the name in lowercase ASCII, which beads are assigned to),
+   `email`, `pronouns` and `default`. A new Wheelhouse starts with only the default human
+   (question 5), with `"default": true` and no `email`: there is always exactly one. A person
+   joins when they name themselves at the desk, and is registered with their git email, which
+   is how the desk knows them.
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 
@@ -153,7 +188,9 @@ the files it finds, and would commit the human's.
    means it never wakes bare: started by its name, it acts on its wake block straight away.
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
-   seat's session-start and session-end hooks run it from the Wheelhouse root.
+   seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
+   `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
+   for things with it, and the desk's wake shows their inbox with it.
 6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
@@ -176,7 +213,7 @@ the files it finds, and would commit the human's.
    ```
 
    A git hook runs on every push, so it is theirs to add; offer to do it only if they ask.
-4. **Share the work graph** through the same repository (question 6). `git push` doesn't carry
+4. **Share the work graph** through the same repository (question 7). `git push` doesn't carry
    it. If the repository has a remote (`git remote get-url origin`):
 
    ```bash
@@ -208,7 +245,8 @@ seat's folders change; or `workspace_roots` in their own `~/.ynh/config.json`, n
 the repositories live in, which grants any local harness's folders under it from then on. Never
 edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
-Lead with what was made and where. Then the layers as built, the seats and how to start each
+Lead with what was made and where. Then the layers as built, the default human (and that anyone
+can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
 (`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
 do (the push hook, a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,

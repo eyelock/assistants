@@ -20,7 +20,7 @@
     "should_trigger": true
   },
   {
-    "query": "mark ynw-a3f2 done, the docs build was skipped",
+    "query": "mark hq-a3f2 done, the docs build was skipped",
     "should_trigger": true
   },
   {
@@ -41,6 +41,18 @@
   },
   {
     "query": "write a plan.md for the ynf scheduler refactor",
+    "should_trigger": false
+  },
+  {
+    "query": "my PR for this bead needs a human to merge it, put it in front of them",
+    "should_trigger": true
+  },
+  {
+    "query": "let the humans know the release slipped to Monday, nothing for them to do",
+    "should_trigger": true
+  },
+  {
+    "query": "merge pull request 12 on the widget repo",
     "should_trigger": false
   }
 ]

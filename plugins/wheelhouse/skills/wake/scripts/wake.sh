@@ -11,6 +11,11 @@
 # wake; one that fails is named in the block. --no-sync skips both. It
 # changes nothing else.
 #
+# The desk (the seat in the desk group) also wakes to the humans' inbox, first:
+# what the seats have asked of the human at the desk and of the default human,
+# and the notes left for them, from inbox.sh show (beside this script, as
+# create-wheelhouse copies it). Other seats' wakes have no inbox.
+#
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root.
 #
@@ -22,7 +27,9 @@
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
-# urgent first), sync {memory, work: synced|skipped|failed}}, or a Markdown
+# urgent first), sync {memory, work: synced|skipped|failed}, inbox (the desk's
+# only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
+# null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
@@ -125,14 +132,41 @@ inprogress=$(beads list --status in_progress --assignee "$seat" | jq -c 'map(.ti
 assigned=$(beads ready --assignee "$seat" | jq -c 'map(select(.issue_type != "epic") | .title)')
 unassigned=$(beads ready --unassigned | jq -c 'map(select(.issue_type != "epic")) | sort_by(.priority) | map(.title)')
 
+# The desk's wake opens with the humans' inbox. inbox.sh sits beside this
+# script in a Wheelhouse's scripts/, and in the work-graph skill otherwise.
+inbox='null'
+if [ "$group" = desk ]; then
+  here=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+  inboxsh=""
+  for f in "$here/inbox.sh" "scripts/inbox.sh" "$here/../../work-graph/scripts/inbox.sh"; do
+    [ -f "$f" ] && { inboxsh="$f"; break; }
+  done
+  if [ -z "$inboxsh" ]; then
+    inbox='{"error": "no inbox.sh beside wake.sh: copy it from the work-graph skill into scripts/"}'
+  else
+    # No temp file for its errors: a sandboxed seat may not write outside the
+    # repository. On failure, run it again for the first line of its stderr.
+    # When bd or ynm fails, show exits 3 but still prints JSON: what it could
+    # read, with what failed in errors, which the block below names.
+    shown=$(bash "$inboxsh" show --dir . 2>/dev/null)
+    if [ -n "$shown" ] && jq -e . >/dev/null 2>&1 <<<"$shown"; then
+      inbox=$(jq -c . <<<"$shown")
+    else
+      err=$(bash "$inboxsh" show --dir . 2>&1 >/dev/null | head -1)
+      inbox=$(jq -nc --arg e "${err:-inbox.sh show failed}" '{error: $e}')
+    fi
+  fi
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" \
-  --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" '{
+  --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" \
+  --argjson inbox "$inbox" '{
     seat: $seat, group: $group, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, record: $record,
     inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned,
-    sync: {memory: $memsync, work: $worksync}
+    sync: {memory: $memsync, work: $worksync}, inbox: $inbox
   }')
 
 if [ "$format" = json ]; then
@@ -148,6 +182,32 @@ jq -r '
    | if ($failed | length) > 0
      then "**Not synced:** \($failed | join(" and ")) failed, so what follows may be out of date. Say so when you reply, and run the sync by hand before relying on it.\n"
      else empty end),
+  (if .inbox == null then empty
+   elif .inbox.error then "## For the humans\n\nThe inbox could not be read: \(.inbox.error). Say so when you reply; the doctor skill can help.\n"
+   else
+     def bead: "- \(.title)"
+       + (if .ref then ": [\(.ref.short // .ref.url)](\(.ref.url))" else "" end)
+       + " (\(.id), asked by \(.askedBy // "unknown"), unblocks \(.unblocks))";
+     def note: "- \(.content) (note \(.memoryId))";
+     "## For the humans\n",
+     (if ((.inbox.errors // []) | length) > 0
+      then "**The inbox could not be read in full:** \(.inbox.errors | join("; ")). Don'"'"'t say nothing is waiting: say what couldn'"'"'t be read when you reply, and what could; the doctor skill can help.\n"
+      else empty end),
+     (if .inbox.empty == true then "Nothing waiting for the humans.\n"
+      else
+        (.inbox.humans[] |
+          "### \(.name) (\(.role))\n",
+          (if .beads == null then "Their beads couldn'"'"'t be read.\n" else empty end),
+          (if .notes == null then "Their notes couldn'"'"'t be read.\n" else empty end),
+          (if .beads != null and .notes != null and (.beads | length) == 0 and (.notes | length) == 0 then "Nothing waiting.\n"
+           else
+             (if (.beads // [] | length) > 0 then (.beads | map(bead) | join("\n")) + "\n" else empty end),
+             (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
+           end)),
+        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
+      end),
+     (if .inbox.unknown then "You haven'"'"'t said who you are at this desk. Say \"it'"'"'s me, <name>\" to get your own inbox.\n" else empty end)
+   end),
   "## Who you are\n",
   (if .firstWake
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"

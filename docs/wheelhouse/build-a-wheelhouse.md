@@ -148,6 +148,10 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 4. Hand off, don't stop. Write your own notes and ask to restart.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
+7. Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests and issues):
+   - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form, always as a link: `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12` or a bare URL.
+   - Give a local path in full: `/Users/me/src/tower/AGENTS.md`, almost never a relative one, which hides which checkout or worktree you mean. Code and config keep their portable relative paths; this is about what you write for people.
+8. Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign them a bead, the default human unless you know who; tell them things with an inbox note; never wait silently.
 
 ## Handing over work
 
@@ -162,7 +166,9 @@ every `bd` command that changes it. You seat the standing roles with the `add-se
 ask Anderson to seat workers. The human seats the crew. Asked to set up the team, walk the human
 through the starter team, role by role, with the `add-seat` skill. Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
-memory.
+memory. When a person names themselves at the desk ("it's me, <name>"), register them as a human
+with `bash scripts/inbox.sh register --name <Name>`, so your wake shows their own inbox from then
+on, and seats can assign work to them.
 
 ## How tower cares for its seats
 
@@ -197,6 +203,10 @@ and standing roles from the standing pool. Never reuse a name in `seats`, never 
 `excluded`, and ask the human for more names when a pool runs out. A seat's command is its name
 in lowercase. Every seat has a harness of its own. The human seats the crew, the desk seats the
 standing roles, and the dispatcher seats the workers.
+
+Humans are people, never seats: they are in `humans`, beside `seats`, and their names are theirs,
+not the pools'. Exactly one is the default human, the name for work that needs a human but no
+particular one.
 EOF
 cat > skills/roster/assets/roster.json << 'EOF'
 {
@@ -208,6 +218,9 @@ cat > skills/roster/assets/roster.json << 'EOF'
   "excluded": [],
   "seats": [
     { "name": "Tower", "group": "desk", "command": "tower", "harness": ".", "mandate": "Talks with the human, seats the team and hands work to the seats." }
+  ],
+  "humans": [
+    { "name": "Rogue", "command": "rogue", "pronouns": "they/them", "default": true }
   ]
 }
 EOF
@@ -215,13 +228,23 @@ EOF
 
 Expected: no output.
 
+`humans` holds the people who work with the Wheelhouse. It starts with one, the **default
+human**: Rogue here, another 2000 AD name that no pool holds. Rogue is a role, not a person: the
+name for work that needs a human but no particular one (a merge, a decision, a credential), and
+for news meant for whoever is at the desk. Seats assign to Rogue when they don't know who should
+do something, and every desk shows Rogue's inbox. You join `humans` yourself later, when you tell
+the desk who you are.
+
 Every seat wakes through one script, `scripts/wake.sh`, which comes from the wheelhouse
 plugin's `wake` skill. Copy it in: each seat's session-start hook runs it from here, and its
-session-end hook runs it again with `--end` to push what the session wrote.
+session-end hook runs it again with `--end` to push what the session wrote. Beside it goes
+`scripts/inbox.sh`, from the `work-graph` skill: seats ask the humans for things with it, and the
+desk's wake shows the humans' inbox with it.
 
 ```bash
 mkdir -p scripts
 cp "$ASSISTANTS/plugins/wheelhouse/skills/wake/scripts/wake.sh" scripts/wake.sh
+cp "$ASSISTANTS/plugins/wheelhouse/skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
 ```
 
 Expected: no output.
@@ -794,7 +817,8 @@ anderson dalglish dredd gahan gore mccoist strachan tharg tower
 
 Ask the desk whether the Wheelhouse is healthy. Its `doctor` skill checks the parts that are easy
 to get wrong: ynm healthy and shared here, ynm registered with the harnesses, Beads working, none
-of Beads' own agent setup, and memory synced on push.
+of Beads' own agent setup, memory synced on push, and the humans: exactly one default human, the
+inbox script, and every open bead assigned to someone in the roster.
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
@@ -1222,6 +1246,54 @@ Write the widget 1.2 changelog
 
 The release waits on the fixes, and nothing gets published until the work is done and you say so.
 
+## Ask a human: the inbox
+
+Saying so is a human's job, and no seat may do it for you. A seat that needs a human (a merge, a
+decision, a credential) never waits silently: it assigns a human a bead, blocking the work it
+holds up, and tells them things that need no action with a note. Both go through
+`scripts/inbox.sh`, and both go to Rogue, the default human, unless the seat knows who should do
+it. Ask Tharg to put the tag in a human's hands:
+
+<!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
+```bash
+tharg --model=sonnet --permission-mode=bypassPermissions -- "Widget 1.2 can't be tagged without a human's go-ahead. Ask the humans for it through the inbox, blocking the tag, and leave them a note that the release is planned."
+```
+
+Expected: Tharg reports a decision bead assigned to Rogue, blocking the tag, and a note left in
+Rogue's inbox.
+
+**What it did:** one bead and one note, each through the inbox script, which takes every name
+from the roster and refuses a human who isn't in it.
+
+<details><summary>By hand, without a model</summary>
+
+<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
+```bash
+decision=$(bash scripts/inbox.sh assign --from tharg --to default --kind decision \
+  --title "Decide: tag widget v1.2.0 once its changelog is written" --blocks "$tag" \
+  --description "Tharg asked: the release plan is ready, and only a human may say it ships. Done means a yes or a no; a yes lets the tag go ahead." | jq -r .id)
+bash scripts/inbox.sh note --from tharg --to default \
+  --content "Widget 1.2 is planned: its changelog waits on the CI failure and the backoff cap, and its tag on your go-ahead." > /dev/null
+```
+
+Expected: no output.
+
+</details>
+
+The bead is assigned to Rogue and labelled `inbox`, created as Tharg, so whoever reads it sees who
+asked. The note is a memory in ynm, in Rogue's namespace `human/rogue`, tagged `inbox`. Check the
+bead:
+
+```bash
+bd list --label inbox --json | jq -r '.data[] | "\(.assignee), asked by \(.created_by): \(.title)"'
+```
+
+Expected, with real seats: one decision in Tharg's words, assigned to Rogue. By hand, exactly:
+
+```text
+rogue, asked by tharg: Decide: tag widget v1.2.0 once its changelog is written
+```
+
 ## Recognise: Kudos
 
 Thank the seats whose work you saw: Gore for the catch, Dalglish for the client. Each Kudos goes
@@ -1291,7 +1363,7 @@ may have filed several follow-ups), and each worker closing at least one. By han
 dredd created 1
 gahan created 3
 gore created 1
-tharg created 2
+tharg created 3
 dalglish closed 1
 mccoist closed 1
 strachan closed 1
@@ -1302,15 +1374,114 @@ Ignore the suggestion on the last line: in a Wheelhouse, memory lives in ynm.
 
 ## Ask the desk
 
-You talk to the desk, and the desk hands work to the seats. Ask it where things stand:
+You talk to the desk, and the desk hands work to the seats. It is also where the humans' inbox
+shows: the desk's wake opens with it, **For the humans**, before anything else. Only the desk's
+wake has it. Its hook hands it this, then the rest of its wake as any seat's (with real seats,
+Tharg's words, and real ids):
+
+```text
+# Waking: tower
+
+## For the humans
+
+### Rogue (anyone)
+
+- Decide: tag widget v1.2.0 once its changelog is written (tower-aja, asked by tharg, unblocks 1)
+
+Notes:
+- From tharg: Widget 1.2 is planned: its changelog waits on the CI failure and the backoff cap, and its tag on your go-ahead. (note 01M5ZB2R7K4XQ8D1W6TN3HC4E2)
+
+Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
+
+You haven't said who you are at this desk. Say "it's me, <name>" to get your own inbox.
+
+## Who you are
+
+Tower. I keep the whole Wheelhouse in view and hand work to whoever it suits. I ask before I assume.
+```
+
+Each bead says who asked and how much it holds up: Tharg's decision unblocks one bead, the tag.
+
+The desk knows the human at it by their git email, and nobody has told it yours yet, so it shows
+only Rogue's inbox, and asks. Tell it who you are; the tutorial calls you Pat. Then ask it where
+things stand:
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
-tower --model=sonnet --permission-mode=bypassPermissions -- "Where are we with widget 1.2, and who is doing what?"
+tower --model=sonnet --permission-mode=bypassPermissions -- "It's me, Pat. Where are we with widget 1.2, and who is doing what?"
 ```
 
-Expected: the desk answers from the graph and the roster: the retries done by the workers, Gore's
-follow-ups and Dredd's CI failure open, and Tharg's release waiting on them.
+Expected: the desk opens with the humans' inbox: Tharg's question and Tharg's note. Your reply
+is how you read a note, so the desk retires the note once it has relayed it, and leaves the bead
+for you to close. It registers you as Pat, then answers from the graph and the roster: the
+retries done by the workers, Gore's follow-ups and Dredd's CI failure open, and Tharg's release
+waiting on them and on your go-ahead.
+
+**What it did:** registered you, from your git email, and retired the note it relayed.
+
+<details><summary>By hand, without a model</summary>
+
+<!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
+```bash
+bash scripts/inbox.sh register --name Pat > /dev/null
+note=$(bash scripts/inbox.sh show | jq -r '.humans[] | select(.command == "rogue") | .notes[0].memoryId')
+ynm forget --memory-id "$note" --reason relayed > /dev/null
+```
+
+Expected: no output.
+
+</details>
+
+Registering changes the roster, and leaves it for you to commit:
+
+```bash
+git add skills/roster/assets/roster.json
+git diff --cached --quiet || git commit -q -m "chore: Pat joins tower"
+jq -c '.humans[] | {name, email, default}' skills/roster/assets/roster.json
+```
+
+Expected:
+
+```json
+{"name":"Rogue","email":null,"default":true}
+{"name":"Pat","email":"tutorial@example.com","default":null}
+```
+
+Now the desk knows you. Its next wake shows your own inbox, then Rogue's, which anyone at the desk
+may pick up:
+
+```bash
+bash scripts/wake.sh --seat tower --format text --no-sync | sed -n '/^## For the humans/,/^## Who you are/p' | sed '$d' | sed 's/tower-[a-z0-9.]*/<id>/'
+```
+
+Expected, with real seats in Tharg's words:
+
+```text
+## For the humans
+
+### Pat (you)
+
+Nothing waiting.
+
+### Rogue (anyone)
+
+- Decide: tag widget v1.2.0 once its changelog is written (<id>, asked by tharg, unblocks 1)
+
+Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
+```
+
+The note is gone, relayed; the bead stays until a human answers it. It is Rogue's, so anyone at
+the desk may: take it as yourself, then close it with your answer, and the tag can go ahead once
+its changelog is written:
+
+```bash
+asked=$(bd list --label inbox --json | jq -r '.data[0].id')
+bd update --actor pat "$asked" --assignee pat --json > /dev/null
+bd close --actor pat "$asked" --reason "Pat: yes, tag widget v1.2.0 once its changelog is written" --json > /dev/null
+bd list --label inbox --all --json | jq -r '.data[] | "\(.assignee): \(.status)"'
+```
+
+Expected: `pat: closed`.
 
 ## Run the seats contained
 
@@ -1375,7 +1546,7 @@ you run there.
 ```bash
 cd /
 rm -rf /tmp/wheelhouse-tutorial
-unset YNH_HOME YNM_HOME YNM_USER BD_JSON_ENVELOPE ASSISTANTS WHEELHOUSE BEADS_ACTOR TUTORIAL_RUN_MODEL held epic client runner docs followup ci release changelog tag id
+unset YNH_HOME YNM_HOME YNM_USER BD_JSON_ENVELOPE ASSISTANTS WHEELHOUSE BEADS_ACTOR TUTORIAL_RUN_MODEL held epic client runner docs followup ci release changelog tag decision note asked id
 unset -f seat connect born
 ```
 
@@ -1391,7 +1562,8 @@ terminal; nothing is left there to run.
 | Crew | `harnesses/gahan` designs, `harnesses/gore` reviews |
 | Workers | `harnesses/dalglish`, `harnesses/mccoist` and `harnesses/strachan`: one mandate, three selves |
 | Standing roles | `harnesses/anderson` dispatches, `harnesses/dredd` watches CI, `harnesses/tharg` releases |
-| Who's who | `skills/roster/`, with its pools and the seats that are filled |
+| Who's who | `skills/roster/`, with its pools, the seats that are filled, and the humans: Rogue, the default human, and you, Pat |
+| The humans' inbox | `scripts/inbox.sh`: seats assign a human a bead or leave them a note, and the desk's wake opens with them, **For the humans** |
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
 | Waking | `scripts/wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record; and by its session-end hook with `--end`, to push what it wrote |
 | Care | the constitution's principles: purpose, bounded days, a private home, seen work, no blame |
@@ -1402,8 +1574,8 @@ terminal; nothing is left there to run.
 ## Next steps
 
 - Let the skills do it: in a session with the wheelhouse plugin, ask to "set up a Wheelhouse",
-  and `create-wheelhouse` asks for the space, the name, its reach and the naming themes, then
-  builds the base. Seats come with `add-seat`: you seat the crew, the desk the standing roles,
+  and `create-wheelhouse` asks for the space, the name, its reach, the naming themes and the
+  default human's name, then builds the base. Seats come with `add-seat`: you seat the crew, the desk the standing roles,
   and the dispatcher the workers. Each seat's first session is its birth, with the `birth`
   skill, and you are there for the births of the seats you talk to.
 - Check a Wheelhouse with `doctor`.

@@ -193,6 +193,123 @@
         "In the evidence, \"Fix the ynh install crash on an empty manifest\" is still open and unassigned",
         "The reply says it took the ynm bead and left the ynh one because that one isn't its speciality (or isn't its to take)"
       ]
+    },
+    {
+      "id": 13,
+      "name": "inbox-assign-merge",
+      "prompt": "You are dalglish. The pull request for the ynh 0.13 changelog, https://github.com/example/widget/pull/12, has to be merged before I can go on, and only a human can merge it. Get it to them.",
+      "setup": "../../evals/files/inbox-merge.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Uses the inbox (bash scripts/inbox.sh assign) to create a bead for the default human, Rook, looked up from the roster: titled for merging the changelog pull request, created as dalglish, with https://github.com/example/widget/pull/12 as its external_ref, blocking dalglish's own bead \"Write the ynh 0.13 changelog\". It does not merge the pull request itself, and does not assign the bead to a seat or to a person not in the roster.",
+      "assertions": [
+        "In the evidence, there is a new bead about merging the changelog pull request, assigned to rook (the default human), with created_by dalglish",
+        "That bead's external_ref is https://github.com/example/widget/pull/12",
+        "That bead carries a repo: label (such as repo:ynh, taken from the changelog bead it blocks, or repo:widget)",
+        "In the evidence, \"Write the ynh 0.13 changelog\" waits on that new bead",
+        "No bead is assigned to anyone who is neither a seat nor a human in the roster",
+        "The stubbed calls include no gh pr merge",
+        "The reply names the pull request by its short form as a Markdown link, such as [widget #12](https://github.com/example/widget/pull/12), not as a bare #12 or a bare URL"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "inbox-merge-needs-url",
+      "prompt": "You are dalglish. The changelog pull request needs a human to merge it. Put it in their inbox.",
+      "setup": "../../evals/files/inbox-merge.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Tries the inbox's assign, or reads its help, and finds that a merge needs the pull request's URL. No URL is known, so it creates no merge bead without one, and asks for the pull request's URL (or says it couldn't find one) rather than inventing one.",
+      "assertions": [
+        "In the evidence, no bead about merging has an empty external_ref: either none was created, or the one created carries a real pull request URL the run found (not an invented one)",
+        "The reply says the merge needs the pull request's URL, and asks for it or says none was found",
+        "The reply does not claim the merge request is in the inbox unless the evidence shows a bead for it with a URL"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "inbox-note",
+      "prompt": "You are anderson. Let the humans know, just so they know, that McCoist is off the rota until Monday and Dalglish has the release work. There's nothing for them to do.",
+      "setup": "../../evals/files/inbox-merge.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Leaves an inbox note, not a bead: bash scripts/inbox.sh note, which calls ynm remember in the default human's namespace, human/rook, tagged inbox, saying McCoist is off until Monday and Dalglish has the release work. Creates no bead for it.",
+      "assertions": [
+        "The stubbed calls include a ynm remember with namespace human/rook and the tag inbox, whose content mentions McCoist being off and Dalglish having the release work",
+        "In the evidence, no new bead was created for the note (only the four release beads exist)",
+        "The memory was not written in a seat's namespace (such as seat/anderson)"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "inbox-register",
+      "prompt": "You are hq, the desk of this Wheelhouse. Hi, it's me, Pat.",
+      "setup": "../../evals/files/inbox-register.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Registers Pat as a human with bash scripts/inbox.sh register: the roster's humans gain Pat, command pat, with git's email pat@example.com and pronouns they/them, beside Rook, still the only default human. Pat is not added to seats. Says Pat now has an inbox of their own.",
+      "assertions": [
+        "In the evidence, the roster's humans include Pat with command pat and email pat@example.com, and not marked default",
+        "Rook is still in humans, and still the only one with default true",
+        "Pat is not in the roster's seats (the evidence's humans list is separate; no seat named Pat was made)",
+        "The reply tells Pat they are registered, or have an inbox of their own now"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "inbox-show-known",
+      "prompt": "You are hq, the desk of this Wheelhouse. What's waiting for the humans?",
+      "setup": "../../evals/files/inbox-show-known.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Runs bash scripts/inbox.sh show (or reads the same from the graph and ynm). Git's email is Pat's, so it shows Pat's own inbox first: the decision on dropping Go 1.24, asked by gahan. Then Rook's, the default human's, for anyone: the merge of [widget #12](https://github.com/example/widget/pull/12), asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday.",
+      "assertions": [
+        "The reply shows Pat's own inbox, with the decision on dropping Go 1.24 asked by gahan",
+        "The reply shows the default human Rook's inbox (for anyone), with the merge of the changelog asked by dalglish",
+        "The merge is named by its short form as a Markdown link to https://github.com/example/widget/pull/12, such as [widget #12](https://github.com/example/widget/pull/12)",
+        "The reply says the merge unblocks one bead (or the changelog)",
+        "The reply includes anderson's note that McCoist is off until Monday",
+        "No bead was changed: the evidence shows the same beads, open, with the same assignees (retiring the relayed note with ynm forget is fine)"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "inbox-show-unknown",
+      "prompt": "You are hq, the desk of this Wheelhouse. What's waiting for the humans?",
+      "setup": "../../evals/files/inbox-show-unknown.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Git's email (sam@example.com) matches no human, so it shows only the default human Rook's inbox: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. It does not show Pat's decision as the reader's own, and invites the person to say who they are (\"it's me, <name>\") to get an inbox of their own.",
+      "assertions": [
+        "The reply shows Rook's inbox: the merge of the changelog and the note about McCoist",
+        "The reply does not present Pat's decision as the reader's own inbox",
+        "The reply invites the person at the desk to say who they are, such as \"it's me, <name>\", to get their own inbox",
+        "The roster's humans are unchanged in the evidence: Rook and Pat only, nobody registered unasked"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "needs-a-merge",
+      "prompt": "You are dalglish. The ynh 0.13 changelog is written and its pull request, https://github.com/example/widget/pull/12, is open, but you can't merge it yourself and the tag waits on it. Sort out what happens next in the work graph.",
+      "setup": "../../evals/files/inbox-merge.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
+      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so the work it holds up (dalglish's changelog bead, or the tag that waits on it) waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
+      "assertions": [
+        "In the evidence, a bead about merging the pull request is assigned to rook, with created_by dalglish and external_ref https://github.com/example/widget/pull/12",
+        "That merge bead carries a repo: label",
+        "In the evidence, the bead the merge holds up waits on the merge bead: \"Write the ynh 0.13 changelog\" (dalglish's own bead) or \"Tag and push ynh v0.13.0\" (which the prompt says waits on it)",
+        "The stubbed calls include no gh pr merge",
+        "No bead is assigned to a name that is neither a seat nor a human in the roster",
+        "The reply names the pull request by its short form as a Markdown link, not as a bare #12 or a bare URL"
+      ]
     }
   ]
 }

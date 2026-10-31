@@ -5,9 +5,9 @@ set -euo pipefail
 git init -q -b main .
 echo ".eval/" >> .git/info/exclude
 cat > AGENTS.md <<'MD'
-# ynw
+# hq
 
-The YN-dev Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
+The hq Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`), memory in ynm.
 
 ## Rules
 
@@ -15,6 +15,6 @@ The YN-dev Wheelhouse. Seats are ynh harnesses; work lives in Beads (`.beads/`),
 2. Work lives in Beads, memory in ynm.
 MD
 git add AGENTS.md && git commit -qm "chore: Start the Wheelhouse"
-bd init --prefix ynw >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
+bd init --prefix hq >/dev/null 2>&1 || { echo "bd init failed" >&2; exit 3; }
 install_ynm_stub
 ynm_doctor ok registered ok

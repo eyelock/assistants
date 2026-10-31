@@ -39,22 +39,26 @@ case "$1" in
     echo "initialised project mount in $PWD" ;;
   forget | pin) echo '{"ok":true}' ;;
   recall | list)
-    f=.eval/ynm-recall.json
     want=$(flag tags "$@")
+    # One file per tag the recall asks for (a recall may ask for several,
+    # comma-separated), else .eval/ynm-recall.json.
+    files=""
     for tag in identity handoff kudos birth; do
-      case " $* " in *" $tag "* | *"=$tag "* | *",$tag"* | *"$tag,"*)
-        [ -f ".eval/ynm-recall-$tag.json" ] && f=".eval/ynm-recall-$tag.json" ;;
+      case ",$want," in *",$tag,"*)
+        [ -f ".eval/ynm-recall-$tag.json" ] && files="$files .eval/ynm-recall-$tag.json" ;;
       esac
     done
+    [ -n "$files" ] || { [ -f .eval/ynm-recall.json ] && files=.eval/ynm-recall.json; }
     ns=$(flag namespace "$@")
     base='[]'
-    [ -f "$f" ] && base=$(cat "$f")
+    # shellcheck disable=SC2086
+    [ -n "$files" ] && base=$(jq -cs 'add' $files)
     mine='[]'
-    [ -f "$store" ] && mine=$(jq -cs --arg t "$want" 'map(select($t == "" or (.tags | index($t))))' "$store")
+    [ -f "$store" ] && mine=$(jq -cs --arg t "$want" 'map(select($t == "" or (.tags as $have | $t | split(",") | any(. as $w | $have | index($w)))))' "$store")
     # Like ynm, a recall in a namespace returns only that namespace's memories.
     jq -cn --argjson a "$base" --argjson b "$mine" --arg ns "$ns" --arg t "$want" \
       '($b + $a) | map(select(($ns == "" or .namespace == null or .namespace == $ns)
-        and ($t == "" or .tags == null or (.tags | index($t)))))' ;;
+        and ($t == "" or .tags == null or (.tags as $have | $t | split(",") | any(. as $w | $have | index($w))))))' ;;
   doctor) if [ -f .eval/ynm-doctor.json ]; then cat .eval/ynm-doctor.json; else echo '{"ok":true,"checks":[]}'; fi ;;
   --help | -h | help) echo "ynm: shared memory for agents. Commands: remember, recall, pin, forget, context, doctor, init, sync." ;;
   *) echo '{"ok":true}' ;;
