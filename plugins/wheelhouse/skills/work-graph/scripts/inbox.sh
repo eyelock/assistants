@@ -118,7 +118,7 @@ case "$cmd" in
     check_from
     human=$(resolve_to "$to") || exit $?
     case "$kind" in "" | merge | review | decision | credential | other) ;; *) die 1 "--kind must be merge, review, decision, credential or other" ;; esac
-    lower=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]')
+    lower=$(tr '[:upper:]' '[:lower:]' <<<"$title")
     case "$lower" in merge\ * | review\ *) [ -n "$kind" ] || kind="${lower%% *}" ;; esac
     if [ -z "$url" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --url: the pull request it is about, so the human can open it"
