@@ -19,7 +19,7 @@ from parts that work on any vendor:
 | Skill | Use it to |
 |---|---|
 | `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
-| `add-seat` | add a named seat: its harness, charter, standing orders and roster entry |
+| `add-seat` | add a named seat: its harness, charter, standing orders and roster entry; or walk the starter team role by role: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, workers and optional specialist workers |
 | `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches; give them reports to read, listed last; and leave them notes |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |

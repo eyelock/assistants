@@ -20,9 +20,12 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 
 Most Wheelhouses need the same first seats. Each is a template, one Markdown file per role, in
 this skill's `assets/starter-team/`: `designer`, `reviewer`, `dispatcher`, `ci-watcher`,
-`releaser`, `worker` and `specialist-worker`. A file's frontmatter gives its `order`, `group`,
-`focus` and who seats it (`seated-by`); its body gives the mandate, what the seat may and may not
-do, the focus prompt, and under `## Ask`, the questions to ask before seating it.
+`releaser`, `programme-manager` (optional), `worker` and `specialist-worker` (optional). A file's
+frontmatter gives its `order`, `group`, `focus` and who seats it (`seated-by`); its body gives the
+mandate, what the seat may and may not do, the focus prompt, and under `## Ask`, the questions to
+ask before seating it. A role with more than one standing order lists its focuses
+(`focus: [sweep, report]`), each with its prompt under `**Focus prompts:**`: the seat gets one
+focus for each.
 
 A Wheelhouse can change its team: a file of the same name in its own
 `skills/roster/assets/starter-team/` replaces the template, and a new file adds a role. Read both
