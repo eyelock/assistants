@@ -5,7 +5,8 @@
 # the default human (`"default": true`), the name for work that needs a human
 # but no particular one.
 #
-#   assign    a bead for a human to do (a merge, a decision, a credential),
+#   assign    a bead for a human to do (a merge, a decision, a credential) or
+#             read (a report),
 #             assigned to them, created as the seat that asked, optionally
 #             blocking the bead it holds up, labelled with the repository it
 #             touches. A merge or review needs --url and a repository.
@@ -27,8 +28,8 @@ usage() {
   cat <<'EOF'
 Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
                        [--url <url>] [--blocks <bead>] [--repo <repo>]
-                       [--description <text>]
-                       [--kind merge|review|decision|credential|other]
+                       [--description <text>] [--priority 0-4]
+                       [--kind merge|review|decision|credential|report|other]
        inbox.sh note --content <text> --from <seat> [--to default|<command>]
        inbox.sh register --name <Name> [--command <command>] [--pronouns <p>] [--email <email>]
        inbox.sh show [--email <email>]
@@ -44,7 +45,11 @@ assign    Creates a bead assigned to a human (--to, default: the default human),
           bead repo:<repo>, the one repository it touches; without --repo it
           takes the repo: label of the --blocks bead. A merge or review must
           end up with one; other kinds go unlabelled when the work touches no
-          repository.
+          repository. --kind report is something to read, such as a weekly
+          report: it needs no --url or repository, gets priority 3 unless
+          --priority says otherwise, and show lists it after the rest.
+          Every kind is labelled inbox:<kind>. --priority sets any bead's
+          priority (0 highest, 4 lowest; bd's default, 2, unless given).
 note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
 register  Adds a person to the roster's humans: name, command (the name in
           lowercase; given or derived, a command is lowercase ASCII,
@@ -52,8 +57,8 @@ register  Adds a person to the roster's humans: name, command (the name in
           (git config user.email unless given; matched ignoring case). Leaves
           the roster uncommitted.
 show      Prints {you, unknown, email, humans: [{name, command,
-          role: you|anyone, beads: [{id, title, askedBy, priority,
-          ref: {short, url}, unblocks}], notes: [{memoryId, content}]}],
+          role: you|anyone, beads: [{id, title, kind, askedBy, priority,
+          ref: {short, url}, unblocks}] (reports last, then by priority), notes: [{memoryId, content}]}],
           errors, empty, relay (what to do with it)}. email is the one the
           human at the desk was matched by: --email, else
           $WHEELHOUSE_HUMAN_EMAIL, else git config user.email (null if none).
@@ -74,17 +79,17 @@ case "$cmd" in
 esac
 
 dir="."
-title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""
+title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""; priority=""
 content=""; name=""; command=""; pronouns="they/them"; email=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
-    --dir | --title | --from | --to | --url | --blocks | --repo | --description | --kind | --content | --name | --command | --pronouns | --email)
+    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name | --command | --pronouns | --email)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       v="$2"
       case "$1" in
         --dir) dir="$v" ;; --title) title="$v" ;; --from) from="$v" ;; --to) to="$v" ;;
-        --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --description) description="$v" ;;
+        --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --priority) priority="$v" ;; --description) description="$v" ;;
         --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;;
         --command) command="$v" ;; --pronouns) pronouns="$v" ;; --email) email="$v" ;;
       esac
@@ -132,7 +137,11 @@ case "$cmd" in
     [ -n "$title" ] || die 1 "assign needs --title"
     check_from
     human=$(resolve_to "$to") || exit $?
-    case "$kind" in "" | merge | review | decision | credential | other) ;; *) die 1 "--kind must be merge, review, decision, credential or other" ;; esac
+    case "$kind" in "" | merge | review | decision | credential | report | other) ;; *) die 1 "--kind must be merge, review, decision, credential, report or other" ;; esac
+    priority="${priority#[Pp]}"
+    case "$priority" in "" | 0 | 1 | 2 | 3 | 4) ;; *) die 1 "--priority must be 0 to 4 (0 highest)" ;; esac
+    # A report is read, not done: it sorts below the work a human has to do.
+    [ "$kind" != report ] || [ -n "$priority" ] || priority=3
     # Without --kind, the first whole word "merge" or "review" in the title
     # (any case, anywhere: "Merge: widget #13", "Please review ...") makes it one.
     if [ -z "$kind" ]; then
@@ -161,12 +170,14 @@ case "$cmd" in
     [ -n "$kind" ] && args+=(--labels "inbox:$kind")
     [ -n "$repo" ] && args+=(--labels "repo:$repo")
     [ -n "$description" ] && args+=(--description "$description")
+    [ -n "$priority" ] && args+=(--priority "$priority")
     [ -n "$url" ] && args+=(--external-ref "$url")
     [ -n "$blocks" ] && args+=(--deps "blocks:$blocks")
     out=$(bd "${args[@]}" --json 2>&1) || die 3 "bd create failed: $out"
     id=$(jq -r '(.data? // .) | if type == "array" then .[0] else . end | .id' <<<"$out")
-    jq -n --arg id "$id" --arg to "$human" --arg from "$from" --arg url "$url" --arg blocks "$blocks" --arg kind "$kind" --arg repo "$repo" \
+    jq -n --arg id "$id" --arg to "$human" --arg from "$from" --arg url "$url" --arg blocks "$blocks" --arg kind "$kind" --arg repo "$repo" --arg priority "$priority" \
       '{id: $id, to: $to, askedBy: $from, kind: (if $kind == "" then null else $kind end),
+        priority: (if $priority == "" then null else ($priority | tonumber) end),
         repo: (if $repo == "" then null else $repo end),
         url: (if $url == "" then null else $url end), blocks: (if $blocks == "" then null else $blocks end)}'
     ;;
@@ -244,8 +255,10 @@ case "$cmd" in
     inbox_of() {
       local c="$1" role="$2" out beads notes msg
       if out=$(bd ready --assignee "$c" --json 2>/dev/null) && beads=$(jq -c "$short"'
-        (.data? // .) | map(select(.issue_type != "epic")) | sort_by(.priority)
-        | map({id, title, askedBy: (.created_by // null), priority,
+        (.data? // .) | map(select(.issue_type != "epic"))
+        | map(. + {kind: ([(.labels // [])[] | select(startswith("inbox:")) | ltrimstr("inbox:")][0] // null)})
+        | sort_by([(.kind == "report"), .priority])
+        | map({id, title, kind, askedBy: (.created_by // null), priority,
                ref: (if (.external_ref // "") == "" then null else {short: (.external_ref | short), url: .external_ref} end),
                unblocks: (.dependent_count // 0)})' <<<"$out" 2>/dev/null) && [ -n "$beads" ]; then :; else
         msg=$(bd ready --assignee "$c" --json 2>&1 | head -1)

@@ -112,7 +112,19 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    bead, even when your own bead is about the same change. When you report it, name the pull
    request by its short form as a Markdown link, such as
    `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`.
-3. **Tell them things** that need no action with a note instead of a bead: it waits in their
+3. **Give them something to read,** such as a weekly report or a milestone that moved, as a
+   report: a bead labelled `inbox:report`, priority 3 unless you pass `--priority`, with no
+   `--url` or repository needed. It stays in their inbox, listed after the merges, reviews and
+   decisions, until the human closes it:
+
+   ```bash
+   bash scripts/inbox.sh assign --from <your command> --to default --kind report \
+     --title "<what it reports>" --description "<the report>"
+   ```
+
+   `--priority <0-4>` sets any inbox bead's priority (0 highest); without it, a bead other than
+   a report keeps bd's default, 2.
+4. **Tell them things** that need no action with a note instead of a bead: it waits in their
    inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
 
    ```bash
@@ -122,7 +134,7 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    Name anything on the web by its short form as a Markdown link, such as
    `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`, never a bare `#12` or
    a bare URL.
-4. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
+5. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
    once the human closes theirs.
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
