@@ -1,0 +1,5 @@
+---
+"@eyelock-assistants/wheelhouse": minor
+---
+
+A `patrol` skill. Its `scripts/patrol.sh` reads a Wheelhouse's repositories (from `--repo`, `$WHEELHOUSE_REPOS`, or the constitution's "What it reaches") with `gh`: recent pull requests and issues, the CI on each open pull request, and the default branch's CI. It compares them with the last patrol's snapshot (`.wheelhouse/patrol.json`, ignored by git, or `--snapshot`), and prints only the changes as JSON: merged (by merge commit or squash), closed, reopened, draft or ready, retargeted, `DIRTY`, new, issues opened, closed or reopened, and CI red or green again. It prints `[]` when nothing changed, and `--dry-run` peeks without saving, so a seat on a 5-minute timer (a background watch, cron or launchd, or a scheduled routine) is woken only for news. A repository `gh` can't read is an `error`, exit 3, with its last snapshot kept. `create-wheelhouse` copies the script into `scripts/`. The CI watcher starter role now reports every pull request and issue change to the desk, so the humans never announce merges; its patrol focus runs the script and acts only on a non-empty list; and it asks how it runs every 5 minutes.
