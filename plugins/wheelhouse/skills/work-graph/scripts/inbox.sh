@@ -35,13 +35,16 @@ Common: --dir <wheelhouse repo> (default: the current directory).
 
 assign    Creates a bead assigned to a human (--to, default: the default human),
           as the seat that asked (--from, default: $BEADS_ACTOR). --url is kept
-          as the bead's external_ref; a merge or review (--kind, or a title
-          starting "Merge" or "Review") is refused without one. --blocks makes
-          the given bead wait on this one.
+          as the bead's external_ref; a merge or review is refused without
+          one. --kind says which it is; without --kind, a title with the word
+          "merge" or "review" in it (any case, anywhere) is taken as one.
+          --blocks makes the given bead wait on this one.
 note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
 register  Adds a person to the roster's humans: name, command (the name in
-          lowercase), pronouns (they/them unless given) and email (git config
-          user.email unless given). Leaves the roster uncommitted.
+          lowercase; given or derived, a command is lowercase ASCII,
+          [a-z0-9][a-z0-9-]*), pronouns (they/them unless given) and email
+          (git config user.email unless given; matched ignoring case). Leaves
+          the roster uncommitted.
 show      Prints {you, unknown, humans: [{name, command, role: you|anyone,
           beads: [{id, title, askedBy, ref: {short, url}, unblocks}], notes:
           [{memoryId, content}]}], errors, empty, relay (what to do with it)}. The human at the desk is matched by --email,
@@ -122,15 +125,19 @@ case "$cmd" in
     check_from
     human=$(resolve_to "$to") || exit $?
     case "$kind" in "" | merge | review | decision | credential | other) ;; *) die 1 "--kind must be merge, review, decision, credential or other" ;; esac
-    lower=$(tr '[:upper:]' '[:lower:]' <<<"$title")
-    case "$lower" in merge\ * | review\ *) [ -n "$kind" ] || kind="${lower%% *}" ;; esac
+    # Without --kind, the first whole word "merge" or "review" in the title
+    # (any case, anywhere: "Merge: widget #13", "Please review ...") makes it one.
+    if [ -z "$kind" ]; then
+      kind=$(tr '[:upper:]' '[:lower:]' <<<"$title" | grep -oE '(^|[^a-z0-9])(merge|review)([^a-z0-9]|$)' | head -1 | tr -cd 'a-z')
+    fi
     if [ -z "$url" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --url: the pull request it is about, so the human can open it"
     fi
     if [ -n "$blocks" ]; then
       bd show "$blocks" --json >/dev/null 2>&1 || die 1 "no bead $blocks to block"
     fi
-    args=(create "$title" --actor "$from" --assignee "$human" --labels inbox)
+    # --title, never positional, so a title starting with "-" is not a flag.
+    args=(create --title "$title" --actor "$from" --assignee "$human" --labels inbox)
     [ -n "$kind" ] && args+=(--labels "inbox:$kind")
     [ -n "$description" ] && args+=(--description "$description")
     [ -n "$url" ] && args+=(--external-ref "$url")
@@ -160,6 +167,10 @@ case "$cmd" in
     [ -n "$name" ] || die 1 "register needs --name"
     [ -n "$command" ] || command=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
     [ -n "$command" ] || die 1 "can't make a command from $name: pass --command"
+    # The roster's rule: lowercase ASCII, starting with a letter or digit. The
+    # command names an ynm namespace (human/<command>), so nothing else gets in.
+    [[ "$command" =~ ^[a-z0-9][a-z0-9-]*$ ]] ||
+      die 1 "$command is not a command: use lowercase ASCII letters, digits and '-', starting with a letter or digit (pass --command)"
     if [ -z "$email" ]; then
       need git
       email=$(git config user.email 2>/dev/null || true)
@@ -171,11 +182,11 @@ case "$cmd" in
     existing=$(jq -c --arg c "$command" '[(.humans // [])[] | select(.command == $c)][0] // empty' "$roster")
     if [ -n "$existing" ]; then
       [ "$(jq -r '.default // false' <<<"$existing")" != true ] || die 1 "$command is the default human: a person registers under their own name"
-      [ "$(jq -r '.email // ""' <<<"$existing")" = "$email" ] || die 1 "$command is already a human in the roster, with another email"
+      jq -e --arg e "$email" '(.email // "" | ascii_downcase) == ($e | ascii_downcase)' <<<"$existing" >/dev/null || die 1 "$command is already a human in the roster, with another email"
       jq -c '{registered: false, already: true, human: .}' <<<"$existing"
       exit 0
     fi
-    other=$(jq -r --arg e "$email" '[(.humans // [])[] | select(.email == $e)][0].command // empty' "$roster")
+    other=$(jq -r --arg e "$email" '[(.humans // [])[] | select(.email != null and (.email | ascii_downcase) == ($e | ascii_downcase))][0].command // empty' "$roster")
     [ -z "$other" ] || die 1 "$email is already registered, as $other"
     human=$(jq -nc --arg n "$name" --arg c "$command" --arg e "$email" --arg p "$pronouns" \
       '{name: $n, command: $c, email: $e, pronouns: $p}')
