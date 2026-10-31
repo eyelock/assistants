@@ -143,15 +143,15 @@ if [ "$group" = desk ]; then
   if [ -z "$inboxsh" ]; then
     inbox='{"error": "no inbox.sh beside wake.sh: copy it from the work-graph skill into scripts/"}'
   else
-    errfile=$(mktemp 2>/dev/null || echo "/tmp/wake-inbox.$$")
-    shown=$(bash "$inboxsh" show --dir . 2>"$errfile")
+    # No temp file for its errors: a sandboxed seat may not write outside the
+    # repository. On failure, run it again for the first line of its stderr.
+    shown=$(bash "$inboxsh" show --dir . 2>/dev/null)
     if [ -n "$shown" ] && jq -e . >/dev/null 2>&1 <<<"$shown"; then
       inbox=$(jq -c . <<<"$shown")
     else
-      err=$(head -1 "$errfile")
+      err=$(bash "$inboxsh" show --dir . 2>&1 >/dev/null | head -1)
       inbox=$(jq -nc --arg e "${err:-inbox.sh show failed}" '{error: $e}')
     fi
-    rm -f "$errfile"
   fi
 fi
 
@@ -196,7 +196,7 @@ jq -r '
              (if (.beads | length) > 0 then (.beads | map(bead) | join("\n")) + "\n" else empty end),
              (if (.notes | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
            end)),
-        "Relay this to the human first, before anything else, naming each pull request or page by its short form as a Markdown link. Once a note is relayed, retire it so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
+        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
       end),
      (if .inbox.unknown then "You haven'"'"'t said who you are at this desk. Say \"it'"'"'s me, <name>\" to get your own inbox.\n" else empty end)
    end),

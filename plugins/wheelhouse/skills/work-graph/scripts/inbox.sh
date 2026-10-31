@@ -43,7 +43,7 @@ register  Adds a person to the roster's humans: name, command (the name in
           user.email unless given). Leaves the roster uncommitted.
 show      Prints {you, unknown, humans: [{name, command, role: you|anyone,
           beads: [{id, title, askedBy, ref: {short, url}, unblocks}], notes:
-          [{memoryId, content}]}]}. The human at the desk is matched by --email,
+          [{memoryId, content}]}], empty, relay (what to do with it)}. The human at the desk is matched by --email,
           else $WHEELHOUSE_HUMAN_EMAIL, else git config user.email.
 EOF
 }
@@ -216,8 +216,10 @@ case "$cmd" in
     humans=$(jq -c --argjson h "$(inbox_of "$dflt" anyone)" '. + [$h]' <<<"$humans")
     yours='null'
     [ -n "$you" ] && yours=$(jq -c --arg c "$you" '[.humans[] | select(.command == $c)][0] | {name, command}' "$roster")
-    jq -n --argjson you "$yours" --argjson humans "$humans" --arg email "$email" \
+    # One line, so a reader that keeps only the head of the output keeps it all.
+    jq -nc --argjson you "$yours" --argjson humans "$humans" --arg email "$email" \
       '{you: $you, unknown: ($you == null), email: (if $email == "" then null else $email end), humans: $humans,
-        empty: ($humans | all((.beads | length) == 0 and (.notes | length) == 0))}'
+        empty: ($humans | all((.beads | length) == 0 and (.notes | length) == 0)),
+        relay: "Relay this to the human first. Retire each note you relay, in the same turn: ynm forget --memory-id <its memoryId> --reason relayed. Leave the beads to the human."}'
     ;;
 esac

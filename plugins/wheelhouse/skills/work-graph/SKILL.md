@@ -104,7 +104,9 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
 
    It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
    or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. A merge
-   gets its own small bead, even when your own bead is about the same change.
+   gets its own small bead, even when your own bead is about the same change. When you report it,
+   name the pull request by its short form as a Markdown link, such as
+   `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`.
 3. **Tell them things** that need no action with a note instead of a bead: it waits in their
    inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
 

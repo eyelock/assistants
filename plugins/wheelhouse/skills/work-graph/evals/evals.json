@@ -273,7 +273,7 @@
         "The merge is named by its short form as a Markdown link to https://github.com/example/widget/pull/12, such as [widget #12](https://github.com/example/widget/pull/12)",
         "The reply says the merge unblocks one bead (or the changelog)",
         "The reply includes anderson's note that McCoist is off until Monday",
-        "Nothing was changed: the evidence shows the same beads, open, with the same assignees"
+        "No bead was changed: the evidence shows the same beads, open, with the same assignees (retiring the relayed note with ynm forget is fine)"
       ]
     },
     {
@@ -300,10 +300,10 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so its own changelog bead waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
+      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so the work it holds up (dalglish's changelog bead, or the tag that waits on it) waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
       "assertions": [
         "In the evidence, a bead about merging the pull request is assigned to rook, with created_by dalglish and external_ref https://github.com/example/widget/pull/12",
-        "In the evidence, \"Write the ynh 0.13 changelog\" waits on that merge bead",
+        "In the evidence, the bead the merge holds up waits on the merge bead: \"Write the ynh 0.13 changelog\" (dalglish's own bead) or \"Tag and push ynh v0.13.0\" (which the prompt says waits on it)",
         "The stubbed calls include no gh pr merge",
         "No bead is assigned to a name that is neither a seat nor a human in the roster",
         "The reply names the pull request by its short form as a Markdown link, not as a bare #12 or a bare URL"

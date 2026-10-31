@@ -275,6 +275,7 @@ inbox_wheelhouse() {
   local email="$1" registered="${2:-}"
   team_wheelhouse
   git config user.email "$email"
+  git config user.name "Pat Example"
   cat >> AGENTS.md <<'MD'
 
 ## Asking a human
@@ -282,6 +283,17 @@ inbox_wheelhouse() {
 Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign
 them a bead, the default human unless you know who; tell them things with an inbox note; never
 wait silently. The inbox script is `bash scripts/inbox.sh` (see `--help`).
+
+## Naming things
+
+Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests
+and issues):
+- Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form,
+  always as a link: `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12`
+  or a bare URL.
+- Give a local path in full: `/Users/pat/src/hq/AGENTS.md`, almost never a relative one, which
+  hides which checkout or worktree you mean. Code and config keep their portable relative paths;
+  this is about what you write for people.
 
 ## The desk
 
