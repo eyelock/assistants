@@ -21,7 +21,7 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 Most Wheelhouses need the same first seats. Each is a template, one Markdown file per role, in
 this skill's `assets/starter-team/`: `designer`, `reviewer`, `dispatcher`, `ci-watcher`,
 `releaser`, `programme-manager` (optional), `worker` and `specialist-worker` (optional). A file's
-frontmatter gives its `order`, `group`, `focus` and who seats it (`seated-by`); its body gives the
+frontmatter gives its `order`, `group`, `focus`, `model` (its tier) and who seats it (`seated-by`); its body gives the
 mandate, what the seat may and may not do, the focus prompt, and under `## Ask`, the questions to
 ask before seating it. A role with more than one standing order lists its focuses
 (`focus: [sweep, report]`), each with its prompt under `**Focus prompts:**`: the seat gets one
@@ -96,6 +96,36 @@ seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and
 - **Keep a general-purpose worker.** Specialists hand their overflow to one, and it takes beads
   no specialist covers. When you seat a specialist and the Wheelhouse has no
   general-purpose worker, say so and offer to seat one.
+
+## Choosing the model
+
+Every seat starts on a model, chosen by what it does: judgement, design and review get the
+stronger model; watching, releasing and building get the cheaper one. The roster says so in a
+vendor-agnostic way, so the Wheelhouse is not tied to one vendor's model names:
+
+- A seat's `model` is a **tier**: `fast`, `balanced` or `deep`. A starter-team template carries
+  its tier (workers, specialist workers, CI watchers and releasers `fast`; designers, reviewers
+  and dispatchers `deep`); copy it to the roster seat, and ask only when you can't tell.
+- A seat's optional `models` overrides the tier per vendor: `"models": {"claude": "haiku"}`.
+- The roster's `models.tiers` says which model each tier is on each vendor, and `models.groups`
+  gives each group a default tier for a seat with none, `desk` included. Without `tiers`, the
+  plugin's own table applies (`fast` and `balanced` are `sonnet` and `deep` is `opus` on
+  `claude`); add `models.tiers` to change it for a vendor.
+
+```json
+"models": {
+  "groups": { "desk": "deep", "crew": "deep", "standing": "fast", "workers": "fast" },
+  "tiers": { "deep": { "claude": "opus", "codex": "<model>" } }
+}
+```
+
+`scripts/model.sh --seat <command> [--vendor <vendor>] [--format value|flag|json]` (in this
+skill's folder, run from the Wheelhouse root or with `--dir`) resolves a seat's model, and
+exits 4 when there is none. **Launch with it:** pass `$(model.sh --seat <command> --format flag)`
+(`--model=sonnet`) when starting a seat from a launcher, and its `value` as the Agent tool's
+`model` parameter when waking it as a subagent. ynh's `plugin.json` has no field for a launch
+model, so the roster is where it is declared, and the launcher or the Agent call is where it is
+applied. The `doctor` warns about a seat with no model.
 
 ## 2. Name it
 
@@ -203,7 +233,7 @@ with; a standing role or a worker hands it back to the desk.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate; `seated-by`, the command of the seat seating it (or `human` when you aren't in
+   path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, the command of the seat seating it (or `human` when you aren't in
    a seat, or the human wrote every word); `role` when it was seated from a starter-team template;
    and `specialities` for a specialist worker.
 4. Check the Wheelhouse with the `doctor` skill.
@@ -217,9 +247,10 @@ seat's birth belongs to whoever works with it. The dispatcher wakes each worker 
 is installed: `ynh install harnesses/<command>`, then
 `<command> <flags> -- "This is your first session in <wheelhouse>. You were seated by <your command>."`,
 as its own session. Nobody is there to approve what a birth does, so `<flags>` are the ones
-you were given for starting seats (such as `--model` and `--permission-mode`): without them its
-memory writes are refused, and it can't save who it is. If you weren't given any, ask for them
-before you wake anyone. Leave the birth
+you were given for starting seats (such as `--permission-mode`): without them its memory writes
+are refused, and it can't save who it is. If you weren't given any, ask for them before you wake
+anyone. Add the model from the roster (`--model=<model>`, from `model.sh`), never one copied
+from another seat. Leave the birth
 of a crew or standing seat to the human, who works with it directly and meets it themselves: install
 it, but don't start it.
 

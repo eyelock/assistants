@@ -198,6 +198,21 @@ if [ -f "$roster" ]; then
   else
     add "workspace folders" true info "every folder a seat asks for exists; granting them is the human's (ynh trust accept, or workspace_roots)"
   fi
+  # Every seat starts on a model: its own tier, or its group's default, that maps to a model
+  # (the same resolution as the add-seat skill's model.sh, for the claude vendor).
+  nomodel=$(jq -r '
+    . as $root
+    | ({fast: {claude: "sonnet"}, balanced: {claude: "sonnet"}, deep: {claude: "opus"}} * ($root.models.tiers // {})) as $tiers
+    | [.seats[] | . as $s
+        | ($s.model // ($root.models.groups // {})[$s.group]) as $tier
+        | select(($s.models.claude // (if $tier then $tiers[$tier].claude else null end)) == null)
+        | .command] | join(" ")' "$roster" 2>/dev/null)
+  if [ -n "$nomodel" ]; then
+    add "seat models" false warn "seats with no model, so they start on whatever the launcher defaults to: $nomodel" \
+      "give each seat a \"model\" tier (fast, balanced or deep) in the roster, or its group a default in \"models\": {\"groups\": {...}} (the add-seat skill)"
+  else
+    add "seat models" true info "every seat has a model"
+  fi
   # Specialist workers hand their overflow to a general-purpose worker.
   specialists=$(jq -r '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) > 0) | .command] | join(" ")' "$roster" 2>/dev/null)
   general=$(jq '[.seats[] | select(.group == "workers" and ((.specialities // []) | length) == 0)] | length' "$roster" 2>/dev/null)
