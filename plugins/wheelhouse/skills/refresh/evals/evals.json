@@ -1,0 +1,52 @@
+{
+  "skill_name": "refresh",
+  "evals": [
+    {
+      "id": 1,
+      "name": "refresh-one-seat",
+      "prompt": "I just pulled the Wheelhouse repository. Apply what changed.",
+      "setup": "../../evals/files/refresh-seat.sh",
+      "tools": ["Bash"],
+      "stubs": ["ynm"],
+      "evidence": "cat \"$EVAL_STUB_LOG\"",
+      "expected_output": "Runs scripts/refresh.sh over the last commit's diff, which reinstalls only wick (ynh install harnesses/wick), and reports that wick is the seat to restart. It reinstalls nothing else and tells the human nothing needs trusting.",
+      "assertions": [
+        "The stub log shows ynh install harnesses/wick",
+        "The stub log shows no ynh install for hq, eno or the desk (no ynh install . and no ynh install harnesses/eno)",
+        "The reply names wick as the seat to restart, and no other seat",
+        "The reply does not say anything needs trusting"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "refresh-workspace-trust",
+      "prompt": "I just pulled the Wheelhouse repository. Apply what changed.",
+      "setup": "../../evals/files/refresh-workspace.sh",
+      "tools": ["Bash"],
+      "stubs": ["ynm"],
+      "evidence": "cat \"$EVAL_STUB_LOG\"",
+      "expected_output": "Reinstalls wick, tells the human to run ynh trust accept local/wick themselves (it never runs it), and says every seat needs a restart because a script changed.",
+      "assertions": [
+        "The stub log shows ynh install harnesses/wick",
+        "The reply gives ynh trust accept local/wick (not the bare seat name) as a command for the human to run",
+        "The stub log has no ynh trust call",
+        "The reply says every seat (hq, eno and wick) needs a restart because scripts/wake.sh changed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "refresh-docs-only",
+      "prompt": "I just pulled the Wheelhouse repository. Apply what changed.",
+      "setup": "../../evals/files/refresh-docs.sh",
+      "tools": ["Bash"],
+      "stubs": ["ynm"],
+      "evidence": "cat \"$EVAL_STUB_LOG\"",
+      "expected_output": "Says the pull changed only documentation, so nothing needs reinstalling, trusting or restarting, and runs no ynh install.",
+      "assertions": [
+        "The stub log shows no ynh install",
+        "The reply says nothing needs reinstalling, trusting or restarting",
+        "The reply does not invent work the diff did not need"
+      ]
+    }
+  ]
+}

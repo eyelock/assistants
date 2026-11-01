@@ -252,15 +252,19 @@ the files it finds, and would commit the human's.
 1. Add any first seats the human named with the `add-seat` skill. Each seat's first session is its
    birth (the `birth` skill), where it writes who it is: leave that to the seat.
 2. Run the `doctor` skill and fix what it reports, asking first as it says.
+3. Tell the human the desk applies merged changes with the `refresh` skill after they pull: it
+   reinstalls the seats the diff touches, prints each `ynh trust accept local/<seat>` for them to run (it asks ynh which seats are no longer trusted), and
+   lists the seats to restart. It is the desk's alone; no other seat is told to run it.
 
 Don't add a remote, push or publish unless asked.
 
 ## 6. Report
 
 Seats ask for their repositories' folders (`workspace`), and ynh grants them only when the human
-says so, in one of two ways. Explain both and leave the choice to them: `ynh trust accept <command>`
-for each seat, after `ynh trust show <command>` lists what it asks for, which they repeat whenever a
-seat's folders change; or `workspace_roots` in their own `~/.ynh/config.json`, naming the folder
+says so, in one of two ways. Explain both and leave the choice to them: `ynh trust accept local/<command>`
+for each seat, after `ynh trust show local/<command>` lists what it asks for, which they repeat whenever
+anything the digest covers changes (a seat's folders, sensors, hooks, MCP servers in any profile, launch
+focus or delegate focuses); or `workspace_roots` in their own `~/.ynh/config.json`, naming the folder
 the repositories live in, which grants any local harness's folders under it from then on. Never
 edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 

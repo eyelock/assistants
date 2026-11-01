@@ -1,0 +1,26 @@
+[
+  {
+    "query": "I just pulled the Wheelhouse repository: apply whatever changed",
+    "should_trigger": true
+  },
+  {
+    "query": "Reni says three pull requests merged to the Wheelhouse repo, so reinstall what needs it",
+    "should_trigger": true
+  },
+  {
+    "query": "which seats do I need to restart after the pull, and do I have to trust anything?",
+    "should_trigger": true
+  },
+  {
+    "query": "is the Wheelhouse set up right? run the doctor",
+    "should_trigger": false
+  },
+  {
+    "query": "pull the latest changes for the api repository and fix the merge conflict",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new worker seat called Dalglish",
+    "should_trigger": false
+  }
+]

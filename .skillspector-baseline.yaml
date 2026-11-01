@@ -210,6 +210,11 @@ rules:
     path: "plugins/wheelhouse/skills/create-wheelhouse/SKILL.md"
     reason: "Creating a Wheelhouse writes its roster skill (skills/roster) into the new repository."
 
+  - id: "AE1"
+    path: "plugins/wheelhouse/skills/refresh/SKILL.md"
+    message: "*scripts/refresh.sh*"
+    reason: "static_parse_limit on the skill's own shell script. It reads git diff and ynh's listing, runs ynh install for the seats the diff touches, prints ynh trust accept for the human and never runs it, and copies plugin scripts only with --update."
+
   # --- dev and tech skills ----------------------------------------------------------------
 
   - id: "AS3"
