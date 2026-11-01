@@ -34,7 +34,7 @@ just moved. After anything else that moved `ORIG_HEAD` since the pull, give the 
 | `harnesses/<seat>/...` | `ynh install harnesses/<seat>` |
 | the root `AGENTS.md`, the root `.agents/harness/plugin.json`, `skills/roster/...` | `ynh install .` and every seat (they include `../..`) |
 | another `skills/<name>/...` | `ynh install .`, and each seat whose `../..` include picks that skill |
-| a change to a harness's sensors, hooks, MCP servers, workspace, launch focus or delegate focuses in its `plugin.json`, or a seat ynh lists as `changed` or `unreviewed` after the installs | **printed** `ynh trust accept local/<seat>`, never run |
+| a change to a harness's workspace, sensors, hooks or MCP servers (top level or in any profile), launch focus (its name, and the profile and prompt of that entry in `focuses`) or `delegates_to` entries in its `plugin.json`, or a seat ynh lists as `changed` or `unreviewed` after the installs | **printed** `ynh trust accept local/<seat>`, never run |
 | `scripts/...` | a restart of every seat: hooks run the scripts from disk, and a running session keeps the old ones |
 | anything else, such as `docs/` or a `pinned-skills.md` | nothing |
 
@@ -44,7 +44,13 @@ Trust is asked of ynh, not inferred: after the installs (and any `--update`) it 
 `ynh trust ls --format json` and lists every roster seat whose state is `changed` or `unreviewed`,
 whatever the cause, including a wheelhouse plugin update that changed a hook. The diff's changes to
 those fields are listed too, because a `--dry-run` installs nothing and so can't see the state
-afterwards; it says so in `notes`.
+afterwards; it says so in `notes`. The prompt of a delegate's focus lives in the delegate's own
+harness, so only ynh's listing sees it change.
+
+A seat ynh lists as `unavailable` (what it runs could not be read in full, usually an include that
+isn't cached) is reported in `notes` with the problems ynh gives. It loses its workspace folders, and
+`ynh trust accept` does not fix it: `ynh update local/<seat>` fetches the include, and then refresh
+is run again.
 
 ## With no diff
 

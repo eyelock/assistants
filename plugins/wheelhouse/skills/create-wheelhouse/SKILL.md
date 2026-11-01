@@ -262,8 +262,9 @@ Don't add a remote, push or publish unless asked.
 
 Seats ask for their repositories' folders (`workspace`), and ynh grants them only when the human
 says so, in one of two ways. Explain both and leave the choice to them: `ynh trust accept local/<command>`
-for each seat, after `ynh trust show local/<command>` lists what it asks for, which they repeat whenever a
-seat's folders change; or `workspace_roots` in their own `~/.ynh/config.json`, naming the folder
+for each seat, after `ynh trust show local/<command>` lists what it asks for, which they repeat whenever
+anything the digest covers changes (a seat's folders, sensors, hooks, MCP servers in any profile, launch
+focus or delegate focuses); or `workspace_roots` in their own `~/.ynh/config.json`, naming the folder
 the repositories live in, which grants any local harness's folders under it from then on. Never
 edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 

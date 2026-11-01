@@ -19,8 +19,8 @@
 # offers `ynh update`; --update runs it, then re-copies the plugin scripts the
 # Wheelhouse already carries in scripts/ when they differ.
 #
-# Trust: ynh's digest covers a harness's sensors, hooks, MCP servers, workspace,
-# launch focus and delegate focuses, and a seat whose digest changed or was never
+# Trust: ynh's digest covers a harness's sensors, hooks and MCP servers (top level and every
+# profile), workspace, launch focus (with its prompt) and delegates_to focuses, and a seat whose digest changed or was never
 # accepted loses its workspace folders until the human accepts again. So after
 # the installs and updates it asks ynh (`ynh trust ls --format json`) and prints
 # `ynh trust accept local/<seat>` for each roster seat that is `changed` or
@@ -119,9 +119,16 @@ seat_picks() {
   [ -f "$f" ] || return 1
   jq -e --arg s "$2" '[.includes[]? | select(.git == "../..") | (if .pick then (.pick | index($s) != null) else true end)] | any' "$f" >/dev/null 2>&1
 }
-# What ynh's trust digest covers in a plugin.json (workspace, sensors, hooks, MCP servers, launch and delegate focuses).
+# What ynh's trust digest covers in a plugin.json (ynh cmd/ynh/trust.go): workspace; sensors, hooks and
+# MCP servers at the top level and in every profile; the launch focus (its name, and the profile and
+# prompt of that entry in focuses); and each delegates_to entry with the focus it selects. The prompt
+# of a delegate's focus lives in the delegate's own harness, so only the entry shows in this diff.
 trust_of() {
-  git -C "$dir" show "$1:$2" 2>/dev/null | jq -cS '{workspace, sensors, hooks, mcp_servers, launch_focus, delegates: [.delegates[]? | {git, path, focus}]}' 2>/dev/null || echo "null"
+  git -C "$dir" show "$1:$2" 2>/dev/null | jq -cS '{
+    workspace, sensors, hooks, mcp_servers, launch_focus,
+    launch_focus_entry: (if .launch_focus then (.focuses[.launch_focus] // null) else null end),
+    profiles: ((.profiles // {}) | map_values({hooks, mcp_servers, sensors} | with_entries(select(.value != null))) | with_entries(select(.value != {}))),
+    delegates_to: [.delegates_to[]? | {git, ref, path, profile, focus}]}' 2>/dev/null || echo "null"
 }
 # A harness new in the range has no earlier digest to differ from: ynh's own listing reports it.
 trust_changed() { local o; o=$(trust_of "$from" "$1"); [ "$o" != "null" ] && [ "$o" != "$(trust_of "$to" "$1")" ]; }
@@ -274,7 +281,12 @@ if [ "$ynh_ok" = 1 ]; then
     for s in $desk $seats; do
       [ -n "$s" ] || continue
       st=$(jq -r --arg id "local/$s" '[.[] | select(.harness == $id) | .state][0] // empty' <<<"$tl")
-      case "$st" in changed | unreviewed) trust="$trust$s"$'\n' ;; esac
+      case "$st" in
+        changed | unreviewed) trust="$trust$s"$'\n' ;;
+        unavailable)
+          why=$(jq -r --arg id "local/$s" '[.[] | select(.harness == $id) | (.problems // [])[]] | join("; ")' <<<"$tl")
+          note "local/$s is unavailable to ynh trust: what it runs could not be read in full${why:+ ($why)}. It gets none of its workspace folders, and ynh trust accept does not fix it: ynh update local/$s fetches the missing include (then run refresh again)" ;;
+      esac
     done
     [ "$dry" = 1 ] && [ "$(jq length <<<"$planned")" -gt 0 ] && note "dry run: trust was read before the installs, so a seat they would change is not listed"
   else

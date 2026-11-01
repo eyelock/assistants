@@ -228,6 +228,64 @@ test("a hook, MCP server, sensor or launch focus change prints a trust instructi
   }
 });
 
+test("a hook in a profile, a changed launch focus prompt and a delegates_to focus change each print a trust instruction; delegates and unrelated profile text do not", () => {
+  const base = {
+    launch_focus: "wake",
+    focuses: { wake: { prompt: "wake up" } },
+    profiles: { ci: { hooks: { before_tool: [{ command: "echo a" }] }, description: "words" } },
+    delegates_to: [{ git: "https://example.com/d", focus: "review" }],
+  };
+  const w = wheelhouse();
+  try {
+    w.change((put) => {
+      for (const c of ["eno", "wick", "dree"]) put(`harnesses/${c}/.agents/harness/plugin.json`, manifest(c, base));
+    });
+    // The first change only gave eno, wick and dree these fields (dree is new in no sense: it existed).
+    w.change((put) => {
+      put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { ...base, profiles: { ci: { hooks: { before_tool: [{ command: "echo b" }] } } } }));
+      put("harnesses/wick/.agents/harness/plugin.json", manifest("wick", { ...base, focuses: { wake: { prompt: "wake up, now" } } }));
+      put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { ...base, delegates_to: [{ git: "https://example.com/d", focus: "audit" }] }));
+      // Only profile text outside what the digest covers changes: not a trust change.
+      put(".agents/harness/plugin.json", manifest("hq", { workspace: ["../api"], profiles: { ci: { description: "other words" } } }));
+    });
+    const r = w.run(["HEAD~1..HEAD"]);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(r.json.trust, ["ynh trust accept local/dree", "ynh trust accept local/eno", "ynh trust accept local/wick"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("a profile description change alone is not a trust change", () => {
+  const w = wheelhouse();
+  try {
+    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a" } } })));
+    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "b" } } })));
+    const r = w.run(["HEAD~1..HEAD"]);
+    assert.deepEqual(r.json.trust, []);
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat ynh lists as unavailable is noted with its problems and what fixes it, and is not offered trust accept", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "trust.json"), JSON.stringify([...trustLs({ wick: "x" }).filter((t) => t.harness !== "local/wick"), { harness: "local/wick", state: "unavailable", problems: ["includes: not cached"] }]));
+    w.change((put) => put("docs/notes.md", "more\n"));
+    const r = w.run(diff);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(r.json.trust, []);
+    const n = r.json.notes.find((x) => x.includes("local/wick"));
+    assert.match(n, /unavailable/);
+    assert.match(n, /includes: not cached/);
+    assert.match(n, /ynh update local\/wick/);
+    assert.match(n, /trust accept does not fix/);
+  } finally {
+    w.done();
+  }
+});
+
 test("a seat ynh reports changed or unreviewed after the installs gets a trust instruction, even when the diff shows no cause", () => {
   const w = wheelhouse();
   try {
