@@ -80,7 +80,7 @@ test("the starter team puts workers and watchers on the cheaper tier, and design
     "ci-watcher": "fast",
     designer: "deep",
     dispatcher: "deep",
-    "programme-manager": "balanced",
+    "programme-manager": "deep",
     releaser: "fast",
     reviewer: "deep",
     "specialist-worker": "fast",

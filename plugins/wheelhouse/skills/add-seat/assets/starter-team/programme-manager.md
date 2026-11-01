@@ -1,7 +1,7 @@
 ---
 order: 55
 group: standing
-model: balanced
+model: deep
 focus: [sweep, report]
 seated-by: desk
 optional: true
