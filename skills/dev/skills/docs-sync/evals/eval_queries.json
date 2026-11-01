@@ -1,0 +1,15 @@
+[
+  { "query": "are the docs still in sync with the code on this branch?", "should_trigger": true },
+  {
+    "query": "before I open the PR, check the README, reference and help text match what changed",
+    "should_trigger": true
+  },
+  { "query": "check this PR for docs drift, including the PR description", "should_trigger": true },
+  {
+    "query": "the tutorial still mentions a bug we fixed, can you find any other stale docs",
+    "should_trigger": true
+  },
+  { "query": "write a README for this new project", "should_trigger": false },
+  { "query": "review this diff for bugs and security issues", "should_trigger": false },
+  { "query": "generate API docs from the TypeScript types", "should_trigger": false }
+]
