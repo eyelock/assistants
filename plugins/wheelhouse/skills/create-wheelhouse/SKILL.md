@@ -118,7 +118,9 @@ the files it finds, and would commit the human's.
    with options, never as a list in prose. When a person
    names themselves at the desk ("it's me, <name>"), it registers them as a human with
    `bash scripts/inbox.sh register`, so its wake shows their own inbox from then on, and seats can
-   assign work to them.
+   assign work to them. It starts every seat on the model the roster gives it: the Agent tool's
+   `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
+   both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:
@@ -144,6 +146,9 @@ the files it finds, and would commit the human's.
        "standing": { "theme": "<theme>", "names": ["..."] }
      },
      "excluded": [],
+     "models": {
+       "groups": { "desk": "deep", "crew": "deep", "standing": "fast", "workers": "fast" }
+     },
      "seats": [
        { "name": "<Name>", "group": "desk", "command": "<name>", "harness": ".", "mandate": "<the desk's mandate>" }
      ],
@@ -154,6 +159,11 @@ the files it finds, and would commit the human's.
    ```
 
    The desk is the first seat: it wakes from the roster like the others.
+
+   `models` says which model each seat starts on, by tier (`fast`, `balanced`, `deep`), and the
+   `add-seat` skill explains it: a seat's `model` overrides its group's default, `models.tiers`
+   maps tiers to models per vendor, and the desk wakes its subagents with the Agent tool's
+   `model` parameter and starts launchers with `--model`, both from `scripts/model.sh`.
 
    `humans` holds the people who work with the Wheelhouse, beside `seats` and never in it: a
    human has `name`, `command` (the name in lowercase ASCII, which beads are assigned to),

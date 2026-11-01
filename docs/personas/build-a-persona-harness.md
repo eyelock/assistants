@@ -66,6 +66,7 @@ dev-quality
 dev-review
 dev-security
 dev-ui
+docs-sync
 gh-cli
 skill-creator
 

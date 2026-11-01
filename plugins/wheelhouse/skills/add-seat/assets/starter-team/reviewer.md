@@ -1,6 +1,7 @@
 ---
 order: 20
 group: crew
+model: deep
 focus: review
 seated-by: human
 ---
