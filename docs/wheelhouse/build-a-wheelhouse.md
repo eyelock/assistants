@@ -156,6 +156,7 @@ The tower Wheelhouse: the seats that build and release the widget tools.
    - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short form, always as a link: `[widget #12](https://github.com/example/widget/pull/12)`, never a bare `#12` or a bare URL.
    - Give a local path in full: `/Users/me/src/tower/AGENTS.md`, almost never a relative one, which hides which checkout or worktree you mean. Code and config keep their portable relative paths; this is about what you write for people.
 8. Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign them a bead, the default human unless you know who; tell them things with an inbox note; never wait silently.
+9. Never name a human in anything you post or write (pull requests, reviews, comments, beads, notes, docs, commits): write the next action impersonally ("Decision needed before merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you". Seats that talk to the humans follow the `comms` skill.
 
 ## Handing over work
 
@@ -170,7 +171,8 @@ every `bd` command that changes it. You seat the standing roles with the `add-se
 ask Anderson to seat workers. The human seats the crew. Asked to set up the team, walk the human
 through the starter team, role by role, with the `add-seat` skill. Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
-memory. When a person names themselves at the desk ("it's me, <name>"), register them as a human
+memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
+question tool, with options. When a person names themselves at the desk ("it's me, <name>"), register them as a human
 with `bash scripts/inbox.sh register --name <Name>`, so your wake shows their own inbox from then
 on, and seats can assign work to them.
 

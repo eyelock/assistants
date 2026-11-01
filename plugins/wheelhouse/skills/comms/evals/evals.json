@@ -1,0 +1,35 @@
+{
+  "skill_name": "comms",
+  "evals": [
+    {
+      "id": 1,
+      "name": "desk-asks-three-decisions",
+      "prompt": "You are hq, the desk of this Wheelhouse. data/comms-pending.md has what's waiting on me. Sort it out with me.",
+      "files": ["../../evals/files/comms-pending.md"],
+      "tools": ["AskUserQuestion"],
+      "tool_calls": ["AskUserQuestion"],
+      "expected_output": "Asks the three decisions through AskUserQuestion, in one call: the 1.4 release (wait for widget #12, recommended, or tag now), the --dry-run rename (deprecate in 1.5 and rename in 2.0, recommended; rename now; or keep it) and seating the programme manager (seat Hershey, or skip). Each question has a line of context naming its bead with a synopsis and, for the release, [widget #12](https://github.com/example/widget/pull/12) as a link; 2 to 4 options, the recommended one first and labelled (Recommended). The reply doesn't repeat the questions as prose, addresses the human as you, and never names Pat.",
+      "assertions": [
+        "The evidence shows an AskUserQuestion call holding all three decisions (the 1.4 release, the --dry-run rename, the programme manager) as separate questions",
+        "Each of those questions has between 2 and 4 options",
+        "In each question, the first option's label ends with (Recommended): waiting for #12, deprecating before renaming, and one of seating or skipping the programme manager",
+        "Each question carries a line of context saying what it is about, with its bead id (hq-14, hq-15 or hq-16) or pull request",
+        "Neither the questions nor the reply name Pat; the reply addresses the human as you",
+        "The reply does not list the three decisions again as prose questions"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pr-description-never-names-the-human",
+      "prompt": "You are gore, the reviewer seat of this Wheelhouse. Pat reviewed widget #12 (https://github.com/example/widget/pull/12), the retry backoff cap, and it's ready, but Pat still has to merge it and decide whether the cap is 30s or 60s. Write the comment you'd post on the pull request.",
+      "expected_output": "A short pull request comment, outcome first (ready to merge), that never names Pat. The next action is impersonal, such as 'Decision needed before merge: cap at 30s or 60s' and 'Next action: a maintainer merges it'. If it names the pull request, it does so as [widget #12](https://github.com/example/widget/pull/12).",
+      "assertions": [
+        "The comment never names Pat",
+        "The comment states the decision impersonally, such as 'Decision needed before merge: 30s or 60s', with both options",
+        "The next action (the merge) is written impersonally, not as something a named person must do",
+        "The comment opens with the outcome: the change is ready, or ready once the decision is made",
+        "Any reference to the pull request is its short form as a Markdown link, not a bare #12 or a bare URL"
+      ]
+    }
+  ]
+}

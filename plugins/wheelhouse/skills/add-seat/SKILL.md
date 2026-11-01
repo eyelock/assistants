@@ -214,6 +214,12 @@ requests and issues):
   relative one, which hides which checkout or worktree you mean. Code and config keep their
   portable relative paths; this is about what you write for people.
 
+**Never name a human** in anything you post or write (pull requests, reviews, comments, beads,
+notes, docs, commits): write the next action impersonally. In chat, call the human "you".
+<For a seat that talks to the humans, the crew: Talk to the humans as the `comms` skill says:
+decisions through the question tool, with options; a synopsis beside every bead id; the outcome
+first.>
+
 You act in the work graph as `<command>`: pass `--actor <command>` on every `bd` command that
 changes it.
 When something is outside your mandate, <where it goes>.

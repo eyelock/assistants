@@ -66,6 +66,10 @@ for (const skill of skills.filter(hasEvals)) {
         `${where}: has an expected_output`,
       );
       assert.ok(Array.isArray(c.assertions) && c.assertions.length > 0, `${where}: has assertions`);
+      // A tool whose calls the judge sees must be one the case grants.
+      for (const t of c.tool_calls ?? []) {
+        assert.ok((c.tools ?? []).includes(t), `${where}: tool_calls ${t} is granted in tools`);
+      }
       // A skill lives at <package>/skills/<name>; its fixtures stay in its package.
       const packageDir = resolve(ROOT, skill, "..", "..");
       for (const f of c.files ?? []) {
