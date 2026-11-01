@@ -256,6 +256,18 @@ test("a hook in a profile, a changed launch focus prompt and a delegates_to focu
   }
 });
 
+test("an include added to a profile prints a trust instruction", () => {
+  const w = wheelhouse();
+  try {
+    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a" } } })));
+    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a", includes: [{ git: "https://example.com/x" }] } } })));
+    const r = w.run(["HEAD~1..HEAD"]);
+    assert.deepEqual(r.json.trust, ["ynh trust accept local/eno"]);
+  } finally {
+    w.done();
+  }
+});
+
 test("a profile description change alone is not a trust change", () => {
   const w = wheelhouse();
   try {

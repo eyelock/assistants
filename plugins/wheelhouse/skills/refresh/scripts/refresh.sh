@@ -120,14 +120,16 @@ seat_picks() {
   jq -e --arg s "$2" '[.includes[]? | select(.git == "../..") | (if .pick then (.pick | index($s) != null) else true end)] | any' "$f" >/dev/null 2>&1
 }
 # What ynh's trust digest covers in a plugin.json (ynh cmd/ynh/trust.go): workspace; sensors, hooks and
-# MCP servers at the top level and in every profile; the launch focus (its name, and the profile and
+# MCP servers at the top level and in every profile (a profile's includes too: ynh appends them to the
+# harness's, so what they bring is digested); the launch focus (its name, and the profile and
 # prompt of that entry in focuses); and each delegates_to entry with the focus it selects. The prompt
-# of a delegate's focus lives in the delegate's own harness, so only the entry shows in this diff.
+# of a delegate's focus lives in the delegate's own harness, so only the entry shows in this diff. Nor does this diff show what an include brings in: that is
+# in the included harness, so a top-level include change is left to ynh trust ls.
 trust_of() {
   git -C "$dir" show "$1:$2" 2>/dev/null | jq -cS '{
     workspace, sensors, hooks, mcp_servers, launch_focus,
     launch_focus_entry: (if .launch_focus then (.focuses[.launch_focus] // null) else null end),
-    profiles: ((.profiles // {}) | map_values({hooks, mcp_servers, sensors} | with_entries(select(.value != null))) | with_entries(select(.value != {}))),
+    profiles: ((.profiles // {}) | map_values({hooks, mcp_servers, sensors, includes} | with_entries(select(.value != null))) | with_entries(select(.value != {}))),
     delegates_to: [.delegates_to[]? | {git, ref, path, profile, focus}]}' 2>/dev/null || echo "null"
 }
 # A harness new in the range has no earlier digest to differ from: ynh's own listing reports it.
