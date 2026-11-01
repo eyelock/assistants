@@ -252,6 +252,9 @@ the files it finds, and would commit the human's.
 1. Add any first seats the human named with the `add-seat` skill. Each seat's first session is its
    birth (the `birth` skill), where it writes who it is: leave that to the seat.
 2. Run the `doctor` skill and fix what it reports, asking first as it says.
+3. Tell the human the desk applies merged changes with the `refresh` skill after they pull: it
+   reinstalls the seats the diff touches, prints any `ynh trust accept` for them to run, and
+   lists the seats to restart. It is the desk's alone; no other seat is told to run it.
 
 Don't add a remote, push or publish unless asked.
 
