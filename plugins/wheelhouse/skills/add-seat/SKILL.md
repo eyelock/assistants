@@ -105,7 +105,7 @@ vendor-agnostic way, so the Wheelhouse is not tied to one vendor's model names:
 
 - A seat's `model` is a **tier**: `fast`, `balanced` or `deep`. A starter-team template carries
   its tier (workers, specialist workers, CI watchers and releasers `fast`; designers, reviewers
-  and dispatchers `deep`); copy it to the roster seat, and ask only when you can't tell.
+  and dispatchers `deep`; programme managers `balanced`); copy it to the roster seat, and ask only when you can't tell.
 - A seat's optional `models` overrides the tier per vendor: `"models": {"claude": "haiku"}`.
 - The roster's `models.tiers` says which model each tier is on each vendor, and `models.groups`
   gives each group a default tier for a seat with none, `desk` included. Without `tiers`, the
