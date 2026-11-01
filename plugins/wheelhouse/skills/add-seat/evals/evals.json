@@ -193,6 +193,23 @@
         "The reply does not offer the designer or reviewer again",
         "The evidence shows no new seat harness and the roster's seats unchanged"
       ]
+    },
+    {
+      "id": 12,
+      "name": "team-optional-programme-manager",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-programme.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The designer, reviewer, dispatcher, CI watcher and releaser are already seated, so the walk offers the next role, the programme manager: says it runs the roadmap on the issue tracker so issues close against versioned milestones, and reports to the humans; says it is optional; suggests the first unused standing name (Hershey); and asks whether to seat it. Seats nothing yet.",
+      "assertions": [
+        "The reply does not offer to seat a designer, reviewer, dispatcher, CI watcher or releaser again",
+        "The reply offers the programme manager next, saying it runs the roadmap (issues closing against milestones) and reports on it",
+        "The reply makes clear the programme manager is optional, for example by asking whether the Wheelhouse wants one, rather than assuming it",
+        "The reply suggests Hershey, the first unused name in the standing pool",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
     }
   ]
 }

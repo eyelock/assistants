@@ -21,6 +21,10 @@ sessions are days, seats are people. That is the other half of Yegge's idea, fro
 | Dredd | standing role | watches CI and files a bead for each failure |
 | Tharg | standing role | plans and cuts releases, and never publishes without you |
 
+The `add-seat` skill's starter team also offers an optional programme manager, a standing role
+that runs the roadmap on your issue tracker and sends you a weekly report through the inbox.
+This tutorial doesn't seat one.
+
 Building it by hand is how you learn what each part is for. Once you know, the `create-wheelhouse`
 skill does this for you, and `add-seat` adds the seats. The idea comes from Steve Yegge's
 [The Shape of Things to Come](https://yegge.ai/essays/the-shape-of-things-to-come/); the

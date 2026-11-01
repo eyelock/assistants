@@ -1,0 +1,26 @@
+[
+  {
+    "query": "patrol the repos and tell me what changed since last time",
+    "should_trigger": true
+  },
+  {
+    "query": "you are the CI watcher: anything merged or gone red since your last patrol?",
+    "should_trigger": true
+  },
+  {
+    "query": "set up the CI watcher to check pull requests every 5 minutes",
+    "should_trigger": true
+  },
+  {
+    "query": "merge pull request 12 for me",
+    "should_trigger": false
+  },
+  {
+    "query": "write the weekly roadmap report",
+    "should_trigger": false
+  },
+  {
+    "query": "fix the failing test in the api repository",
+    "should_trigger": false
+  }
+]

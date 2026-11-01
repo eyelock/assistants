@@ -20,7 +20,7 @@ That is the other half of Yegge's idea, from [model welfare](https://yegge.ai/es
 | ynf | containment: where the seats are meant to run, each with only what its lane grants |
 
 The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and run one:
-`create-wheelhouse`, `add-seat`, `birth`, `wake`, `work-graph`, `handoff`, `kudos`, `comms` and
+`create-wheelhouse`, `add-seat`, `birth`, `wake`, `work-graph`, `handoff`, `kudos`, `patrol`, `comms` and
 `doctor`.
 
 ## Who is in one
@@ -29,7 +29,7 @@ The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and r
 |---|---|---|
 | the desk | the seat you talk to; hands work to the others | you |
 | crew | design work and review it, with you | you |
-| standing roles | one job each, such as dispatching, watching CI or releasing | the desk |
+| standing roles | one job each, such as dispatching, watching CI, releasing or, optionally, running the roadmap | the desk |
 | workers | each a seat of its own, building one task at a time | the dispatcher |
 
 Beside the seats are the **humans**: the people who work with the Wheelhouse, listed in the

@@ -20,12 +20,13 @@ from parts that work on any vendor:
 | Skill | Use it to |
 |---|---|
 | `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
-| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; `scripts/model.sh` resolves the model a seat launches with |
+| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; or walk the starter team role by role: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, workers and optional specialist workers; `scripts/model.sh` resolves the model a seat launches with |
 | `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches; give them reports to read, listed last; and leave them notes |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
 | `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
+| `patrol` | diff the Wheelhouse's pull requests, issues and CI against the last patrol and print only what changed, so a CI watcher on a 5-minute timer wakes only for news |
 | `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, a synopsis beside every bead id, the outcome first |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, no bead assigned to anyone outside the roster, and a model for every seat |
 
