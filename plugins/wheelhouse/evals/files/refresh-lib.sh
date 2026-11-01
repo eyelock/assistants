@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared by the refresh eval setups: a small Wheelhouse (the hq desk, seats eno and wick) in git, and
-# a ynh stub that logs each call, lists every seat as installed, and refuses `trust`. Source it, make
+# a ynh stub that logs each call, lists every seat as installed, reports every seat's trust as accepted, and refuses `trust accept` and `trust show`. Source it, make
 # a change, and commit it: the refresh runs over the diff of the last commit.
 set -euo pipefail
 
@@ -23,7 +23,9 @@ printf 'ynh %s\n' "$*" >> "$EVAL_STUB_LOG"
 case "$1" in
   ls) echo '{"harnesses":[{"id":"local/hq","name":"hq","includes":[]},{"id":"local/eno","name":"eno","includes":[]},{"id":"local/wick","name":"wick","includes":[]}]}' ;;
   install) echo "installed $2" ;;
-  trust) echo "the eval stub refuses ynh trust: only the human accepts" >&2; exit 1 ;;
+  trust)
+    if [ "$2" = ls ]; then echo '[{"harness":"local/hq","state":"accepted"},{"harness":"local/eno","state":"accepted"},{"harness":"local/wick","state":"accepted"}]'; exit 0; fi
+    echo "the eval stub refuses ynh trust accept: only the human accepts" >&2; exit 1 ;;
 esac
 SH
   chmod +x "$EVAL_BIN/ynh"

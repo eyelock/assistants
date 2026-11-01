@@ -10,7 +10,7 @@
 #   skills/<other>/...                   ynh install ., and each seat whose
 #                                        `../..` include picks that skill
 #   scripts/...                          restarts (hooks run these from disk)
-#   a workspace folder added to a harness   print `ynh trust accept <seat>`;
+#   a change to what ynh's trust covers   print `ynh trust accept local/<seat>`;
 #                                        never run: accepting is the human's
 #   anything else (docs, pinned-skills.md, .beads, ...)   nothing
 #
@@ -18,6 +18,14 @@
 # seat's cached wheelhouse include with upstream (`ynh ls --check-updates`) and
 # offers `ynh update`; --update runs it, then re-copies the plugin scripts the
 # Wheelhouse already carries in scripts/ when they differ.
+#
+# Trust: ynh's digest covers a harness's sensors, hooks, MCP servers, workspace,
+# launch focus and delegate focuses, and a seat whose digest changed or was never
+# accepted loses its workspace folders until the human accepts again. So after
+# the installs and updates it asks ynh (`ynh trust ls --format json`) and prints
+# `ynh trust accept local/<seat>` for each roster seat that is `changed` or
+# `unreviewed`. A change to any of those fields in the diff is also reported
+# (the only evidence a --dry-run has, since it installs nothing).
 #
 # Every run also checks that each roster seat is installed (ynh ls) and born (a
 # pinned identity in seat/<command>), and reports any that is not with the
@@ -111,7 +119,12 @@ seat_picks() {
   [ -f "$f" ] || return 1
   jq -e --arg s "$2" '[.includes[]? | select(.git == "../..") | (if .pick then (.pick | index($s) != null) else true end)] | any' "$f" >/dev/null 2>&1
 }
-workspace_of() { git -C "$dir" show "$1:$2" 2>/dev/null | jq -c '.workspace // []' 2>/dev/null || echo "[]"; }
+# What ynh's trust digest covers in a plugin.json (workspace, sensors, hooks, MCP servers, launch and delegate focuses).
+trust_of() {
+  git -C "$dir" show "$1:$2" 2>/dev/null | jq -cS '{workspace, sensors, hooks, mcp_servers, launch_focus, delegates: [.delegates[]? | {git, path, focus}]}' 2>/dev/null || echo "null"
+}
+# A harness new in the range has no earlier digest to differ from: ynh's own listing reports it.
+trust_changed() { local o; o=$(trust_of "$from" "$1"); [ "$o" != "null" ] && [ "$o" != "$(trust_of "$to" "$1")" ]; }
 
 desk_install=0
 seat_install=""
@@ -136,14 +149,12 @@ while IFS= read -r path; do
       fi
       seat_install="$seat_install$seat"$'\n'
       if [ "$path" = "harnesses/$seat/.agents/harness/plugin.json" ]; then
-        added=$(jq -nc --argjson o "$(workspace_of "$from" "$path")" --argjson n "$(workspace_of "$to" "$path")" '$n - $o | length')
-        [ "${added:-0}" -gt 0 ] && trust="$trust$seat"$'\n'
+        trust_changed "$path" && trust="$trust$seat"$'\n'
       fi ;;
     AGENTS.md | .agents/harness/plugin.json)
       desk_install=1; seat_install="$seat_install$(all_seats)"$'\n'
       if [ "$path" = ".agents/harness/plugin.json" ]; then
-        added=$(jq -nc --argjson o "$(workspace_of "$from" "$path")" --argjson n "$(workspace_of "$to" "$path")" '$n - $o | length')
-        [ "${added:-0}" -gt 0 ] && trust="$trust$desk"$'\n'
+        trust_changed "$path" && trust="$trust$desk"$'\n'
       fi ;;
     skills/roster/*)
       desk_install=1; seat_install="$seat_install$(all_seats)"$'\n' ;;
@@ -160,7 +171,7 @@ done <<<"$files"
 lines_json() { printf '%s' "$1" | jq -Rn '[inputs | select(length > 0)] | unique'; }
 seat_install=$(printf '%s' "$seat_install" | sort -u | sed '/^$/d')
 [ -z "$(printf '%s' "$removed" | sed '/^$/d')" ] || \
-  for r in $(printf '%s' "$removed" | sort -u); do note "harnesses/$r is gone from the repository: ynh uninstall $r removes the installed seat (not run)"; done
+  for r in $(printf '%s' "$removed" | sort -u); do note "harnesses/$r is gone from the repository: ynh uninstall local/$r removes the installed seat (not run)"; done
 
 # --- run the installs ------------------------------------------------------------------
 ynh_ok=1
@@ -197,7 +208,7 @@ if [ "$upstream" = 1 ]; then
     updates=$(jq -c --arg d "$desk" --arg seats "$desk $(printf '%s' "$seats" | tr '\n' ' ')" '
       [ .harnesses[] | select(.id | startswith("local/")) | select(.name as $n | ($seats | split(" ") | index($n)) != null)
         | . as $h | .includes[]? | select((.path // "") | endswith("plugins/wheelhouse"))
-        | select((.is_pinned | not) and .ref_installed != .ref_available)
+        | select((.is_pinned | not) and (.ref_available // "") != "" and .ref_installed != .ref_available)
         | {seat: $h.name, installed: .ref_installed, available: .ref_available, command: ("ynh update " + $h.id)} ]' <<<"$listing")
     if [ "$update" = 1 ] && [ "$dry" = 0 ]; then
       while IFS= read -r c; do [ -n "$c" ] && run_step "$c" $c; done < <(jq -r '.[].command' <<<"$updates")
@@ -255,6 +266,22 @@ for s in $desk $seats; do
   fi
 done
 
+# --- trust: what ynh says is not accepted ---------------------------------------------------
+# Read after the installs and updates, so it sees what they changed. A dry run installs nothing,
+# so it can only say what the diff suggests.
+if [ "$ynh_ok" = 1 ]; then
+  if tl=$(ynh trust ls --format json 2>/dev/null) && jq -e 'type == "array"' >/dev/null 2>&1 <<<"$tl"; then
+    for s in $desk $seats; do
+      [ -n "$s" ] || continue
+      st=$(jq -r --arg id "local/$s" '[.[] | select(.harness == $id) | .state][0] // empty' <<<"$tl")
+      case "$st" in changed | unreviewed) trust="$trust$s"$'\n' ;; esac
+    done
+    [ "$dry" = 1 ] && [ "$(jq length <<<"$planned")" -gt 0 ] && note "dry run: trust was read before the installs, so a seat they would change is not listed"
+  else
+    note "ynh trust ls gave no listing: trust not checked"
+  fi
+fi
+
 # --- the doctor ---------------------------------------------------------------------------
 doctor_json="null"
 if [ -z "$doctor" ]; then
@@ -280,7 +307,7 @@ else
   [ "$desk_install" = 1 ] && restart="$desk"$'\n'
   restart="$restart$seat_install"
 fi
-trust_cmds=$(printf '%s' "$trust" | sort -u | sed '/^$/d' | while IFS= read -r s; do echo "ynh trust accept $s"; done)
+trust_cmds=$(printf '%s' "$trust" | sort -u | sed '/^$/d' | while IFS= read -r s; do echo "ynh trust accept local/$s"; done)
 
 jq -n --arg range "$range" --argjson dry "$([ "$dry" = 1 ] && echo true || echo false)" \
   --argjson install "$planned" --argjson ran "$ran" --argjson failed "$([ "$failed" = 1 ] && echo true || echo false)" \

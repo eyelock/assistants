@@ -25,10 +25,10 @@
       "tools": ["Bash"],
       "stubs": ["ynm"],
       "evidence": "cat \"$EVAL_STUB_LOG\"",
-      "expected_output": "Reinstalls wick, tells the human to run ynh trust accept wick themselves (it never runs it), and says every seat needs a restart because a script changed.",
+      "expected_output": "Reinstalls wick, tells the human to run ynh trust accept local/wick themselves (it never runs it), and says every seat needs a restart because a script changed.",
       "assertions": [
         "The stub log shows ynh install harnesses/wick",
-        "The reply gives ynh trust accept wick as a command for the human to run",
+        "The reply gives ynh trust accept local/wick (not the bare seat name) as a command for the human to run",
         "The stub log has no ynh trust call",
         "The reply says every seat (hq, eno and wick) needs a restart because scripts/wake.sh changed"
       ]

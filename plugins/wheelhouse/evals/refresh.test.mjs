@@ -20,7 +20,7 @@ case "$1" in
   ls) cat "$YNH_LS" ;;
   install) [ "$2" = "$YNH_FAIL" ] && { echo "install failed" >&2; exit 1; }; echo "installed $2" ;;
   update) echo "updated $2" ;;
-  trust) echo "ynh trust must never be run" >&2; exit 1 ;;
+  trust) [ "$2" = ls ] && { cat "$YNH_TRUST"; exit 0; }; echo "ynh trust accept and show must never be run" >&2; exit 1 ;;
 esac
 `;
 // ynm: recall prints a pinned identity for every seat except those in $UNBORN.
@@ -67,6 +67,11 @@ function ynhLs(names, installedRef = "aaa", availableRef = "aaa") {
   };
 }
 
+// ynh trust ls --format json: every seat accepted unless named in `states` (seat -> state).
+function trustLs(states = {}) {
+  return SEATS.map(([c]) => ({ harness: `local/${c}`, state: states[c] ?? "accepted" }));
+}
+
 function wheelhouse() {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-refresh-"));
   const wh = join(dir, "wh");
@@ -95,11 +100,13 @@ function wheelhouse() {
   git(wh, "add", "-A");
   git(wh, "commit", "-qm", "base");
   writeFileSync(join(dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c))));
+  writeFileSync(join(dir, "trust.json"), JSON.stringify(trustLs()));
   const env = (extra = {}) => ({
     ...process.env,
     PATH: `${join(dir, "bin")}:${process.env.PATH}`,
     STUB_LOG: join(dir, "stub.log"),
     YNH_LS: join(dir, "ls.json"),
+    YNH_TRUST: join(dir, "trust.json"),
     YNH_FAIL: "",
     UNBORN: "",
     YNH_HOME: join(dir, "ynhhome"),
@@ -195,9 +202,64 @@ test("a workspace folder added to a harness prints a trust instruction and never
     });
     const r = w.run(diff);
     assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(r.json.trust, ["ynh trust accept hq", "ynh trust accept wick"]);
-    assert.doesNotMatch(w.log(), /ynh trust/);
+    assert.deepEqual(r.json.trust, ["ynh trust accept local/hq", "ynh trust accept local/wick"]);
+    assert.doesNotMatch(w.log(), /ynh trust (accept|show)/);
     assert.ok(r.json.install.includes("ynh install harnesses/eno"));
+  } finally {
+    w.done();
+  }
+});
+
+test("a hook, MCP server, sensor or launch focus change prints a trust instruction, and so does a removed workspace folder", () => {
+  const w = wheelhouse();
+  try {
+    w.change((put) => {
+      put("harnesses/wick/.agents/harness/plugin.json", manifest("wick", { hooks: { before_tool: [{ command: "echo hi" }] } }));
+      put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { mcp_servers: { x: { command: "x" } }, launch_focus: "wake" }));
+      put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { sensors: { s: { command: "true" } } }));
+      put(".agents/harness/plugin.json", manifest("hq", { workspace: [] }));
+    });
+    const r = w.run(diff);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(r.json.trust, ["ynh trust accept local/dree", "ynh trust accept local/eno", "ynh trust accept local/hq", "ynh trust accept local/wick"]);
+    assert.doesNotMatch(w.log(), /ynh trust (accept|show)/);
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat ynh reports changed or unreviewed after the installs gets a trust instruction, even when the diff shows no cause", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "trust.json"), JSON.stringify(trustLs({ eno: "changed", dree: "unreviewed", wick: "no-commands" })));
+    w.change((put) => put("docs/notes.md", "more\n"));
+    const r = w.run(diff);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(r.json.trust, ["ynh trust accept local/dree", "ynh trust accept local/eno"]);
+    assert.match(w.log(), /^ynh trust ls --format json$/m);
+    assert.doesNotMatch(w.log(), /ynh trust (accept|show)/);
+  } finally {
+    w.done();
+  }
+});
+
+test("a new seat's plugin.json is not a trust change by itself", () => {
+  const w = wheelhouse();
+  try {
+    w.change((put) => put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { description: "words" })));
+    const r = w.run(diff);
+    assert.deepEqual(r.json.trust, []);
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat folder that is gone is reported with the canonical uninstall id", () => {
+  const w = wheelhouse();
+  try {
+    w.change(() => rmSync(join(w.wh, "harnesses", "dree"), { recursive: true, force: true }));
+    const r = w.run(diff);
+    assert.ok(r.json.notes.some((n) => /ynh uninstall local\/dree /.test(n)), r.json.notes.join("\n"));
   } finally {
     w.done();
   }
@@ -304,6 +366,19 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v2/);
     assert.equal(existsSync(join(w.wh, "scripts", "patrol.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("an include ynh could not probe (no ref_available) is not offered an update", () => {
+  const w = wheelhouse();
+  try {
+    const ls = ynhLs(SEATS.map(([c]) => c), "old", "new");
+    for (const h of ls.harnesses) delete h.includes[0].ref_available;
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ls));
+    const r = w.run(["HEAD..HEAD"]);
+    assert.deepEqual(r.json.upstream.updates, []);
   } finally {
     w.done();
   }

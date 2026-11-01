@@ -1,14 +1,15 @@
 ---
 name: refresh
-description: Apply merged Wheelhouse changes after a pull - works out from the git diff which seats to reinstall (ynh install), which workspace changes need the human to run ynh trust accept, and which seats to restart, runs the safe steps, then the doctor. Also checks every roster seat is installed and born, and offers ynh update when a seat's cached wheelhouse plugin is behind upstream. The desk's skill. Use after the human pulls the Wheelhouse repository, when the CI watcher reports merges to it, or when asked what needs reinstalling or restarting.
+description: Apply merged Wheelhouse changes after a pull - works out from the git diff which seats to reinstall (ynh install), which seats ynh no longer counts as trusted (any change to a seat's sensors, hooks, MCP servers, workspace or focuses) and need the human to run ynh trust accept local/<seat>, and which seats to restart, runs the safe steps, then the doctor. Also checks every roster seat is installed and born, and offers ynh update when a seat's cached wheelhouse plugin is behind upstream. The desk's skill. Use after the human pulls the Wheelhouse repository, when the CI watcher reports merges to it, or when asked what needs reinstalling or restarting.
 allowed-tools: Bash Read
 ---
 
 # Refresh
 
 Merged changes don't reach the running seats by themselves. A seat is an installed ynh harness,
-so a changed charter, roster or desk skill needs `ynh install`; a new workspace folder needs the
-human's `ynh trust accept`; a changed script needs a restart. `scripts/refresh.sh` works out which,
+so a changed charter, roster or desk skill needs `ynh install`; a change to a seat's sensors, hooks,
+MCP servers, workspace or focuses leaves it not accepted, and it loses its workspace folders until
+the human runs `ynh trust accept local/<seat>`; a changed script needs a restart. `scripts/refresh.sh` works out which,
 from the diff, so nobody has to remember the sequence.
 
 This is the desk's skill, and no other seat's. The desk runs it whenever the human pulls, or when
@@ -33,11 +34,17 @@ just moved. After anything else that moved `ORIG_HEAD` since the pull, give the 
 | `harnesses/<seat>/...` | `ynh install harnesses/<seat>` |
 | the root `AGENTS.md`, the root `.agents/harness/plugin.json`, `skills/roster/...` | `ynh install .` and every seat (they include `../..`) |
 | another `skills/<name>/...` | `ynh install .`, and each seat whose `../..` include picks that skill |
-| a workspace folder added to any harness's `plugin.json` | **printed** `ynh trust accept <seat>`, never run |
+| a change to a harness's sensors, hooks, MCP servers, workspace, launch focus or delegate focuses in its `plugin.json`, or a seat ynh lists as `changed` or `unreviewed` after the installs | **printed** `ynh trust accept local/<seat>`, never run |
 | `scripts/...` | a restart of every seat: hooks run the scripts from disk, and a running session keeps the old ones |
 | anything else, such as `docs/` or a `pinned-skills.md` | nothing |
 
-A seat folder that is gone is reported with `ynh uninstall <seat>` and not run.
+A seat folder that is gone is reported with `ynh uninstall local/<seat>` and not run.
+
+Trust is asked of ynh, not inferred: after the installs (and any `--update`) it reads
+`ynh trust ls --format json` and lists every roster seat whose state is `changed` or `unreviewed`,
+whatever the cause, including a wheelhouse plugin update that changed a hook. The diff's changes to
+those fields are listed too, because a `--dry-run` installs nothing and so can't see the state
+afterwards; it says so in `notes`.
 
 ## With no diff
 
@@ -54,7 +61,7 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
 
 - `install`, `ran`: the installs planned, and each one run with its outcome. A failed install
   doesn't stop the rest; `failed` is true and the exit code is 3.
-- `trust`: commands for the human to run themselves. `ynh trust accept` records that they read what
+- `trust`: `ynh trust accept local/<seat>` commands for the human to run themselves. `ynh trust accept` records that they read what
   the harness executes; a seat doing it for them defeats it.
 - `restart`: the seats to restart, so the new install and scripts take effect.
 - `seatsNotReady`: any roster seat not installed (with the exact `install` command) or not born

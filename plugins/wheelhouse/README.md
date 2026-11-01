@@ -27,7 +27,7 @@ from parts that work on any vendor:
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
 | `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
 | `patrol` | diff the Wheelhouse's pull requests, issues and CI against the last patrol and print only what changed, so a CI watcher on a 5-minute timer wakes only for news |
-| `refresh` | the desk's, after a pull: map the git diff to the `ynh install`s, the `ynh trust accept` for the human, and the restarts it needs, run the safe steps and the doctor, and report any seat not installed or born |
+| `refresh` | the desk's, after a pull: map the git diff to the `ynh install`s, the `ynh trust accept local/<seat>` for each seat ynh no longer counts as trusted, and the restarts it needs, run the safe steps and the doctor, and report any seat not installed or born |
 | `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, a synopsis beside every bead id, the outcome first |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, no bead assigned to anyone outside the roster, and a model for every seat |
 
