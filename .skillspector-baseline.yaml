@@ -152,6 +152,10 @@ rules:
     path: "plugins/media-management/skills/*/scripts/*.sh"
     reason: "Scripts query MusicBrainz and AccurateRip with curl, run through the declared Bash tool. The skill spec has no network permission field, and granting WebFetch would widen access the skill does not use."
 
+  - id: "LP1"
+    path: "plugins/wheelhouse/skills/patrol/scripts/patrol.sh"
+    reason: "The patrol reads pull requests, issues and CI with gh, read-only, through the declared Bash tool; reading GitHub is its whole job. The skill spec has no network permission field."
+
   - id: "PE5"
     path: "plugins/media-management/skills/rip-cd/scripts/*.sh"
     message: "*--device /dev/*"

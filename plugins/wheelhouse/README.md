@@ -26,6 +26,7 @@ from parts that work on any vendor:
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
 | `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
+| `patrol` | diff the Wheelhouse's pull requests, issues and CI against the last patrol and print only what changed, so a CI watcher on a 5-minute timer wakes only for news |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, no bead assigned to anyone outside the roster, and a model for every seat |
 
 ## Setting up
