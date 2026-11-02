@@ -183,7 +183,7 @@ rules. In short:
   a specialist gets its own repository, a general worker or a reviewer every one it works in, and
   a seat that only reads a platform (through `gh`, say) none. Paths are relative to the seat's
   folder, so a repository at `../ynh` from the Wheelhouse root is `../../../ynh`. A request grants
-  nothing: the human grants it, with `ynh trust accept <command>` or their own `workspace_roots`
+  nothing: the human grants it, with `ynh trust accept local/<command>` or their own `workspace_roots`
   in `~/.ynh/config.json`. Never run either for them.
 - The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
   `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
@@ -266,6 +266,6 @@ Say who the seat is (name, group, mandate), what it can reach, its standing orde
 start it: `ynh install harnesses/<command>`, then `<command>` to wake it, or
 `<command> --focus <order>` for one standing order, written out for each seat when there are
 several. If it asks for workspace folders, say they are refused until the human grants them:
-`ynh trust show <command>` lists them, and `ynh trust accept <command>` grants them, unless their
+`ynh trust show local/<command>` lists them, and `ynh trust accept local/<command>` grants them, unless their
 `workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
 until it is committed.
