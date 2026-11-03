@@ -168,3 +168,5 @@ speciality
 specialities
 retargeted
 unreviewed
+wshobson
+samber

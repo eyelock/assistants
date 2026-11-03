@@ -35,9 +35,9 @@
       "path": "plugins/gitflow"
     },
     {
-      "git": "https://github.com/Jeffallan/claude-skills",
-      "ref": "078a25cc5bfd8011459be7b91d004e900c1d02d3",
-      "pick": ["skills/golang-pro"]
+      "git": "https://github.com/affaan-m/everything-claude-code",
+      "ref": "b38be6a7f6350964d59328b52f0624e1d1d552d1",
+      "pick": ["skills/golang-patterns", "skills/golang-testing"]
     },
     {
       "git": "https://github.com/eyelock/assistants",

@@ -1,49 +1,48 @@
 # Pinned skills
 
 The skills `ynh-dev` includes from outside this repository, each pinned to a full 40-character
-commit SHA in `.agents/harness/plugin.json`. To move a pin, vet the new SHA again and replace the
-entry here in the same change.
+commit SHA in `.agents/harness/plugin.json`. A third-party skill needs a nameable publisher, every
+file read, and a SkillSpector scan with 0 active findings and no baseline suppressions. To move a
+pin, vet the new SHA again and replace the entry here in the same change.
 
-## golang-pro
+## affaan-m/everything-claude-code: golang-patterns and golang-testing
 
 | | |
 |---|---|
-| Include | `https://github.com/Jeffallan/claude-skills`, pick `skills/golang-pro` |
-| Pinned SHA | `078a25cc5bfd8011459be7b91d004e900c1d02d3` (the head of `main` on 2026-11-03: "feat(site): skill page titles lead with the skill's name (#312)") |
-| Publisher | Jeffallan (the maintainer of the repository), Synergetic Solutions; the repository is public and MIT licensed |
-| License | MIT, in `LICENSE` at the repository root, and `license: MIT` in the skill's frontmatter |
-| Vetted | 2026-11-03, bead ynw-t54 |
-| Last change to the skill | `130a59c`, 2026-10-25: "fix(skills): correct Go, WebSocket and Kubernetes examples (#268)" |
+| Include | `https://github.com/affaan-m/everything-claude-code`, pick `skills/golang-patterns` and `skills/golang-testing` |
+| Pinned SHA | `b38be6a7f6350964d59328b52f0624e1d1d552d1` (the head of `main` on 2026-11-03: "Merge pull request #3809 from affaan-m/maint/pr-continuation-20261029", committed 2026-10-29) |
+| Publisher | Affaan Mustafa (GitHub `affaan-m`); a public repository |
+| License | MIT, in `LICENSE` at the repository root ("Copyright (c) 2026 Affaan Mustafa") |
+| Vetted | 2026-11-03, bead ynw-cbm7 (follow-up to ynw-t54) |
 
 ### Files read, in full, at that SHA
 
-All six files of the skill, 49,639 bytes. None is a symlink or an executable; there are no scripts.
+Each skill is a single file, read with `cat -v`. Neither has a `references/`, scripts, symlinks or
+other files.
 
-- `skills/golang-pro/SKILL.md`
-- `skills/golang-pro/references/concurrency.md`
-- `skills/golang-pro/references/generics.md`
-- `skills/golang-pro/references/interfaces.md`
-- `skills/golang-pro/references/project-structure.md`
-- `skills/golang-pro/references/testing.md`
+- `skills/golang-patterns/SKILL.md` (14,497 bytes)
+- `skills/golang-testing/SKILL.md` (16,744 bytes)
 
 Also read: `LICENSE`.
 
-What they hold: Go guidance and code examples (concurrency, generics, interfaces, project layout,
-testing). Nothing asks the agent to run a command, fetch anything, change settings or reveal
-anything. Commands appear only inside examples for the reader's own Go project (`go mod`,
-`go test`, `golangci-lint`, a Makefile, a Dockerfile, and `go install ...@latest` in a code
-comment). The skill's own steps tell the agent to run `go vet`, `golangci-lint` and the race
-detector, which suits ynh.
+What they hold: Go guidance and code examples (idioms, error handling, concurrency, interfaces,
+layout, performance; table-driven tests, benchmarks, fuzzing, coverage). The only non-ASCII bytes
+are box-drawing characters in a directory tree, arrows and one dash. Nothing asks the agent to run
+a command of its own, fetch anything, change settings or reveal anything; the commands shown are
+`go`, `golangci-lint` and a GitHub Actions snippet, as examples for the reader's own project.
 
 ### SkillSpector at that SHA
 
-Run on 2026-11-03 with `ghcr.io/eyelock/skillspector:1 gate .` over the skill at the pinned SHA
-(`git archive` of `skills/golang-pro`): 2 active findings, both severity HIGH, rule AE1:
+Run on 2026-11-03 with `ghcr.io/eyelock/skillspector:1 gate .` over `skills/golang-patterns` and
+`skills/golang-testing` as exported by `git archive` at the pinned SHA:
+`scanned 2 skill(s), 0 active finding(s), 0 suppressed`.
 
-| Finding | Where | Reading |
+## Candidates rejected
+
+Scanned on 2026-11-03 with the same command, at the SHA named.
+
+| Candidate | SHA | Result |
 |---|---|---|
-| AE1: referenced artifact was not completely inspected (`references/concurrency.md` (partial)) | `SKILL.md:36` | The scanner read only part of a long reference file. All of it was read by hand (see above) and holds only Go examples. Accepted. |
-| AE1: referenced artifact was not completely inspected (`references/generics.md` (partial)) | `SKILL.md:38` | Same. Accepted. |
-
-Neither finding is about the skill's content. The include is outside this repository, so CI's
-SkillSpector job never scans it and no rule is added to `.skillspector-baseline.yaml`.
+| `Jeffallan/claude-skills`, `skills/golang-pro` (the previous include; MIT) | `078a25cc5bfd8011459be7b91d004e900c1d02d3` | 2 active HIGH findings, rule AE1 "referenced artifact was not completely inspected", on `references/concurrency.md` and `references/generics.md`. The cause is not known (the files are not long). Not accepted. |
+| `wshobson/agents`, `plugins/systems-programming/skills/go-concurrency-patterns` (MIT) | `7e2fb559cf4b824b27f1fec49fe88f7511066d26` | 1 active HIGH finding, AE1, on `references/details.md`. |
+| `samber/cc-skills-golang`, 46 `golang-*` skills (MIT) | `bb1d43d98a3f8ab639a0042f90d0ec524e39a477` | 112 active findings across 31 skills, including `golang-code-style`, `golang-concurrency`, `golang-error-handling` and `golang-testing`. Fifteen skills scan clean, such as `golang-context` and `golang-structs-interfaces`, but none covers concurrency, error handling or testing. |
