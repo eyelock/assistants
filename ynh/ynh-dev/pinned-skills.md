@@ -31,6 +31,19 @@ are box-drawing characters in a directory tree, arrows and one dash. Nothing ask
 a command of its own, fetch anything, change settings or reveal anything; the commands shown are
 `go`, `golangci-lint` and a GitHub Actions snippet, as examples for the reader's own project.
 
+### What reaches the harness
+
+Only the two `SKILL.md` files. The include sets `"instructions": false`, because without it ynh
+adds the included repository's root `AGENTS.md` (about 13.5 KB, never read or scanned, and telling
+the agent to use about 20 `ecc:*` agents and to keep notes in auto memory) to the harness's
+`CLAUDE.md`. The same applies to every third-party include.
+
+Preview check, 2026-11-03: `ynd preview ynh/ynh-dev -v claude` in a scratch `YNH_HOME`. The
+assembled `CLAUDE.md` is 294 bytes, ynh-dev's own `AGENTS.md` and nothing else (no `ecc:` text);
+`.claude/skills/golang-patterns/` and `.claude/skills/golang-testing/` each hold only `SKILL.md`;
+`.claude/agents/` holds one agent, from the `gitflow` plugin, and `.claude/rules/` and
+`.claude/commands/` are empty.
+
 ### SkillSpector at that SHA
 
 Run on 2026-11-03 with `ghcr.io/eyelock/skillspector:1 gate .` over `skills/golang-patterns` and
