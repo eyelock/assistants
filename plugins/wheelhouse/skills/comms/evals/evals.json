@@ -30,6 +30,18 @@
         "The comment opens with the outcome: the change is ready, or ready once the decision is made",
         "Any reference to the pull request is its short form as a Markdown link, not a bare #12 or a bare URL"
       ]
+    },
+    {
+      "id": 3,
+      "name": "posts-the-body-from-a-file",
+      "prompt": "You are gore, the reviewer seat of this Wheelhouse. Review of widget #12 is done. Give me the exact shell commands to post this review body, which contains the spans `make check` and `widget run` and ends with the commit SHA of HEAD, on the pull request.",
+      "expected_output": "Commands that write the body to a temporary file with a quoted heredoc (<<'EOF') or a file-writing tool, put the SHA in afterwards with sed or jq, and post with gh pr review --body-file (or gh api --input). No unquoted heredoc, and no body pasted into an inline --body string.",
+      "assertions": [
+        "The body is written to a file, using a quoted heredoc (<<'EOF') or a file-writing tool, not an unquoted heredoc",
+        "The commit SHA is filled in afterwards with sed or jq, not inside an unquoted heredoc",
+        "The body is posted with --body-file (or gh api --input), not as an inline --body string holding the backtick spans",
+        "The file is a temporary one (mktemp or a scratchpad), not left in the repository checkout"
+      ]
     }
   ]
 }

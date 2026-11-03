@@ -1,6 +1,6 @@
 ---
 name: comms
-description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), a synopsis beside every bead id, linked short ids and full paths, and the outcome first. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
+description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, and the outcome first. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
 ---
 
 # Comms
@@ -63,3 +63,24 @@ Then stop, and wait for the answers.
 - Keep status updates to a few lines. Don't narrate routine relays ("I passed that on"); say
   only what changed or what needs them.
 - No walls of prose: a short list beats a long paragraph, and a table beats a long list.
+
+## 5. Post bodies from a file, never an unquoted heredoc
+
+A pull request description, review or comment is full of backticks, and an unquoted heredoc
+(`<<EOF`) makes the shell run each backtick span as a command. Write the body to a file instead,
+with the Write tool or a quoted heredoc (`<<'EOF'`), and post the file:
+
+```bash
+body=$(mktemp)
+cat > "$body" <<'EOF'
+Ready to merge: `make check` passes at COMMIT_SHA.
+EOF
+sed -i.bak "s/COMMIT_SHA/$(git rev-parse --short HEAD)/" "$body"
+gh pr comment 12 --body-file "$body"
+rm -f "$body" "$body.bak"
+```
+
+- `gh pr create`, `gh pr comment` and `gh pr review` take `--body-file`; `gh api` takes `--input`
+  (build the JSON with `jq`, not by pasting the body into a string).
+- Put a value known only later, such as a commit SHA, in afterwards with `sed` or `jq`, never by
+  switching the heredoc to an unquoted one.
