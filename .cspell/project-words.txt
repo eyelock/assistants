@@ -168,3 +168,7 @@ speciality
 specialities
 retargeted
 unreviewed
+wshobson
+samber
+Mustafa
+Affaan
