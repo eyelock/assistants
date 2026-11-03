@@ -1,6 +1,6 @@
 ---
 name: comms
-description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), a synopsis beside every bead id, linked short ids and full paths, and the outcome first. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
+description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, and the outcome first. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
 ---
 
 # Comms
@@ -71,11 +71,13 @@ A pull request description, review or comment is full of backticks, and an unquo
 with the Write tool or a quoted heredoc (`<<'EOF'`), and post the file:
 
 ```bash
-cat > body.md <<'EOF'
+body=$(mktemp)
+cat > "$body" <<'EOF'
 Ready to merge: `make check` passes at COMMIT_SHA.
 EOF
-sed -i.bak "s/COMMIT_SHA/$(git rev-parse --short HEAD)/" body.md && rm body.md.bak
-gh pr comment 12 --body-file body.md
+sed -i.bak "s/COMMIT_SHA/$(git rev-parse --short HEAD)/" "$body"
+gh pr comment 12 --body-file "$body"
+rm -f "$body" "$body.bak"
 ```
 
 - `gh pr create`, `gh pr comment` and `gh pr review` take `--body-file`; `gh api` takes `--input`
