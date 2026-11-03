@@ -15,7 +15,7 @@ Personas compose skills for a kind of work. They have no MCP server and no platf
 | `researcher` | Research and analysis | `dev-review` | none | none |
 | `tester` | Testing and quality assurance | `dev-quality`, `go-lang` | none | none |
 | `termq-dev` | TermQ development, Gitflow with Swift and SwiftUI | the `gitflow` plugin, `dev-quality`, `dev-review`, `skill-creator`, `gh-cli`, `swift-lang` | `thorough`, `quick`, `security` | `code-review`, `security-audit`, `refactor`, `pr-summary`, `changelog` |
-| `ynh-dev` | ynh development | the `gitflow` plugin, `golang-pro` from `github.com/Jeffallan/claude-skills`, `dev-quality`, `dev-review`, `skill-creator`, `gh-cli`, `go-lang`, the `pause` skills | `thorough`, `quick`, `security` | `code-review`, `security-hardening`, `cli-contract`, `refactor`, `changelog` |
+| `ynh-dev` | ynh development | the `gitflow` plugin, `golang-pro` from `github.com/Jeffallan/claude-skills` (pinned to a commit, vetted in `ynh/ynh-dev/pinned-skills.md`), `dev-quality`, `dev-review`, `skill-creator`, `gh-cli`, `go-lang`, the `pause` skills | `thorough`, `quick`, `security` | `code-review`, `security-hardening`, `cli-contract`, `refactor`, `changelog` |
 
 `ynh-dev` is the only harness that includes something from outside this repository.
 No persona declares `hooks` or `sensors`.

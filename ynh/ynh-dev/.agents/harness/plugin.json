@@ -36,6 +36,7 @@
     },
     {
       "git": "https://github.com/Jeffallan/claude-skills",
+      "ref": "078a25cc5bfd8011459be7b91d004e900c1d02d3",
       "pick": ["skills/golang-pro"]
     },
     {
