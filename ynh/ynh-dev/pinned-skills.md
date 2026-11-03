@@ -10,7 +10,7 @@ pin, vet the new SHA again and replace the entry here in the same change.
 | | |
 |---|---|
 | Include | `https://github.com/affaan-m/everything-claude-code`, pick `skills/golang-patterns` and `skills/golang-testing` |
-| Pinned SHA | `b38be6a7f6350964d59328b52f0624e1d1d552d1` (the head of `main` on 2026-11-03: "Merge pull request #3809 from affaan-m/maint/pr-continuation-20261029", committed 2026-10-29) |
+| Pinned SHA | `b38be6a7f6350964d59328b52f0624e1d1d552d1` (the head of `main` on 2026-11-03: a merge of pull request 3809, committed 2026-10-29) |
 | Publisher | Affaan Mustafa (GitHub `affaan-m`); a public repository |
 | License | MIT, in `LICENSE` at the repository root ("Copyright (c) 2026 Affaan Mustafa") |
 | Vetted | 2026-11-03, bead ynw-cbm7 (follow-up to ynw-t54) |
