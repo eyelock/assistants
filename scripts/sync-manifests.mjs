@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Single source of truth: plugin.json / .harness.json.
+// Single source of truth: .harness.json, .claude-plugin/plugin.json or, for a ynh
+// harness that has neither, .agents/harness/plugin.json (in that order).
 // This script projects those into minimal `package.json` mirrors so changesets
 // (which only understands package.json) can operate on the workspace, and
 // writes version bumps back to the source manifest after `changeset version`.
@@ -13,7 +14,10 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// SYNC_MANIFESTS_ROOT lets the tests run the script over a scratch tree.
+const ROOT = process.env.SYNC_MANIFESTS_ROOT
+  ? resolve(process.env.SYNC_MANIFESTS_ROOT)
+  : resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SCOPE = "@eyelock-assistants";
 
 // Workspace roots — every direct subdirectory is a candidate package.
@@ -31,6 +35,20 @@ const MARKETPLACES = [
   ".github/plugin/marketplace.json",
 ];
 
+// The source manifest of a package directory, and what kind of package it is. A ynh
+// harness keeps its manifest only in .agents/harness/ (assistants #44); a plugin that
+// also has .claude-plugin/plugin.json keeps that as its source and .agents/harness/
+// holds a vendor mirror of it.
+function findSource(dir) {
+  const harnessManifest = join(dir, ".harness.json");
+  if (existsSync(harnessManifest)) return { source: harnessManifest, kind: "harness" };
+  const pluginManifest = join(dir, ".claude-plugin", "plugin.json");
+  if (existsSync(pluginManifest)) return { source: pluginManifest, kind: "plugin" };
+  const agentsManifest = join(dir, ".agents", "harness", "plugin.json");
+  if (existsSync(agentsManifest)) return { source: agentsManifest, kind: "harness" };
+  return null;
+}
+
 function discoverPackages() {
   const dirs = WORKSPACE_ROOTS.flatMap((root) => {
     const rootDir = join(ROOT, root);
@@ -41,25 +59,23 @@ function discoverPackages() {
   });
   return dirs
     .map((dir) => {
-      const pluginManifest = join(dir, ".claude-plugin", "plugin.json");
-      const harnessManifest = join(dir, ".harness.json");
-      let source, kind;
-      if (existsSync(harnessManifest)) {
-        source = harnessManifest;
-        kind = "harness";
-      } else if (existsSync(pluginManifest)) {
-        source = pluginManifest;
-        kind = "plugin";
-      } else {
-        return null;
-      }
-      return { dir, source, kind };
+      const found = findSource(dir);
+      return found ? { dir, ...found } : null;
     })
     .filter(Boolean);
 }
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+// JSON with object keys sorted, so two dependency maps compare equal whatever their order.
+function canonical(value) {
+  return JSON.stringify(value, (_, v) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
+      : v,
+  );
 }
 
 function writeJson(path, data) {
@@ -95,10 +111,9 @@ function projectPackageJson({ source, kind }) {
     description: manifest.description ?? "",
   };
 
-  if (kind === "harness" && Array.isArray(manifest.includes)) {
+  if (kind === "harness") {
     const deps = {};
-    for (const inc of manifest.includes) {
-      if (!inc.path) continue;
+    for (const inc of sameRepoIncludes(manifest)) {
       const depDir = join(ROOT, inc.path);
       const depPkg = findPackageAt(depDir);
       if (depPkg) deps[depPkg] = "workspace:*";
@@ -109,16 +124,42 @@ function projectPackageJson({ source, kind }) {
   return pkg;
 }
 
+// A harness's includes: the top-level list plus every profiles.<name>.includes list, as
+// scripts/ynh-register.mjs reads them, so both scripts write the same dependencies. Only
+// includes that name a path in this repository are workspace packages: one with a `git`
+// URL for another repository is not (a path-only include is local).
+const SELF_REPO = "github.com/eyelock/assistants";
+function normalizeGitUrl(url) {
+  return String(url)
+    .trim()
+    .toLowerCase()
+    .replace(/^git\+/, "")
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
+    .replace(/^[^/@]+@/, "")
+    .replace(/^([^/:]+):/, "$1/")
+    .replace(/\/+$/, "")
+    .replace(/\.git$/, "");
+}
+
+function sameRepoIncludes(manifest) {
+  const lists = [manifest.includes];
+  for (const profile of Object.values(manifest.profiles ?? {})) lists.push(profile?.includes);
+  return lists
+    .filter(Array.isArray)
+    .flat()
+    .filter(
+      (inc) =>
+        inc &&
+        typeof inc === "object" &&
+        inc.path &&
+        (!inc.git || normalizeGitUrl(inc.git) === SELF_REPO),
+    );
+}
+
 function findPackageAt(dir) {
-  const pluginManifest = join(dir, ".claude-plugin", "plugin.json");
-  const harnessManifest = join(dir, ".harness.json");
   try {
-    if (existsSync(harnessManifest)) {
-      return `${SCOPE}/${readJson(harnessManifest).name}`;
-    }
-    if (existsSync(pluginManifest)) {
-      return `${SCOPE}/${readJson(pluginManifest).name}`;
-    }
+    const found = findSource(dir);
+    if (found) return `${SCOPE}/${readJson(found.source).name}`;
   } catch {
     /* ignore malformed */
   }
@@ -134,6 +175,10 @@ function cmdGenerate(pkgs) {
       const existing = readJson(target);
       for (const k of ["scripts", "devDependencies"]) {
         if (existing[k]) projected[k] = existing[k];
+      }
+      // Keep the existing order of dependencies that are the same set.
+      if (canonical(existing.dependencies) === canonical(projected.dependencies)) {
+        if (existing.dependencies) projected.dependencies = existing.dependencies;
       }
     }
     writeJson(target, projected);
@@ -156,7 +201,7 @@ function syncVendorPluginManifests(p) {
     ".codex-plugin/plugin.json",
   ]) {
     const target = join(p.dir, rel);
-    if (!existsSync(target)) continue;
+    if (target === p.source || !existsSync(target)) continue;
     if (updateVersionInPlace(target, manifest.version)) {
       process.stdout.write(`  sync      ${relative(ROOT, target)}\n`);
     }
@@ -239,7 +284,7 @@ function cmdCheck(pkgs) {
     const existing = readJson(target);
     // Ignore scripts/devDependencies; compare the projected keys only.
     for (const k of Object.keys(projected)) {
-      if (JSON.stringify(existing[k]) !== JSON.stringify(projected[k])) {
+      if (canonical(existing[k]) !== canonical(projected[k])) {
         drift.push(`${relative(ROOT, target)}: ${k} out of sync`);
       }
     }
@@ -253,7 +298,7 @@ function cmdCheck(pkgs) {
       ".codex-plugin/plugin.json",
     ]) {
       const target = join(p.dir, rel);
-      if (!existsSync(target)) continue;
+      if (target === p.source || !existsSync(target)) continue;
       const vendor = readJson(target);
       if (vendor.version && vendor.version !== manifest.version) {
         drift.push(`${relative(ROOT, target)} version ${vendor.version} != ${manifest.version}`);

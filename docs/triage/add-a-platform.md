@@ -35,4 +35,4 @@ id, for example `apple-calendar`.
    ```
 
 `scripts/ynh-register.sh` writes `ynh/<p>/package.json` and refreshes `pnpm-lock.yaml`, per its
-header. Not yet run for this recipe. `ynh/*` harnesses are not indexed by `pnpm sync-manifests`.
+header. Not yet run for this recipe. `pnpm sync-manifests` covers `ynh/*` harnesses.

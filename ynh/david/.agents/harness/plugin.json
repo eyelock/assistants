@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "david",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "David's personal development persona with full skill set",
   "default_vendor": "claude",
   "includes": [

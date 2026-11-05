@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "ynh-dev",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "default_vendor": "claude",
   "profiles": {
     "thorough": {},

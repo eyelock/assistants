@@ -22,9 +22,10 @@
 #
 # Note: harness entries under ynh/ deliberately carry no vendor manifests
 # (.claude-plugin/, .cursor-plugin/) and are not indexed by the root
-# marketplace files or scripts/sync-manifests.mjs (which only discovers
-# .harness.json / .claude-plugin sources) — verified against ynh/termq-dev.
-# Registration is therefore just the wrapper + lockfile.
+# marketplace files. scripts/sync-manifests.mjs does cover them: it takes
+# .agents/harness/plugin.json as their source, writes the same package.json
+# wrapper as this script, and checks it and the version writeback in CI.
+# Registration is therefore the wrapper + lockfile.
 #
 # Exit codes: 0 success, 1 bad args/validation, 2 file not found, 3 tool error.
 
