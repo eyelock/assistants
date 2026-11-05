@@ -38,7 +38,7 @@ case "${1:-}" in
     fi ;;
   release)
     need_issue "${2:-}"
-    gh issue view "$2" --json milestone --jq '.milestone.title // empty' ;;
+    gh issue view "$2" --json milestone --jq '.milestone.title // empty' || exit 3 ;;
   state)
     need_issue "${2:-}"
     st=$(gh issue view "$2" --json state --jq .state) || exit 3
