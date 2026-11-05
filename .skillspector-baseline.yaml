@@ -235,3 +235,18 @@ rules:
     path: "skills/tech/skills/go-lang/SKILL.md"
     message: "*Make targets*"
     reason: "Coding convention (use the Makefile), not manipulation of the agent's behaviour."
+
+  # --- Diataxis framework text (Daniele Procida, CC-BY-SA 4.0), ynw-3v8s ------------------
+  # The same two findings the YN-dev Wheelhouse's human read and accepted on 2026-11-02, at
+  # evildmp/diataxis-documentation-framework commit 957c09ca40b4a1edc23874f713e01937d50d54d5.
+  # The exception lapses if that pin moves: a new commit is vetted again from scratch.
+
+  - id: "P5"
+    path: "plugins/wheelhouse/skills/diataxis/references/tutorials-how-to.rst"
+    message: "*kill people*"
+    reason: "Line 298: an analogy that a clinical manual written like a tutorial would be deadly; quoted prose, not an instruction."
+
+  - id: "OH3"
+    path: "plugins/wheelhouse/skills/diataxis/references/tutorials-how-to.rst"
+    message: "*without cutting*"
+    reason: "Line 69: a suturing lesson used as an analogy ('without cutting into the muscle beneath'); quoted prose, not an instruction."
