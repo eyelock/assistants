@@ -30,8 +30,14 @@ bead that the script refuses (exit 1: no item, a bad reference, no release) is n
 stays unassigned and the refusal is reported. On exit 3, a fault (a broken `tracker.json`, a missing
 tool, a failed command), it reports the fault to the desk and dispatches nothing.
 
-**May not:** claim or build work, reassign work in progress, or give a worker a second bead while
-it has one.
+**Reclaims a dead seat's bead, and only then.** A claim's lease lapses five minutes after the last
+heartbeat and nothing reverts it on a timer. When a seat reports a lapsed claim, or a claim looks
+stale at a check-in, confirm the holder is gone (no live session, and the lease long expired);
+only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
+you did, and dispatch it again. A bead whose holder may still be working is left alone.
+
+**May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
+gone is the one exception), or give a worker a second bead while it has one.
 
 **Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
