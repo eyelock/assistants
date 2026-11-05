@@ -184,9 +184,8 @@ the files it finds, and would commit the human's.
    name in lowercase ASCII, which beads are assigned to), `pronouns` and `"default": true`
    (question 5). There is always exactly one. No other human is written to the roster, and no
    email or username is stored anywhere: a person is at the desk for a session by naming
-   themselves, and their command is their name in lowercase. Every bead is assigned to a roster
-   seat, to the default human, or to a human command that has a `human/<command>` namespace in
-   ynm.
+   themselves, and their command is their name in lowercase. Every open bead is unassigned or assigned to
+   a seat, the default human, a human command with a `human/<command>` namespace in ynm, or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 
