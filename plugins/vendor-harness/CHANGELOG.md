@@ -1,5 +1,13 @@
 # @eyelock-assistants/vendor-harness
 
+## 0.3.1
+
+### Patch Changes
+
+- [#49](https://github.com/eyelock/assistants/pull/49) [`276d94b`](https://github.com/eyelock/assistants/commit/276d94b6470c7d501f16850b18732a6deff0987e) Thanks [@eyelock](https://github.com/eyelock)! - Add evals for every vendor-harness skill, correct the references against current vendor docs (Cursor hooks, subagents, Codex, Copilot marketplace sources), fix locate-artifact-source, and teach plugin-audit and locate-artifact-source about .agents/harness/.
+
+- [#66](https://github.com/eyelock/assistants/pull/66) [`a53c455`](https://github.com/eyelock/assistants/commit/a53c45508ade5ea6e88517b9f54b0d8c0353164a) Thanks [@eyelock](https://github.com/eyelock)! - The vendor-adapters references name the Copilot and Cursor install scripts by URL instead of quoting `curl … | bash`, so an agent reading them is not handed a pipe-to-shell command.
+
 ## 0.3.0
 
 ### Minor Changes

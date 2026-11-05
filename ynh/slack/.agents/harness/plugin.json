@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "slack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reads Slack through Slack's official MCP server for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only by the scopes granted to your token.",
   "default_vendor": "claude",
   "keywords": ["slack", "chat", "mentions", "messages", "triage", "read-only"],

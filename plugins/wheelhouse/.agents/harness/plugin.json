@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "wheelhouse",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
   "author": {
     "name": "eyelock"
