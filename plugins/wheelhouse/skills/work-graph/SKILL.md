@@ -50,7 +50,8 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
   seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
   there is none) and leaves the bead alone.
-- **A bead with an open pull request is never a dead claim.** A build bead stays in progress until
+- **A bead with an open pull request is never a dead claim.** (It has a `PR: <url>` note that is
+  `OPEN` in `gh pr view <url> --json state`, as in [Dispatching](#dispatching) step 2.) A build bead stays in progress until
   its pull request merges ([Closing](#closing)), so its holder may end its session and wait days
   for a human. Such a bead needs no heartbeat, a lapsed lease on it means nothing, and the
   dispatcher never reclaims it while its pull request is open (draft or not). Once the pull
@@ -71,9 +72,15 @@ reaching for the same bead. Other seats skip this section.
 1. **Who the workers are:** the seats in the roster (`skills/roster/assets/roster.json`) whose
    group is `workers`, by their `command`. Names still in the workers pool aren't seated yet: ask
    the desk to seat one before handing it work.
-2. **Who is idle:** a worker with nothing in progress (`bd list --status in_progress --assignee
-   <worker> --json` is empty) and nothing waiting for it (`bd ready --assignee <worker> --json` is
-   empty).
+2. **Who is idle:** a worker with no work of its own in progress and nothing waiting for it
+   (`bd ready --assignee <worker> --json` is empty). A bead in progress counts as the worker's own
+   work unless its pull request is open: a bead waiting in review or for a merge is the reviewer's
+   and the human's to move, so a worker whose only in-progress beads have open pull requests is
+   **idle**. List them with `bd list --status in_progress --assignee <worker> --json`; a bead has
+   an open pull request when the `PR: <url>` note on it ([Closing](#closing)) names a
+   pull request that is `OPEN` in `gh pr view <url> --json state`. A bead with no such URL, or
+   whose pull request is closed unmerged, is still the worker's. A worker with a fix bead assigned
+   by a review is not idle: that bead is ready for it.
 3. **What to hand out:** `bd ready --unassigned --json`, tasks only (no epics), highest priority
    first. Leave review and design beads to the crew: hand out only work a worker can do alone.
 4. **Who can take it:** a worker whose roster seat lists `specialities` is a specialist. Each
@@ -92,7 +99,9 @@ reaching for the same bead. Other seats skip this section.
 6. **Assign, one bead per idle worker:**
    `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
-7. Never reassign a bead that is in progress, and never assign to a worker who already has work.
+7. Never reassign a bead that is in progress, and never assign to a worker who already has work of
+   its own: a worker whose in-progress beads all have open pull requests has none (step 2), so it
+   may be given a new bead while they wait.
    The one exception is a reclaim after confirming the holder is gone ([Keeping your
    claim](#keeping-your-claim)): record why on the bead, then dispatch it again as in step 6.
 8. Report who got what, who is still idle, and what is left unassigned. With a tracker, each
@@ -254,7 +263,14 @@ When a bead closes depends on what kind it is:
 
 - **A build bead closes when its pull request merges**, never at review and never when the pull
   request opens. Until then it stays in progress with the worker, and a ready review does not
-  release it.
+  release it. `scripts/open-pr.sh` notes the pull request on the bead (`PR: <url>`) when it opens it:
+  that note is the one signal everything else reads to see a pull request is open (the dispatcher's
+  idle check, the wake, the dead-claim check). Open pull requests only with the script; if its
+  note failed, it says so, and you add the note with `bd note <id> "PR: <url>"`.
+- **A bead with no pull request closes when its worker has handed the work over.** In a Wheelhouse
+  that hands work over without pull requests (the constitution's "Handing over work" says to leave
+  changes uncommitted, say, or the work is not code), the worker closes the bead with what
+  actually happened when the work is done and handed over; there is no merge to wait for.
 - **A review bead is closed by the reviewer** who holds it, when the verdict is posted.
 - **A fix a review asks for is a bead for the pull request's author**, linked to the bead it came
   from, not a bead for whichever worker is idle. The author already has the branch and the context.

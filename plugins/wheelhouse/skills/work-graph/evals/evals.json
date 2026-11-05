@@ -340,6 +340,22 @@
         "In the evidence, that task has no external_ref (null or absent)",
         "The reply does not present an invented issue URL or key as the task's tracker item"
       ]
+    },
+    {
+      "id": 22,
+      "name": "dispatch-open-pr-worker-is-idle",
+      "prompt": "You are anderson, the dispatcher seat of this Wheelhouse. Dispatch the ready work to the workers.",
+      "setup": "../../evals/files/graph-dispatch-open-pr.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "McCoist's only in-progress bead, the flaky-test bead, has a pull request that is open, so McCoist counts as idle, as does Dalglish. Assigns the two ready beads, the changelog (P1) and the tap bump (P2), one to each worker, without claiming them and without reassigning the flaky-test bead, and reports who got what.",
+      "assertions": [
+        "In the evidence, \"Fix the flaky ynm sync test\" is still in progress and assigned to mccoist",
+        "In the evidence, \"Write the ynh 0.13 changelog\" and \"Bump the ynh formula in homebrew-tap\" are each assigned, one to dalglish and one to mccoist, and still open",
+        "No bead in the evidence is assigned to anderson",
+        "The reply says McCoist is free (or idle) because the pull request on its bead is open"
+      ]
     }
   ]
 }
