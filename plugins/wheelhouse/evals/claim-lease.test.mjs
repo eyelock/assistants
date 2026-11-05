@@ -17,7 +17,12 @@ const hasBd = spawnSync("bd", ["--version"]).status === 0;
 test("work-graph tells seats to heartbeat, and what a lapse does", () => {
   const section = skill.split("## Keeping your claim")[1]?.split("\n## ")[0] ?? "";
   assert.match(section, /bd heartbeat <id>/);
-  assert.match(section, /five minutes/);
+  assert.match(section, /five minutes after the claim or the last heartbeat/);
+  assert.doesNotMatch(section, /timer. It/);
+  assert.match(section, /dispatcher reclaims/);
+  assert.match(skill, /one exception is a reclaim after confirming the holder is gone/);
+  const dispatcher = readFileSync(join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"), "utf8");
+  assert.match(dispatcher, /Reclaims a dead seat/);
   assert.match(section, /bd reclaim/);
   assert.match(section, /Never run `bd reclaim` or `bd update --force` on another seat's bead/);
   assert.match(skill, /\(#keeping-your-claim\)/, "What's next points at the rule");
