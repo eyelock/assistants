@@ -252,7 +252,7 @@ test("--dry-run opens nothing, and bad args and unknown beads fail", () => {
 test("--dry-run needs no title, and names the item, release and relation a dispatch note quotes", () => {
   const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open" })] });
   const run = (id) => {
-    const out = spawnSync("bash", [script, "--dir", join(h.dir, "wh"), "--bead", id, "--dry-run"], {
+    const out = spawnSync("bash", [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), "--bead", id, "--dry-run"], {
       cwd: h.dir,
       encoding: "utf8",
       env: { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, BD_STATE: join(h.dir, "beads.json"), GH_LOG: join(h.dir, "gh.log"), GH_REPO: "eyelock/ynh", GH_MILESTONE: "v0.17.0" },
