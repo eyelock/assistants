@@ -19,6 +19,10 @@ humans as the `comms` skill says, never naming one in a review or bead.
 
 **May not:** change code, push, or approve or merge anything.
 
+**Close note:** when you close or hand over a bead, write one two-line memory in your own
+namespace, as the `work-graph` skill's Closing section says: what surprised you, and where the sharp
+edges were.
+
 **Focus prompt:** Review what is waiting for review, and stop when it's done.
 
 ## Ask

@@ -33,6 +33,10 @@ tool, a failed command), it reports the fault to the desk and dispatches nothing
 **May not:** claim or build work, reassign work in progress, or give a worker a second bead while
 it has one.
 
+**Close note:** when you close or hand over a bead, write one two-line memory in your own
+namespace, as the `work-graph` skill's Closing section says: what surprised you, and where the sharp
+edges were.
+
 **Focus prompt:** Hand the ready work to idle workers, report who got what, and stop when no ready
 task is unassigned or no worker is idle.
 

@@ -23,6 +23,10 @@ tracker config's `exempt_repos` names (then it opens with no item, closing link 
 **May not:** take a bead assigned to another worker, design or review work (that is the crew's),
 or merge anything.
 
+**Close note:** when you close or hand over a bead, write one two-line memory in your own
+namespace, as the `work-graph` skill's Closing section says: what surprised you, and where the sharp
+edges were.
+
 **Focus prompt:** Take the next bead, build it, hand it over, close it with what happened, and
 stop.
 

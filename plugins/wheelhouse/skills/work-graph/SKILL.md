@@ -229,9 +229,20 @@ registered or written to the repository: no roster entry, no email, no username.
      --tags bead,<id> --content "<id>: <what happened, including anything skipped>"
    ```
 
-3. If the work taught you something for next time, a gotcha or a step that was nearly missed, keep
+3. Write your close note: one memory in your own namespace, two lines, no more. The first line is
+   what surprised you; the second is where the sharp edges were. Do it when you close a bead and
+   when you hand one over unfinished. Your next wake shows the latest three.
+
+   ```bash
+   ynm remember --type reflective --namespace seat/<command> --subject <id> \
+     --tags close-note --content "Surprised: <what>.
+   Sharp edges: <where>."
+   ```
+
+   If nothing surprised you, say so in the line; don't invent a lesson.
+4. If the work taught you something for next time, a gotcha or a step that was nearly missed, keep
    it in ynm as well (see below), not in the bead and not in a file.
-4. Run `bd ready --json` and say what the close unblocked.
+5. Run `bd ready --json` and say what the close unblocked.
 
 ## Memory goes to ynm, never Beads
 
