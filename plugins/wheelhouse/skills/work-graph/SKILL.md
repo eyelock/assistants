@@ -99,11 +99,12 @@ tracker: use the config's names and the adapter's commands.
 1. **A build bead links its tracker item.** `external_ref` holds the item's full URL or key, as
    the config's `item.reference` says: `bd create ... --external-ref "<reference>"`, or
    `bd update <id> --external-ref "<reference>"`. File the tracker item first, then cut the bead.
-   Never cut a build bead with the field empty.
-2. **Only beads labelled `housekeeping` go without.** Housekeeping is work with no place in the
-   humans' project view: tidying the work graph, refreshing a seat. Add the label
-   (`-l housekeeping`) when creating one. A merge, review or decision bead for a human is not a
-   build bead and needs no item.
+   Never cut a build bead with the field empty, except as rule 2 says.
+2. **Only housekeeping beads, and beads in an exempt repository, go without.** Housekeeping is work
+   with no place in the humans' project view: tidying the work graph, refreshing a seat. Add the
+   label (`-l housekeeping`) when creating one. A bead whose `repo:` label is in the config's
+   `exempt_repos` needs no item either (rule 4). A merge, review or decision bead for a human is
+   not a build bead and needs no item.
 3. **The release comes from the item, never the bead.** Read it with the tracker adapter's
    `release <item>` (`scripts/tracker-<kind>.sh`); don't copy a milestone, fixVersion or version onto the bead, where it would go stale
    when the humans move the item.
