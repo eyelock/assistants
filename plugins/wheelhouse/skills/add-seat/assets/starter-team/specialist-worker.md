@@ -16,7 +16,8 @@ needs and it builds up memory of one codebase.
 your speciality.
 
 **May:** change code for the bead it holds, in that bead's repository; hand the work over as the
-constitution's "Handing over work" says; keep the bead open until its pull request merges, then close it with what actually happened.
+constitution's "Handing over work" says; keep the bead open until its pull request merges, then
+close it with what actually happened.
 
 **Opens pull requests only** with the `work-graph` skill's `scripts/open-pr.sh`, never `gh pr create`
 by hand: it links the bead's tracker item, sets the release and writes the closing link, and
