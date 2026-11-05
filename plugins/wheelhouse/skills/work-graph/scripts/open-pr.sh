@@ -102,13 +102,18 @@ if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   # id first, so a sibling written in another case or short form (owner/repo#N) still counts.
   adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
   mine=$(bash "$adapter" canon "$item") || die 3 "open-pr: the $kind adapter failed to canonicalise $item"
+  # Capture each step on its own, so a failing bd or jq is a fault (exit 3), never a count of 0
+  # that would write "Closes" while other beads are open on the item.
+  listing=$(cd "$dir" && bd list --all --json 2>/dev/null) || die 3 "open-pr: bd list failed"
+  refs=$(jq -r --arg id "$bead" \
+    '(.data? // .)[] | select(.id != $id and .status != "closed") | .external_ref // empty' <<<"$listing") ||
+    die 3 "open-pr: could not read bd list's output"
   others=0
   while IFS= read -r sib; do
     [ -n "$sib" ] || continue
-    if [ "$(bash "$adapter" canon "$sib")" = "$mine" ]; then others=$((others + 1)); fi
-  done < <(cd "$dir" && bd list --all --json 2>/dev/null | jq -r --arg id "$bead" \
-    '(.data? // .)[] | select(.id != $id and .status != "closed") | .external_ref // empty') ||
-    die 3 "open-pr: bd list failed"
+    c=$(bash "$adapter" canon "$sib") || die 3 "open-pr: the $kind adapter failed to canonicalise $sib"
+    if [ "$c" = "$mine" ]; then others=$((others + 1)); fi
+  done <<<"$refs"
   last=more; [ "$others" -eq 0 ] && last=last
 
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
