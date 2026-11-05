@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "apple-calendar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
   "default_vendor": "claude",
   "keywords": ["calendar", "apple", "icloud", "meetings", "invites", "triage", "read-only"],

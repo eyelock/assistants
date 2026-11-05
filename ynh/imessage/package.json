@@ -1,6 +1,6 @@
 {
   "name": "@eyelock-assistants/imessage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
   "dependencies": {

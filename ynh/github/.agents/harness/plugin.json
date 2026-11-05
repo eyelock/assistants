@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "github",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reads GitHub for what is waiting on you and what you are waiting on: review requests, your PRs' reviews and checks, mentions and assigned issues. Read-only.",
   "default_vendor": "claude",
   "keywords": ["github", "pull-requests", "reviews", "ci", "triage", "read-only"],
