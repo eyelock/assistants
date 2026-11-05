@@ -997,11 +997,15 @@ decides what is committed.
 ```bash
 bd update --actor dalglish "$client" --claim --json > /dev/null
 bd close --actor dalglish "$client" --reason "Retries added to the HTTP client: three attempts, exponential backoff" --json > /dev/null
+ynm remember --type reflective --level distributed --namespace seat/dalglish --subject "$client" --tags close-note --content "Surprised: the client already retried once, silently.
+Sharp edges: backoff has no cap yet." > /dev/null
 bd update --actor mccoist "$runner" --claim --json > /dev/null
 ynm remember --type episodic --level distributed --namespace seat/mccoist --subject seat:mccoist --tags handoff --content "In progress: the job runner retries. Done: the retry loop. Next: the test for a job that fails three times." > /dev/null
 ```
 
-Expected: no output.
+Expected: no output. Dalglish closed a bead, so Dalglish writes a close note: two lines, what surprised
+them and where the sharp edges were. McCoist keeps the claim, so McCoist's handoff notes carry
+the session and McCoist writes no close note until the bead closes.
 
 </details>
 
@@ -1342,6 +1346,10 @@ Mention them in a line when you reply.
 ## Your record
 
 - Add retries to the HTTP client
+
+## Your close notes
+
+- <the HTTP client bead's id>: Surprised: the client already retried once, silently. / Sharp edges: backoff has no cap yet.
 
 ## Waiting for you
 

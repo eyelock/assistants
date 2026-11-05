@@ -231,7 +231,9 @@ registered or written to the repository: no roster entry, no email, no username.
 
 3. Write your close note: one memory in your own namespace, two lines, no more. The first line is
    what surprised you; the second is where the sharp edges were. Do it when you close a bead and
-   when you hand one over unfinished. Your next wake shows the latest three.
+   when you give one to another seat unfinished, releasing your claim. A session handoff that keeps
+   your claim is neither: your handoff notes carry that, and you write the close note when the
+   bead closes. Your next wake shows the latest three.
 
    ```bash
    ynm remember --type reflective --namespace seat/<command> --subject <id> \
