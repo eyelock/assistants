@@ -111,10 +111,9 @@ function projectPackageJson({ source, kind }) {
     description: manifest.description ?? "",
   };
 
-  if (kind === "harness" && Array.isArray(manifest.includes)) {
+  if (kind === "harness") {
     const deps = {};
-    for (const inc of manifest.includes) {
-      if (!inc.path) continue;
+    for (const inc of sameRepoIncludes(manifest)) {
       const depDir = join(ROOT, inc.path);
       const depPkg = findPackageAt(depDir);
       if (depPkg) deps[depPkg] = "workspace:*";
@@ -123,6 +122,38 @@ function projectPackageJson({ source, kind }) {
   }
 
   return pkg;
+}
+
+// A harness's includes: the top-level list plus every profiles.<name>.includes list, as
+// scripts/ynh-register.mjs reads them, so both scripts write the same dependencies. Only
+// includes that name a path in this repository are workspace packages: one with a `git`
+// URL for another repository is not (a path-only include is local).
+const SELF_REPO = "github.com/eyelock/assistants";
+function normalizeGitUrl(url) {
+  return String(url)
+    .trim()
+    .toLowerCase()
+    .replace(/^git\+/, "")
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
+    .replace(/^[^/@]+@/, "")
+    .replace(/^([^/:]+):/, "$1/")
+    .replace(/\/+$/, "")
+    .replace(/\.git$/, "");
+}
+
+function sameRepoIncludes(manifest) {
+  const lists = [manifest.includes];
+  for (const profile of Object.values(manifest.profiles ?? {})) lists.push(profile?.includes);
+  return lists
+    .filter(Array.isArray)
+    .flat()
+    .filter(
+      (inc) =>
+        inc &&
+        typeof inc === "object" &&
+        inc.path &&
+        (!inc.git || normalizeGitUrl(inc.git) === SELF_REPO),
+    );
 }
 
 function findPackageAt(dir) {

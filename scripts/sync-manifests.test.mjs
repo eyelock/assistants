@@ -109,3 +109,31 @@ test("a plugin keeps .claude-plugin/plugin.json as its source and mirrors into .
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("a ynh harness gets dependencies from its profiles' includes, as ynh-register does, and none from other repositories", () => {
+  const root = tree({
+    "skills/a/.claude-plugin/plugin.json": agents("a", "1.0.0"),
+    "skills/b/.claude-plugin/plugin.json": agents("b", "1.0.0"),
+    "skills/a/package.json": pkg("a", "1.0.0"),
+    "skills/b/package.json": pkg("b", "1.0.0"),
+    "ynh/h/.agents/harness/plugin.json": agents("h", "0.1.0", {
+      includes: [
+        { git: "https://github.com/eyelock/assistants", path: "skills/a" },
+        { git: "https://github.com/someone/else", path: "skills/b" },
+      ],
+      profiles: {
+        full: { includes: [{ git: "git@github.com:eyelock/assistants.git", path: "skills/b" }] },
+      },
+    }),
+  });
+  try {
+    assert.equal(run(root, "generate").status, 0);
+    assert.deepEqual(read(root, "ynh/h/package.json").dependencies, {
+      "@eyelock-assistants/a": "workspace:*",
+      "@eyelock-assistants/b": "workspace:*",
+    });
+    assert.equal(run(root, "check").status, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
