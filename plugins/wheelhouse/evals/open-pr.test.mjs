@@ -303,3 +303,89 @@ test("when bd list fails it is a fault: exit 3, nothing opened, and never Closes
   assert.doesNotMatch(h.log(), /pr create/);
   h.done();
 });
+
+// exempt_repos: a bead whose repo: label is on the list needs no issue, and its PR opens with no
+// issue, no closing link and no milestone; a bead in any other repository is unchanged.
+const exemptGithub = { ...github, exempt_repos: ["hq"] };
+
+test("a bead in an exempt repository opens with no item, no Closes line and no milestone, even with no external_ref", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.exempt, true);
+  assert.equal(r.json.item, "");
+  assert.equal(r.json.release, "");
+  assert.equal(r.json.closing, "");
+  assert.match(h.log(), /pr create --draft/);
+  assert.doesNotMatch(h.log(), /--milestone|Closes|Part of/);
+  h.done();
+});
+
+test("an exempt bead's external_ref is ignored: no closing link, and the tracker is not asked", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"] })] });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.exempt, true);
+  assert.doesNotMatch(h.log(), /issue view|--milestone|Closes/);
+  h.done();
+});
+
+test("--dry-run on an exempt bead says exempt, with no tracker line to quote", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+  const r = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.dry_run, true);
+  assert.equal(r.json.exempt, true);
+  assert.equal(r.json.item, "");
+  assert.equal(r.json.relation, "");
+  h.done();
+});
+
+test("a bead in a repository not on the list is not exempt: it still needs its issue and gets its milestone", () => {
+  const none = harness({ tracker: exemptGithub, beads: [bead("hq-1", { external_ref: null })] });
+  const refused = none.run();
+  assert.equal(refused.status, 1);
+  assert.match(refused.json.refused, /no external_ref/);
+  assert.doesNotMatch(none.log(), /pr create/);
+  none.done();
+
+  const h = harness({ tracker: exemptGithub });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.exempt, false);
+  assert.equal(r.json.closing, "Closes #680");
+  assert.match(h.log(), /--milestone v0\.17\.0/);
+  h.done();
+});
+
+test("a bead with an exempt repo label and another is exempt only by the one on the list", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:ynh", "repo:hq"], external_ref: null })] });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.exempt, true);
+  h.done();
+});
+
+test("an exempt_repos that is not a list of strings is a fault, never nothing exempt", () => {
+  for (const bad of ["hq", [1], { hq: true }]) {
+    const h = harness({ tracker: { ...github, exempt_repos: bad }, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+    const r = h.run();
+    assert.equal(r.status, 3, JSON.stringify(bad));
+    assert.match(r.stderr, /exempt_repos must be a list/);
+    assert.doesNotMatch(h.log(), /pr create/);
+    h.done();
+  }
+});
+
+test("exemption holds for another tracker kind, without calling its adapter", () => {
+  const h = harness({
+    tracker: { ...jira, exempt_repos: ["hq"] },
+    beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })],
+    adapters: { jira: "#!/usr/bin/env bash\necho adapter-called >> \"$GH_LOG\"\n" },
+  });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.exempt, true);
+  assert.doesNotMatch(h.log(), /adapter-called/);
+  h.done();
+});

@@ -6,13 +6,18 @@ description: Start a Wheelhouse seat's session with purpose, not amnesia - who y
 # Wake
 
 Every session of a seat starts here. A seat's session-start hook runs the wake script and puts
-its block in front of you; if it didn't, run it yourself from the Wheelhouse root:
+its block in front of you; if it didn't (a seat the desk wakes as a subagent has no hook), run the
+Wheelhouse's own copy yourself, `scripts/wake.sh` at the Wheelhouse root:
 
 ```bash
-bash path/to/wake/scripts/wake.sh --seat <command> --format text
+bash scripts/wake.sh --seat <command> --format text
 ```
 
-`--seat` defaults to `BEADS_ACTOR`. Without `--format text` it prints the same as JSON.
+From any other directory, give the script's full path and the Wheelhouse with `--dir`:
+`bash <wheelhouse>/scripts/wake.sh --dir <wheelhouse> --seat <command> --format text`. `<command>`
+is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh <command>`) works
+too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
+seats. Without `--format text` it prints the same as JSON.
 
 It syncs first, so you wake to what other machines and seats wrote: ynm's memory (`ynm sync`)
 when the repository has a git remote, and the work graph (`bd sync`, which pulls and then pushes)

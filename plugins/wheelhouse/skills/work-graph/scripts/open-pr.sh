@@ -13,6 +13,10 @@
 #   - the external_ref does not match item.pattern (a config with no pattern is a fault, exit 3);
 #   - the item has no release.
 # A bead labelled housekeeping that has no external_ref opens as if there were no tracker.
+# A bead whose repo:<name> label is named in tracker.json's exempt_repos (a list of repository
+# names) is exempt by repository: it opens as if there were no tracker, whatever its external_ref
+# says, with no item, no closing link and no release. The check comes before any adapter is
+# called, so it holds for every tracker kind.
 #
 # The adapter: tracker-<kind>.sh beside this script (tracker-github.sh; tracker-generic.sh for
 # any kind without its own). It is the one place that knows a tracker's closing-link words and
@@ -38,7 +42,9 @@ Usage: open-pr.sh --bead <id> [--title <title>] [--body-file <file>] [--base <br
 
 Opens a draft pull request for the bead, from the current directory's repository, with the
 bead's tracker item linked and its release set. Prints a JSON object: {"url", "item",
-"release", "closing"}. Refuses a bead with no tracker item unless it is labelled housekeeping.
+"release", "closing"}. Refuses a bead with no tracker item unless it is labelled housekeeping or its
+repo: label is in tracker.json's exempt_repos (then it opens with no item, release or closing link,
+and the JSON has "exempt": true).
 --dir is the Wheelhouse (default: the current directory); --dry-run prints what it would run, and
 needs no --title. The JSON also names "item_name", "release_name" and "relation" ("closes" when the
 bead is the last open bead on the item, "part-of" otherwise, "" with no tracker item): a dispatch
@@ -86,8 +92,22 @@ if [ -f "$dir/tracker.json" ]; then
   printf '%s\n' "$kind" | grep -Eq '^[a-z0-9_-]+$' || die 3 "open-pr: tracker.json kind must be lower-case letters, digits, - or _"
 fi
 
+# Exempt by repository: the bead's repo: label is in the config's exempt_repos. A list that is not
+# an array of strings is a fault, never "nothing exempt".
+exempt=false
+if [ "$kind" != none ]; then
+  jq -e '(.exempt_repos // []) | type == "array" and all(type == "string")' "$dir/tracker.json" >/dev/null 2>&1 ||
+    die 3 "open-pr: tracker.json exempt_repos must be a list of repository names"
+  hit=$(jq -r --argjson b "$shown" '
+    (.exempt_repos // []) as $ex
+    | ($b | (.data? // .) | (if type == "array" then .[0] else . end) | [(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:")]) as $repos
+    | [$repos[] | select(. as $r | $ex | index($r))] | length' "$dir/tracker.json") ||
+    die 3 "open-pr: could not read exempt_repos"
+  [ "$hit" -gt 0 ] && exempt=true
+fi
+
 item=""; release=""; closing=""; flags=(); name=""; rname=""; relation=""
-if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
+if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   name=$(jq -r '.item.name // "item"' "$dir/tracker.json")
   rname=$(jq -r '.release.name // "release"' "$dir/tracker.json")
   [ -n "$ref" ] || refuse "bead $bead has no external_ref: a build bead links its tracker $name (file the $name, then set the bead's external_ref), or carries the housekeeping label if it has none"
@@ -138,11 +158,11 @@ if $dry; then
   ghjson='[]'
   for a in "${args[@]}"; do ghjson=$(jq -c --arg a "$a" '. + [$a]' <<<"$ghjson"); done
   jq -n --arg item "$item" --arg release "$release" --arg closing "$closing" --argjson gh "$ghjson" \
-    --arg iname "$name" --arg rname "$rname" --arg relation "$relation" \
-    '{dry_run: true, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing, gh: $gh}'
+    --arg iname "$name" --arg rname "$rname" --arg relation "$relation" --argjson exempt "$exempt" \
+    '{dry_run: true, exempt: $exempt, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing, gh: $gh}'
   exit 0
 fi
 url=$(gh "${args[@]}") || die 3 "open-pr: gh pr create failed"
 jq -n --arg url "$url" --arg item "$item" --arg release "$release" --arg closing "$closing" \
-  --arg iname "$name" --arg rname "$rname" --arg relation "$relation" \
-  '{url: $url, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing}'
+  --arg iname "$name" --arg rname "$rname" --arg relation "$relation" --argjson exempt "$exempt" \
+  '{url: $url, exempt: $exempt, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing}'
