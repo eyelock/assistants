@@ -86,7 +86,7 @@ reaching for the same bead. Other seats skip this section.
 A Wheelhouse may have a tracker (GitHub Issues, JIRA or another) for the humans' project view,
 beside the work graph. Its config is `tracker.json` at the Wheelhouse root; the shape, and how to
 read it, is in [references/tracker.md](references/tracker.md). Nothing here assumes a particular
-tracker: use the config's names and commands.
+tracker: use the config's names and the adapter's commands.
 
 1. **A build bead links its tracker item.** `external_ref` holds the item's full URL or key, as
    the config's `item.reference` says: `bd create ... --external-ref "<reference>"`, or

@@ -224,6 +224,14 @@ test("the GitHub adapter reads a release and a state with gh, and refuses anythi
   assert.equal(evil.status, 1);
   assert.equal(existsSync(join(h.dir, "PWNED")), false);
   assert.equal(call("state", "owner/repo#1").status, 1);
+  // gh failing is a fault (exit 3) for both, whatever exit code gh itself gave.
+  const bad = join(h.dir, "badbin");
+  mkdirSync(bad);
+  writeFileSync(join(bad, "gh"), "#!/bin/sh\nexit 4\n");
+  chmodSync(join(bad, "gh"), 0o755);
+  const broken = (...a) => spawnSync("bash", [adapter, ...a], { encoding: "utf8", env: { ...env, PATH: `${bad}:${env.PATH}` } });
+  assert.equal(broken("release", ISSUE).status, 3);
+  assert.equal(broken("state", ISSUE).status, 3);
   h.done();
 });
 
