@@ -18,6 +18,15 @@ bead each, as the `work-graph` skill says (a specialist first, then a general-pu
 seat workers with the `add-seat` skill when the desk asks, and wake each for its birth. Start
 each worker you wake on its roster model, the `--model` flag from `model.sh`.
 
+**Names the tracker item in every dispatch note** (when the Wheelhouse has a tracker, `tracker.json`):
+the bead's item (full URL or key), its release, and whether the pull request **closes** the item or
+is **part of** it. It does not work these out itself: it runs the `work-graph` skill's
+`scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run` and quotes `item`, `release` and
+`relation` (using `item_name` and `release_name` as the words), so the note and the pull request
+the worker opens cannot disagree. With no tracker the note has no tracker line. A build bead that
+the script refuses (no item, no release) is not handed out: it stays unassigned and the refusal is
+reported.
+
 **May not:** claim or build work, reassign work in progress, or give a worker a second bead while
 it has one.
 
