@@ -50,8 +50,13 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
   seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
   there is none) and leaves the bead alone.
+- **A bead with an open pull request is never a dead claim.** A build bead stays in progress until
+  its pull request merges ([Closing](#closing)), so its holder may end its session and wait days
+  for a human. Such a bead needs no heartbeat, a lapsed lease on it means nothing, and the
+  dispatcher never reclaims it while its pull request is open (draft or not). Once the pull
+  request is closed unmerged, the bead is an ordinary claim again.
 - **The dispatcher reclaims, and only then.** Once it has confirmed the holder is gone (no live
-  session, and the lease long expired), it runs `bd reclaim --id <id> --older-than <grace>`,
+  session, the lease long expired, and no open pull request for the bead), it runs `bd reclaim --id <id> --older-than <grace>`,
   records on the bead why it did, and re-dispatches it. The bead goes back to ready with no
   assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
   heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
@@ -244,6 +249,15 @@ human's inbox; when someone names themselves ("it's me, <name>"), the desk runs
 registered or written to the repository: no roster entry, no email, no username.
 
 ## Closing
+
+When a bead closes depends on what kind it is:
+
+- **A build bead closes when its pull request merges**, never at review and never when the pull
+  request opens. Until then it stays in progress with the worker, and a ready review does not
+  release it.
+- **A review bead is closed by the reviewer** who holds it, when the verdict is posted.
+- **A fix a review asks for is a bead for the pull request's author**, linked to the bead it came
+  from, not a bead for whichever worker is idle. The author already has the branch and the context.
 
 1. Close with what actually happened: `bd close <id> --reason "<what was done>" --json`.
    **The record is never falsified.** If something was skipped, failed or left for later, the

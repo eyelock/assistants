@@ -1134,8 +1134,15 @@ strachan: Document retries
 
 ## Review: Gore
 
-Ask Gore to review what the workers closed. Gore fixes nothing: what needs fixing goes back into
-the graph, unassigned, for Anderson to hand out.
+Ask Gore to review what the workers closed. Gore fixes nothing: what needs fixing goes into the
+graph as a bead. This tower keeps its code uncommitted in `../widget`, so there are no pull
+requests: the workers have closed their beads when the work was done, and Gore reviews finished
+work. What Gore files is therefore new work, filed unassigned for Anderson to hand out, and not a
+fix to a pull request that is still open.
+
+With pull requests the rules differ. A build bead stays open until its pull request merges, a fix
+the review asks for is a bead assigned to the pull request's author, and the reviewer closes its
+own review bead when the verdict is posted.
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
