@@ -38,38 +38,56 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
+       wake.sh <name> [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
        wake.sh --end [--seat <name>] [--dir <wheelhouse repo>]
 
 Syncs memory and work, then prints what a seat should know as it wakes.
---seat defaults to $BEADS_ACTOR; --dir to the current directory; --format to
-json. --no-sync skips the sync. --end, for the session-end hook, only syncs
+The seat is --seat <name>, or the seat's name given bare; it defaults to
+$BEADS_ACTOR, and without any of them the script stops and lists the roster's
+seats. Run it as bash <wheelhouse>/scripts/wake.sh, and pass --dir <wheelhouse>
+when the current directory is not the Wheelhouse's root. --dir defaults to the
+current directory; --format to json. --no-sync skips the sync. --end, for the session-end hook, only syncs
 memory and work, and prints the result as JSON.
 EOF
 }
 
 seat="${BEADS_ACTOR:-}"
+positional=""
+seat_flag=0
 dir="."
 format="json"
 sync=1
 end=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; shift 2 ;;
+    --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; seat_flag=1; shift 2 ;;
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
     --no-sync) sync=0; shift ;;
     --end) end=1; shift ;;
     --help | -h) usage; exit 0 ;;
-    *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    *)
+      # A bare seat name, such as wake.sh hynde: the same as --seat hynde, once.
+      [ -z "$positional" ] || { echo "more than one seat named: $positional and $1" >&2; usage >&2; exit 1; }
+      positional="$1"; shift ;;
   esac
 done
+if [ -n "$positional" ]; then
+  [ "$seat_flag" != 1 ] || [ "$seat" = "$positional" ] || { echo "two different seats named: --seat $seat and $positional" >&2; usage >&2; exit 1; }
+  seat="$positional"
+fi
 case "$format" in json | text) ;; *) echo "--format must be json or text" >&2; exit 1 ;; esac
-[ -n "$seat" ] || { echo "no seat: pass --seat or set BEADS_ACTOR" >&2; exit 1; }
 for tool in jq ynm bd; do
   command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required" >&2; exit 3; }
 done
 roster="$dir/skills/roster/assets/roster.json"
 [ -f "$roster" ] || { echo "not a Wheelhouse (no $roster)" >&2; exit 2; }
+if [ -z "$seat" ]; then
+  echo "no seat: pass --seat <name> (or the name bare), or set BEADS_ACTOR. The seats here: $(jq -r '[.seats[].command] | join(", ")' "$roster")" >&2
+  usage >&2
+  exit 1
+fi
 cd "$dir" || exit 2
 
 # A sync that hangs gives up after this many seconds (perl's alarm: macOS has
