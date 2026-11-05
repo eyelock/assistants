@@ -47,12 +47,13 @@ at a time**, in this order. Don't create anything until you have the first four.
 8. **The tracker:** where the humans see the project, apart from the work graph: GitHub Issues,
    JIRA, another, or none. For one, gather what `tracker.json` needs (the `work-graph` skill's
    `references/tracker.md` has the shape): the kind; what it calls an item and a release
-   (issue/milestone, ticket/fixVersion); how an item is referenced and a safe pattern for it; the
-   command that prints an item's release; the command that prints its state, and the states that
-   mean open and closed; and the CLI the humans want used to change an item's release. GitHub and
-   JIRA have starting points in `references/tracker.md`: propose one and confirm it. For any other
-   tracker there is none: ask for those commands, and don't guess them. If the request doesn't say
-   and you aren't asking, use none, and say so in the report.
+   (issue/milestone, ticket/fixVersion); how an item is referenced, with a safe pattern for it; and
+   the CLI the humans want used to change an item's release. The config holds no commands. GitHub
+   has an adapter, `tracker-github.sh`, so nothing more is needed. **Any other tracker needs an
+   adapter script** (`tracker-<kind>.sh` in the `work-graph` skill, with `release`, `state`,
+   `canon`, `closing` and `pr-flags` written as plain code): until it exists, pull requests can't
+   be opened through `open-pr.sh` for that tracker. Say so, and offer to write the adapter as a
+   bead. If the request doesn't say and you aren't asking, use none, and say so in the report.
 9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
    walks through with the human role by role.
 

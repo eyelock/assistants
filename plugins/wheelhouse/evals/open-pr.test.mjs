@@ -1,16 +1,17 @@
 // open-pr.sh opens a draft PR with the bead's tracker item and release. Each case runs the real
 // script against stubs: bd answers `show` and `list` from a JSON file, gh answers `repo view` and
-// `issue view` (the release command in tracker.json) and records `pr create`.
+// `issue view` (what the GitHub adapter calls for a release or a state) and records `pr create`.
+// The scripts are copied into each case's folder, so a case can add an adapter of its own.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
-const script = join(plugin, "skills", "work-graph", "scripts", "open-pr.sh");
+const scriptsDir = join(plugin, "skills", "work-graph", "scripts");
 
 const bdStub = `#!/bin/sh
 case "$1" in
@@ -23,7 +24,7 @@ const ghStub = `#!/bin/sh
 printf '%s\\n' "$*" >> "$GH_LOG"
 case "$1 $2" in
   "repo view") echo "$GH_REPO" ;;
-  "issue view") printf '%s\\n' "$GH_MILESTONE" ;;
+  "issue view") case "$*" in *"--json state"*) echo "$GH_STATE" ;; *) printf '%s\\n' "$GH_MILESTONE" ;; esac ;;
   "pr create") echo "https://github.com/$GH_REPO/pull/7" ;;
   *) echo "gh stub: unexpected $*" >&2; exit 1 ;;
 esac
@@ -33,17 +34,21 @@ const ISSUE = "https://github.com/eyelock/ynh/issues/680";
 const github = {
   kind: "github",
   item: { name: "issue", pattern: "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$" },
-  release: { name: "milestone", read: "gh issue view \"$TRACKER_ITEM\" --json milestone --jq .milestone.title" },
+  release: { name: "milestone" },
 };
 const bead = (id, over = {}) => ({ id, status: "in_progress", labels: ["repo:ynh"], external_ref: ISSUE, ...over });
 
-function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false } = {}) {
+function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false, adapters = {} } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-openpr-"));
   mkdirSync(join(dir, "bin"));
   for (const [n, body] of [["bd", bdStub], ["gh", ghStub]]) {
     writeFileSync(join(dir, "bin", n), body);
     chmodSync(join(dir, "bin", n), 0o755);
   }
+  const scripts = join(dir, "scripts");
+  cpSync(scriptsDir, scripts, { recursive: true });
+  for (const [kind, body] of Object.entries(adapters)) writeFileSync(join(scripts, `tracker-${kind}.sh`), body);
+  const script = join(scripts, "open-pr.sh");
   const wh = join(dir, "wh");
   mkdirSync(join(wh, ".beads"), { recursive: true });
   if (tracker) writeFileSync(join(wh, "tracker.json"), JSON.stringify(tracker));
@@ -56,10 +61,12 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
     GH_LOG: join(dir, "gh.log"),
     GH_REPO: "eyelock/ynh",
     GH_MILESTONE: milestone,
+    GH_STATE: "OPEN",
     BD_LIST_FAIL: listFails ? "1" : "",
   };
   return {
     dir,
+    scripts,
     run: (args = ["--bead", "hq-1"]) => {
       const out = spawnSync(
         "bash",
@@ -151,18 +158,37 @@ test("kind none, or no config, still opens PRs", () => {
   }
 });
 
-test("another tracker kind uses the generic adapter: the item in the body, no release flag", () => {
-  const jira = {
-    kind: "jira",
-    item: { name: "ticket", pattern: "^[A-Z][A-Z0-9]+-[0-9]+$" },
-    release: { name: "fixVersion", read: "echo 2.4 \"$TRACKER_ITEM\"" },
-  };
-  const h = harness({ tracker: jira, beads: [bead("hq-1", { external_ref: "PLAT-12" })] });
+const jiraAdapter = `#!/usr/bin/env bash
+case "$1" in
+  canon) echo "$2" ;;
+  release) echo "2.4" ;;
+  closing) echo "Jira: $2" ;;
+  pr-flags) ;;
+esac
+`;
+const jira = {
+  kind: "jira",
+  item: { name: "ticket", pattern: "^[A-Z][A-Z0-9]+-[0-9]+$" },
+  release: { name: "fixVersion" },
+};
+
+test("another tracker kind works through an adapter of its own", () => {
+  const h = harness({ tracker: jira, beads: [bead("hq-1", { external_ref: "PLAT-12" })], adapters: { jira: jiraAdapter } });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.json.release, "2.4 PLAT-12");
-  assert.match(r.json.closing, /PLAT-12/);
+  assert.equal(r.json.release, "2.4");
+  assert.equal(r.json.closing, "Jira: PLAT-12");
   assert.doesNotMatch(h.log(), /--milestone/);
+  h.done();
+});
+
+test("a kind with no adapter of its own cannot read a release: a fault, nothing opened", () => {
+  const h = harness({ tracker: jira, beads: [bead("hq-1", { external_ref: "PLAT-12" })] });
+  const r = h.run();
+  assert.equal(r.status, 3);
+  assert.match(r.stderr, /could not read the release/);
+  assert.match(r.stderr, /add tracker-<kind>\.sh/);
+  assert.doesNotMatch(h.log(), /pr create/);
   h.done();
 });
 
@@ -177,17 +203,27 @@ test("a hostile reference is refused before any command runs", () => {
   h.done();
 });
 
-test("the reference reaches the command only as $TRACKER_ITEM, even when a loose pattern lets metacharacters in", () => {
-  const tracker = {
-    kind: "jira",
-    item: { name: "ticket", pattern: "^.+$" },
-    release: { name: "fixVersion", read: 'echo "$TRACKER_ITEM"' },
-  };
-  const evil = "x; touch PWNED";
-  const h = harness({ tracker, beads: [bead("hq-1", { external_ref: evil })] });
-  const r = h.run(["--bead", "hq-1", "--dry-run"]);
-  assert.equal(r.json.release, evil);
+test("nothing in tracker.json is run: a command-looking field is ignored", () => {
+  const tracker = { ...github, release: { name: "milestone", read: "touch PWNED" }, state: { read: "touch PWNED" } };
+  const h = harness({ tracker });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
   assert.equal(existsSync(join(h.dir, "PWNED")), false);
+  h.done();
+});
+
+test("the GitHub adapter reads a release and a state with gh, and refuses anything but an issue URL", () => {
+  const h = harness();
+  const adapter = join(h.scripts, "tracker-github.sh");
+  const env = { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, GH_LOG: join(h.dir, "gh.log"), GH_MILESTONE: "v1.2", GH_STATE: "CLOSED" };
+  const call = (...a) => spawnSync("bash", [adapter, ...a], { encoding: "utf8", env });
+  assert.equal(call("release", ISSUE).stdout.trim(), "v1.2");
+  assert.equal(call("state", ISSUE).stdout.trim(), "closed");
+  assert.equal(call("release", ISSUE).status, 0);
+  const evil = call("release", "https://github.com/a;touch${IFS}PWNED;/b/issues/1");
+  assert.equal(evil.status, 1);
+  assert.equal(existsSync(join(h.dir, "PWNED")), false);
+  assert.equal(call("state", "owner/repo#1").status, 1);
   h.done();
 });
 
@@ -209,7 +245,7 @@ test("--dry-run opens nothing, and bad args and unknown beads fail", () => {
   assert.ok(r.json.gh.includes("--milestone"));
   assert.doesNotMatch(h.log(), /pr create/);
   assert.equal(h.run(["--bead", "hq-9"]).status, 2);
-  assert.equal(spawnSync("bash", [script], { encoding: "utf8" }).status, 1);
+  assert.equal(spawnSync("bash", [join(scriptsDir, "open-pr.sh")], { encoding: "utf8" }).status, 1);
   h.done();
 });
 

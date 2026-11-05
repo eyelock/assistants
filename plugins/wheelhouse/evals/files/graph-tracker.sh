@@ -12,15 +12,7 @@ cat > tracker.json <<'JSON'
     "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$",
     "example": "https://github.com/eyelock/ynh/issues/680"
   },
-  "release": {
-    "name": "milestone",
-    "read": "gh issue view \"$TRACKER_ITEM\" --json milestone --jq '.milestone.title // empty'"
-  },
-  "state": {
-    "read": "gh issue view \"$TRACKER_ITEM\" --json state --jq .state",
-    "open": ["OPEN"],
-    "closed": ["CLOSED"]
-  }
+  "release": { "name": "milestone" }
 }
 JSON
 git add tracker.json && git commit -qm "chore: tracker config"

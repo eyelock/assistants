@@ -5,7 +5,18 @@
 #                                     names are case-insensitive); accepts the URL or owner/repo#N
 #   tracker-github.sh closing <issue-url> <last|more> <pr-owner/repo>
 #   tracker-github.sh pr-flags <milestone>
+#   tracker-github.sh release <issue-url>   prints the issue's milestone, empty when it has none
+#   tracker-github.sh state <issue-url>     prints open, closed or unknown
+# Nothing here runs text from a config: the commands are written out below, and the item reaches
+# gh only as one argument, after it has matched the safe pattern for an issue URL.
 set -uo pipefail
+
+safe_url='^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$'
+
+need_issue() {
+  [[ "${1:-}" =~ $safe_url ]] || { echo "not a GitHub issue URL: ${1:-}" >&2; exit 1; }
+}
+
 case "${1:-}" in
   closing)
     [ $# -eq 4 ] || { echo "usage: tracker-github.sh closing <issue-url> <last|more> <pr-repo>" >&2; exit 1; }
@@ -25,8 +36,15 @@ case "${1:-}" in
     else
       echo "$2"
     fi ;;
+  release)
+    need_issue "${2:-}"
+    gh issue view "$2" --json milestone --jq '.milestone.title // empty' ;;
+  state)
+    need_issue "${2:-}"
+    st=$(gh issue view "$2" --json state --jq .state) || exit 3
+    case "$st" in OPEN) echo open ;; CLOSED) echo closed ;; *) echo unknown ;; esac ;;
   pr-flags)
     [ $# -eq 2 ] || { echo "usage: tracker-github.sh pr-flags <milestone>" >&2; exit 1; }
     printf '%s\n%s\n' --milestone "$2" ;;
-  *) echo "usage: tracker-github.sh closing|pr-flags|canon ..." >&2; exit 1 ;;
+  *) echo "usage: tracker-github.sh closing|pr-flags|canon|release|state ..." >&2; exit 1 ;;
 esac
