@@ -82,7 +82,7 @@ reaching for the same bead. Other seats skip this section.
 
 ## Linking the tracker
 
-A Wheelhouse may have a tracker (GitHub Issues, JIRA, Linear) for the humans' project view,
+A Wheelhouse may have a tracker (GitHub Issues, JIRA or another) for the humans' project view,
 beside the work graph. Its config is `tracker.json` at the Wheelhouse root; the shape, and how to
 read it, is in [references/tracker.md](references/tracker.md). Nothing here assumes a particular
 tracker: use the config's names and commands.
@@ -100,7 +100,9 @@ tracker: use the config's names and commands.
    when the humans move the item.
 4. **With no tracker** (`kind: "none"`, or no `tracker.json`) there is nothing to link: leave
    `external_ref` empty, and don't invent a reference.
-5. **Check before you rely on it.** If a reference doesn't match `item.pattern`, say so and ask
+5. **Check before you rely on it.** Never run a config command on a reference that hasn't passed
+   `item.pattern`, and pass it as `$TRACKER_ITEM`, never into the command text (see the reference).
+   If a reference doesn't match, say so and ask
    the desk; don't edit it to fit.
 
 ## Who's working on what
