@@ -48,7 +48,7 @@ a milestone moves.
 
 **Watches for, and reports:** an issue carrying many beads or pull requests where it should have
 closed in one; a build bead with no tracker item in its `external_ref` (only beads labelled
-`housekeeping` may go without); a tracker item still open after its work merged, or closed while
+`housekeeping`, or in a repository the config's `exempt_repos` names, may go without); a tracker item still open after its work merged, or closed while
 its work is still open (a bead in progress, or a pull request unmerged); an item with no release; a milestone at risk,
 with open issues blocked, held or with no one on them.
 
