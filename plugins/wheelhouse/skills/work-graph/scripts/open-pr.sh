@@ -19,10 +19,13 @@
 # how to set a release on a PR. It is called as
 #   tracker-<kind>.sh closing <item> <last|more> <pr-repo>   prints the closing line
 #   tracker-<kind>.sh pr-flags <release>                     prints gh pr create args, one a line
+#   tracker-<kind>.sh release <item>                         prints the item's release, empty if none
+#   tracker-<kind>.sh canon <ref>                            prints the canonical item id
+#   tracker-<kind>.sh state <item>                           prints open, closed or unknown (sweeps)
 # <last> means this bead is the last open bead on the item; <more>, that others remain.
 #
-# The item reaches the release command only as $TRACKER_ITEM in its environment, after it has
-# matched item.pattern (required); it is never spliced into the command text.
+# Nothing in tracker.json is run. The release is read by the adapter's own code (release <item>),
+# after the reference has matched item.pattern (required) and again the adapter's strict form.
 #
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse or the bead not found,
 # 3 a tool (jq, bd, gh) is missing or failed.
@@ -88,23 +91,20 @@ if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   name=$(jq -r '.item.name // "item"' "$dir/tracker.json")
   rname=$(jq -r '.release.name // "release"' "$dir/tracker.json")
   [ -n "$ref" ] || refuse "bead $bead has no external_ref: a build bead links its tracker $name (file the $name, then set the bead's external_ref), or carries the housekeeping label if it has none"
-  # The pattern is required, and checked before any command runs: it is what keeps a hostile
-  # reference out of the tracker's commands. The reference then travels in $TRACKER_ITEM, never
-  # as shell text.
+  # The pattern is required, and checked before the adapter is called. The adapter checks the
+  # reference again against its own strict form, and passes it to the tracker's CLI as one argument.
   pattern=$(jq -r '.item.pattern // empty' "$dir/tracker.json")
   [ -n "$pattern" ] || die 3 "open-pr: tracker.json has no item.pattern; refusing to run its commands"
   printf '%s\n' "$ref" | grep -Eq -- "$pattern" ||
     refuse "bead $bead's external_ref does not look like a tracker $name (expected to match $pattern)"
   case "$ref" in *$'\n'*) refuse "bead $bead's external_ref spans several lines" ;; esac
   item="$ref"
-  rcmd=$(jq -r '.release.read // empty' "$dir/tracker.json")
-  [ -n "$rcmd" ] || die 3 "open-pr: tracker.json has no release.read command"
-  release=$(TRACKER_ITEM="$item" sh -c "$rcmd" 2>/dev/null | head -n 1) || die 3 "open-pr: the release command failed"
+  adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
+  release=$(bash "$adapter" release "$item") || die 3 "open-pr: the $kind adapter could not read the release of $item"
   [ -n "$release" ] || refuse "the tracker $name $item has no $rname: set it in the tracker, then open the PR"
 
   # Is this the last open bead on the item? Both sides go through the adapter to a canonical item
   # id first, so a sibling written in another case or short form (owner/repo#N) still counts.
-  adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
   mine=$(bash "$adapter" canon "$item") || die 3 "open-pr: the $kind adapter failed to canonicalise $item"
   # Capture each step on its own, so a failing bd or jq is a fault (exit 3), never a count of 0
   # that would write "Closes" while other beads are open on the item.
