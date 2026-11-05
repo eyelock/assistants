@@ -75,6 +75,8 @@ housekeeping=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) 
 kind=none
 if [ -f "$dir/tracker.json" ]; then
   kind=$(jq -er '.kind' "$dir/tracker.json" 2>/dev/null) || die 3 "open-pr: $dir/tracker.json is not valid, or has no kind"
+  # kind names an adapter file, so it must be a plain word, never a path.
+  printf '%s\n' "$kind" | grep -Eq '^[a-z0-9_-]+$' || die 3 "open-pr: tracker.json kind must be lower-case letters, digits, - or _"
 fi
 
 item=""; release=""; closing=""; flags=()
@@ -96,13 +98,19 @@ if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   release=$(TRACKER_ITEM="$item" sh -c "$rcmd" 2>/dev/null | head -n 1) || die 3 "open-pr: the release command failed"
   [ -n "$release" ] || refuse "the tracker $name $item has no $rname: set it in the tracker, then open the PR"
 
-  # Is this the last open bead on the item?
-  others=$(cd "$dir" && bd list --all --json 2>/dev/null | jq --arg id "$bead" --arg ref "$item" \
-    '[(.data? // .)[] | select(.external_ref == $ref and .id != $id and .status != "closed")] | length') ||
+  # Is this the last open bead on the item? Both sides go through the adapter to a canonical item
+  # id first, so a sibling written in another case or short form (owner/repo#N) still counts.
+  adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
+  mine=$(bash "$adapter" canon "$item") || die 3 "open-pr: the $kind adapter failed to canonicalise $item"
+  others=0
+  while IFS= read -r sib; do
+    [ -n "$sib" ] || continue
+    if [ "$(bash "$adapter" canon "$sib")" = "$mine" ]; then others=$((others + 1)); fi
+  done < <(cd "$dir" && bd list --all --json 2>/dev/null | jq -r --arg id "$bead" \
+    '(.data? // .)[] | select(.id != $id and .status != "closed") | .external_ref // empty') ||
     die 3 "open-pr: bd list failed"
   last=more; [ "$others" -eq 0 ] && last=last
 
-  adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
   closing=$(bash "$adapter" closing "$item" "$last" "$repo") || die 3 "open-pr: the $kind adapter failed to write the closing link"
   while IFS= read -r f; do [ -n "$f" ] && flags+=("$f"); done < <(bash "$adapter" pr-flags "$release")
