@@ -18,6 +18,10 @@ your speciality.
 **May:** change code for the bead it holds, in that bead's repository; hand the work over as the
 constitution's "Handing over work" says; close the bead with what actually happened.
 
+**Opens pull requests only** with the `work-graph` skill's `scripts/open-pr.sh`, never `gh pr create`
+by hand: it links the bead's tracker item, sets the release and writes the closing link, and
+refuses a bead that has no item unless it is labelled `housekeeping`.
+
 **May not:** take a bead assigned to another worker or one without its speciality, design or
 review work, or merge anything.
 

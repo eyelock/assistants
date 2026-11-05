@@ -1,6 +1,7 @@
 ---
 name: work-graph
 description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, ask a human for what only a human can do (a merge, a decision, a credential) through the humans' inbox, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, when work needs a human or the humans should be told something, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
+allowed-tools: Bash Read
 ---
 
 # Work graph
@@ -85,7 +86,7 @@ reaching for the same bead. Other seats skip this section.
 A Wheelhouse may have a tracker (GitHub Issues, JIRA or another) for the humans' project view,
 beside the work graph. Its config is `tracker.json` at the Wheelhouse root; the shape, and how to
 read it, is in [references/tracker.md](references/tracker.md). Nothing here assumes a particular
-tracker: use the config's names and commands.
+tracker: use the config's names and the adapter's commands.
 
 1. **A build bead links its tracker item.** `external_ref` holds the item's full URL or key, as
    the config's `item.reference` says: `bd create ... --external-ref "<reference>"`, or
@@ -95,15 +96,44 @@ tracker: use the config's names and commands.
    humans' project view: tidying the work graph, refreshing a seat. Add the label
    (`-l housekeeping`) when creating one. A merge, review or decision bead for a human is not a
    build bead and needs no item.
-3. **The release comes from the item, never the bead.** Read it with the config's `release.read`
-   command; don't copy a milestone, fixVersion or version onto the bead, where it would go stale
+3. **The release comes from the item, never the bead.** Read it with the tracker adapter's
+   `release <item>` (`scripts/tracker-<kind>.sh`); don't copy a milestone, fixVersion or version onto the bead, where it would go stale
    when the humans move the item.
 4. **With no tracker** (`kind: "none"`, or no `tracker.json`) there is nothing to link: leave
    `external_ref` empty, and don't invent a reference.
-5. **Check before you rely on it.** Never run a config command on a reference that hasn't passed
-   `item.pattern`, and pass it as `$TRACKER_ITEM`, never into the command text (see the reference).
-   If a reference doesn't match, say so and ask
+5. **Check before you rely on it.** Never call an adapter on a reference that hasn't passed
+   `item.pattern`. `tracker.json` holds no commands, and nothing in it is ever run (see the
+   reference). If a reference doesn't match, say so and ask
    the desk; don't edit it to fit.
+
+## Opening a pull request
+
+A worker that hands work over with a pull request opens it only with this skill's
+`scripts/open-pr.sh`, never `gh pr create` by hand, so the PR carries its tracker item and release:
+
+```bash
+bash path/to/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> \
+  --title "<conventional title>" --body-file <file> --base <branch>
+```
+
+Run it from the repository's worktree; `--dir` is the Wheelhouse, where `tracker.json` and the
+work graph are. Start the body file with your byline. The script:
+
+1. reads the bead's `external_ref` and the release from the item (the adapter's `release`),
+   and opens a **draft** PR with the release set where the tracker supports it (a GitHub
+   milestone);
+2. writes the tracker's own closing link at the end of the body: on GitHub, `Closes #N` when this
+   bead is the last open bead on the item, `Part of #N` when others remain;
+3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
+   `housekeeping`, a reference that doesn't match `item.pattern`, and an item with no release.
+   Fix the cause (file the item, ask the desk to set its release) and run it again;
+4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release.
+
+Everything GitHub-specific is in `scripts/tracker-github.sh`; another tracker gets a
+`tracker-<kind>.sh` with the same two commands (`closing`, `pr-flags`), and until it does,
+`tracker-generic.sh` names the item in the body and sets no release. `--dry-run` shows what it
+would run. A PR with no tracker item of its own (a Wheelhouse process change, say) is a bead
+labelled `housekeeping`; do not close a tracker item from it.
 
 ## Who's working on what
 

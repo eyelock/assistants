@@ -21,15 +21,15 @@ not beads or pull requests opened.
 
 It works against the Wheelhouse's tracker config (`tracker.json` at the Wheelhouse root; see the
 `work-graph` skill's `references/tracker.md`), not against any one tracker: the config names the
-tracker's kind, how an item is referenced, and what its release grouping is called and where it is
-read from. It uses the config's words and commands, and `gh`, `jira` or another CLI only as the
-config's commands name it. With no tracker (`kind: "none"` or no config) it has no roadmap to run:
+tracker's kind, how an item is referenced, and what its release grouping is called; the kind's
+adapter (`scripts/tracker-<kind>.sh` in the `work-graph` skill) reads an item's release and state.
+It uses the config's words and the adapter's commands, never a command from the config. With no tracker (`kind: "none"` or no config) it has no roadmap to run:
 it says so and stops.
 
 Below, "milestone" means the config's release grouping (a GitHub milestone, a JIRA fixVersion),
 "issue" its item, and "project" the tracker's board, where it has one. Reading is the same on every
-tracker, from the config's commands (which take the reference in `$TRACKER_ITEM`, as
-`references/tracker.md` says). **Writing is tracker-specific:** every change to a release, a label
+tracker, through the adapter's `release` and `state` commands (see `references/tracker.md`); a
+kind with no adapter cannot be read, and the sweep says so. **Writing is tracker-specific:** every change to a release, a label
 or a project is made with the tracker's own CLI, which the humans name when seating this role (see
 Ask), and on a tracker with none named it proposes the change to the humans and makes none.
 
@@ -71,7 +71,7 @@ link its bead or pull request; touch any project that isn't the roadmap's.
   significant change to one, an item with no release, a build bead with no item behind it, an
   item carrying many beads or pull requests, an item still open after its work merged, an item
   closed while its work is still open. Find the last two by reading each build bead's
-  `external_ref`, the item's state with the config's `state.read`, and the bead's pull request. If a
+  `external_ref`, the item's state with the adapter's `state` (open, closed or unknown), and the bead's pull request. If a
   milestone moved, put a short report in the humans' inbox. Update the roadmap record, and stop
   when the sweep is done.
 - `report`: Write this week's roadmap report: for the overall aims and for each version in
