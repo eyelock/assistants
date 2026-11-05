@@ -20,8 +20,11 @@ case "${1:-}" in
     re_url='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)/?$'
     re_short='^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([0-9]+)$'
     if [[ "$2" =~ $re_url ]] || [[ "$2" =~ $re_short ]]; then
-      printf '%s#%s\n' "$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')" "${BASH_REMATCH[2]}"
-    else printf '%s\n' "$2"; fi ;;
+      name=$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+      echo "$name#${BASH_REMATCH[2]}"
+    else
+      echo "$2"
+    fi ;;
   pr-flags)
     [ $# -eq 2 ] || { echo "usage: tracker-github.sh pr-flags <milestone>" >&2; exit 1; }
     printf '%s\n%s\n' --milestone "$2" ;;
