@@ -33,13 +33,16 @@ set -uo pipefail
 
 usage() {
   cat <<'EOF2'
-Usage: open-pr.sh --bead <id> --title <title> [--body-file <file>] [--base <branch>]
+Usage: open-pr.sh --bead <id> [--title <title>] [--body-file <file>] [--base <branch>]
                   [--repo <owner/name>] [--dir <wheelhouse repo>] [--dry-run]
 
 Opens a draft pull request for the bead, from the current directory's repository, with the
 bead's tracker item linked and its release set. Prints a JSON object: {"url", "item",
 "release", "closing"}. Refuses a bead with no tracker item unless it is labelled housekeeping.
---dir is the Wheelhouse (default: the current directory); --dry-run prints what it would run.
+--dir is the Wheelhouse (default: the current directory); --dry-run prints what it would run, and
+needs no --title. The JSON also names "item_name", "release_name" and "relation" ("closes" when the
+bead is the last open bead on the item, "part-of" otherwise, "" with no tracker item): a dispatch
+note asks this for the same answer the PR will give.
 EOF2
 }
 
@@ -61,7 +64,8 @@ while [ $# -gt 0 ]; do
     *) usage >&2; exit 1 ;;
   esac
 done
-[ -n "$bead" ] && [ -n "$title" ] || { usage >&2; exit 1; }
+[ -n "$bead" ] || { usage >&2; exit 1; }
+$dry || [ -n "$title" ] || { usage >&2; exit 1; }
 [ -z "$body_file" ] || [ -f "$body_file" ] || die 2 "open-pr: no such body file: $body_file"
 command -v jq >/dev/null || die 3 "open-pr: jq is not installed"
 command -v bd >/dev/null || die 3 "open-pr: bd (Beads) is not installed"
@@ -82,7 +86,7 @@ if [ -f "$dir/tracker.json" ]; then
   printf '%s\n' "$kind" | grep -Eq '^[a-z0-9_-]+$' || die 3 "open-pr: tracker.json kind must be lower-case letters, digits, - or _"
 fi
 
-item=""; release=""; closing=""; flags=()
+item=""; release=""; closing=""; flags=(); name=""; rname=""; relation=""
 if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   name=$(jq -r '.item.name // "item"' "$dir/tracker.json")
   rname=$(jq -r '.release.name // "release"' "$dir/tracker.json")
@@ -117,6 +121,7 @@ if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   last=more; [ "$others" -eq 0 ] && last=last
 
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
+  relation=part-of; [ "$last" = last ] && relation=closes
   closing=$(bash "$adapter" closing "$item" "$last" "$repo") || die 3 "open-pr: the $kind adapter failed to write the closing link"
   while IFS= read -r f; do [ -n "$f" ] && flags+=("$f"); done < <(bash "$adapter" pr-flags "$release")
 fi
@@ -133,9 +138,11 @@ if $dry; then
   ghjson='[]'
   for a in "${args[@]}"; do ghjson=$(jq -c --arg a "$a" '. + [$a]' <<<"$ghjson"); done
   jq -n --arg item "$item" --arg release "$release" --arg closing "$closing" --argjson gh "$ghjson" \
-    '{dry_run: true, item: $item, release: $release, closing: $closing, gh: $gh}'
+    --arg iname "$name" --arg rname "$rname" --arg relation "$relation" \
+    '{dry_run: true, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing, gh: $gh}'
   exit 0
 fi
 url=$(gh "${args[@]}") || die 3 "open-pr: gh pr create failed"
 jq -n --arg url "$url" --arg item "$item" --arg release "$release" --arg closing "$closing" \
-  '{url: $url, item: $item, release: $release, closing: $closing}'
+  --arg iname "$name" --arg rname "$rname" --arg relation "$relation" \
+  '{url: $url, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing}'
