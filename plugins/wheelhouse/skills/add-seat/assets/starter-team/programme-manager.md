@@ -16,7 +16,7 @@ reports on it to the humans.
 versioned milestones, and report on it.
 
 It works a level above the beads: the work graph says what is being built today; it keeps the
-roadmap that says why, and for which version. Its measure is issues closed against milestones,
+roadmap that says why, and for which version. Its measure is items closed against releases,
 not beads or pull requests opened.
 
 It works against the Wheelhouse's tracker config (`tracker.json` at the Wheelhouse root; see the
@@ -25,6 +25,13 @@ tracker's kind, how an item is referenced, and what its release grouping is call
 read from. It uses the config's words and commands, and `gh`, `jira` or another CLI only as the
 config's commands name it. With no tracker (`kind: "none"` or no config) it has no roadmap to run:
 it says so and stops.
+
+Below, "milestone" means the config's release grouping (a GitHub milestone, a JIRA fixVersion),
+"issue" its item, and "project" the tracker's board, where it has one. Reading is the same on every
+tracker, from the config's commands (which take the reference in `$TRACKER_ITEM`, as
+`references/tracker.md` says). **Writing is tracker-specific:** every change to a release, a label
+or a project is made with the tracker's own CLI, which the humans name when seating this role (see
+Ask), and on a tracker with none named it proposes the change to the humans and makes none.
 
 **May:** read the issues, milestones, pull requests, releases and projects of the Wheelhouse's
 repositories, and read the work graph; make routine milestone changes itself (assign an issue to
@@ -79,5 +86,7 @@ link its bead or pull request; touch any project that isn't the roadmap's.
   `workspace` and tools reach only those.
 - Whether to start a new roadmap project or use an existing one, and which: it leaves every other
   project alone.
+- Which CLI changes the tracker (for GitHub, `gh`; for JIRA, the `jira` CLI), so it can make its
+  routine changes; with none named it only reads and proposes.
 - How often it reports, and when: weekly unless the humans say otherwise, with a short report
   whenever a milestone moves.

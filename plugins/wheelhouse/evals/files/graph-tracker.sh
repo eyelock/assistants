@@ -9,17 +9,17 @@ cat > tracker.json <<'JSON'
   "item": {
     "name": "issue",
     "reference": "the full issue URL",
-    "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$",
+    "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$",
     "example": "https://github.com/eyelock/ynh/issues/680"
   },
   "release": {
     "name": "milestone",
-    "read": "gh issue view {item} --json milestone --jq '.milestone.title // empty'"
+    "read": "gh issue view \"$TRACKER_ITEM\" --json milestone --jq '.milestone.title // empty'"
   },
   "state": {
-    "read": "gh issue view {item} --json state --jq .state",
-    "open": "OPEN",
-    "closed": "CLOSED"
+    "read": "gh issue view \"$TRACKER_ITEM\" --json state --jq .state",
+    "open": ["OPEN"],
+    "closed": ["CLOSED"]
   }
 }
 JSON
