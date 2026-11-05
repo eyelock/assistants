@@ -1,6 +1,6 @@
 ---
 name: comms
-description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, and the outcome first. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
+description: How a Wheelhouse seat talks to the humans - never naming a human in anything posted or written, asking decisions through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), one question at a time, a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, and the outcome first in plain words, led by the initiative and kept small. Use whenever a seat (the desk or crew) reports to a human, asks a human to decide something, or writes a pull request, review, comment, bead, note or doc a human will read.
 ---
 
 # Comms
@@ -23,10 +23,12 @@ name, not a human's.
 
 ## 2. Ask decisions with the question tool
 
-Gather what is waiting on a human, then ask it all at once through the vendor's structured
-question tool (in Claude Code, `AskUserQuestion`):
+Gather what is waiting on a human, then ask **one question at a time** through the vendor's
+structured question tool (in Claude Code, `AskUserQuestion`). Ask the most urgent first, wait for
+the answer, then ask the next. A person answers one clear question well and a batch badly, and
+the answer to one often changes the next:
 
-- Up to 4 questions in one call; more than 4, ask the most urgent first and the rest next.
+- One question per call. Say how many are waiting ("two more after this") so they can see the end.
 - Each question stands alone: one line of context (what it is about, with its linked short id or
   bead), then the question.
 - 2 to 4 concrete options, each a short label and a line on what it means. Put the one you
@@ -35,10 +37,10 @@ question tool (in Claude Code, `AskUserQuestion`):
 - Ask only what needs a human. What you may decide yourself, decide, and say what you chose.
 
 Never list open questions in prose, and never repeat a "still waiting on you" list: ask through
-the tool, once, and carry on with what doesn't wait on the answers.
+the tool, and carry on with what doesn't wait on the answer.
 
-**No question tool?** Where a vendor has none, ask in a numbered list, one decision per item,
-each with its line of context and lettered options, the recommended one first:
+**No question tool?** Where a vendor has none, ask the same way in plain text: one decision, its
+line of context and lettered options, the recommended one first:
 
 ```text
 1. Release: api 1.4 is ready except for [api #12](https://github.com/<owner>/api/pull/12).
@@ -46,7 +48,7 @@ each with its line of context and lettered options, the recommended one first:
    b. Release now; #12 goes in 1.5.
 ```
 
-Then stop, and wait for the answers.
+Then stop, and wait for the answer before asking the next.
 
 ## 3. Name things so they can be found
 
@@ -58,8 +60,15 @@ Then stop, and wait for the answers.
 
 ## 4. Outcome first, briefly
 
-- Lead with the outcome: what happened, or what is ready. Then what changed. Then what needs the
-  human, if anything, asked as in section 2.
+- Lead with the initiative: the goal the work serves and how far along it is, such as "Tracker
+  links: 3 of 5 beads done". Group the rest under it, not as a flat list of bead ids.
+- Then the outcome: what happened, or what is ready. Then what changed. Then what needs the human,
+  if anything, asked as in section 2.
+- Use plain words. Say "finished" before "closed", "waiting for review" before "blocked on the
+  reviewer", and explain a seat's term of art the first time you use it. A report that needs the
+  work graph open beside it is too dense.
+- Keep reports small: a few lines for an update, one screen at most for a report. Give the
+  headline and offer the detail ("want the list of changed files?") instead of including it.
 - Keep status updates to a few lines. Don't narrate routine relays ("I passed that on"); say
   only what changed or what needs them.
 - No walls of prose: a short list beats a long paragraph, and a table beats a long list.
