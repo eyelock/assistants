@@ -17,7 +17,9 @@
 # create-wheelhouse copies it). Other seats' wakes have no inbox.
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
-# with the block it prints. Run it from the Wheelhouse repository's root.
+# with the block it prints. Run it from the Wheelhouse repository's root, or
+# pass --dir <wheelhouse repo> from anywhere. The seat is --seat <name> or the
+# name given bare, as in wake.sh gahan.
 #
 # Its session-end hook runs it with --end, which only syncs what the session
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
@@ -37,17 +39,19 @@ set -uo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
-       wake.sh <name> [--dir <wheelhouse repo>] [--format json|text] [--no-sync]
-       wake.sh --end [--seat <name>] [--dir <wheelhouse repo>]
+Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text]
+               [--no-sync]
+       wake.sh <name> [--dir <wheelhouse repo>] [--format json|text]
+               [--no-sync]
+       wake.sh --end [--seat <name> | <name>] [--dir <wheelhouse repo>]
 
 Syncs memory and work, then prints what a seat should know as it wakes.
 The seat is --seat <name>, or the seat's name given bare; it defaults to
 $BEADS_ACTOR, and without any of them the script stops and lists the roster's
 seats. Run it as bash <wheelhouse>/scripts/wake.sh, and pass --dir <wheelhouse>
 when the current directory is not the Wheelhouse's root. --dir defaults to the
-current directory; --format to json. --no-sync skips the sync. --end, for the session-end hook, only syncs
-memory and work, and prints the result as JSON.
+current directory; --format to json. --no-sync skips the sync. --end, for the
+session-end hook, only syncs memory and work, and prints the result as JSON.
 EOF
 }
 
