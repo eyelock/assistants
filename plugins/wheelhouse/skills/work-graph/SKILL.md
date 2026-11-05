@@ -63,7 +63,15 @@ reaching for the same bead. Other seats skip this section.
    `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
 7. Never reassign a bead that is in progress, and never assign to a worker who already has work.
-8. Report who got what, who is still idle, and what is left unassigned.
+8. Report who got what, who is still idle, and what is left unassigned. With a tracker, each
+   dispatch note names the bead's item, its release, and whether its pull request closes the item
+   or is part of it, read from `scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run`
+   (`item`, `release`, `relation`), the logic the worker's pull request will use. It is a snapshot taken now: `open-pr.sh`
+   recomputes it when the PR opens, and that result wins. Without a
+   tracker (`kind: none` or no `tracker.json`), or for a `housekeeping` bead with no item, the note
+   has no tracker line. A bead the script refuses (no item, or no release) isn't handed out:
+   leave it unassigned and say why. On exit 3 (a fault, not a refusal), report it to the desk and
+   dispatch nothing.
 9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
    parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
    `scripts/model.sh --seat <worker>`.
