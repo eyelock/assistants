@@ -24,7 +24,8 @@ the adapter, where it can be read and scanned.
     "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$",
     "example": "https://github.com/eyelock/ynh/issues/680"
   },
-  "release": { "name": "milestone" }
+  "release": { "name": "milestone" },
+  "exempt_repos": ["hq"]
 }
 ```
 
@@ -35,6 +36,7 @@ the adapter, where it can be read and scanned.
 | `item.reference` | how a bead's `external_ref` writes the item: a full URL or a key. |
 | `item.pattern` | **Required** for any kind but `none`. An extended regular expression (as `grep -E`) a valid reference matches, JSON-escaped. Write it with a safe character class (`[A-Za-z0-9_.-]`), never `[^/]+`: it keeps special characters out of a reference. |
 | `item.example` | one real-looking reference, shown to a seat that has to write one. |
+| `exempt_repos` | Optional. A list of repository names (the part after `repo:` in a bead's label) that are exempt from the tracker, such as the Wheelhouse's own repository when it plans in beads. A bead with one of these `repo:` labels needs no item, and `open-pr.sh` opens its pull request with no item, closing link or release, whatever its `external_ref` says; the dispatch note has no tracker line. The check is made by `open-pr.sh` before any adapter is called, so it holds for every kind. Anything but a list of strings is a fault. |
 | `release.name` | what the tracker calls the release grouping (`milestone`, `fixVersion`), for what seats write. |
 
 ## The adapter

@@ -68,8 +68,8 @@ reaching for the same bead. Other seats skip this section.
    or is part of it, read from `scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run`
    (`item`, `release`, `relation`), the logic the worker's pull request will use. It is a snapshot taken now: `open-pr.sh`
    recomputes it when the PR opens, and that result wins. Without a
-   tracker (`kind: none` or no `tracker.json`), or for a `housekeeping` bead with no item, the note
-   has no tracker line. A bead the script refuses (no item, or no release) isn't handed out:
+   tracker (`kind: none` or no `tracker.json`), for a `housekeeping` bead with no item, or for a
+   bead in an exempt repository (`"exempt": true` in the output), the note has no tracker line. A bead the script refuses (no item, or no release) isn't handed out:
    leave it unassigned and say why. On exit 3 (a fault, not a refusal), report it to the desk and
    dispatch nothing.
 9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
@@ -108,7 +108,10 @@ tracker: use the config's names and the adapter's commands.
    `release <item>` (`scripts/tracker-<kind>.sh`); don't copy a milestone, fixVersion or version onto the bead, where it would go stale
    when the humans move the item.
 4. **With no tracker** (`kind: "none"`, or no `tracker.json`) there is nothing to link: leave
-   `external_ref` empty, and don't invent a reference.
+   `external_ref` empty, and don't invent a reference. The same holds for a bead in an **exempt
+   repository**: one whose `repo:` label is named in the config's `exempt_repos` (a Wheelhouse's
+   own repository, say, which plans in beads). It needs no item, and `open-pr.sh` opens its pull
+   request with no issue, no closing link and no milestone.
 5. **Check before you rely on it.** Never call an adapter on a reference that hasn't passed
    `item.pattern`. `tracker.json` holds no commands, and nothing in it is ever run (see the
    reference). If a reference doesn't match, say so and ask
@@ -133,7 +136,7 @@ work graph are. Start the body file with your byline. The script:
 2. writes the tracker's own closing link at the end of the body: on GitHub, `Closes #N` when this
    bead is the last open bead on the item, `Part of #N` when others remain;
 3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
-   `housekeeping`, a reference that doesn't match `item.pattern`, and an item with no release.
+   `housekeeping` and isn't in an exempt repository, a reference that doesn't match `item.pattern`, and an item with no release.
    Fix the cause (file the item, ask the desk to set its release) and run it again;
 4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release.
 
