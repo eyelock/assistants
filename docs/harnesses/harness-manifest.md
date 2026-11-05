@@ -15,7 +15,7 @@ The schema requires `name` and `version`. `ynd validate` checks a manifest again
 | `plugins/<name>/.agents/harness/plugin.json` | A plugin's identity | `name`, `version`, `description`, `author` |
 | `skills/<domain>/.agents/harness/plugin.json` | A skills package's identity | `name`, `version`, `description`, `author` |
 
-Plugins and skills packages also carry `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. Keep the three in sync; `pnpm sync-manifests:check` gates CI. `ynh/*` harnesses are not indexed by `pnpm sync-manifests`.
+Plugins and skills packages also carry `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. Keep the three in sync; `pnpm sync-manifests:check` gates CI. A `ynh/*` harness has only `.agents/harness/plugin.json`, which is its source: `pnpm sync-manifests` indexes it, and the check and writeback cover it.
 
 ## Fields
 
@@ -23,7 +23,7 @@ Plugins and skills packages also carry `.claude-plugin/plugin.json` and `.cursor
 |---|---|---|---|
 | `$schema` | string | all | Always `https://eyelock.github.io/ynh/schema/plugin.schema.json` |
 | `name` | string | all | Required. The harness or plugin id |
-| `version` | string | all | Required. For plugins and packages, `changeset version` bumps it, then `pnpm sync-manifests:writeback` copies it back |
+| `version` | string | all | Required. For plugins, packages and `ynh/*` harnesses, `changeset version` bumps it, then `pnpm sync-manifests:writeback` copies it back |
 | `description` | string | all | One sentence. Platform harnesses also say they are read-only |
 | `author` | object | plugins and packages | `{ "name": "eyelock" }` |
 | `keywords` | string[] | platform harnesses | Search terms, for example `"read-only"` |
