@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "termq-dev",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support.",
   "default_vendor": "claude",
   "profiles": {
