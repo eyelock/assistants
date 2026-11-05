@@ -226,3 +226,22 @@ test("--dry-run needs no title, and names the item, release and relation a dispa
   assert.deepEqual([a.item, a.item_name, a.release, a.release_name, a.relation], [ISSUE, "issue", "v0.17.0", "milestone", "part-of"]);
   h.done();
 });
+
+test("a sibling bead written in another case or the short form still counts as the same item", () => {
+  for (const sibling of ["https://github.com/Eyelock/ynh/issues/680", "eyelock/ynh#680", "EyeLock/YNH#680"]) {
+    const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: sibling })] });
+    assert.equal(h.run().json.closing, "Part of #680", sibling);
+    h.done();
+  }
+  const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: "eyelock/ynh#681" })] });
+  assert.equal(h.run().json.closing, "Closes #680");
+  h.done();
+});
+
+test("a kind that is not a plain word is a fault, never a file path", () => {
+  const h = harness({ tracker: { ...github, kind: "../../evil" } });
+  const r = h.run();
+  assert.equal(r.status, 3);
+  assert.match(r.stderr, /kind must be/);
+  h.done();
+});
