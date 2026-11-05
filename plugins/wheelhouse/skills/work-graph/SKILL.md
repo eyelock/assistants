@@ -31,7 +31,27 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
 4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
 5. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
    reopen or edit a bead another seat has claimed; if it looks stuck, tell the desk.
-6. Say which bead you claimed and what you are about to do.
+6. Say which bead you claimed and what you are about to do. Keep the claim alive
+   ([Keeping your claim](#keeping-your-claim)).
+
+## Keeping your claim
+
+A claim carries a lease that runs out five minutes after the claim, and `bd show` says when ("Lease:
+expires in 4 mins"). The lease is `bd`'s own and its length is not configurable, so a Wheelhouse
+cannot lengthen it: seats refresh it.
+
+- **Heartbeat while you hold a bead:** `bd heartbeat <id> --actor <you>` (alias `bd hb`) at least every few
+  minutes, and at every natural pause, such as before a long build, a test run or a review wait.
+  It writes no history, so the cadence costs nothing, and only the holder can refresh. A seat that cannot heartbeat for a long stretch (one blocking command) hands
+  off rather than letting the lease run out.
+- **What a lapsed lease does on its own:** nothing. The bead stays in progress and assigned to
+  you, and another seat's `--claim` is still refused. It only looks abandoned in `bd show`.
+- **What reclaims it:** `bd reclaim`, which a supervisor runs on a timer. It reverts a bead whose
+  lease expired (by default more than 10 minutes ago) to ready with no assignee, and from then on
+  another seat can claim it and your `bd heartbeat` is refused. That refusal means you lost the
+  bead: stop, tell the desk, and don't edit it.
+- **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
+  reclaims, and only for a seat it has confirmed is gone.
 
 ## Dispatching
 
