@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# inbox show, known: Pat is at the desk (git email pat@example.com).
+# inbox show, named: the inbox-show world; Pat names themselves in the prompt.
 set -euo pipefail
-bash "$EVAL_FIXTURES/inbox-show.sh" pat@example.com
+bash "$EVAL_FIXTURES/inbox-show.sh"

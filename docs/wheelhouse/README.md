@@ -29,13 +29,14 @@ The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and r
 |---|---|---|
 | the desk | the seat you talk to; hands work to the others | you |
 | crew | design work and review it, with you | you |
-| standing roles | one job each, such as dispatching, watching CI, releasing or, optionally, running the roadmap | the desk |
+| standing roles | one job each, such as dispatching, watching CI, releasing or, optionally, running the roadmap or verifying the tools | the desk |
 | workers | each a seat of its own, building one task at a time | the dispatcher |
 
 Beside the seats are the **humans**: the people who work with the Wheelhouse, listed in the
-roster's `humans`, never as seats. One of them is the **default human**, the name for work that
-needs a human but no particular one. A person who names themselves at the desk ("it's me, Pat") is
-registered with their git email, so the desk knows them from then on.
+roster's `humans`, never as seats. The roster holds one of them, the **default human**, the name
+for work that needs a human but no particular one. Anyone else is per session: a person who names
+themselves at the desk ("it's me, Pat") sees their own inbox for that session, and nothing about
+them is saved, no roster entry and no email.
 
 When work needs a human (a merge, a decision, a credential), a seat doesn't wait silently or do it
 itself: it assigns a bead to that human, or to the default human, with `scripts/inbox.sh assign`,
@@ -77,8 +78,8 @@ overrides the tier for one vendor. `add-seat/scripts/model.sh --seat okafor` pri
 none. Launchers start a seat with that `--model` flag, and the desk passes the value as the Agent
 tool's `model` parameter when it wakes a seat as a subagent. ynh's `plugin.json` has no field for
 a launch model, so the roster declares it and the launcher applies it. The starter-team templates
-put workers, CI watchers and releasers on `fast`, and designers, reviewers and dispatchers on
-`deep`; the `doctor` warns about a seat with none.
+put workers, CI watchers and releasers on `fast`, and designers, reviewers, dispatchers,
+programme managers and verifiers on `deep`; the `doctor` warns about a seat with none.
 
 ## Tutorials
 

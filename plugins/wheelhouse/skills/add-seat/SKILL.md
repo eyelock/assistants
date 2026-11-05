@@ -20,7 +20,7 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 
 Most Wheelhouses need the same first seats. Each is a template, one Markdown file per role, in
 this skill's `assets/starter-team/`: `designer`, `reviewer`, `dispatcher`, `ci-watcher`,
-`releaser`, `programme-manager` (optional), `worker` and `specialist-worker` (optional). A file's
+`releaser`, `programme-manager` (optional), `verifier` (optional), `worker` and `specialist-worker` (optional). A file's
 frontmatter gives its `order`, `group`, `focus`, `model` (its tier) and who seats it (`seated-by`); its body gives the
 mandate, what the seat may and may not do, the focus prompt, and under `## Ask`, the questions to
 ask before seating it. A role with more than one standing order lists its focuses
@@ -105,7 +105,7 @@ vendor-agnostic way, so the Wheelhouse is not tied to one vendor's model names:
 
 - A seat's `model` is a **tier**: `fast`, `balanced` or `deep`. A starter-team template carries
   its tier (workers, specialist workers, CI watchers and releasers `fast`; designers, reviewers,
-  programme managers and dispatchers `deep`); copy it to the roster seat, and ask only when you can't tell.
+  programme managers, verifiers and dispatchers `deep`); copy it to the roster seat, and ask only when you can't tell.
 - A seat's optional `models` overrides the tier per vendor: `"models": {"claude": "haiku"}`.
 - The roster's `models.tiers` says which model each tier is on each vendor, and `models.groups`
   gives each group a default tier for a seat with none, `desk` included. Without `tiers`, the

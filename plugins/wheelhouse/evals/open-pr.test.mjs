@@ -257,6 +257,21 @@ test("--dry-run opens nothing, and bad args and unknown beads fail", () => {
   h.done();
 });
 
+test("--dry-run needs no title, and names the item, release and relation a dispatch note quotes", () => {
+  const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open" })] });
+  const run = (id) => {
+    const out = spawnSync("bash", [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), "--bead", id, "--dry-run"], {
+      cwd: h.dir,
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, BD_STATE: join(h.dir, "beads.json"), GH_LOG: join(h.dir, "gh.log"), GH_REPO: "eyelock/ynh", GH_MILESTONE: "v0.17.0" },
+    });
+    return JSON.parse(out.stdout);
+  };
+  const a = run("hq-1");
+  assert.deepEqual([a.item, a.item_name, a.release, a.release_name, a.relation], [ISSUE, "issue", "v0.17.0", "milestone", "part-of"]);
+  h.done();
+});
+
 test("a sibling bead written in another case or the short form still counts as the same item", () => {
   for (const sibling of ["https://github.com/Eyelock/ynh/issues/680", "eyelock/ynh#680", "EyeLock/YNH#680"]) {
     const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: sibling })] });

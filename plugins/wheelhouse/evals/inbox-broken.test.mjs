@@ -20,7 +20,6 @@ const roster = {
   seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
   humans: [
     { name: "Rook", command: "rook", pronouns: "they/them", default: true },
-    { name: "Pat", command: "pat", email: "pat@example.com", pronouns: "they/them" },
   ],
 };
 
@@ -72,7 +71,6 @@ function run(dir, script, args, env) {
     env: {
       ...process.env,
       PATH: `${join(dir, "bin")}:${process.env.PATH}`,
-      WHEELHOUSE_HUMAN_EMAIL: "pat@example.com",
       BD_BROKEN: "",
       YNM_BROKEN: "",
       BD_EMPTY: "",
