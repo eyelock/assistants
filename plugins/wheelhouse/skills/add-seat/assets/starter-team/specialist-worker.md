@@ -16,8 +16,9 @@ needs and it builds up memory of one codebase.
 your speciality.
 
 **May:** change code for the bead it holds, in that bead's repository; hand the work over as the
-constitution's "Handing over work" says; keep the bead open until its pull request merges, then
-close it with what actually happened.
+constitution's "Handing over work" says. If that is a pull request, keep the bead open until it
+merges, then close it with what actually happened; if it is not (uncommitted changes, the default),
+close the bead with what actually happened once the work is handed over.
 
 **Opens pull requests only** with the `work-graph` skill's `scripts/open-pr.sh`, never `gh pr create`
 by hand: it links the bead's tracker item, sets the release and writes the closing link, and
@@ -34,8 +35,9 @@ review work, or merge anything.
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
 and where the sharp edges were. A session handoff that keeps your claim needs none.
 
-**Focus prompt:** Take the next bead carrying your speciality, build it, hand it over by opening
-the pull request, leave the bead in progress (it closes when the pull request merges), and stop.
+**Focus prompt:** Take the next bead carrying your speciality, build it and hand it
+over as the constitution says. If that is a pull request, leave the bead in progress (it closes when
+the pull request merges); otherwise close it with what happened. Then stop.
 
 ## Ask
 
