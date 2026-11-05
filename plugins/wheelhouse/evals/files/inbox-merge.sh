@@ -4,6 +4,6 @@
 # needs merging before the tag can go on.
 set -euo pipefail
 . "$EVAL_FIXTURES/graph-lib.sh"
-inbox_wheelhouse pat@example.com
+inbox_wheelhouse
 read -r _ changelog _ _ < <(release_graph)
 BEADS_ACTOR=dalglish bd update "$changelog" --claim --json >/dev/null

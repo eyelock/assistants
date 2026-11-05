@@ -54,18 +54,19 @@
     {
       "id": 4,
       "name": "desk-inbox-known",
-      "prompt": "You are hq, the desk, starting a new session.",
+      "prompt": "You are hq, the desk, starting a new session. The person at the desk says: it's me, Pat.",
       "setup": "../../evals/files/inbox-wake-known.sh",
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox, and its reply relays that first: for Pat (you, matched by git email), the decision on dropping Go 1.24 asked by gahan; for Rook (anyone, the default human), the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), and leaves the beads open.",
+      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox (the default human Rook's), and its reply relays that first. Pat then names themselves, so the desk runs bash scripts/inbox.sh show --name Pat and adds Pat's own inbox for the session: the decision on dropping Go 1.24 asked by gahan. Rook's (anyone, the default human): the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), leaves the beads open, and writes nothing to the roster.",
       "assertions": [
         "The reply relays the humans' inbox before anything else about the desk's own work",
         "The reply shows Pat's decision on dropping Go 1.24 as Pat's own, and the changelog merge and the McCoist note as the default human Rook's",
         "The merge is named by its short form as a Markdown link to https://github.com/example/widget/pull/12",
         "The stubbed calls include a ynm forget of the note 01JINBOXNOTE00000000000001",
-        "In the evidence, the merge and decision beads are still open with their assignees (rook and pat)"
+        "In the evidence, the merge and decision beads are still open with their assignees (rook and pat)",
+        "The roster's humans are unchanged in the evidence: Rook only, nobody registered, and no email stored anywhere"
       ]
     },
     {
@@ -76,12 +77,12 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "The person at the desk (git email sam@example.com) hasn't named themselves, so the desk's wake shows only the default human Rook's inbox: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. The reply relays it, does not present Pat's decision as the reader's, and invites them to say who they are (\"it's me, <name>\") to get their own inbox. It registers nobody unasked.",
+      "expected_output": "Nobody has named themselves at the desk, so the desk's wake shows only the default human Rook's inbox, treating the person at the desk as Rook: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. The reply relays it, does not present Pat's decision as the reader's, and says they can name themselves (\"it's me, <name>\") for this session. It registers nobody and stores nothing.",
       "assertions": [
         "The reply relays Rook's inbox: the changelog merge and the McCoist note",
         "The reply does not present Pat's decision as the reader's own",
-        "The reply invites the person at the desk to say who they are, such as \"it's me, <name>\"",
-        "In the evidence, the roster's humans are still only Rook and Pat"
+        "The reply says the person at the desk can name themselves, such as \"it's me, <name>\", to see their own inbox for the session",
+        "In the evidence, the roster's humans are still only Rook"
       ]
     },
     {

@@ -20,7 +20,7 @@ from parts that work on any vendor:
 | Skill | Use it to |
 |---|---|
 | `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
-| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; or walk the starter team role by role: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, workers and optional specialist workers; `scripts/model.sh` resolves the model a seat launches with |
+| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; or walk the starter team role by role: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, an optional verifier, workers and optional specialist workers; `scripts/model.sh` resolves the model a seat launches with |
 | `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches; give them reports to read, listed last; and leave them notes; link every build bead to its tracker item (GitHub issue, JIRA key, other) as the Wheelhouse's `tracker.json` says, and read its release from the item; open draft pull requests with `scripts/open-pr.sh`, which sets the release and the closing link and refuses a bead with no tracker item |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
@@ -30,6 +30,7 @@ from parts that work on any vendor:
 | `refresh` | the desk's, after a pull: map the git diff to the `ynh install`s, the `ynh trust accept local/<seat>` for each seat ynh no longer counts as trusted, and the restarts it needs, run the safe steps and the doctor, and report any seat not installed or born |
 | `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, a synopsis beside every bead id, post bodies from a file and never an unquoted heredoc, the outcome first |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, no bead assigned to anyone outside the roster, and a model for every seat |
+| `vet-skill` | vet and pin a skill someone else wrote before a seat includes it: publisher and license, every file read, a SkillSpector scan of the folder as included, a full commit SHA, a `pinned-skills.md` record; and the one-finding exception rule, accepted only by a human in their own message and never granted by a worker |
 
 ## Setting up
 

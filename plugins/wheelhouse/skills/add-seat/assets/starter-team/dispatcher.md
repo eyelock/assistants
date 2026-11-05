@@ -25,13 +25,19 @@ is **part of** it. It does not work these out itself: it runs the `work-graph` s
 `relation` (using `item_name` and `release_name` as the words), so the note uses the same logic
 as the pull request. It is a snapshot: the answer is taken at dispatch time, and `open-pr.sh`
 recomputes it when the worker opens the pull request, and that result wins (a sibling bead closing
-or a release moving in between changes it). With no tracker the note has no tracker line. A build
+or a release moving in between changes it). With no tracker, or for a bead in an exempt repository (`exempt` is true in the script's output), the note has no tracker line. A build
 bead that the script refuses (exit 1: no item, a bad reference, no release) is not handed out: it
 stays unassigned and the refusal is reported. On exit 3, a fault (a broken `tracker.json`, a missing
 tool, a failed command), it reports the fault to the desk and dispatches nothing.
 
-**May not:** claim or build work, reassign work in progress, or give a worker a second bead while
-it has one.
+**Reclaims a dead seat's bead, and only then.** A claim's lease lapses five minutes after the last
+heartbeat and nothing reverts it on a timer. When a seat reports a lapsed claim, or a claim looks
+stale at a check-in, confirm the holder is gone (no live session, and the lease long expired);
+only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
+you did, and dispatch it again. A bead whose holder may still be working is left alone.
+
+**May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
+gone is the one exception), or give a worker a second bead while it has one.
 
 **Focus prompt:** Hand the ready work to idle workers, report who got what, and stop when no ready
 task is unassigned or no worker is idle.

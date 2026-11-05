@@ -6,13 +6,18 @@ description: Start a Wheelhouse seat's session with purpose, not amnesia - who y
 # Wake
 
 Every session of a seat starts here. A seat's session-start hook runs the wake script and puts
-its block in front of you; if it didn't, run it yourself from the Wheelhouse root:
+its block in front of you; if it didn't (a seat the desk wakes as a subagent has no hook), run the
+Wheelhouse's own copy yourself, `scripts/wake.sh` at the Wheelhouse root:
 
 ```bash
-bash path/to/wake/scripts/wake.sh --seat <command> --format text
+bash scripts/wake.sh --seat <command> --format text
 ```
 
-`--seat` defaults to `BEADS_ACTOR`. Without `--format text` it prints the same as JSON.
+From any other directory, give the script's full path and the Wheelhouse with `--dir`:
+`bash <wheelhouse>/scripts/wake.sh --dir <wheelhouse> --seat <command> --format text`. `<command>`
+is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh <command>`) works
+too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
+seats. Without `--format text` it prints the same as JSON.
 
 It syncs first, so you wake to what other machines and seats wrote: ynm's memory (`ynm sync`)
 when the repository has a git remote, and the work graph (`bd sync`, which pulls and then pushes)
@@ -51,18 +56,19 @@ read, never that nothing is waiting.
 ## Then
 
 0. **For the humans** (the desk only): the desk's block opens with the humans' inbox, a
-   section for the human at the desk (`<name> (you)`, matched by their git email) and one for
-   the default human (`<name> (anyone)`): the ready beads assigned to them, each with who asked
+   section for the human at the desk (`<name> (you)`, only when they have named themselves this
+   session) and one for the default human (`<name> (anyone)`): the ready beads assigned to them, each with who asked
    and how many beads it unblocks, then any reports to read under `Reports:`, then the notes left
    for them. Your reply opens with it, before
    anything else, even your own introduction, naming each pull request or page by its short form
    as a Markdown link. Your reply is how the human sees a note, so putting it there is relaying
    it, and the note's job is done: retire each note you relay in the same turn, before you
    finish, `ynm forget --memory-id <memoryId> --reason "relayed"`, so it isn't shown twice. Don't
-   wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. If the block says the human
-   hasn't said who they are, show only the default human's inbox as theirs to see, keep any other
-   human's beads out of it, and pass on its invitation; when they answer "it's me, <name>", register
-   them with `bash scripts/inbox.sh register --name <Name>`. If the inbox couldn't be read, or
+   wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. Who the human at the desk
+   is, is per session: with no name given, treat them as the default human and show only that
+   inbox, and pass on the block's note that they can name themselves; when they say "it's me,
+   <name>", run `bash scripts/inbox.sh show --name <Name>` and show theirs for the rest of the
+   session. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
    couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,
    relay what could be read, and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the

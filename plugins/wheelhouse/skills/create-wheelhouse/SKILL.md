@@ -48,7 +48,9 @@ at a time**, in this order. Don't create anything until you have the first four.
    JIRA, another, or none. For one, gather what `tracker.json` needs (the `work-graph` skill's
    `references/tracker.md` has the shape): the kind; what it calls an item and a release
    (issue/milestone, ticket/fixVersion); how an item is referenced, with a safe pattern for it; and
-   the CLI the humans want used to change an item's release. The config holds no commands. GitHub
+   the CLI the humans want used to change an item's release; and whether any repository is exempt
+   from the tracker (`exempt_repos`), such as the Wheelhouse's own repository when it plans in
+   beads: ask, and leave it out when none is. The config holds no commands. GitHub
    has an adapter, `tracker-github.sh`, so nothing more is needed. **Any other tracker needs an
    adapter script** (`tracker-<kind>.sh` in the `work-graph` skill, with `release`, `state`,
    `canon`, `closing` and `pr-flags` written as plain code): until it exists, pull requests can't
@@ -117,7 +119,8 @@ the files it finds, and would commit the human's.
    example "Workers leave their changes uncommitted in the working tree for review; a human
    commits." or "Workers commit on a branch and open a draft pull request; a human merges."
    When the Wheelhouse has a tracker (question 8), add: "A build bead's `external_ref` holds the
-   full URL or key of its tracker item; only beads labelled `housekeeping` go without. The
+   full URL or key of its tracker item; only beads labelled `housekeeping`, or in a repository the tracker config's
+   `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
    with the `work-graph` skill's `scripts/open-pr.sh`."
 
@@ -129,10 +132,11 @@ the files it finds, and would commit the human's.
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
-   with options, never as a list in prose. When a person
-   names themselves at the desk ("it's me, <name>"), it registers them as a human with
-   `bash scripts/inbox.sh register`, so its wake shows their own inbox from then on, and seats can
-   assign work to them. It starts every seat on the model the roster gives it: the Agent tool's
+   with options, never as a list in prose. Who is at the desk is
+   per session: with no name, its wake shows the default human's inbox; when a person names
+   themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
+   their own inbox for that session, and seats can assign work to them by their lowercase name.
+   Nothing about them is saved: no roster entry, no email, no username. It starts every seat on the model the roster gives it: the Agent tool's
    `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
    both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
 
@@ -179,12 +183,12 @@ the files it finds, and would commit the human's.
    maps tiers to models per vendor, and the desk wakes its subagents with the Agent tool's
    `model` parameter and starts launchers with `--model`, both from `scripts/model.sh`.
 
-   `humans` holds the people who work with the Wheelhouse, beside `seats` and never in it: a
-   human has `name`, `command` (the name in lowercase ASCII, which beads are assigned to),
-   `email`, `pronouns` and `default`. A new Wheelhouse starts with only the default human
-   (question 5), with `"default": true` and no `email`: there is always exactly one. A person
-   joins when they name themselves at the desk, and is registered with their git email, which
-   is how the desk knows them.
+   `humans` holds only the default human, beside `seats` and never in it: `name`, `command` (the
+   name in lowercase ASCII, which beads are assigned to), `pronouns` and `"default": true`
+   (question 5). There is always exactly one. No other human is written to the roster, and no
+   email or username is stored anywhere: a person is at the desk for a session by naming
+   themselves, and their command is their name in lowercase. Every open bead is unassigned or assigned to
+   a seat, the default human, a human command with a `human/<command>` namespace in ynm, or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 

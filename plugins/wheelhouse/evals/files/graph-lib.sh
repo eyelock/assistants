@@ -254,27 +254,22 @@ specialist_wheelhouse() {
   git add -A && git commit -qm "chore: The seats"
 }
 
-# add_humans [registered]: the roster's humans: Rook, the default human, and
-# with "registered" Pat (pat@example.com), who has named themselves at the
-# desk. Copies the real inbox.sh into scripts/, as create-wheelhouse does.
+# add_humans: the roster's humans: Rook, the default human, and nobody else (a
+# person at the desk is per session, never in the roster). Copies the real
+# inbox.sh into scripts/, as create-wheelhouse does.
 add_humans() {
   local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
-  [ "${1:-}" = registered ] &&
-    humans=$(jq -c '. + [{"name": "Pat", "command": "pat", "email": "pat@example.com", "pronouns": "they/them"}]' <<<"$humans")
   mkdir -p scripts
   cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
   jq --argjson h "$humans" '.humans = $h' skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
 }
 
-# inbox_wheelhouse <email> [registered]: the team Wheelhouse with humans. The
-# default human is Rook (no email); with "registered", Pat (pat@example.com)
-# has named themselves at the desk. git's user.email here is <email>. The desk
+# inbox_wheelhouse: the team Wheelhouse with humans. The default human is Rook;
+# a person at the desk (Pat, say) names themselves per session. The desk
 # is hq (harness "."). scripts/ has the real wake.sh and inbox.sh, as
 # create-wheelhouse leaves them, and the constitution has the inbox rule.
 inbox_wheelhouse() {
-  local email="$1" registered="${2:-}"
   team_wheelhouse
-  git config user.email "$email"
   git config user.name "Pat Example"
   cat >> AGENTS.md <<'MD'
 
@@ -297,12 +292,13 @@ and issues):
 
 ## The desk
 
-The desk is hq. When a person names themselves at the desk ("it's me, <name>"), it registers them
-as a human with `bash scripts/inbox.sh register`.
+The desk is hq. Who is at the desk is per session: with no name, it shows the default human's
+inbox; when a person names themselves ("it's me, <name>"), it shows theirs with
+`bash scripts/inbox.sh show --name <Name>`. Nothing about them is saved.
 MD
   jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \
     skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
-  add_humans "$registered"
+  add_humans
   git add -A && git commit -qm "chore: The humans"
 }
 

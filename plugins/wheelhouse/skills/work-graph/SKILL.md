@@ -31,7 +31,32 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
 4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
 5. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
    reopen or edit a bead another seat has claimed; if it looks stuck, tell the desk.
-6. Say which bead you claimed and what you are about to do.
+6. Say which bead you claimed and what you are about to do. Keep the claim alive
+   ([Keeping your claim](#keeping-your-claim)).
+
+## Keeping your claim
+
+A claim carries a lease that runs out five minutes after the claim or the last heartbeat, and `bd show`
+says when ("Lease: expires in 4 mins"). The lease is `bd`'s own and its length is not configurable,
+so a Wheelhouse cannot lengthen it: seats refresh it.
+
+- **Heartbeat while you hold a bead:** `bd heartbeat <id> --actor <you>` (alias `bd hb`) at least
+  every few minutes, and at every natural pause, such as before a long build, a test run or a
+  review wait. It writes no history, so the cadence costs nothing, and only the holder can refresh.
+  A seat that cannot heartbeat for a long stretch (one blocking command) hands off rather than
+  letting the lease run out.
+- **What a lapsed lease does on its own:** nothing. The bead stays in progress and assigned to its
+  holder, and another seat's `--claim` is still refused. It only looks abandoned in `bd show`
+  ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
+  seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
+  there is none) and leaves the bead alone.
+- **The dispatcher reclaims, and only then.** Once it has confirmed the holder is gone (no live
+  session, and the lease long expired), it runs `bd reclaim --id <id> --older-than <grace>`,
+  records on the bead why it did, and re-dispatches it. The bead goes back to ready with no
+  assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
+  heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
+- **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
+  reclaims, and only for a seat it has confirmed is gone.
 
 ## Dispatching
 
@@ -63,13 +88,15 @@ reaching for the same bead. Other seats skip this section.
    `bd update <id> --assignee <worker> --if-assignee '' --json`. The guard makes it atomic: if the
    bead was taken meanwhile, nothing changes and `bd` exits 13. Move on to the next bead.
 7. Never reassign a bead that is in progress, and never assign to a worker who already has work.
+   The one exception is a reclaim after confirming the holder is gone ([Keeping your
+   claim](#keeping-your-claim)): record why on the bead, then dispatch it again as in step 6.
 8. Report who got what, who is still idle, and what is left unassigned. With a tracker, each
    dispatch note names the bead's item, its release, and whether its pull request closes the item
    or is part of it, read from `scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run`
    (`item`, `release`, `relation`), the logic the worker's pull request will use. It is a snapshot taken now: `open-pr.sh`
    recomputes it when the PR opens, and that result wins. Without a
-   tracker (`kind: none` or no `tracker.json`), or for a `housekeeping` bead with no item, the note
-   has no tracker line. A bead the script refuses (no item, or no release) isn't handed out:
+   tracker (`kind: none` or no `tracker.json`), for a `housekeeping` bead with no item, or for a
+   bead in an exempt repository (`"exempt": true` in the output), the note has no tracker line. A bead the script refuses (no item, or no release) isn't handed out:
    leave it unassigned and say why. On exit 3 (a fault, not a refusal), report it to the desk and
    dispatch nothing.
 9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
@@ -99,16 +126,20 @@ tracker: use the config's names and the adapter's commands.
 1. **A build bead links its tracker item.** `external_ref` holds the item's full URL or key, as
    the config's `item.reference` says: `bd create ... --external-ref "<reference>"`, or
    `bd update <id> --external-ref "<reference>"`. File the tracker item first, then cut the bead.
-   Never cut a build bead with the field empty.
-2. **Only beads labelled `housekeeping` go without.** Housekeeping is work with no place in the
-   humans' project view: tidying the work graph, refreshing a seat. Add the label
-   (`-l housekeeping`) when creating one. A merge, review or decision bead for a human is not a
-   build bead and needs no item.
+   Never cut a build bead with the field empty, except as rule 2 says.
+2. **Only housekeeping beads, and beads in an exempt repository, go without.** Housekeeping is work
+   with no place in the humans' project view: tidying the work graph, refreshing a seat. Add the
+   label (`-l housekeeping`) when creating one. A bead whose `repo:` label is in the config's
+   `exempt_repos` needs no item either (rule 4). A merge, review or decision bead for a human is
+   not a build bead and needs no item.
 3. **The release comes from the item, never the bead.** Read it with the tracker adapter's
    `release <item>` (`scripts/tracker-<kind>.sh`); don't copy a milestone, fixVersion or version onto the bead, where it would go stale
    when the humans move the item.
 4. **With no tracker** (`kind: "none"`, or no `tracker.json`) there is nothing to link: leave
-   `external_ref` empty, and don't invent a reference.
+   `external_ref` empty, and don't invent a reference. The same holds for a bead in an **exempt
+   repository**: one whose `repo:` label is named in the config's `exempt_repos` (a Wheelhouse's
+   own repository, say, which plans in beads). It needs no item, and `open-pr.sh` opens its pull
+   request with no issue, no closing link and no milestone.
 5. **Check before you rely on it.** Never call an adapter on a reference that hasn't passed
    `item.pattern`. `tracker.json` holds no commands, and nothing in it is ever run (see the
    reference). If a reference doesn't match, say so and ask
@@ -133,7 +164,7 @@ work graph are. Start the body file with your byline. The script:
 2. writes the tracker's own closing link at the end of the body: on GitHub, `Closes #N` when this
    bead is the last open bead on the item, `Part of #N` when others remain;
 3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
-   `housekeeping`, a reference that doesn't match `item.pattern`, and an item with no release.
+   `housekeeping` and isn't in an exempt repository, a reference that doesn't match `item.pattern`, and an item with no release.
    Fix the cause (file the item, ask the desk to set its release) and run it again;
 4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release.
 
@@ -157,10 +188,10 @@ Some work only a human can do: a merge, a decision, a credential. Never wait for
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
 (`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
 
-1. **Who:** a named person only when you know who: they asked for the work, or the roster says
-   they handle it. Otherwise the default human (`--to default`, the roster's human with
-   `"default": true`), whom every desk shows. Only humans in the roster's `humans` can be
-   assigned; never a name you guessed.
+1. **Who:** a named person only when you know who: they asked for the work, or they have named
+   themselves at the desk this session. Otherwise the default human (`--to default`, the
+   roster's human with `"default": true`), whom every desk shows. A named person is `--to
+   <command>`, their name in lowercase; they need no roster entry. Never a name you guessed.
 2. **Assign a bead** for it, blocking the work it holds up, so that work waits and its wait is
    visible:
 
@@ -206,8 +237,11 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other
-returned: a broken tool never reads as an empty inbox. When someone at the desk names themselves ("it's me, <name>"), the desk registers them with
-`bash scripts/inbox.sh register --name <Name>`, and from then on they can be assigned by name.
+returned: a broken tool never reads as an empty inbox. Who is at the desk is per session: with no name, the desk shows the default
+human's inbox; when someone names themselves ("it's me, <name>"), the desk runs
+`bash scripts/inbox.sh show --name <Name>` for the rest of the session, which adds their inbox
+(the beads assigned to their lowercase name, and the ynm notes in `human/<command>`). Nothing is
+registered or written to the repository: no roster entry, no email, no username.
 
 ## Closing
 

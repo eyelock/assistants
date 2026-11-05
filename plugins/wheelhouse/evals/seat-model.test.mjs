@@ -72,7 +72,7 @@ test("a seat with no model, no vendor mapping or no place in the roster exits 4"
   });
 });
 
-test("the starter team puts workers and watchers on the cheaper tier, and designers, reviewers and dispatchers on the stronger", () => {
+test("the starter team puts workers and watchers on the cheaper tier, and designers, reviewers, verifiers and dispatchers on the stronger", () => {
   const tier = Object.fromEntries(
     readdirSync(team).map((f) => [f.replace(/\.md$/, ""), /^model:\s*(\S+)$/m.exec(readFileSync(join(team, f), "utf8"))?.[1]]),
   );
@@ -84,6 +84,7 @@ test("the starter team puts workers and watchers on the cheaper tier, and design
     releaser: "fast",
     reviewer: "deep",
     "specialist-worker": "fast",
+    verifier: "deep",
     worker: "fast",
   });
 });
@@ -102,5 +103,19 @@ test("the doctor warns about a seat with no model, and not when every seat has o
   });
   withRoster({ ...roster, seats: roster.seats.filter((s) => s.command !== "dredd") }, (dir) => {
     assert.equal(find(dir).ok, true);
+  });
+});
+
+test("the verifier is an optional standing role on the desk's seating, with a verify focus, and resolves to the deep tier", () => {
+  const text = readFileSync(join(team, "verifier.md"), "utf8");
+  const front = /^---\n([\s\S]*?)\n---/.exec(text)[1];
+  for (const line of ["group: standing", "model: deep", "focus: verify", "seated-by: desk", "optional: true"]) {
+    assert.match(front, new RegExp(`^${line}$`, "m"));
+  }
+  assert.match(text, /^\*\*Mandate:\*\*/m);
+  assert.match(text, /^\*\*Focus prompt:\*\*/m);
+  assert.match(text, /^## Ask$/m);
+  withRoster({ models: { groups: { standing: "deep" } }, seats: [seat("may", "standing", { model: "deep" })] }, (dir) => {
+    assert.equal(model(dir, "--seat", "may").stdout.trim(), "opus");
   });
 });
