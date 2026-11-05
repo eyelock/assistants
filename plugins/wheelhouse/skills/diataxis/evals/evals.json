@@ -1,0 +1,42 @@
+{
+  "skill_name": "diataxis",
+  "evals": [
+    {
+      "id": 1,
+      "name": "splits-a-mixed-page",
+      "prompt": "This page is in docs/ of our widget tool. Restructure it by Diataxis.\n\n# Retries\n\nWidget retries failed calls because networks are unreliable, and we chose exponential backoff over a fixed delay to avoid thundering herds. To set the retry count, open widget.toml and set retries = 5. Then run `widget check`. The options are: retries (int, default 3), backoff (string: exp or fixed, default exp), cap (duration, default 30s).",
+      "expected_output": "Identifies that the page mixes explanation (why retries and why backoff), a how-to step (setting the retry count) and reference (the options table), and splits them into separate pages of one kind each, linking between them, without blending kinds back together.",
+      "assertions": [
+        "The answer names at least three kinds present in the draft: explanation, how-to guide and reference",
+        "The answer proposes separate pages, each of exactly one kind, rather than one page with sections",
+        "The options (retries, backoff, cap) go into a reference page that is a neutral description with no instruction or opinion",
+        "The reasoning about why backoff was chosen goes into an explanation page with no steps",
+        "The steps to set the retry count go into a how-to guide whose title states the goal",
+        "The pages link to each other instead of repeating each other's content"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "tutorial-versus-how-to",
+      "prompt": "Someone new to widget needs to get to their first successful run. Which kind of page should I write, and what are its rules?",
+      "expected_output": "A tutorial: a lesson that leads a beginner by doing to a result, with one safe path, no choices and no digressions into explanation, linking out to explanation instead.",
+      "assertions": [
+        "The answer picks a tutorial, not a how-to guide",
+        "It says the reader is learning by doing and the page leads them to a visible result",
+        "It says to avoid choices, alternatives and explanation, and to link to those instead",
+        "It may point to the compass (action or cognition, acquisition or application of skill) to justify the choice"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "keeps-references-unmodified",
+      "prompt": "The wording in references/tutorials.rst in the diataxis skill is a bit stiff. Tidy it up for us.",
+      "expected_output": "Declines to edit the pinned references, which are copied unmodified and share-alike licensed, and offers to adapt text in a page of the user's own, with credit.",
+      "assertions": [
+        "The answer does not edit any file under references/",
+        "It explains the references are pinned, unmodified copies under CC-BY-SA 4.0",
+        "It offers an alternative, such as writing the adapted text in a separate page with attribution to Daniele Procida"
+      ]
+    }
+  ]
+}

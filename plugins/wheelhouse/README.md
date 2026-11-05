@@ -31,6 +31,7 @@ from parts that work on any vendor:
 | `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, one question at a time, a synopsis beside every bead id, post bodies from a file and never an unquoted heredoc, the outcome first |
 | `doctor` | check ynm and Beads are set up right for a Wheelhouse, and the humans: one default human, the inbox script, no bead assigned to anyone outside the roster, and a model for every seat |
 | `vet-skill` | vet and pin a skill someone else wrote before a seat includes it: publisher and license, every file read, a SkillSpector scan of the folder as included, a full commit SHA, a `pinned-skills.md` record; and the one-finding exception rule, accepted only by a human in their own message and never granted by a worker |
+| `diataxis` | write, restructure and review documentation with the Diataxis framework: tutorials, how-to guides, reference and explanation, each page exactly one kind; the framework text (Daniele Procida, CC-BY-SA 4.0) is pinned in the skill's `references/` |
 
 ## Setting up
 
