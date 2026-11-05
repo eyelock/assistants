@@ -48,7 +48,9 @@ at a time**, in this order. Don't create anything until you have the first four.
    JIRA, another, or none. For one, gather what `tracker.json` needs (the `work-graph` skill's
    `references/tracker.md` has the shape): the kind; what it calls an item and a release
    (issue/milestone, ticket/fixVersion); how an item is referenced, with a safe pattern for it; and
-   the CLI the humans want used to change an item's release. The config holds no commands. GitHub
+   the CLI the humans want used to change an item's release; and whether any repository is exempt
+   from the tracker (`exempt_repos`), such as the Wheelhouse's own repository when it plans in
+   beads: ask, and leave it out when none is. The config holds no commands. GitHub
    has an adapter, `tracker-github.sh`, so nothing more is needed. **Any other tracker needs an
    adapter script** (`tracker-<kind>.sh` in the `work-graph` skill, with `release`, `state`,
    `canon`, `closing` and `pr-flags` written as plain code): until it exists, pull requests can't
@@ -117,7 +119,8 @@ the files it finds, and would commit the human's.
    example "Workers leave their changes uncommitted in the working tree for review; a human
    commits." or "Workers commit on a branch and open a draft pull request; a human merges."
    When the Wheelhouse has a tracker (question 8), add: "A build bead's `external_ref` holds the
-   full URL or key of its tracker item; only beads labelled `housekeeping` go without. The
+   full URL or key of its tracker item; only beads labelled `housekeeping`, or in a repository the tracker config's
+   `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
    with the `work-graph` skill's `scripts/open-pr.sh`."
 
