@@ -16,7 +16,7 @@ const bdStub = `#!/bin/sh
 case "$1" in
   show) jq -c --arg id "$2" '[.[] | select(.id == $id)]' "$BD_STATE" | jq -e 'length > 0' >/dev/null || exit 1
         jq -c --arg id "$2" '[.[] | select(.id == $id)]' "$BD_STATE" ;;
-  list) cat "$BD_STATE" ;;
+  list) [ -z "$BD_LIST_FAIL" ] || { echo "bd: list failed" >&2; exit 1; }; cat "$BD_STATE" ;;
 esac
 `;
 const ghStub = `#!/bin/sh
@@ -37,7 +37,7 @@ const github = {
 };
 const bead = (id, over = {}) => ({ id, status: "in_progress", labels: ["repo:ynh"], external_ref: ISSUE, ...over });
 
-function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0" } = {}) {
+function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-openpr-"));
   mkdirSync(join(dir, "bin"));
   for (const [n, body] of [["bd", bdStub], ["gh", ghStub]]) {
@@ -56,6 +56,7 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
     GH_LOG: join(dir, "gh.log"),
     GH_REPO: "eyelock/ynh",
     GH_MILESTONE: milestone,
+    BD_LIST_FAIL: listFails ? "1" : "",
   };
   return {
     dir,
@@ -243,5 +244,18 @@ test("a kind that is not a plain word is a fault, never a file path", () => {
   const r = h.run();
   assert.equal(r.status, 3);
   assert.match(r.stderr, /kind must be/);
+  h.done();
+});
+
+test("when bd list fails it is a fault: exit 3, nothing opened, and never Closes", () => {
+  const h = harness({
+    beads: [bead("hq-1"), bead("hq-2", { status: "open" })],
+    listFails: true,
+  });
+  const r = h.run();
+  assert.equal(r.status, 3);
+  assert.match(r.stderr, /bd list failed/);
+  assert.doesNotMatch(r.stdout, /Closes/);
+  assert.doesNotMatch(h.log(), /pr create/);
   h.done();
 });
