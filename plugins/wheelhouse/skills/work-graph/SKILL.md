@@ -203,6 +203,15 @@ returned: a broken tool never reads as an empty inbox. When someone at the desk 
 
 ## Closing
 
+When a bead closes depends on what kind it is:
+
+- **A build bead closes when its pull request merges**, never at review and never when the pull
+  request opens. Until then it stays in progress with the worker, and a ready review does not
+  release it.
+- **A review bead is closed by the reviewer** who holds it, when the verdict is posted.
+- **A fix a review asks for is a bead for the pull request's author**, linked to the bead it came
+  from, not a bead for whichever worker is idle. The author already has the branch and the context.
+
 1. Close with what actually happened: `bd close <id> --reason "<what was done>" --json`.
    **The record is never falsified.** If something was skipped, failed or left for later, the
    reason says so, plainly: "Released for macOS; the Linux build was skipped (runner down)."
