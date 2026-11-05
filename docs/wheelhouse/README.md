@@ -20,8 +20,8 @@ That is the other half of Yegge's idea, from [model welfare](https://yegge.ai/es
 | ynf | containment: where the seats are meant to run, each with only what its lane grants |
 
 The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and run one:
-`create-wheelhouse`, `add-seat`, `birth`, `wake`, `work-graph`, `handoff`, `kudos`, `patrol`, `refresh`, `comms` and
-`doctor`.
+`create-wheelhouse`, `add-seat`, `birth`, `wake`, `work-graph`, `handoff`, `kudos`, `patrol`, `refresh`, `comms`,
+`doctor` and `vet-skill`.
 
 ## Who is in one
 

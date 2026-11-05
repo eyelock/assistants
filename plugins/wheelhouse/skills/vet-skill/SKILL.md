@@ -46,11 +46,10 @@ A new commit is a new skill. Moving the pin means vetting again from scratch, an
 Run the SkillSpector scanner on the skill folder, as it is included: the folder you will pin,
 with the files it will have, not the whole clone.
 
-```bash
-docker run --rm -v "<skill folder>:/scan:ro" ghcr.io/eyelock/skillspector:1 gate .
-```
-
-This is the command CI runs with `eyelock/actions/skillspector`. The bar is **0 active
+Use the scanner image `ghcr.io/eyelock/skillspector:1` and its `gate` command. Mount the skill
+folder read-only at `/scan` and gate `.` there, the same as the `make skillspector` target of
+eyelock/assistants does for a whole repository. CI runs the same gate with
+`eyelock/actions/skillspector`. The bar is **0 active
 findings**. Read every finding; do not just count them. A finding is real, or a false positive
 that you can explain in a sentence. A real one is a rejection.
 

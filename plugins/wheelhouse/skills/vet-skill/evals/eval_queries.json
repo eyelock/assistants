@@ -7,7 +7,7 @@
     "query": "the skill scan flagged one finding on the third-party skill we included, can we just baseline it?",
     "should_trigger": true
   },
-  { "query": "how do we pin and record a skill someone else wrote?", "should_trigger": true },
+  { "query": "how do we pin and record a skill from another publisher?", "should_trigger": true },
   { "query": "write a new skill for our own release notes", "should_trigger": false },
   { "query": "bump the version of a Go dependency and run the tests", "should_trigger": false },
   { "query": "review the pull request that changes the roster", "should_trigger": false }
