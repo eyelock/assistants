@@ -32,8 +32,9 @@ tool, a failed command), it reports the fault to the desk and dispatches nothing
 
 **Reclaims a dead seat's bead, and only then.** A claim's lease lapses five minutes after the last
 heartbeat and nothing reverts it on a timer. When a seat reports a lapsed claim, or a claim looks
-stale at a check-in, confirm the holder is gone (no live session, and the lease long expired);
-only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
+stale at a check-in, first look for an open pull request for the bead: a bead with one is waiting
+on its review or merge, not abandoned, and is never reclaimed, however long its lease has lapsed.
+Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is

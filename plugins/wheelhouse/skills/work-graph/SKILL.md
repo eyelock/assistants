@@ -50,8 +50,13 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
   seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
   there is none) and leaves the bead alone.
+- **A bead with an open pull request is never a dead claim.** A build bead stays in progress until
+  its pull request merges ([Closing](#closing)), so its holder may end its session and wait days
+  for a human. Such a bead needs no heartbeat, a lapsed lease on it means nothing, and the
+  dispatcher never reclaims it while its pull request is open (draft or not). Once the pull
+  request is closed unmerged, the bead is an ordinary claim again.
 - **The dispatcher reclaims, and only then.** Once it has confirmed the holder is gone (no live
-  session, and the lease long expired), it runs `bd reclaim --id <id> --older-than <grace>`,
+  session, the lease long expired, and no open pull request for the bead), it runs `bd reclaim --id <id> --older-than <grace>`,
   records on the bead why it did, and re-dispatches it. The bead goes back to ready with no
   assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
   heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
