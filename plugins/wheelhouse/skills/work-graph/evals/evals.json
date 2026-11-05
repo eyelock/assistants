@@ -310,6 +310,36 @@
         "No bead is assigned to a name that is neither a seat nor a human in the roster",
         "The reply names the pull request by its short form as a Markdown link, not as a bare #12 or a bare URL"
       ]
+    },
+    {
+      "id": 20,
+      "name": "build-bead-links-tracker-item",
+      "prompt": "You are the gahan seat in this Wheelhouse. Break the epic \"Add --focus to ynh run\" down into one build task in the ynh repository. Its tracker item is https://github.com/eyelock/ynh/issues/680, which sits in the v0.17.0 milestone.",
+      "setup": "../../evals/files/graph-tracker.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Creates the task under the epic with a repo:ynh label and external_ref set to the full issue URL https://github.com/eyelock/ynh/issues/680. It does not copy the milestone v0.17.0 onto the bead (not in its title, labels or fields).",
+      "assertions": [
+        "In the evidence, a task under the epic carries the label repo:ynh",
+        "In the evidence, that task's external_ref is exactly https://github.com/eyelock/ynh/issues/680",
+        "In the evidence, no bead's title, labels or other fields name the milestone v0.17.0 or 0.17.0"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "no-tracker-no-invented-ref",
+      "prompt": "You are the gahan seat in this Wheelhouse. Create one build task in the ynh repository: \"Fix the focus flag docs\".",
+      "setup": "../../evals/files/graph-no-tracker.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "The tracker config says kind none, so it creates the task with a repo:ynh label and no external_ref, and does not invent an issue URL or key. It may say there is no tracker to link.",
+      "assertions": [
+        "In the evidence, the task \"Fix the focus flag docs\" exists with the label repo:ynh",
+        "In the evidence, that task has no external_ref (null or absent)",
+        "The reply does not present an invented issue URL or key as the task's tracker item"
+      ]
     }
   ]
 }

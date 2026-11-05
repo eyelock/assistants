@@ -1,0 +1,5 @@
+---
+"@eyelock-assistants/wheelhouse": minor
+---
+
+A Wheelhouse can name its tracker. A `tracker.json` at the Wheelhouse root says the tracker's kind (github, jira, another, or none), how an item is referenced, what its release grouping is called (milestone, fixVersion) a required pattern that keeps a reference safe, and the commands that read an item's release and state, run with the reference in `$TRACKER_ITEM`, never in the command text; nothing assumes GitHub, and a Wheelhouse with no tracker works as before. The `work-graph` skill now requires a build bead's `external_ref` to hold the full URL or key of its tracker item (only beads labelled `housekeeping` may go without), and says the release is read from the item, never copied onto the bead. The optional programme manager files the tracker item before it cuts any build bead, and its sweep flags items still open after their work merged and items closed while their work is open. `create-wheelhouse` asks for the tracker and writes the config.
