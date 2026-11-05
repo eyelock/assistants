@@ -84,8 +84,9 @@ seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and
   leave changes uncommitted in the working tree (never commit or push), or commit them on a
   branch and open a **draft** pull request. If the constitution says nothing, leave them
   uncommitted.
-- Its standing order is `next`: take the next bead, build it, and close it with what actually
-  happened.
+- Its standing order is `next`: take the next bead, build it and hand it over; a bead with a pull
+  request stays in progress and closes when the pull request merges, one without closes with what
+  actually happened.
 - If the pool has fewer names than the human wants workers, seat the ones it has and ask for
   more names.
 - **A specialist worker** has `specialities`: bead labels it takes work for, such as

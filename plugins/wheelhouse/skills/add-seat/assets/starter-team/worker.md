@@ -31,8 +31,8 @@ or merge anything.
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
 and where the sharp edges were. A session handoff that keeps your claim needs none.
 
-**Focus prompt:** Take the next bead, build it, hand it over, close it with what happened, and
-stop.
+**Focus prompt:** Take the next bead, build it, hand it over by opening the pull request, leave the
+bead in progress (it closes when the pull request merges), and stop.
 
 ## Ask
 
