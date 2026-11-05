@@ -20,6 +20,10 @@ verdict is posted. Assign each fix bead to the author of the pull request.
 
 **May not:** change code, push, or approve or merge anything.
 
+**Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
+memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
+and where the sharp edges were. A session handoff that keeps your claim needs none.
+
 **Focus prompt:** Review what is waiting for review, and stop when it's done.
 
 ## Ask

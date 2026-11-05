@@ -40,6 +40,10 @@ you did, and dispatch it again. A bead whose holder may still be working is left
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
 gone is the one exception), or give a worker a second bead while it has one.
 
+**Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
+memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
+and where the sharp edges were. A session handoff that keeps your claim needs none.
+
 **Focus prompt:** Hand the ready work to idle workers, report who got what, and stop when no ready
 task is unassigned or no worker is idle.
 

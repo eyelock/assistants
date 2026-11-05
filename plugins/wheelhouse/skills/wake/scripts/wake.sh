@@ -2,7 +2,8 @@
 # Wakes a Wheelhouse seat with purpose, not amnesia: who it is (its own
 # identity, pinned in its ynm namespace), what it is for (its charter's
 # mandate), where it left off (its handoff notes), what it has been thanked for
-# (its Kudos), its record (what it closed lately) and what is waiting for it.
+# (its Kudos), its record (what it closed lately), its latest close notes (the
+# two lines it wrote on closing a bead) and what is waiting for it.
 #
 # First it syncs, so the seat wakes to what other machines and seats wrote:
 # ynm's memory when the repository has a git remote, and the Beads work graph
@@ -28,7 +29,7 @@
 # {seat, push {memory, work: pushed|skipped|failed}} and nothing else.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
-# handoff, handoffId, kudos, record, inProgress, assigned, unassignedReady (titles, most
+# handoff, handoffId, kudos, closeNotes [{bead, note}], record, inProgress, assigned, unassignedReady (titles, most
 # urgent first), sync {memory, work: synced|skipped|failed}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
 # null for other seats)}, or a Markdown
@@ -144,6 +145,11 @@ notes=$(recall handoff 1)
 handoff=$(jq -c '[.[] | .content][0] // null' <<<"$notes")
 handoffid=$(jq -c '[.[] | .memoryId][0] // null' <<<"$notes")
 kudos=$(recall kudos 5 | jq -c '[.[] | .content]')
+# Close notes are subjected to the bead they are about, not to the seat, so they are
+# recalled by tag alone: the latest three, newest first.
+closenotes=$(ynm recall --namespace "seat/$seat" --tags close-note --limit 20 --json 2>/dev/null \
+  | jq -c 'sort_by(.updatedAt) | reverse | .[:3] | map({bead: .subject, note: .content})' 2>/dev/null)
+[ -n "$closenotes" ] || closenotes='[]'
 
 # Its record and its work, from the graph.
 # Beads' --json output is an array, or {"data": [...]} with BD_JSON_ENVELOPE=1 (the
@@ -181,12 +187,12 @@ if [ "$group" = desk ]; then
 fi
 
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
-  --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" \
+  --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" \
   --argjson inbox "$inbox" '{
     seat: $seat, group: $group, firstWake: ($identity == null), identity: $identity,
-    mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, record: $record,
+    mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned,
     sync: {memory: $memsync, work: $worksync}, inbox: $inbox
   }')
@@ -246,6 +252,9 @@ jq -r '
   (if (.kudos | length) == 0 then "Nothing yet.\n"
     else list(.kudos; "") + "\n\nMention them in a line when you reply.\n" end),
   "## Your record\n", (list(.record; "Nothing closed yet.") + "\n"),
+  (if (.closeNotes | length) == 0 then empty
+    else "## Your close notes\n", (.closeNotes | map("- " + (.bead // "?") + ": " + (.note | gsub("\n"; " / "))) | join("\n")) + "\n"
+    end),
   "## Waiting for you\n",
   ((if (.inProgress | length) > 0 then "In progress, yours: " + (.inProgress | join("; ")) + "\n" else "" end)
     + list(.assigned; "Nothing assigned to you.") + "\n"),

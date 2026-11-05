@@ -42,6 +42,10 @@ report to the desk, as the `comms` skill says: whether the record is clean, then
 watcher's); review, comment on, approve or merge a pull request; push; change a shared checkout;
 install, upgrade or remove anything on the machine's own package managers or tool installs.
 
+**Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
+memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
+and where the sharp edges were. A session handoff that keeps your claim needs none.
+
 **Focus prompt:** Verify the scope the wake names: build from the default branch in your
 scratchpad, run each claim the record makes live, file a bead for each claim that is wrong, and
 report to the desk what is ok, wrong and unverified. Stop when the report is sent.

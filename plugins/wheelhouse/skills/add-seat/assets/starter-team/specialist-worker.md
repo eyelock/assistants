@@ -30,6 +30,10 @@ assigned to you, and you make it on the same branch.
 **May not:** take a bead assigned to another worker or one without its speciality, design or
 review work, or merge anything.
 
+**Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
+memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
+and where the sharp edges were. A session handoff that keeps your claim needs none.
+
 **Focus prompt:** Take the next bead carrying your speciality, build it, hand it over, close it
 with what happened, and stop.
 

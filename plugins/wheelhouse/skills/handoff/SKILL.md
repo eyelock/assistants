@@ -39,6 +39,10 @@ You are your seat's command name, which your charter gives. If you don't know it
      open, something the human said.
    - **Open questions** for the human, if any.
 
+   A handoff that keeps your claims is not a reason for a close note: the `work-graph` skill's
+   Closing step has you write that, two lines, when a bead closes or when you give one to another
+   seat unfinished. If you closed a bead this session, make sure its close note is written too.
+
 4. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
    notes are saved in ynm (subject seat:<name>). Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.

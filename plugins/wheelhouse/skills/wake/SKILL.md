@@ -51,6 +51,7 @@ read, never that nothing is waiting.
 | Where you left off | your latest handoff notes |
 | What you have been thanked for | your Kudos |
 | Your record | the beads you closed most recently |
+| Your close notes | the two-line notes you wrote on your last three closes |
 | Waiting for you | beads in progress or assigned to you, and how many are ready and unassigned |
 
 ## Then
