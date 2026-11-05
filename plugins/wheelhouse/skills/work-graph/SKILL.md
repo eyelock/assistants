@@ -103,6 +103,35 @@ tracker: use the config's names and commands.
 5. **Check before you rely on it.** If a reference doesn't match `item.pattern`, say so and ask
    the desk; don't edit it to fit.
 
+## Opening a pull request
+
+A worker that hands work over with a pull request opens it only with this skill's
+`scripts/open-pr.sh`, never `gh pr create` by hand, so the PR carries its tracker item and release:
+
+```bash
+bash path/to/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> \
+  --title "<conventional title>" --body-file <file> --base <branch>
+```
+
+Run it from the repository's worktree; `--dir` is the Wheelhouse, where `tracker.json` and the
+work graph are. Start the body file with your byline. The script:
+
+1. reads the bead's `external_ref` and the release from the item (the config's `release.read`),
+   and opens a **draft** PR with the release set where the tracker supports it (a GitHub
+   milestone);
+2. writes the tracker's own closing link at the end of the body: on GitHub, `Closes #N` when this
+   bead is the last open bead on the item, `Part of #N` when others remain;
+3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
+   `housekeeping`, a reference that doesn't match `item.pattern`, and an item with no release.
+   Fix the cause (file the item, ask the desk to set its release) and run it again;
+4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release.
+
+Everything GitHub-specific is in `scripts/tracker-github.sh`; another tracker gets a
+`tracker-<kind>.sh` with the same two commands (`closing`, `pr-flags`), and until it does,
+`tracker-generic.sh` names the item in the body and sets no release. `--dry-run` shows what it
+would run. A PR with no tracker item of its own (a Wheelhouse process change, say) is a bead
+labelled `housekeeping`; do not close a tracker item from it.
+
 ## Who's working on what
 
 - In progress, with who has it: `bd list --status in_progress --json` (the `assignee` field).
