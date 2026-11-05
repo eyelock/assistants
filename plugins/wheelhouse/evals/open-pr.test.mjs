@@ -17,6 +17,7 @@ const bdStub = `#!/bin/sh
 case "$1" in
   show) jq -c --arg id "$2" '[.[] | select(.id == $id)]' "$BD_STATE" | jq -e 'length > 0' >/dev/null || exit 1
         jq -c --arg id "$2" '[.[] | select(.id == $id)]' "$BD_STATE" ;;
+  note) [ -z "$BD_NOTE_FAIL" ] || exit 1; printf '%s\\n' "$*" >> "$BD_NOTE_LOG" ;;
   list) [ -z "$BD_LIST_FAIL" ] || { echo "bd: list failed" >&2; exit 1; }; cat "$BD_STATE" ;;
 esac
 `;
@@ -38,7 +39,7 @@ const github = {
 };
 const bead = (id, over = {}) => ({ id, status: "in_progress", labels: ["repo:ynh"], external_ref: ISSUE, ...over });
 
-function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false, adapters = {} } = {}) {
+function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false, noteFails = false, adapters = {} } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-openpr-"));
   mkdirSync(join(dir, "bin"));
   for (const [n, body] of [["bd", bdStub], ["gh", ghStub]]) {
@@ -63,6 +64,8 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
     GH_MILESTONE: milestone,
     GH_STATE: "OPEN",
     BD_LIST_FAIL: listFails ? "1" : "",
+    BD_NOTE_LOG: join(dir, "notes.log"),
+    BD_NOTE_FAIL: noteFails ? "1" : "",
   };
   return {
     dir,
@@ -79,6 +82,7 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
       } catch {}
       return { ...out, json };
     },
+    notes: () => (existsSync(join(dir, "notes.log")) ? readFileSync(join(dir, "notes.log"), "utf8") : ""),
     log: () => (existsSync(join(dir, "gh.log")) ? readFileSync(join(dir, "gh.log"), "utf8") : ""),
     done: () => rmSync(dir, { recursive: true, force: true }),
   };
@@ -387,5 +391,26 @@ test("exemption holds for another tracker kind, without calling its adapter", ()
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.exempt, true);
   assert.doesNotMatch(h.log(), /adapter-called/);
+  h.done();
+});
+
+test("the PR's URL is noted on the bead as 'PR: <url>', and a --dry-run notes nothing", () => {
+  const h = harness();
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(h.notes().trim(), "note hq-1 PR: https://github.com/eyelock/ynh/pull/7");
+  const d = harness();
+  assert.equal(d.run(["--bead", "hq-1", "--dry-run"]).status, 0);
+  assert.equal(d.notes(), "");
+  h.done();
+  d.done();
+});
+
+test("an exempt bead's PR is noted too, and a failed note warns but keeps the PR", () => {
+  const h = harness({ noteFails: true });
+  const r = h.run();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.url, "https://github.com/eyelock/ynh/pull/7");
+  assert.match(r.stderr, /could not note it on hq-1/);
   h.done();
 });

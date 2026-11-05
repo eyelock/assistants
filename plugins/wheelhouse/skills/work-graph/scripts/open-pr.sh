@@ -163,6 +163,10 @@ if $dry; then
   exit 0
 fi
 url=$(gh "${args[@]}") || die 3 "open-pr: gh pr create failed"
+# Note the PR on the bead, so the dispatcher, the wake and the dead-claim check all find an open
+# pull request the same way: a note line "PR: <url>". A failed note does not undo the PR.
+(cd "$dir" && bd note "$bead" "PR: $url" >/dev/null) ||
+  echo "open-pr: opened $url but could not note it on $bead; run: bd note $bead \"PR: $url\"" >&2
 jq -n --arg url "$url" --arg item "$item" --arg release "$release" --arg closing "$closing" \
   --arg iname "$name" --arg rname "$rname" --arg relation "$relation" --argjson exempt "$exempt" \
   '{url: $url, exempt: $exempt, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing}'

@@ -83,7 +83,7 @@ read, never that nothing is waiting.
    assigned to you but not yet claimed, claim it first (`bd update <id> --claim`): that is not a
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
-5. **Waiting for you:** carry on with what is in progress, then what is assigned to you, then
+5. **Waiting for you:** carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
    (if you are a worker) an unassigned ready bead, as the `work-graph` skill says.
 6. Open your reply (after the humans' inbox, at the desk) in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
    notes: <what they say is done>. Next: <the step you are taking>." Then the rest.

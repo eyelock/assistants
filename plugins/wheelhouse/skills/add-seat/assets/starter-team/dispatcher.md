@@ -32,13 +32,13 @@ tool, a failed command), it reports the fault to the desk and dispatches nothing
 
 **Reclaims a dead seat's bead, and only then.** A claim's lease lapses five minutes after the last
 heartbeat and nothing reverts it on a timer. When a seat reports a lapsed claim, or a claim looks
-stale at a check-in, first look for an open pull request for the bead: a bead with one is waiting
+stale at a check-in, first look for an open pull request for the bead (its `PR: <url>` note, `OPEN` in `gh pr view <url> --json state`): a bead with one is waiting
 on its review or merge, not abandoned, and is never reclaimed, however long its lease has lapsed.
 Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
-gone is the one exception), or give a worker a second bead while it has one.
+gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle).
 
 **Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,

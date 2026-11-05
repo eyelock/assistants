@@ -156,7 +156,23 @@ closenotes=$(ynm recall --namespace "seat/$seat" --tags close-note --limit 20 --
 # Beads 2.0 default); (.data? // .) reads either.
 beads() { bd "$@" --json 2>/dev/null | jq -c '.data? // .' 2>/dev/null || echo '[]'; }
 record=$(beads list --status closed --assignee "$seat" | jq -c 'sort_by(.updated_at) | reverse | .[:5] | map(.title)')
-inprogress=$(beads list --status in_progress --assignee "$seat" | jq -c 'map(.title)')
+# A bead whose notes carry "PR: <url>" (open-pr.sh writes it) and whose pull request is open is
+# waiting on a review or a merge, not work to carry on with: its title is marked "(waiting on PR
+# <url>)". If gh cannot say, the mark says the state is unknown rather than guessing.
+inprogress='[]'
+while IFS=$'\t' read -r title prurl; do
+  [ -n "$title" ] || continue
+  if [ -n "$prurl" ]; then
+    state=$(gh pr view "$prurl" --json state --jq .state 2>/dev/null || true)
+    case "$state" in
+      OPEN) title="$title (waiting on PR $prurl)" ;;
+      MERGED|CLOSED) ;;
+      *) title="$title (PR noted: $prurl, state unknown)" ;;
+    esac
+  fi
+  inprogress=$(jq -c --arg t "$title" '. + [$t]' <<<"$inprogress")
+done < <(beads list --status in_progress --assignee "$seat" |
+  jq -r '.[] | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' 2>/dev/null)
 assigned=$(beads ready --assignee "$seat" | jq -c 'map(select(.issue_type != "epic") | .title)')
 unassigned=$(beads ready --unassigned | jq -c 'map(select(.issue_type != "epic")) | sort_by(.priority) | map(.title)')
 

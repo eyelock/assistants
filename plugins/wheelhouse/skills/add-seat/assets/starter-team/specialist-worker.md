@@ -21,7 +21,7 @@ merges, then close it with what actually happened; if it is not (uncommitted cha
 close the bead with what actually happened once the work is handed over.
 
 **Opens pull requests only** with the `work-graph` skill's `scripts/open-pr.sh`, never `gh pr create`
-by hand: it links the bead's tracker item, sets the release and writes the closing link, and
+by hand: it notes the pull request on the bead (`PR: <url>`, which is how the dispatcher and your wake know it is open), links the bead's tracker item, sets the release and writes the closing link, and
 refuses a bead that has no item unless it is labelled `housekeeping` or is in a repository the
 tracker config's `exempt_repos` names (then it opens with no item, closing link or release).
 
