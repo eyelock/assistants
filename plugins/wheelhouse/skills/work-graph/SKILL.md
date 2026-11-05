@@ -70,7 +70,8 @@ reaching for the same bead. Other seats skip this section.
 ## Breaking work down
 
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
-2. Create each task under it: `bd create "<task>" --parent <epic> -l repo:<repo> -d "<what done looks like>" --json`.
+2. Create each task under it: `bd create "<task>" --parent <epic> -l repo:<repo> -d "<what done looks like>" --json`,
+   with `--external-ref` set to its tracker item (see "Linking the tracker").
    Every task names the one repository it touches in a `repo:` label, such as `repo:api` or
    `repo:docs`. Split a task that touches two. The one exception is a bead for a human (see
    "Needing a human") whose work touches no repository, such as a decision.
@@ -78,6 +79,29 @@ reaching for the same bead. Other seats skip this section.
    where the order matters; tasks that can run side by side stay unlinked.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.
 5. Report the epic, its tasks in order and what is ready first. Don't claim them unless asked.
+
+## Linking the tracker
+
+A Wheelhouse may have a tracker (GitHub Issues, JIRA, Linear) for the humans' project view,
+beside the work graph. Its config is `tracker.json` at the Wheelhouse root; the shape, and how to
+read it, is in [references/tracker.md](references/tracker.md). Nothing here assumes a particular
+tracker: use the config's names and commands.
+
+1. **A build bead links its tracker item.** `external_ref` holds the item's full URL or key, as
+   the config's `item.reference` says: `bd create ... --external-ref "<reference>"`, or
+   `bd update <id> --external-ref "<reference>"`. File the tracker item first, then cut the bead.
+   Never cut a build bead with the field empty.
+2. **Only beads labelled `housekeeping` go without.** Housekeeping is work with no place in the
+   humans' project view: tidying the work graph, refreshing a seat. Add the label
+   (`-l housekeeping`) when creating one. A merge, review or decision bead for a human is not a
+   build bead and needs no item.
+3. **The release comes from the item, never the bead.** Read it with the config's `release.read`
+   command; don't copy a milestone, fixVersion or version onto the bead, where it would go stale
+   when the humans move the item.
+4. **With no tracker** (`kind: "none"`, or no `tracker.json`) there is nothing to link: leave
+   `external_ref` empty, and don't invent a reference.
+5. **Check before you rely on it.** If a reference doesn't match `item.pattern`, say so and ask
+   the desk; don't edit it to fit.
 
 ## Who's working on what
 

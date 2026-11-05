@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prints the state of the Beads graph after a work-graph eval: every bead with
-# its status, assignee, labels, parent, close reason and what it waits on, then
+# its status, assignee, labels, parent, external_ref, close reason and what it waits on, then
 # what is ready, then anything stored in Beads' own memory.
 set -uo pipefail
 echo '$ beads (every bead, after the run)'

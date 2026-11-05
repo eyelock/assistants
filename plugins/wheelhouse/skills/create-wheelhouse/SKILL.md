@@ -44,7 +44,11 @@ at a time**, in this order. Don't create anything until you have the first four.
    through its git remote: code on its branches, memory in ynm's notes, and the work graph in
    Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
    separate Dolt remote, or a Wheelhouse that never leaves this machine.
-8. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
+8. **The tracker:** where the humans see the project, apart from the work graph: GitHub Issues,
+   JIRA, Linear, another, or none. For one, ask how an item is referenced and what its release
+   grouping is called (milestone, fixVersion). If the request doesn't say and you aren't asking,
+   use none, and say so in the report.
+9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
    walks through with the human role by role.
 
 ## 2. Check the tools
@@ -210,7 +214,10 @@ the files it finds, and would commit the human's.
    for things with it, and the desk's wake shows their inbox with it. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
-6. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
+   `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
+   "Handing over work" section says that a build bead's `external_ref` holds its tracker item.
+7. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
 ## 4. Work and memory
