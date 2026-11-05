@@ -1,0 +1,9 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "media-management",
+  "version": "0.3.0",
+  "description": "Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports",
+  "author": {
+    "name": "eyelock"
+  }
+}

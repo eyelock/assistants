@@ -1,0 +1,15 @@
+[
+  {
+    "query": "write a tutorial for our new CLI, for people who have never used it",
+    "should_trigger": true
+  },
+  {
+    "query": "this docs page mixes steps with long explanations; how should I restructure it?",
+    "should_trigger": true
+  },
+  { "query": "is this page a how-to guide or a tutorial?", "should_trigger": true },
+  { "query": "review our docs folder for structure", "should_trigger": true },
+  { "query": "write a commit message for this change", "should_trigger": false },
+  { "query": "fix the failing unit test in parser.go", "should_trigger": false },
+  { "query": "add a seat to the wheelhouse", "should_trigger": false }
+]

@@ -1,7 +1,27 @@
 # Claude Code — Skill Artifact Reference
 
-Docs: https://code.claude.com/docs/en/plugins
+Docs: https://code.claude.com/docs/en/skills
+      https://code.claude.com/docs/en/plugins
       https://code.claude.com/docs/en/plugins-reference
+
+## Frontmatter That Does Not Parse
+
+If the YAML frontmatter is malformed, Claude Code still loads the skill, but with empty
+metadata: `/skill-name` works when typed, yet the model has no `description` to match, so it
+never picks the skill up by itself. No error is shown in a normal session; `--debug` shows
+the parse error, and `claude plugin validate <dir>` lists the files that fail.
+
+The usual culprit is an unquoted `description` containing `: ` (colon then space), `#`
+after a space, or a leading `[`, `{`, `*`, `&`, `!`, `|`, `>`, `'`, `"` or `%`. YAML reads
+`description: Deploy with Helm: staging or production` as a nested mapping and fails. Quote
+the value, or use a `>-` block scalar.
+
+"Typing /name works, the model never uses it" → parse the frontmatter before anything else.
+
+## Description Length
+
+`description` plus `when_to_use` are truncated at 1,536 characters in the skill listing; put
+the key use case first.
 
 ## Known Bugs
 
@@ -21,6 +41,8 @@ model: sonnet                    # override model
 context: fork                    # runs as isolated subagent
 agent: general-purpose           # subagent type
 argument-hint: "[text]"          # autocomplete hint
+paths: "**/*.tf"                 # globs; skill stays inactive until matching files are in play (Cursor too)
+when_to_use: "..."               # appended to description in the listing
 
 ## Installation Paths
 

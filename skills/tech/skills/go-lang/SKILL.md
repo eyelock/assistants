@@ -30,16 +30,17 @@ Read the asset at `assets/Makefile` for the reference implementation.
 ## Build
 
 ```makefile
-GOFLAGS := -v
+BUILD_FLAGS := -v
 VERSION := $(shell git describe --tags --always --dirty)
 
 build:
-	go build $(GOFLAGS) -ldflags "-X main.version=$(VERSION)" -o bin/<name> ./cmd/<name>
+	go build $(BUILD_FLAGS) -ldflags "-X main.version=$(VERSION)" -o bin/<name> ./cmd/<name>
 ```
 
 - Build to `bin/` directory, never in-place
 - Inject version via `-ldflags` from git tags
 - Use `-v` for visibility into what's being compiled
+- Never name a Make variable `GOFLAGS`: it is Go's own environment variable, so it replaces the user's `GOFLAGS` (e.g. `-mod=mod`) and, once exported, adds `-v` to every `go` command
 - `CGO_ENABLED=0` for release builds (cross-compilation, static binaries)
 
 ## Test

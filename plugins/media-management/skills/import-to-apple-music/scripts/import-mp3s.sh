@@ -8,13 +8,16 @@ set -euo pipefail
 
 show_help() {
   cat <<'HELP'
-Usage: import-mp3s.sh <source_folder> <import_folder>
+Usage: import-mp3s.sh <source_folder> <import_folder> [--wait SECONDS]
 
 Copy all MP3 files from source folder to the Apple Music auto-import folder.
 
 Arguments:
   source_folder   Path to folder containing MP3 files
   import_folder   Path to Apple Music auto-import folder
+  --wait SECONDS  Then wait, up to SECONDS, for Apple Music to take the files
+                  out of the import folder. "picked_up" in the output says
+                  whether it did; files it rejects go to its "Not Added" folder
   --help          Show this help
 
 Output: JSON to stdout
@@ -22,8 +25,11 @@ Output: JSON to stdout
     "source_folder": "/path/to/source",
     "import_folder": "/path/to/import",
     "files_copied": 8,
-    "files": ["01 Track.mp3", "02 Track.mp3", ...]
+    "files": ["01 Track.mp3", "02 Track.mp3", ...],
+    "picked_up": true, "not_added": []
   }
+  picked_up is null without --wait. not_added lists any of these files Apple
+  Music moved to its "Not Added" folder.
 
 Exit codes:
   0  Success
@@ -35,9 +41,15 @@ HELP
 
 SOURCE=""
 IMPORT=""
+WAIT=""
 
 for arg in "$@"; do
+  if [[ "$WAIT" == "next" ]]; then
+    WAIT="$arg"
+    continue
+  fi
   case "$arg" in
+    --wait) WAIT="next" ;;
     --help) show_help; exit 0 ;;
     *)
       if [[ -z "$SOURCE" ]]; then
@@ -101,9 +113,45 @@ if [[ $errors -gt 0 ]]; then
   echo "Warning: $errors file(s) failed to copy" >&2
 fi
 
+if [[ -n "$WAIT" && ! "$WAIT" =~ ^[0-9]+$ ]]; then
+  echo "Error: --wait needs a number of seconds" >&2
+  exit 1
+fi
+
+picked_up=null
+not_added="[]"
+if [[ -n "$WAIT" ]]; then
+  # Apple Music moves each file out of the folder once it has imported it.
+  picked_up=false
+  waited=0
+  while [[ $waited -le $WAIT ]]; do
+    left=0
+    while IFS= read -r name; do
+      [[ -f "$IMPORT/$name" ]] && left=$((left + 1))
+    done < <(echo "$copied_files" | jq -r '.[]')
+    if [[ $left -eq 0 ]]; then
+      picked_up=true
+      echo "Apple Music picked up the files after ${waited}s" >&2
+      break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  [[ "$picked_up" == true ]] || echo "Warning: $left file(s) still waiting after ${WAIT}s; is Apple Music running?" >&2
+  rejected="$(find "$IMPORT" -maxdepth 1 -type d -name 'Not Added*' | head -1)"
+  if [[ -n "$rejected" ]]; then
+    not_added=$(while IFS= read -r name; do
+      if [[ -f "$rejected/$name" ]]; then echo "$name"; fi
+    done < <(echo "$copied_files" | jq -r '.[]') | jq -R . | jq -s .)
+  fi
+fi
+
 jq -n \
   --arg source_folder "$SOURCE" \
   --arg import_folder "$IMPORT" \
   --argjson files_copied "$copy_count" \
   --argjson files "$copied_files" \
-  '{source_folder: $source_folder, import_folder: $import_folder, files_copied: $files_copied, files: $files}'
+  --argjson picked_up "$picked_up" \
+  --argjson not_added "$not_added" \
+  '{source_folder: $source_folder, import_folder: $import_folder, files_copied: $files_copied,
+    files: $files, picked_up: $picked_up, not_added: $not_added}'

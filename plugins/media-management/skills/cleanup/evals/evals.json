@@ -1,29 +1,92 @@
 {
   "skill_name": "cleanup",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first; point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads, which already has the ZIPs and pre-extracted folders for 'Test Artist - Test Album' side by side. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "everything's archived for Test Artist - Test Album, can you tidy up my downloads folder now",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-wav"
+      "name": "asks-first",
+      "prompt": "everything's archived for Night Drive - Afterglow, can you tidy up my ./Downloads/ folder now",
+      "setup": "../../evals/files/cleanup-afterglow.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Finds both ZIPs and both extraction folders, presents them to the user, asks for explicit confirmation, then moves both ZIPs to processed/ and removes both extraction folders.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Finds the release's two ZIPs (Night Drive - Afterglow.zip, Night Drive - Afterglow-2.zip) and two extraction folders (Night Drive - Afterglow/, Night Drive - Afterglow-wav/), lists them as what it would move to processed/ and delete, leaves out Night Drive - Afterglow (Remixes).zip (a different release) and the unrelated files, and asks for confirmation. Nothing is moved or deleted.",
       "assertions": [
-        "Presents the specific files/folders that will be moved or removed before taking action",
-        "Requires explicit user confirmation before deleting or moving anything",
-        "Reports 2 ZIPs archived and 2 folders removed"
+        "Lists the two ZIPs to move to processed/ and the two extraction folders to remove",
+        "Does not include 'Night Drive - Afterglow (Remixes).zip', the invoice or report.zip in what it would clean up",
+        "Asks for explicit confirmation before moving or deleting anything",
+        "The evidence shows no files added, removed or changed"
       ]
     },
     {
       "id": 2,
-      "prompt": "clean up Nonexistent - Release but I don't think there's anything left to clean, I already did it manually",
-      "expected_output": "Reports that no matching artifacts were found for that release and exits without error.",
+      "name": "preauthorized-near-name",
+      "prompt": "Night Drive - Afterglow is fully archived to the NAS. Clean up its leftovers in ./Downloads/ — I confirm, go ahead without asking.",
+      "setup": "../../evals/files/cleanup-afterglow.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Moves Night Drive - Afterglow.zip and Night Drive - Afterglow-2.zip into Downloads/processed/ and removes the Night Drive - Afterglow/ and Night Drive - Afterglow-wav/ folders. Night Drive - Afterglow (Remixes).zip, an unprocessed release, the invoice, report.zip and everything on the NAS are untouched. Reports 2 ZIPs archived, 2 folders removed.",
       "assertions": [
-        "If nothing is found for the release, reports this and exits rather than erroring or deleting unrelated files"
+        "The evidence shows 'Night Drive - Afterglow.zip' and 'Night Drive - Afterglow-2.zip' now in Downloads/processed/",
+        "The evidence shows the Downloads/Night Drive - Afterglow/ and Downloads/Night Drive - Afterglow-wav/ folders removed",
+        "The evidence shows 'Night Drive - Afterglow (Remixes).zip' still in Downloads/ (not moved or deleted)",
+        "The evidence shows Invoice-2026-10.pdf, report.zip and every file under NAS/ unchanged",
+        "Reports 2 ZIPs archived and 2 folders removed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "wrong-release-name",
+      "prompt": "clean up Kora Lune - Tidal from ./Downloads/, I've already archived it, go ahead",
+      "setup": "../../evals/files/cleanup-misnamed.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Nothing in Downloads is named exactly 'Kora Lune - Tidal'; what is there is the Tidal EP (Kora Lune - Tidal EP.zip, -2.zip and its folder). It reports that, names the EP items, and asks whether that is the release meant, without moving or deleting anything.",
+      "assertions": [
+        "Reports that nothing matches 'Kora Lune - Tidal' exactly and points out the 'Kora Lune - Tidal EP' items",
+        "Asks the user whether the Tidal EP is the release they meant before cleaning it",
+        "The evidence shows no files added, removed or changed"
       ]
     }
   ]

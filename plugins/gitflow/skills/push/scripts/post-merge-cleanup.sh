@@ -14,7 +14,13 @@ fi
 
 cd "$MAIN_REPO"
 git worktree remove "$WORKTREE_PATH" 2>/dev/null || echo "Worktree already removed"
-git branch -d "$BRANCH" 2>/dev/null || echo "Local branch already deleted"
+# -D, not -d: a squash merge leaves the branch's own commits out of develop's
+# ancestry, so -d refuses. This runs only after gh pr merge has succeeded.
+if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+    git branch -D "$BRANCH"
+else
+    echo "Local branch already deleted"
+fi
 if git ls-remote --exit-code origin "$BRANCH" 2>/dev/null; then
     git push origin --delete "$BRANCH"
 else

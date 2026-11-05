@@ -1,0 +1,18 @@
+[
+  { "query": "claude code isn't reading my AGENTS.md", "should_trigger": true },
+  { "query": "my .cursor/rules file is being ignored", "should_trigger": true },
+  { "query": "does copilot cli read CLAUDE.md?", "should_trigger": true },
+  { "query": "AGENTS.md and copilot-instructions.md disagree, which wins", "should_trigger": true },
+  { "query": "do codex plugins support rules?", "should_trigger": true },
+  { "query": "write a CLAUDE.md for this project", "should_trigger": false },
+  {
+    "query": "my SessionStart hook is supposed to add context but nothing shows up",
+    "should_trigger": false
+  },
+  {
+    "query": "the system prompt in agents/triager.md isn't being followed in copilot",
+    "should_trigger": false
+  },
+  { "query": "my skill's description isn't making it into the catalog", "should_trigger": false },
+  { "query": "remember that I always use pnpm", "should_trigger": false }
+]

@@ -5,10 +5,11 @@ How to adopt the develop/main branching model from scratch or migrate from a sin
 ## What You're Setting Up
 
 ```
-main      ← stable, production-ready. Only receives PRs from develop or hotfix branches.
-develop   ← integration branch. All feature/fix work merges here first.
-feat-*    ← short-lived feature branches, created from develop.
-hotfix/*  ← emergency patches, created from a release tag.
+main       ← stable, production-ready. Only receives PRs from release/* or hotfix/* branches.
+develop    ← integration branch. All feature/fix work merges here first.
+feat/*     ← short-lived feature branches (also fix/*, docs/*, ...), created from develop.
+release/*  ← release/vX.Y.Z, cut from develop and PR'd into main to ship a stable release.
+hotfix/*   ← hotfix/vX.Y.Z, emergency patches, created from a release tag.
 ```
 
 ## Step 1: Create the Develop Branch
@@ -47,14 +48,14 @@ Ensure your CI workflow runs on both branches and on PRs targeting them:
 ```yaml
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'hotfix/**', 'release/**']
   pull_request:
-    branches: [main, develop, 'hotfix/**']
+    branches: [main, develop, 'hotfix/**', 'release/**']
 ```
 
-## Step 5: Configure Squash Merge
+## Step 5: Configure Merge Methods
 
-In GitHub, go to **Settings → General → Pull Requests**. Enable only **Allow squash merging** (disable merge commits and rebase merging). This keeps `develop` history linear.
+In GitHub, go to **Settings → General → Pull Requests**. Enable **Allow squash merging** and **Allow merge commits**; disable **Allow rebase merging**. Feature/fix PRs into `develop` are squash-merged, which keeps `develop` history linear. `release/*` and `hotfix/*` PRs into `main` must use a true merge (`gh pr merge --merge`) to keep ancestry, so merge commits must stay enabled.
 
 ## Step 6: Update CLAUDE.md
 
@@ -64,7 +65,8 @@ Document the branch model so collaborators and AI assistants know the rules:
 ## Branching
 
 All feature work branches from `develop` and PRs back to `develop`.
-Release promotion: PR from `develop` → `main`, then tag.
+Stable release: cut `release/vX.Y.Z` from `develop`, PR it into `main` (merge with `--merge`), then tag.
+`develop` never opens a PR into `main` directly.
 Never commit directly to `main` or `develop`.
 ```
 

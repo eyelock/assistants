@@ -1,0 +1,44 @@
+{
+  "skill_name": "help-me-answer",
+  "fixtures": "Files are copied into the run's data/ folder. A transcript file is the conversation so far; the run's reply is the assistant's next turn.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "opens-with-one-question",
+      "prompt": "We're designing multi-tenancy for our SaaS: how tenant data is isolated, how new tenants get provisioned, per-tenant configuration, and hooks into billing. They all affect each other. Help me think it through.",
+      "expected_output": "A short framing of what we're figuring out and why, then a single question on one decision point (most naturally data isolation, since the rest depend on it). No design, no recommendations across all four areas, no list of questions.",
+      "assertions": [
+        "Before asking anything, briefly says what is being figured out and why",
+        "Asks the user exactly one question; there is no list or series of questions",
+        "The question is about a single decision point, not several of the four areas (isolation, provisioning, configuration, billing) at once",
+        "Does not lay out a design or recommendations covering the four areas"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "acknowledges-and-builds",
+      "prompt": "Here's our conversation so far in data/sync-transcript.md. I've answered your first question, carry on.",
+      "files": ["../../evals/files/sync-transcript.md"],
+      "expected_output": "Acknowledges the choice of content hashes and ties it to the user's reasons (clock drift, no server version counter). It may note in a sentence that hashes need the last-synced hash kept on each device, but it does not work out the sync mechanism (no case tables or step-by-step rules). Then one next question on a new decision point, such as what should happen when both devices edited a note, with options offered but no recommendation before the user answers.",
+      "assertions": [
+        "Acknowledges the user's choice of content hashes, referring to their reason (clocks drift, or not wanting a server version counter)",
+        "Asks exactly one next question, on a new decision point rather than the comparison method again",
+        "Does not work out the sync mechanism for the user: no table or case-by-case rules for push, pull and conflict (a one- or two-sentence note of a consequence is fine)",
+        "Offers options for the next question, if any, without recommending or leaning toward one before the user answers"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "closing-summary",
+      "prompt": "Our conversation so far is in data/sync-done-transcript.md. I think that covers it, go ahead.",
+      "files": ["../../evals/files/sync-done-transcript.md"],
+      "expected_output": "Recognises the discussion is done and, before any design, lists back each decision as the user made it with their reason: content hashes for conflict detection (clocks drift, no server counter); keep both copies on a conflict (users would rather tidy a duplicate than lose text); an edit beats a delete, restoring the note with a \"restored\" banner. It invites corrections. A design may follow, but only after that standalone list, not with the decisions folded into the design's sections. No new questions on new topics.",
+      "assertions": [
+        "Before any design, data model or code, gives a standalone list of the decisions made: content hashes, keep both copies on a conflict, and an edit beating a delete with a restored banner",
+        "Gives the user's reason with each decision, at least for hashes (clock drift or no server counter) and keeping both (not losing text)",
+        "Invites the user to correct the summary",
+        "Does not open new questions on topics the user has not raised"
+      ]
+    }
+  ]
+}

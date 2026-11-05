@@ -1,0 +1,18 @@
+[
+  { "query": "which branch should I base this feature on?", "should_trigger": true },
+  { "query": "how do I name a branch for fixing the login redirect", "should_trigger": true },
+  { "query": "PR's merged, clean up the branch", "should_trigger": true },
+  { "query": "can I just commit this typo fix straight to develop?", "should_trigger": true },
+  {
+    "query": "should I squash or do a merge commit for the release PR into main?",
+    "should_trigger": true
+  },
+  { "query": "write the commit message for this", "should_trigger": false },
+  { "query": "push the branch and open the PR for me", "should_trigger": false },
+  {
+    "query": "write a GitHub Actions workflow that rejects PRs into main from feature branches",
+    "should_trigger": false
+  },
+  { "query": "tag v1.3.0 and ship it", "should_trigger": false },
+  { "query": "lint fails on my branch, can I add a nolint comment?", "should_trigger": false }
+]

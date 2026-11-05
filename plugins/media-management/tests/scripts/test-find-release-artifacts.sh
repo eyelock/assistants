@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck disable=SC2034  # the runner passes it to every test
 FIXTURES_DIR="${1:-tests/fixtures}"
 PROJECT_ROOT="${2:-.}"
 SCRIPT="$PROJECT_ROOT/skills/cleanup/scripts/find-release-artifacts.sh"
@@ -22,7 +23,7 @@ folder_count=$(echo "$output" | jq '.folders | length')
 [[ "$folder_count" -eq 2 ]] || { echo "FAIL: expected 2 folders, got $folder_count"; echo "$output"; exit 1; }
 
 rm -f "$TEST_TMPDIR/$RELEASE.zip" "$TEST_TMPDIR/$RELEASE-2.zip"
-rm -rf "$TEST_TMPDIR/$RELEASE" "$TEST_TMPDIR/$RELEASE-wav"
+rm -rf "${TEST_TMPDIR:?}/$RELEASE" "${TEST_TMPDIR:?}/$RELEASE-wav"
 
 # Test 2: Finds loose audio files for a single-track release (no ZIP)
 TRACK="Artist - Track"
@@ -50,5 +51,14 @@ folder_count=$(echo "$output" | jq '.folders | length')
   echo "FAIL: expected nothing found for unrelated release"
   exit 1
 }
+
+# Test 4: A different release whose name starts the same is not matched
+touch "$TEST_TMPDIR/$RELEASE.zip" "$TEST_TMPDIR/$RELEASE (1).zip" "$TEST_TMPDIR/$RELEASE (Remixes).zip"
+mkdir -p "$TEST_TMPDIR/$RELEASE" "$TEST_TMPDIR/$RELEASE-Live"
+output=$(bash "$SCRIPT" "$TEST_TMPDIR" "$RELEASE")
+zips=$(echo "$output" | jq -r '[.zips[].file] | join("|")')
+folders=$(echo "$output" | jq -r '[.folders[].name] | join("|")')
+[[ "$zips" == "$RELEASE (1).zip|$RELEASE.zip" ]] || { echo "FAIL: unexpected zips: $zips"; exit 1; }
+[[ "$folders" == "$RELEASE" ]] || { echo "FAIL: unexpected folders: $folders"; exit 1; }
 
 echo "All find-release-artifacts tests passed"

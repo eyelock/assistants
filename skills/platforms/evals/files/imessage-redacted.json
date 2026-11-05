@@ -1,0 +1,262 @@
+{
+  "snapshot": "Raw results of iMessage MCP tool calls made with --privacy redacted (message text and filenames are dropped, so text is null and group participants are not given), captured 2026-10-05T09:00:00Z (a Monday); treat this time as now. The user, Dave, lives in London: Europe/London (BST, UTC+1, until 25 October 2026). Every date is seconds since 2001-01-01 00:00:00 UTC (the Apple epoch); add 978307200 to get Unix time. Now is 812883600. Field names are illustrative.",
+  "me": {
+    "name": "Dave"
+  },
+  "resolve_contact": [
+    {
+      "query": "Jo",
+      "match": {
+        "name": "Jo Parker",
+        "handle": "+447700900101"
+      }
+    },
+    {
+      "query": "Tom",
+      "match": {
+        "name": "Tom Hale",
+        "handle": "+447700900102"
+      }
+    }
+  ],
+  "list_conversations": [
+    {
+      "chat_id": 100,
+      "name": "Jo Parker",
+      "kind": "direct",
+      "service": "iMessage",
+      "last_message_date": 812648400,
+      "last_message_from_me": false,
+      "last_message_kind": "message",
+      "unread": 1
+    },
+    {
+      "chat_id": 101,
+      "name": "Sam Okafor",
+      "kind": "direct",
+      "service": "iMessage",
+      "last_message_date": 812642700,
+      "last_message_from_me": false,
+      "last_message_kind": "reaction",
+      "unread": 1
+    },
+    {
+      "chat_id": 102,
+      "name": "Ana Ruiz",
+      "kind": "direct",
+      "service": "iMessage",
+      "last_message_date": 812721600,
+      "last_message_from_me": false,
+      "last_message_kind": "reaction",
+      "unread": 1
+    },
+    {
+      "chat_id": 103,
+      "name": "Priya Nair",
+      "kind": "direct",
+      "service": "iMessage",
+      "last_message_date": 812880000,
+      "last_message_from_me": false,
+      "last_message_kind": "message",
+      "unread": 1
+    },
+    {
+      "chat_id": 104,
+      "name": "Flat 4",
+      "kind": "group",
+      "service": "iMessage",
+      "last_message_date": 812849400,
+      "last_message_from_me": false,
+      "last_message_kind": "message",
+      "unread": 1
+    },
+    {
+      "chat_id": 105,
+      "name": "+447700900188",
+      "kind": "direct",
+      "service": "SMS",
+      "last_message_date": 812827200,
+      "last_message_from_me": false,
+      "last_message_kind": "message",
+      "unread": 1
+    },
+    {
+      "chat_id": 106,
+      "name": "Kim Doyle",
+      "kind": "direct",
+      "service": "iMessage",
+      "last_message_date": 812738700,
+      "last_message_from_me": false,
+      "last_message_kind": "unsent",
+      "unread": 1
+    }
+  ],
+  "get_conversation": [
+    {
+      "chat_id": 100,
+      "name": "Jo Parker",
+      "kind": "direct",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1001,
+          "date": 812572200,
+          "is_from_me": true,
+          "sender": "me",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1002,
+          "date": 812648400,
+          "is_from_me": false,
+          "sender": "Jo Parker",
+          "kind": "message",
+          "text": null
+        }
+      ]
+    },
+    {
+      "chat_id": 101,
+      "name": "Sam Okafor",
+      "kind": "direct",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1011,
+          "date": 812642400,
+          "is_from_me": true,
+          "sender": "me",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1012,
+          "date": 812642700,
+          "is_from_me": false,
+          "sender": "Sam Okafor",
+          "kind": "reaction",
+          "text": null,
+          "reaction": "liked",
+          "reaction_to": 1011
+        }
+      ]
+    },
+    {
+      "chat_id": 102,
+      "name": "Ana Ruiz",
+      "kind": "direct",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1021,
+          "date": 812715300,
+          "is_from_me": false,
+          "sender": "Ana Ruiz",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1022,
+          "date": 812718000,
+          "is_from_me": true,
+          "sender": "me",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1023,
+          "date": 812721600,
+          "is_from_me": false,
+          "sender": "Ana Ruiz",
+          "kind": "reaction",
+          "text": null,
+          "reaction": "loved",
+          "reaction_to": 1022
+        }
+      ]
+    },
+    {
+      "chat_id": 103,
+      "name": "Priya Nair",
+      "kind": "direct",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1031,
+          "date": 812836800,
+          "is_from_me": true,
+          "sender": "me",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1032,
+          "date": 812880000,
+          "is_from_me": false,
+          "sender": "Priya Nair",
+          "kind": "message",
+          "text": null
+        }
+      ]
+    },
+    {
+      "chat_id": 104,
+      "name": "Flat 4",
+      "kind": "group",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1041,
+          "date": 812794200,
+          "is_from_me": false,
+          "sender": "Mia Chen",
+          "kind": "message",
+          "text": null
+        },
+        {
+          "id": 1042,
+          "date": 812849400,
+          "is_from_me": false,
+          "sender": "Tom Hale",
+          "kind": "message",
+          "text": null
+        }
+      ]
+    },
+    {
+      "chat_id": 105,
+      "name": "+447700900188",
+      "kind": "direct",
+      "service": "SMS",
+      "messages": [
+        {
+          "id": 1051,
+          "date": 812827200,
+          "is_from_me": false,
+          "sender": "+447700900188",
+          "kind": "message",
+          "text": null
+        }
+      ]
+    },
+    {
+      "chat_id": 106,
+      "name": "Kim Doyle",
+      "kind": "direct",
+      "service": "iMessage",
+      "messages": [
+        {
+          "id": 1061,
+          "date": 812738700,
+          "is_from_me": false,
+          "sender": "Kim Doyle",
+          "kind": "unsent",
+          "text": null,
+          "is_unsent": true
+        }
+      ]
+    }
+  ],
+  "privacy": "redacted"
+}

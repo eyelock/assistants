@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set track X/total on all MP3s in a folder (sorted alphabetically).
+# Set track X/total on all MP3s in a folder, keeping the album's order.
 # Usage: update-track-count.sh <folder>
 # Output: JSON to stdout
 # Exit codes: 0=success, 1=bad args, 2=folder not found, 3=ffmpeg error
@@ -10,8 +10,12 @@ show_help() {
   cat <<'HELP'
 Usage: update-track-count.sh <folder>
 
-Renumber all MP3 files in a folder sequentially (sorted alphabetically).
-Sets track tag to "X/total" format.
+Renumber all MP3 files in a folder sequentially and set the track tag to
+"X/total". Order is the album's: by the existing track number, then by
+filename (so the parts of a split track, which share the original's number,
+stay in place, in part order). Files with no track number go last, by
+filename. Vendor filenames that do not start with a number therefore keep
+their tagged order instead of being renumbered alphabetically.
 
 Output: JSON to stdout
   {"updated": N, "total": N}
@@ -34,8 +38,15 @@ if [[ ! -d "$FOLDER" ]]; then
   exit 2
 fi
 
+# Sort key per file: existing track number (99999 when absent), then filename.
 files=()
-while IFS= read -r f; do files+=("$f"); done < <(find "$FOLDER" -maxdepth 1 -iname '*.mp3' -type f | sort)
+while IFS= read -r f; do files+=("$f"); done < <(
+  find "$FOLDER" -maxdepth 1 -iname '*.mp3' -type f | sort | while IFS= read -r f; do
+    num=$(ffprobe -v quiet -show_entries format_tags=track -of csv=p=0 "$f" 2>/dev/null |
+      grep -oE '^[0-9]+' | head -1 || true)
+    printf '%05d\t%s\t%s\n' "$((10#${num:-99999}))" "$(basename "$f")" "$f"
+  done | LC_ALL=C sort -t "$(printf '\t')" -k1,1n -k2,2 | cut -f3-
+)
 total=${#files[@]}
 
 if [[ $total -eq 0 ]]; then

@@ -1,0 +1,10 @@
+[
+  { "query": "draft a reply to this PR comment", "should_trigger": true },
+  { "query": "write a slack reply to Jo", "should_trigger": true },
+  { "query": "how should I format a code review comment", "should_trigger": true },
+  { "query": "decline this meeting and suggest Friday", "should_trigger": true },
+  { "query": "reply to this email from the customer", "should_trigger": true },
+  { "query": "fix the CSS styles on the reply button", "should_trigger": false },
+  { "query": "what's our code style guide for Go", "should_trigger": false },
+  { "query": "summarise this email thread", "should_trigger": false }
+]

@@ -1,25 +1,55 @@
 {
   "skill_name": "reclaim-space",
-  "fixtures": "No file fixtures apply — this skill drives the real Apple Music app via AppleScript. Running these evals for real requires either a disposable test Apple Music library or a stubbed osascript on PATH returning canned JSON matching audit-library.sh/build-offload-playlist.sh's expected shapes.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists. Apple Music is a stub osascript (evals/files/osascript-stub.sh) that answers the plugin's own AppleScripts from a library model and logs each call with a label; any other AppleScript fails as if automation were not allowed.",
   "evals": [
     {
       "id": 1,
-      "prompt": "my mac is almost out of disk space and I think it's all these apple music downloads, can you help",
-      "expected_output": "Audits iCloud status first, confirms Sync Library is on and cloud-safe tracks exist, then builds an offload playlist protecting DJ crates and lossless/local-only files, and tells the user to manually run Remove Download themselves rather than automating it.",
+      "name": "healthy-library",
+      "prompt": "My Mac is almost out of disk space and I think it's all the Apple Music downloads. Can you help me free some up? My DJ crates live in the Crates playlist folder, and anything I'm playing out has a Grouping starting with DJ — don't touch those.",
+      "setup": "../../evals/files/reclaim-healthy.sh",
+      "tools": ["Bash(bash:*)", "Bash(osascript:*)", "Bash(cat:*)", "Bash(jq:*)"],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Audits first (12,000 tracks, 11,550 cloud-backed, Sync Library on, Crates holds three playlists). Builds the offload playlist protecting the Crates folder, the DJ grouping and WAVs: 8,500 tracks in it, excluding 1,800 crate tracks, 900 DJ-grouped, 350 WAVs and 450 not cloud-backed. Tells the user to sanity-check the count, test Remove Download on a small batch, then select all and Remove Download themselves; never removes downloads by automation.",
       "assertions": [
-        "Runs the audit step before building any playlist",
-        "Stops and warns if Sync Library appears off or nothing is cloud-safe, rather than proceeding anyway",
-        "Excludes DJ-tagged tracks and local-only formats (e.g. WAV) from the offload playlist by default",
-        "Explicitly tells the user to run Remove Download themselves in Apple Music rather than automating that step"
-      ]
+        "The stub log shows the audit (audit-library) ran before the playlist was built",
+        "The stub log shows the playlist build with the Crates keep folder, the DJ grouping prefix and the WAV kind excluded",
+        "Reports the playlist's track count (8,500) and what was excluded",
+        "Tells the user to run Remove Download themselves in Apple Music (ideally testing a small batch first) instead of doing it for them",
+        "The stub log shows no AppleScript that removes downloads or deletes tracks (no DESTRUCTIVE call)"
+      ],
+      "stubs": []
     },
     {
       "id": 2,
-      "prompt": "I already built the offload playlist last month, can you refresh it since I've added new tracks",
-      "expected_output": "Re-runs the build-offload-playlist step with --replace to refresh the existing playlist rather than creating a duplicate, and reports the updated in_playlist/excluded counts.",
+      "name": "sync-library-off",
+      "prompt": "free up disk space by offloading my Apple Music downloads, go ahead and build whatever playlist you need",
+      "setup": "../../evals/files/reclaim-sync-off.sh",
+      "tools": ["Bash(bash:*)", "Bash(osascript:*)", "Bash(cat:*)", "Bash(jq:*)"],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "The audit shows no cloud-backed tracks (11,500 Ineligible, 500 unknown): Sync Library is off or nothing is in iCloud, so removing downloads would lose music for good. It stops: no playlist is built, and it tells the user to turn on Sync Library (or archive to the NAS) first.",
       "assertions": [
-        "Uses the replace/refresh behavior instead of creating a second, duplicate playlist"
-      ]
+        "The stub log shows the audit ran",
+        "The stub log shows no playlist build (build-offload-playlist was never called) and the stub holds no playlists",
+        "Warns that nothing is cloud-backed (Sync Library is off), so removing downloads would permanently lose the music",
+        "Does not tell the user to Remove Download now"
+      ],
+      "stubs": []
+    },
+    {
+      "id": 3,
+      "name": "refresh-existing",
+      "prompt": "I built the offload playlist last month — refresh it, I've added new tracks since. Same protections as before: the Crates folder and anything grouped DJ.",
+      "setup": "../../evals/files/reclaim-refresh.sh",
+      "tools": ["Bash(bash:*)", "Bash(osascript:*)", "Bash(cat:*)", "Bash(jq:*)"],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Rebuilds 'Offload — Cloud Safe' with --replace (rather than failing on, or duplicating, the existing playlist), protecting Crates, DJ grouping and WAVs, and reports the new count (8,500) and exclusions. There is still exactly one playlist of that name.",
+      "assertions": [
+        "The stub log shows a playlist build with replace on (the last argument 1)",
+        "The stub's playlists show exactly one 'Offload — Cloud Safe' playlist",
+        "The rebuild kept the Crates keep folder and the DJ grouping exclusion",
+        "Reports the refreshed playlist's track count (8,500)"
+      ],
+      "stubs": []
     }
   ]
 }

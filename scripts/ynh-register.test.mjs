@@ -70,7 +70,7 @@ function makeFixture(t, options = {}) {
   ]) {
     writeJson(join(root, dir, "package.json"), { name, version: "0.1.0", private: true });
   }
-  writeJson(join(root, harnessDir, ".ynh-plugin", "plugin.json"), manifest);
+  writeJson(join(root, harnessDir, ".agents", "harness", "plugin.json"), manifest);
   return root;
 }
 

@@ -1,0 +1,16 @@
+[
+  { "query": "write a commit message for what I've staged", "should_trigger": true },
+  { "query": "what should the PR title be for this change?", "should_trigger": true },
+  { "query": "fill in the PR description for my branch", "should_trigger": true },
+  { "query": "is 'fixed stuff' good enough as a commit message here?", "should_trigger": true },
+  {
+    "query": "which conventional commit type do I use for a change that only touches the GitHub workflow?",
+    "should_trigger": true
+  },
+  { "query": "how do I mark this commit as a breaking change?", "should_trigger": true },
+  { "query": "push this and open a PR against develop", "should_trigger": false },
+  { "query": "what should I call my branch for the login redirect fix", "should_trigger": false },
+  { "query": "squash my wip commits down before review", "should_trigger": false },
+  { "query": "cut the 1.4.0 release", "should_trigger": false },
+  { "query": "run make check before I commit", "should_trigger": false }
+]

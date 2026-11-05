@@ -18,7 +18,7 @@ allowed-tools: Bash Read Write   # space-delimited; tools that run without promp
 
 ## Vendor Extensions (Claude Code only, NOT in spec)
 
-disable-model-invocation: false  # hide from agent catalog; user /invoke only
+disable-model-invocation: false  # hide from agent catalog; user /invoke only (Cursor honors it too)
 user-invocable: true             # hide from / menu if false
 model: sonnet                    # override model for this skill
 context: fork                    # run in isolated subagent

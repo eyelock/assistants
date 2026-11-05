@@ -15,7 +15,7 @@ if [[ -z "$COMMAND" ]]; then
 fi
 
 # Skills whose scripts read the MEDIA_MGMT_* path config
-GATED_SKILLS='process-album|select-release|cleanup|manage-metadata|import-to-apple-music|archive-media'
+GATED_SKILLS='process-album|select-release|cleanup|manage-metadata|import-to-apple-music|archive-media|rip-cd|audit-release'
 
 if ! echo "$COMMAND" | grep -qE "skills/(${GATED_SKILLS})/scripts/"; then
   exit 0

@@ -1,0 +1,119 @@
+{
+  "snapshot": "Raw results of Google Drive MCP tool calls (workspace-mcp, read-only, extended tier) captured Monday 2026-10-19 09:00 UTC. Treat this as now. The user is dave@acme.example in UTC. search_drive_files was called for files modified in the last 14 days that the user owns or that were shared with them. Comments were then listed per file.",
+  "user_email": "dave@acme.example",
+  "search_drive_files": [
+    {
+      "id": "f1",
+      "name": "Q4 plan",
+      "mimeType": "application/vnd.google-apps.document",
+      "owners": [
+        {
+          "displayName": "Dave",
+          "emailAddress": "dave@acme.example"
+        }
+      ],
+      "modifiedTime": "2026-10-15T16:00:00Z",
+      "webViewLink": "https://docs.google.com/d/f1/edit"
+    },
+    {
+      "id": "f2",
+      "name": "Launch checklist",
+      "mimeType": "application/vnd.google-apps.spreadsheet",
+      "owners": [
+        {
+          "displayName": "Kim",
+          "emailAddress": "kim@acme.example"
+        }
+      ],
+      "modifiedTime": "2026-10-19T08:00:00Z",
+      "webViewLink": "https://docs.google.com/d/f2/edit",
+      "sharedWithMeTime": "2026-10-04T14:00:00Z"
+    },
+    {
+      "id": "f7",
+      "name": "Vendor contract 2026",
+      "mimeType": "application/vnd.google-apps.document",
+      "owners": [
+        {
+          "displayName": "Pia",
+          "emailAddress": "pia@acme.example"
+        }
+      ],
+      "modifiedTime": "2026-10-09T10:00:00Z",
+      "webViewLink": "https://docs.google.com/d/f7/edit",
+      "sharedWithMeTime": "2026-10-09T10:00:00Z"
+    }
+  ],
+  "list_document_comments": {
+    "f1": [
+      {
+        "id": "c1",
+        "author": {
+          "displayName": "Dave",
+          "emailAddress": "dave@acme.example"
+        },
+        "content": "I'll fix section 2 by Friday.",
+        "createdTime": "2026-10-14T09:00:00Z",
+        "resolved": false,
+        "replies": []
+      },
+      {
+        "id": "c2",
+        "author": {
+          "displayName": "Dave",
+          "emailAddress": "dave@acme.example"
+        },
+        "content": "I'll add the budget table.",
+        "createdTime": "2026-10-12T09:00:00Z",
+        "resolved": true,
+        "replies": [
+          {
+            "author": {
+              "displayName": "Dave",
+              "emailAddress": "dave@acme.example"
+            },
+            "content": "Added.",
+            "createdTime": "2026-10-13T09:00:00Z"
+          }
+        ]
+      },
+      {
+        "id": "c3",
+        "author": {
+          "displayName": "Dave",
+          "emailAddress": "dave@acme.example"
+        },
+        "content": "we should probably restructure this at some point",
+        "createdTime": "2026-10-13T11:00:00Z",
+        "resolved": false,
+        "replies": []
+      }
+    ],
+    "f7": []
+  },
+  "list_spreadsheet_comments": {
+    "f2": [
+      {
+        "id": "c5",
+        "author": {
+          "displayName": "Dave",
+          "emailAddress": "dave@acme.example"
+        },
+        "content": "I'll confirm the dates in column C on Monday.",
+        "createdTime": "2026-10-15T09:00:00Z",
+        "resolved": false,
+        "replies": [
+          {
+            "author": {
+              "displayName": "Dave",
+              "emailAddress": "dave@acme.example"
+            },
+            "content": "Confirmed, updated column C.",
+            "createdTime": "2026-10-19T08:00:00Z"
+          }
+        ]
+      }
+    ]
+  },
+  "list_presentation_comments": {}
+}

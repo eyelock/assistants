@@ -1,0 +1,95 @@
+{
+  "snapshot": "Results of GitHub MCP tool calls, captured 2026-10-05T09:00:00Z (a Monday). Treat this time as now.",
+  "get_me": { "login": "dave-c", "name": "Dave Cole" },
+  "search_pull_requests": {
+    "review-requested:@me is:open": [],
+    "author:@me is:open": [
+      {
+        "repo": "acme/api",
+        "number": 50,
+        "title": "Fix pagination",
+        "draft": false,
+        "created_at": "2026-10-02T14:00:00Z",
+        "requested_reviewers": [{ "login": "erin", "requested_at": "2026-10-02T14:00:00Z" }],
+        "reviews": [],
+        "comments": [
+          {
+            "author": "dave-c",
+            "at": "2026-10-04T10:00:00Z",
+            "body": "@erin gentle nudge on this one, it unblocks the export work."
+          }
+        ],
+        "checks": "success",
+        "url": "https://github.com/acme/api/pull/50"
+      },
+      {
+        "repo": "acme/api",
+        "number": 57,
+        "title": "Add audit log for admin actions",
+        "draft": false,
+        "created_at": "2026-10-01T09:30:00Z",
+        "requested_reviewers": [],
+        "requested_teams": [{ "slug": "acme/security", "requested_at": "2026-10-01T09:30:00Z" }],
+        "reviews": [],
+        "checks": "success",
+        "url": "https://github.com/acme/api/pull/57"
+      },
+      {
+        "repo": "acme/api",
+        "number": 58,
+        "title": "Rate limit headers",
+        "draft": false,
+        "created_at": "2026-09-30T16:00:00Z",
+        "requested_reviewers": [],
+        "reviews": [
+          {
+            "author": "gina",
+            "state": "CHANGES_REQUESTED",
+            "at": "2026-10-03T11:00:00Z",
+            "body": "Headers should follow the IETF draft names."
+          }
+        ],
+        "checks": "success",
+        "url": "https://github.com/acme/api/pull/58"
+      },
+      {
+        "repo": "acme/web",
+        "number": 59,
+        "title": "Update README badges",
+        "draft": false,
+        "created_at": "2026-10-03T08:00:00Z",
+        "requested_reviewers": [],
+        "reviews": [{ "author": "gina", "state": "APPROVED", "at": "2026-10-03T12:00:00Z" }],
+        "checks": "success",
+        "mergeable": true,
+        "url": "https://github.com/acme/web/pull/59"
+      },
+      {
+        "repo": "acme/web",
+        "number": 90,
+        "title": "Dark mode",
+        "draft": false,
+        "created_at": "2026-09-30T11:00:00Z",
+        "requested_reviewers": [{ "login": "frank", "requested_at": "2026-10-04T16:00:00Z" }],
+        "reviews": [],
+        "checks": "failure",
+        "checks_failed_at": "2026-10-04T16:20:00Z",
+        "failed_check": "e2e / chrome",
+        "url": "https://github.com/acme/web/pull/90"
+      },
+      {
+        "repo": "acme/api",
+        "number": 52,
+        "title": "WIP: metrics",
+        "draft": true,
+        "created_at": "2026-10-03T09:00:00Z",
+        "requested_reviewers": [],
+        "reviews": [],
+        "checks": "pending",
+        "url": "https://github.com/acme/api/pull/52"
+      }
+    ]
+  },
+  "search_issues": { "assignee:@me is:open": [] },
+  "list_notifications": []
+}

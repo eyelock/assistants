@@ -58,8 +58,9 @@ fi
 
 # AppleScript is fed via a temp file and reads its parameters from argv, so
 # playlist/folder names are never interpolated into the script text.
-tmp=$(mktemp -t reclaim-audit) || { echo "Error: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$tmp"' EXIT
+tmp=$(mktemp "${TMPDIR:-/tmp}/reclaim-audit.XXXXXX") || { echo "Error: mktemp failed" >&2; exit 2; }
+err=$(mktemp "${TMPDIR:-/tmp}/reclaim-audit-err.XXXXXX") || { echo "Error: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$tmp" "$err"' EXIT
 
 cat > "$tmp" <<'OSA'
 on run argv
@@ -89,29 +90,37 @@ on run argv
 end run
 OSA
 
-raw=$(osascript "$tmp" "$KEEP_FOLDER" 2>/tmp/reclaim-audit-err-$$) || {
+raw=$(osascript "$tmp" "$KEEP_FOLDER" 2>"$err") || {
   echo "Error: Music is not scriptable. Open Apple Music and grant Automation" >&2
   echo "permission to your terminal, then retry. Details:" >&2
-  sed 's/^/  /' "/tmp/reclaim-audit-err-$$" >&2 2>/dev/null || true
-  rm -f "/tmp/reclaim-audit-err-$$"
+  sed 's/^/  /' "$err" >&2 2>/dev/null || true
   exit 2
 }
-rm -f "/tmp/reclaim-audit-err-$$"
 
+# Plain variables, not an associative array: macOS ships bash 3.2.
 total=0
-declare -A status=([matched]=0 [uploaded]=0 [purchased]=0 [subscription]=0 [ineligible]=0 [unknown]=0)
+s_matched=0 s_uploaded=0 s_purchased=0 s_subscription=0 s_ineligible=0 s_unknown=0
 keep_json="[]"
 
 while IFS=$'\t' read -r tag a b; do
   case "$tag" in
     TOTAL) total="${a:-0}" ;;
-    STATUS) status["$a"]="${b:-0}" ;;
+    STATUS)
+      case "$a" in
+        matched) s_matched="${b:-0}" ;;
+        uploaded) s_uploaded="${b:-0}" ;;
+        purchased) s_purchased="${b:-0}" ;;
+        subscription) s_subscription="${b:-0}" ;;
+        ineligible) s_ineligible="${b:-0}" ;;
+        unknown) s_unknown="${b:-0}" ;;
+      esac
+      ;;
     KEEP) keep_json=$(jq --arg n "$a" --argjson c "${b:-0}" '. + [{name:$n, tracks:$c}]' <<<"$keep_json") ;;
   esac
 done <<<"$raw"
 
-safe=$(( status[matched] + status[uploaded] + status[purchased] + status[subscription] ))
-known=$(( safe + status[ineligible] + status[unknown] ))
+safe=$(( s_matched + s_uploaded + s_purchased + s_subscription ))
+known=$(( safe + s_ineligible + s_unknown ))
 other=$(( total - known ))
 [[ $other -lt 0 ]] && other=0
 synced=false
@@ -119,12 +128,12 @@ synced=false
 
 jq -n \
   --argjson total "$total" \
-  --argjson matched "${status[matched]}" \
-  --argjson uploaded "${status[uploaded]}" \
-  --argjson purchased "${status[purchased]}" \
-  --argjson subscription "${status[subscription]}" \
-  --argjson ineligible "${status[ineligible]}" \
-  --argjson unknown "${status[unknown]}" \
+  --argjson matched "$s_matched" \
+  --argjson uploaded "$s_uploaded" \
+  --argjson purchased "$s_purchased" \
+  --argjson subscription "$s_subscription" \
+  --argjson ineligible "$s_ineligible" \
+  --argjson unknown "$s_unknown" \
   --argjson other "$other" \
   --argjson safe "$safe" \
   --argjson synced "$synced" \

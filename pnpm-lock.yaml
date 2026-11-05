@@ -27,13 +27,30 @@ importers:
 
   plugins/vendor-harness: {}
 
+  plugins/wheelhouse: {}
+
   skills/dev: {}
 
   skills/infra: {}
 
   skills/pause: {}
 
+  skills/platforms: {}
+
   skills/tech: {}
+
+  skills/triage: {}
+
+  skills/voice: {}
+
+  ynh/apple-calendar:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
 
   ynh/david:
     dependencies:
@@ -50,6 +67,51 @@ importers:
         specifier: workspace:*
         version: link:../../skills/tech
 
+  ynh/github:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/gmail:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/google-calendar:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/google-drive:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
+  ynh/imessage:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
+
   ynh/planner:
     dependencies:
       '@eyelock-assistants/dev-skills':
@@ -64,6 +126,15 @@ importers:
       '@eyelock-assistants/dev-skills':
         specifier: workspace:*
         version: link:../../skills/dev
+
+  ynh/slack:
+    dependencies:
+      '@eyelock-assistants/platform-skills':
+        specifier: workspace:*
+        version: link:../../skills/platforms
+      '@eyelock-assistants/triage-skills':
+        specifier: workspace:*
+        version: link:../../skills/triage
 
   ynh/termq-dev:
     dependencies:

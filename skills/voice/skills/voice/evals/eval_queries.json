@@ -1,0 +1,38 @@
+[
+  {
+    "query": "Sam wrote 'Fixed the sync bug, can you review today?' - reply as warm + direct",
+    "should_trigger": true
+  },
+  {
+    "query": "draft a response, direct + formal",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new voice from some emails I liked",
+    "should_trigger": true
+  },
+  {
+    "query": "how do my voices combine if I use two at once",
+    "should_trigger": true
+  },
+  {
+    "query": "change the tone of voice-direct to be less blunt",
+    "should_trigger": true
+  },
+  {
+    "query": "transcribe this voice memo",
+    "should_trigger": false
+  },
+  {
+    "query": "set up voice dictation on my mac",
+    "should_trigger": false
+  },
+  {
+    "query": "what's waiting on me in slack",
+    "should_trigger": false
+  },
+  {
+    "query": "write release notes for v2.3",
+    "should_trigger": false
+  }
+]

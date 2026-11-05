@@ -1,0 +1,50 @@
+{
+  "skill_name": "action-now-or-soon",
+  "fixtures": "Each file is a snapshot of platform tool results, copied into the run's data/ folder. Its snapshot field gives the time to treat as now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "github-what-first",
+      "prompt": "Here's my GitHub from this morning in data/github.json. What do I need to deal with today, and what can wait?",
+      "files": ["../../evals/files/github.json"],
+      "expected_output": "action-now: grace's blocking question on acme/api#47, the failing e2e check on acme/web#90, acme/api#30 due before today's demo, and alice's review on acme/api#41 (waited more than 2 working days), each with a reason. action-soon: ivan's acme/web#89, requested this morning.",
+      "assertions": [
+        "acme/api#47 is in action-now",
+        "acme/web#90 (failing check) is in action-now",
+        "acme/api#30 is in action-now with a reason naming today's deadline or demo",
+        "acme/api#41 is in action-now with a reason naming how long it waited",
+        "acme/web#89 is in action-soon, not action-now",
+        "Every action-now row has a non-empty Why now",
+        "action-soon rows leave Why now empty"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "slack-no-key-people",
+      "prompt": "what do i need to answer right now in slack vs later? data/slack.json",
+      "files": ["../../evals/files/slack.json"],
+      "expected_output": "action-now: Jo's request for the Q3 numbers (needed before standup), and Quinn's request for the vendor contact (waited more than 2 working days, despite 'no rush'). action-soon: Omar's mockups request, posted Friday afternoon: under 2 working days, though 3 calendar days.",
+      "assertions": [
+        "Jo's Q3 numbers request is in action-now",
+        "Quinn's vendor contact request is in action-now, with a Why now naming how long it waited",
+        "Omar's mockups request is in action-soon, not action-now",
+        "Every action-now row has a non-empty Why now, and action-soon rows leave it empty",
+        "The answer is in tables with the columns Platform, What, Who, Since, Why now, Link"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "slack-key-person",
+      "prompt": "Omar and Kim are my key people. Going by data/slack.json, what should I do now?",
+      "files": ["../../evals/files/slack.json"],
+      "expected_output": "Only things waiting on dave count, key people or not. action-now: Jo's Q3 numbers request first (needed before standup today), then Omar's mockups request (key person), then Quinn's vendor contact (waited more than 2 working days). Kim's message is an FYI that v2.3 is deployed: it asks nothing, so it is not an item at all even though Kim is a key person. dave's own messages (to Lee and Nia), the answered offsite question and the @channel announcement are not items either. action-soon: Nothing.",
+      "assertions": [
+        "Omar's mockups request is in action-now, with a Why now naming him as a key person",
+        "Kim's v2.3 deploy FYI is not listed as an item to act on, in action-now or action-soon, despite Kim being a key person",
+        "Jo's Q3 numbers request is listed above Omar's",
+        "Quinn's vendor contact request is in action-now, with a Why now naming how long it waited",
+        "No row comes from dave's own messages (the runbook ask to Lee, the thanks to Nia) or from the @channel office announcement"
+      ]
+    }
+  ]
+}

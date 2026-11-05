@@ -1,0 +1,15 @@
+{
+  "snapshot": "Results of GitHub MCP tool calls, captured 2026-10-05T09:00:00Z (a Monday). Treat this time as now.",
+  "get_me": { "login": "dave-c", "name": "Dave Cole" },
+  "search_pull_requests": { "review-requested:@me is:open": [], "author:@me is:open": [] },
+  "search_issues": { "assignee:@me is:open": [] },
+  "list_notifications": [
+    {
+      "reason": "subscribed",
+      "repo": "acme/api",
+      "subject": "Release v2.3.0 published",
+      "updated_at": "2026-10-04T18:00:00Z",
+      "url": "https://github.com/acme/api/releases/tag/v2.3.0"
+    }
+  ]
+}

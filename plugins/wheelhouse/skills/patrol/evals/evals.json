@@ -1,0 +1,38 @@
+{
+  "skill_name": "patrol",
+  "evals": [
+    {
+      "id": 1,
+      "name": "patrol-reports-changes",
+      "prompt": "You are the CI watcher of this Wheelhouse. Patrol, and tell the desk what changed.",
+      "setup": "../../evals/files/patrol-news.sh",
+      "tools": ["Bash"],
+      "stubs": ["ynm", "ynh", "ynd"],
+      "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {title, labels}'",
+      "expected_output": "Runs scripts/patrol.sh, and reports each change it prints, one line each with a linked short id: [widget #12](https://github.com/example/widget/pull/12) merged by squash, [widget #13](https://github.com/example/widget/pull/13)'s CI turned red, and issue [widget #20](https://github.com/example/widget/issues/20) opened. Merges nothing, comments on nothing, and may file a bead for #13's red CI.",
+      "assertions": [
+        "The stub log shows the patrol's gh reads (gh pr list, gh issue list), as run by scripts/patrol.sh",
+        "The reply reports widget #12 as merged, and says it was a squash merge",
+        "The reply reports that widget #13's CI turned red (failed)",
+        "The reply reports issue #20 as new",
+        "The reply names each pull request or issue by its short form as a Markdown link, not a bare #12 or a bare URL",
+        "The stub log has no gh pr merge, gh pr comment or gh run rerun"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "patrol-nothing-changed",
+      "prompt": "You are the CI watcher of this Wheelhouse. Patrol.",
+      "setup": "../../evals/files/patrol-quiet.sh",
+      "tools": ["Bash"],
+      "stubs": ["ynm", "ynh", "ynd"],
+      "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {title, labels}'",
+      "expected_output": "Runs scripts/patrol.sh, which prints [], says nothing changed since the last patrol, files no bead and stops.",
+      "assertions": [
+        "The stub log shows the patrol's gh reads, as run by scripts/patrol.sh",
+        "The reply says nothing changed since the last patrol",
+        "The evidence shows no bead was filed"
+      ]
+    }
+  ]
+}

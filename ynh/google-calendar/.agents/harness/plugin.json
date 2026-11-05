@@ -1,0 +1,58 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "google-calendar",
+  "version": "0.1.0",
+  "description": "Reads Google Calendar for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read-only.",
+  "default_vendor": "claude",
+  "keywords": ["calendar", "meetings", "invites", "google", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/google-calendar"]
+    }
+  ],
+  "env_passthrough": ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "USER_GOOGLE_EMAIL"],
+  "mcp_servers": {
+    "google-calendar": {
+      "command": "uvx",
+      "args": ["workspace-mcp@2.1.0", "--single-user", "--read-only", "--tools", "calendar"],
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}",
+        "USER_GOOGLE_EMAIL": "${USER_GOOGLE_EMAIL}"
+      }
+    }
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me on Google Calendar."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for on Google Calendar."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today on Google Calendar."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon on Google Calendar."
+    },
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic on Google Calendar: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
+    },
+    "find": {
+      "prompt": "Use the find skill to find what the caller asks for on Google Calendar (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
+    },
+    "all": {
+      "prompt": "Answer all four triage questions on Google Calendar, following triage-report: action-now, action-soon, waiting-on-them, then the counts."
+    }
+  }
+}

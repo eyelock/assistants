@@ -16,7 +16,7 @@
     {
       "name": "media-management",
       "source": "./plugins/media-management",
-      "description": "Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS.",
+      "description": "Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports.",
       "version": "0.3.0"
     },
     {
@@ -57,6 +57,30 @@
       "source": "./plugins/vendor-harness",
       "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
       "version": "0.3.0"
+    },
+    {
+      "name": "triage-skills",
+      "source": "./skills/triage",
+      "description": "Triage skills: what is waiting on me, what am I waiting on, and what to act on now or soon, answered in one shape on any platform.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "platform-skills",
+      "source": "./skills/platforms",
+      "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar and Google Drive.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "voice-skills",
+      "source": "./skills/voice",
+      "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "wheelhouse",
+      "source": "./plugins/wheelhouse",
+      "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
+      "version": "0.1.0"
     }
   ]
 }

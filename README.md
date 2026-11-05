@@ -2,13 +2,15 @@
 
 **This repository is not production software.** It is a reference collection of sample plugins, skills, and personas for exploring how [Agent Skills](https://agentskills.io/specification), [Claude Code plugins](https://code.claude.com/docs/en/plugins), [Cursor plugins](https://cursor.com/docs/plugins/overview), and plugin marketplaces work together across multiple AI coding tools. Use it to learn, experiment, and as a starting point for your own configurations.
 
+**Docs:** https://eyelock.github.io/assistants/ — the library, the personas, how harnesses work, and two worked demos: Triage and the Wheelhouse.
+
 Nothing here is guaranteed to be complete, stable, or suitable for any particular use. Skills and plugins may contain placeholder logic, opinionated patterns, or personal workflow assumptions.
 
 ## What This Repository Demonstrates
 
-- **Cross-vendor plugins** — Each plugin carries `.ynh-plugin/plugin.json`, `.claude-plugin/plugin.json`, and `.cursor-plugin/plugin.json` manifests, making it usable from Claude Code, Cursor, and YNH
+- **Cross-vendor plugins** — Each plugin carries `.agents/harness/plugin.json`, `.claude-plugin/plugin.json`, and `.cursor-plugin/plugin.json` manifests, making it usable from Claude Code, Cursor, and YNH
 - **Portable skills** — Skills follow the [agentskills.io specification](https://agentskills.io/specification), the open standard adopted by Claude Code, Cursor, Codex, GitHub Copilot, and others
-- **Quad marketplace** — The repo serves as a Claude Code, Cursor, YNH, and GitHub Copilot CLI marketplace from the same GitHub repository
+- **Multi-vendor marketplace** — The repo serves as a Claude Code, Cursor, YNH, and GitHub Copilot CLI marketplace from the same GitHub repository
 - **Vendor-neutral instructions** — `AGENTS.md` files provide project context for Codex and Cursor alongside `CLAUDE.md` for Claude Code
 - **Persona composition** — How ynh personas reference and compose skills from shared libraries (`ynh/`)
 
@@ -22,46 +24,50 @@ assistants/
 │   └── marketplace.json          # Cursor marketplace index
 ├── .github/plugin/
 │   └── marketplace.json          # GitHub Copilot CLI marketplace index
-├── .ynh-plugin/
+├── .agents/harness/
 │   └── marketplace.json          # YNH marketplace index
 ├── AGENTS.md                     # Codex/Cursor project instructions
 ├── plugins/
 │   ├── gitflow/                  # Gitflow workflow plugin (6 skills, 1 agent)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
-│   ├── media-management/         # Music processing plugin (7 skills, 2 agents, hooks)
+│   │   └── .agents/harness/plugin.json
+│   ├── media-management/         # Music processing plugin (11 skills, 2 agents, hooks)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
-│   └── vendor-harness/           # Vendor harness lifecycle plugin (11 skills, 4 agents)
+│   │   └── .agents/harness/plugin.json
+│   ├── vendor-harness/           # Vendor harness lifecycle plugin (11 skills, 4 agents)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
+│   └── wheelhouse/               # A team of named agent seats, with Beads and ynm (8 skills)
 │       ├── .claude-plugin/plugin.json
 │       ├── .cursor-plugin/plugin.json
-│       └── .ynh-plugin/plugin.json
+│       └── .agents/harness/plugin.json
 ├── skills/
 │   ├── dev/                      # Development workflow plugin (9 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   ├── tech/                     # Language-specific plugin (4 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
 │   ├── infra/                    # Infrastructure plugin (2 skills)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── .cursor-plugin/plugin.json
-│   │   └── .ynh-plugin/plugin.json
-│   └── pause/                    # Conversational alignment plugin (2 skills)
-│       ├── .claude-plugin/plugin.json
-│       ├── .cursor-plugin/plugin.json
-│       └── .ynh-plugin/plugin.json
-└── ynh/                          # Personas (compose skills via includes)
-    ├── david/
-    ├── planner/
-    ├── tester/
-    ├── researcher/
-    ├── ynh-dev/
-    └── termq-dev/
+│   │   └── .agents/harness/plugin.json
+│   ├── pause/                    # Conversational alignment plugin (2 skills)
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── .cursor-plugin/plugin.json
+│   │   └── .agents/harness/plugin.json
+│   ├── triage/                   # Generic triage questions (waiting-on-me, find, ...)
+│   ├── platforms/                # One skill per tool: GitHub, Slack, Gmail, Calendar, Drive, iMessage
+│   └── voice/                    # Writing-voice skills
+├── ynh/                          # ynh harnesses
+│   ├── david/ planner/ tester/ researcher/ ynh-dev/ termq-dev/   # Personas
+│   └── github/ gmail/ google-calendar/ google-drive/ imessage/ slack/ apple-calendar/   # Read-only platform harnesses
+└── docs/                         # The docs, by area: library, personas, harnesses, testing, triage, wheelhouse
 ```
 
 ## Using the Marketplace
@@ -118,7 +124,7 @@ copilot plugin marketplace add eyelock/assistants
 ```
 
 This resolves `.github/plugin/marketplace.json`, a Copilot-safe mirror of the Claude index.
-It exists because Copilot rejects the `git-subdir`, `archive`, and `command` source types
+It exists because Copilot rejects the `git-subdir`, `npm`, `archive`, and `command` source types
 Claude allows — and rejects the *whole* index over one unsupported entry, not just that row.
 See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 
@@ -127,21 +133,24 @@ See `plugins/vendor-harness/skills/vendor-adapters/references/copilot.md`.
 | Plugin | Skills | Description |
 |--------|--------|-------------|
 | `gitflow` | 6 | Gitflow branching, conventional commits, quality gate, tag-driven release, push/PR workflow |
-| `media-management` | 7 | Process downloaded music purchases: extract, tag, import to Apple Music, stage to NAS |
-| `vendor-harness` | 11 | Lifecycle management for LLM vendor harness artifacts across Claude Code, Cursor, Codex, and GitHub Copilot CLI |
-| `dev-skills` | 9 | Project setup, code quality, review, debugging, backend, UI, security, and skill authoring |
+| `media-management` | 11 | Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports |
+| `vendor-harness` | 12 | Lifecycle management for LLM vendor harness artifacts across Claude Code, Cursor, Codex, and GitHub Copilot CLI |
+| `dev-skills` | 10 | Project setup, code quality, review, docs sync, debugging, backend, UI, security, and skill authoring |
 | `tech-skills` | 4 | Go, Java, Swift, and SwiftUI development workflows |
 | `infra-skills` | 2 | GitHub repository setup, Terraform backend provisioning |
 | `pause-skills` | 2 | Guided elicitation and context checkpoints for alignment |
+| `triage-skills` | 8 | Generic triage questions: what is waiting on me, what am I waiting on, what needs action, what I promised, catch-up, find |
+| `platform-skills` | 6 | How to read GitHub, Slack, Gmail, Google Calendar, Google Drive and iMessage well |
+| `voice-skills` | 5 | Writing voices and reply styles |
 
 ## Cross-Vendor Compatibility
 
 | Layer | Claude Code | Cursor | Codex | GitHub Copilot CLI |
 |-------|-------------|--------|-------|--------------------|
 | **Skills (SKILL.md)** | Native | Native | Native | Native |
-| **Plugin manifest** | `.claude-plugin/plugin.json` | `.cursor-plugin/plugin.json` | `.codex-plugin/plugin.json` | `plugin.json` (falls back to `.claude-plugin/plugin.json`) |
-| **YNH manifest** | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` | `.ynh-plugin/plugin.json` | not generated |
-| **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | `.agents/plugins/marketplace.json` | `.github/plugin/marketplace.json` |
+| **Plugin manifest** | `.claude-plugin/plugin.json` | `.cursor-plugin/plugin.json` | `.codex-plugin/plugin.json` (only `plugins/vendor-harness` has one) | `plugin.json` (falls back to `.claude-plugin/plugin.json`) |
+| **YNH manifest** | `.agents/harness/plugin.json` | `.agents/harness/plugin.json` | `.agents/harness/plugin.json` | not generated |
+| **Marketplace** | `.claude-plugin/marketplace.json` | `.cursor-plugin/marketplace.json` | none yet (the file `.agents/plugins/marketplace.json` does not exist here) | `.github/plugin/marketplace.json` |
 | **Instructions** | `CLAUDE.md` (via `@AGENTS.md`) | `AGENTS.md`, `.cursor/rules/*.mdc` | `AGENTS.md` | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
 | **MCP servers** | `.mcp.json` | `mcp.json` (no dot) | `.mcp.json` | `.mcp.json` or `.github/mcp.json` |
 | **Custom repos** | Any user | Teams/Enterprise | Manual install | Any user |

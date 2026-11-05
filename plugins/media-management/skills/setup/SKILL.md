@@ -6,10 +6,8 @@ description: >-
   fix any that are missing. Use when paths seem not configured, when a skill
   fails to resolve a path, when explicitly asked to set up/configure the
   plugin, or when asked where its config lives or how path resolution works.
+  Not for checking whether a drive, NAS or folder is online or reachable.
 allowed-tools: Bash Read Write
-metadata:
-  author: eyelock
-  version: "0.1.0"
 ---
 
 ## Setup
@@ -41,9 +39,15 @@ must say exactly where the value came from, not just `env` or `config`:
 | downloads | ~/Downloads | env: MEDIA_MGMT_DOWNLOADS |
 | library_import | ... | config: ~/.config/media-management/config.json |
 
-Mention that `rekordbox_mcp_path` is optional — it's only needed for the
-`rekordbox-database` MCP tools — and if it's missing, note that in passing
-without treating it as a problem.
+Mention the optional keys in passing, without treating a missing one as a
+problem:
+
+- `rekordbox_mcp_path`: only needed for the `rekordbox-database` MCP tools.
+- `cd_read_offset`: the optical drive's read offset in samples, for `rip-cd`'s
+  AccurateRip check (e.g. `6` for a TSSTcorp SE-506). Without it a rip is
+  still secure but will not match AccurateRip. `rip-cd` says when to set it.
+- `work_dir`: where temporary work (rips, encodes, plans) goes. Unset means
+  `$TMPDIR/media-management`; never suggest Downloads or the home folder.
 
 ## Step 3: If required keys are missing
 
@@ -76,7 +80,9 @@ directory if needed) using the Write tool. Use this shape:
   "library_storage": "...",
   "archive_workdir": "...",
   "processed": "...",
-  "rekordbox_mcp_path": "..."
+  "rekordbox_mcp_path": "...",
+  "cd_read_offset": 6,
+  "work_dir": "..."
 }
 ```
 

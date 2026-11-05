@@ -1,0 +1,11 @@
+[
+  { "query": "start a new Go CLI project", "should_trigger": true },
+  { "query": "scaffold a TypeScript library with lint and tests set up", "should_trigger": true },
+  { "query": "set up a fresh python service repo with uv", "should_trigger": true },
+  { "query": "create the folder layout and Makefile for a new project", "should_trigger": true },
+  { "query": "add eslint to my existing project and fix the errors", "should_trigger": false },
+  { "query": "design the API for the new service", "should_trigger": false },
+  { "query": "write a new agent skill", "should_trigger": false },
+  { "query": "create a GitHub repo for this with gh", "should_trigger": false },
+  { "query": "run the build and tests on this repo", "should_trigger": false }
+]

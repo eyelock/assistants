@@ -1,0 +1,52 @@
+{
+  "skill_name": "swiftui-lang",
+  "fixtures": "SwiftUI sources and a coverage report copied into data/. Runs are read-only, so changes are shown in the answer rather than written.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "blank-pill-on-launch",
+      "prompt": "On cold launch the app sometimes shows a tiny blank white rounded rectangle over a dimmed window instead of the project details; quitting and reopening usually fixes it. The code is in data/swiftui-projects/. Fix it, and tell me what else in these files will bite us.",
+      "files": ["../../evals/files/swiftui-projects"],
+      "expected_output": "Diagnosis: .sheet(isPresented:) presents while repo.project(for:) is still nil because refresh() has not loaded (or failed silently), so SwiftUI shows an empty view as a blank pill. Fix: .sheet(item:) with an Identifiable Project, set only once the store is ready, and give the repository an explicit LoadState (idle/loading/loaded/failed) with isReady instead of projects = [] plus isLoading. Also: try? in refresh() and in the Archive button swallow errors, which belong in view-model state the view shows; archivingIDs and the selection are business state that belongs in a @MainActor @Observable view model, not @State; project(for:) matching id || name is an identity seam: pick the canonical id (team/name) everywhere, including what is persisted in @AppStorage (it stores project.name today); ProjectRepository.shared and ProjectAPI.shared should be injected through a protocol with a default init argument so the view model is testable.",
+      "assertions": [
+        "Explains the blank pill as .sheet(isPresented:) presenting an empty view while the project lookup is nil before the data has loaded",
+        "Replaces .sheet(isPresented:) with .sheet(item:) bound to an optional Identifiable project",
+        "Models the repository's loading lifecycle explicitly (an idle/loading/loaded/failed state with an isReady check) instead of projects = [] plus isLoading, and only presents the sheet once ready",
+        "Flags the try? in the Archive button action (and in refresh) and says the error must land in state the view displays, not be swallowed",
+        "Says archivingIDs (and the selection) are business state that belongs in a @MainActor @Observable view model, not @State",
+        "Flags the id || name lookup as an identity problem and makes the canonical id the only key, including the value stored in @AppStorage",
+        "Says the direct ProjectRepository.shared / ProjectAPI.shared use should become protocol-based injection with the singleton as an init default"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "open-in-terminal-closure",
+      "prompt": "Implement the Open in Terminal TODO in data/WorkspaceViewModel.swift.",
+      "files": ["../../evals/files/WorkspaceViewModel.swift"],
+      "expected_output": "Calls NSWorkspace.shared.open([folder], withApplicationAt: Terminal's URL, configuration:, completionHandler:) with a completion closure explicitly marked @Sendable (capturing what it needs, e.g. [weak self]), because this API calls back on a background queue (com.apple.launchservices.open-queue) and a closure written inside a @MainActor type would otherwise inherit main-actor isolation and crash on entry. Inside, it hops back with Task { @MainActor in ... } to set errorMessage. It explains why the @Sendable is required and that the inner Task hop alone does not prevent the crash.",
+      "assertions": [
+        "The completionHandler closure is explicitly annotated @Sendable",
+        "Hops back to the main actor (Task { @MainActor in ... }) before setting errorMessage",
+        "Explains that the closure would otherwise inherit @MainActor isolation and crash when NSWorkspace calls it on a background queue",
+        "Says the inner Task { @MainActor in } hop alone does not protect against the crash, because the isolation check fires when the closure is entered"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "coverage-plan",
+      "prompt": "Our SwiftUI app's coverage is terrible; data/coverage-report.txt has the numbers. Give me the plan to fix it: what to target and in what order.",
+      "files": ["../../evals/files/coverage-report.txt"],
+      "expected_output": "Targets by layer: services and view models 80-95%, pure utilities 95-100%, views 10-20%, overall 60-75%; the low number is uncovered services and view models, not the views. Order: audit, test services and utilities first; pure extractions out of the views (escapeForShell, score/filter, LogLineParser) committed as test:; then protocol + DI one service at a time, persistence first (BoardPersistence, which is writing test cards into the real board.json), via a protocol and an init default argument, committed as refactor:; then view model extraction (CardEditorView's @State form state); ViewInspector for the thin view residue; snapshot tests last. Refactor work and coverage work go in separate plans and separate PRs, never mixed. BoardViewTests redefining Card and Column locally is a coupling red flag.",
+      "assertions": [
+        "Gives coverage targets by layer, with views around 10-20% and overall around 60-75%",
+        "Says the problem is uncovered services and view models, not the SwiftUI views",
+        "Puts BoardPersistence first among the DI work, because tests are writing into the real board.json",
+        "Plans pure extractions of escapeForShell, the card scoring and LogLineParser into standalone types, each tested on its own",
+        "Commits pure extractions as test: and protocol/DI introductions as refactor:",
+        "Keeps refactor work and coverage (test-adding) work in separate plans or PRs, never mixed",
+        "Introduces DI through a protocol and an init default argument such as init(persistence: any BoardPersistenceProtocol = BoardPersistence.shared)",
+        "Puts ViewInspector tests for the remaining views near the end and snapshot tests last"
+      ]
+    }
+  ]
+}

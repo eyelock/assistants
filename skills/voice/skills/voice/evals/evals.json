@@ -1,0 +1,64 @@
+{
+  "skill_name": "voice",
+  "fixtures": "Files are copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "compose-direct-warm",
+      "prompt": "Sam has been waiting since Thursday on data/slack-thread-late.md. I've reviewed it now and approved it. Draft my reply, warm + direct. Don't send anything.",
+      "files": ["../../evals/files/slack-thread-late.md"],
+      "expected_output": "A short Slack thread reply: approved, in those words (not merged or shipped), thanking Sam for something specific (finding the retry cause, or the reproducing test). The voices' Don't lists add up, so it has no apology for the slow reply and no thanks for his patience (direct avoids both), no exclamation marks (direct), and no gushing (warm). At most three sentences, no sign-off.",
+      "assertions": [
+        "Says the change is approved, without claiming it is merged, released or deployed",
+        "Names something specific Sam did (the retry cause, the fix or the reproducing test)",
+        "Neither apologizes for the slow reply nor thanks Sam for his patience or for waiting",
+        "Contains no exclamation marks",
+        "The draft itself, not counting any To/On header or Check: note, is at most three sentences, with no sign-off"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "facts-placeholder",
+      "prompt": "Reply to Priya's email in data/customer-email.md. What I actually know is in data/facts.md.",
+      "files": ["../../evals/files/customer-email.md", "../../evals/files/facts.md"],
+      "expected_output": "No voice is named, so the default direct voice in the email style: greeting by first name, then the answer in the first sentence (not fixed for her yet: the fix is merged but not released), then the cause, then the next step and who owns it. No apology for replying and no thanks for her patience. No release date: either it says the date is not set, or it leaves a [placeholder] named in a Check: line. The fix is described as merged, never as approved, tested or deployed.",
+      "assertions": [
+        "The first sentence after the greeting answers her question: the fix is merged (or done) but not yet released",
+        "States the cause: the retry stopped after the first timeout",
+        "Does not state a specific release date; either says it is not yet set, or leaves a [placeholder] that a Check: line asks Dave to fill",
+        "Does not describe the fix as anything Dave did not confirm, such as approved, tested or deployed",
+        "Names the next step and who takes it",
+        "Does not thank her for her patience or apologize for the time taken to reply"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "create-voice",
+      "prompt": "Make me a new voice called 'mine' from the replies in data/my-replies.md. Show it to me, don't save it.",
+      "files": ["../../evals/files/my-replies.md"],
+      "expected_output": "A draft voice-mine skill with frontmatter and the sections Tone, Length, Do, Don't, Words and Example, drawn from the three sample replies (short, informal British phrasing such as 'Ta', commits to a time).",
+      "assertions": [
+        "Has frontmatter with name: voice-mine and a description",
+        "Has the sections Tone, Length, Do, Don't, Words and Example",
+        "Its Words or Do section draws on phrasing from the sample replies (for example 'Ta' or naming a time like 'tomorrow')",
+        "Its Length targets short replies, consistent with the samples",
+        "Is shown as a draft for review, not reported as saved"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "style-beats-voice",
+      "prompt": "Reply to Sam's Slack message in data/slack-thread.md in formal + warm. I'll review it this afternoon.",
+      "files": ["../../evals/files/slack-thread.md"],
+      "expected_output": "A Slack thread reply: formal wording and warm acknowledgement of Sam's work, but in Slack's shape: no 'Dear' salutation, no sign-off, at most three short lines, and no emoji or abbreviations (formal's Don't list carries over).",
+      "assertions": [
+        "Does not open with a letter salutation such as 'Dear Sam' or 'Hi Sam,' on its own line",
+        "Has no sign-off such as 'Kind regards' or 'Best'",
+        "The draft itself, not counting any To/On header or Check: note, is at most three sentences",
+        "Contains no emoji and no abbreviations such as FYI or ASAP",
+        "Acknowledges something specific Sam did",
+        "Says the review will happen this afternoon"
+      ]
+    }
+  ]
+}

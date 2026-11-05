@@ -18,7 +18,7 @@ Ask the user:
 
 Create the standard layout for the chosen language:
 
-- **Go**: `cmd/`, `internal/`, `pkg/`, `go.mod`, `Makefile`
+- **Go**: `cmd/<name>/`, `internal/`, `go.mod`, `Makefile`; add `pkg/` only for packages other modules are meant to import
 - **TypeScript**: `src/`, `tests/`, `package.json`, `tsconfig.json`
 - **Python**: `src/<pkg>/`, `tests/`, `pyproject.toml`
 
@@ -37,6 +37,8 @@ Set up the standard development tools:
 Create config files with sensible defaults. Prefer zero-config or minimal-config setups.
 
 ## Step 4: Initialize version control
+
+If the directory is not a git repository yet:
 
 ```bash
 git init

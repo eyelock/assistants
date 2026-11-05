@@ -1,0 +1,48 @@
+{
+  "skill_name": "comms",
+  "evals": [
+    {
+      "id": 1,
+      "name": "desk-asks-three-decisions",
+      "prompt": "You are hq, the desk of this Wheelhouse. data/comms-pending.md has what's waiting on me. Sort it out with me.",
+      "files": ["../../evals/files/comms-pending.md"],
+      "tools": ["AskUserQuestion"],
+      "tool_calls": ["AskUserQuestion"],
+      "expected_output": "Asks one decision first through AskUserQuestion, in a single call holding a single question: the 1.4 release (wait for widget #12, recommended, or tag now), the most urgent. Its context line names hq-14 with a synopsis and [widget #12](https://github.com/example/widget/pull/12) as a link, and says two more decisions wait after this one. 2 to 4 options, the recommended one first and labelled (Recommended). It does not ask the --dry-run rename or the programme manager yet, does not list them as prose questions, addresses the human as you, and never names Pat.",
+      "assertions": [
+        "The evidence shows an AskUserQuestion call holding exactly one question, not all three decisions batched into one call",
+        "That question is the 1.4 release (hq-14), the most urgent, and the --dry-run rename and the programme manager are not asked in the same call",
+        "The question has between 2 and 4 options, and the first option's label ends with (Recommended), waiting for #12",
+        "The question carries a line of context saying what it is about, with its bead id (hq-14) and [widget #12](https://github.com/example/widget/pull/12) as a link",
+        "The context or reply says how many decisions are still waiting after this one, such as two more",
+        "Neither the question nor the reply name Pat; the reply addresses the human as you",
+        "The reply does not list the other two decisions as prose questions"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pr-description-never-names-the-human",
+      "prompt": "You are gore, the reviewer seat of this Wheelhouse. Pat reviewed widget #12 (https://github.com/example/widget/pull/12), the retry backoff cap, and it's ready, but Pat still has to merge it and decide whether the cap is 30s or 60s. Write the comment you'd post on the pull request.",
+      "expected_output": "A short pull request comment, outcome first (ready to merge), that never names Pat. The next action is impersonal, such as 'Decision needed before merge: cap at 30s or 60s' and 'Next action: a maintainer merges it'. If it names the pull request, it does so as [widget #12](https://github.com/example/widget/pull/12).",
+      "assertions": [
+        "The comment never names Pat",
+        "The comment states the decision impersonally, such as 'Decision needed before merge: 30s or 60s', with both options",
+        "The next action (the merge) is written impersonally, not as something a named person must do",
+        "The comment opens with the outcome: the change is ready, or ready once the decision is made",
+        "Any reference to the pull request is its short form as a Markdown link, not a bare #12 or a bare URL"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "posts-the-body-from-a-file",
+      "prompt": "You are gore, the reviewer seat of this Wheelhouse. Review of widget #12 is done. Give me the exact shell commands to post this review body, which contains the spans `make check` and `widget run` and ends with the commit SHA of HEAD, on the pull request.",
+      "expected_output": "Commands that write the body to a temporary file with a quoted heredoc (<<'EOF') or a file-writing tool, put the SHA in afterwards with sed or jq, and post with gh pr review --body-file (or gh api --input). No unquoted heredoc, and no body pasted into an inline --body string.",
+      "assertions": [
+        "The body is written to a file, using a quoted heredoc (<<'EOF') or a file-writing tool, not an unquoted heredoc",
+        "The commit SHA is filled in afterwards with sed or jq, not inside an unquoted heredoc",
+        "The body is posted with --body-file (or gh api --input), not as an inline --body string holding the backtick spans",
+        "The file is a temporary one (mktemp or a scratchpad), not left in the repository checkout"
+      ]
+    }
+  ]
+}

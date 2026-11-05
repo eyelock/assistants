@@ -18,6 +18,13 @@ These rules are non-negotiable. Never bypass them.
 - **Step 4 (metadata):** MANDATORY stop. Present all metadata fields and get explicit user confirmation before proceeding
 - **Step 8 (Apple Music):** MANDATORY stop. User must check Apple Music and confirm the import is correct
 - **Genre selection:** NEVER auto-select a genre. Always present options and let the user choose
+- **Batch exception:** when the user explicitly asks to process multiple releases with a single
+  check at the end (see process-album's "Batch Processing Multiple Releases" section), Steps 4
+  and 8 collapse into one consolidated confirmation covering every release, and genre may be your
+  best inference rather than a per-release numbered choice — but it must still be presented and
+  clearly flagged as inferred, and the user must still get one explicit checkpoint before you
+  consider the batch done. This exception only applies when the user asked for it; the default is
+  still per-release confirmation.
 
 ## Processing Order
 
@@ -32,5 +39,6 @@ These rules are non-negotiable. Never bypass them.
 ## File Splitting
 
 - Split parts replace the original file
-- Name splits sequentially (01, 02, ...) — no "Part X" in filenames or titles
-- After splitting, re-run update-track-count.sh to renumber the entire folder
+- No "Part X" in filenames or titles: a lone track becomes a mini-album (01, 02, ...); a track
+  inside an album keeps its place ("03 Title 1", "03 Title 2")
+- After splitting, re-run update-track-count.sh to renumber the entire folder in album order

@@ -1,0 +1,42 @@
+[
+  {
+    "query": "what did I promise people this week?",
+    "should_trigger": true
+  },
+  {
+    "query": "what did I say I would send and haven't yet",
+    "should_trigger": true
+  },
+  {
+    "query": "what do I still owe from things I told people I'd do",
+    "should_trigger": true
+  },
+  {
+    "query": "list my open commitments in Slack and mail",
+    "should_trigger": true
+  },
+  {
+    "query": "did I ever follow up on what I told Priya I'd do",
+    "should_trigger": true
+  },
+  {
+    "query": "what's waiting on me?",
+    "should_trigger": false
+  },
+  {
+    "query": "who am I waiting on",
+    "should_trigger": false
+  },
+  {
+    "query": "write a promise to send the report on Friday",
+    "should_trigger": false
+  },
+  {
+    "query": "summarise my conversation with Jo",
+    "should_trigger": false
+  },
+  {
+    "query": "set a reminder to send the quote",
+    "should_trigger": false
+  }
+]

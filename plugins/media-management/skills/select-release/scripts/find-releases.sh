@@ -38,9 +38,19 @@ Output: JSON to stdout
       }
     ],
     "unmatched": [
-      {"file": "...", "path": "...", "type": "mp3", "tracks": 5, "source_type": "zip", ...}
+      {"file": "...", "path": "...", "type": "mixed", "tracks": 5, "source_type": "zip", ...}
+    ],
+    "duplicates": [
+      {"release": "Artist - Album", "file": "Artist - Album (1).zip", "type": "mp3", ...}
     ],
     "total_sources": 5
+  }
+
+  A release with only one side has the other set to null (an MP3-only or
+  WAV-only purchase). "unmatched" holds sources that cannot be classified as
+  one format (a ZIP mixing MP3 and WAV). "duplicates" holds a second source of
+  the same format for a release, such as a ZIP downloaded twice: the first is
+  used in the release, the rest are listed here.
   }
 
 Exit codes:
@@ -85,7 +95,7 @@ done < <(find "$DOWNLOADS" -maxdepth 1 -type f \( -iname '*.mp3' -o -iname '*.wa
 total_sources=$((${#zip_files[@]} + ${#audio_files[@]}))
 
 if [[ $total_sources -eq 0 ]]; then
-  echo '{"releases": [], "unmatched": [], "total_sources": 0}'
+  echo '{"releases": [], "unmatched": [], "duplicates": [], "total_sources": 0}'
   exit 0
 fi
 
@@ -110,7 +120,7 @@ for f in "${audio_files[@]}"; do
 done
 
 if [[ ${#inspected_json[@]} -eq 0 ]]; then
-  echo "{\"releases\": [], \"unmatched\": [], \"total_sources\": ${total_sources}}"
+  echo "{\"releases\": [], \"unmatched\": [], \"duplicates\": [], \"total_sources\": ${total_sources}}"
   exit 0
 fi
 
@@ -135,7 +145,9 @@ normalize_name() {
 
 # Build a map of normalized names to their inspected results
 # We'll use temporary files since bash associative arrays can be fragile
-pair_dir=$(mktemp -d)
+# An explicit template: BSD mktemp ignores $TMPDIR without one, and /tmp may
+# not be writable (Claude Code's sandbox).
+pair_dir=$(mktemp -d "${TMPDIR:-/tmp}/find-releases.XXXXXX")
 trap 'rm -rf "$pair_dir"' EXIT
 
 for i in "${!inspected_json[@]}"; do
@@ -147,8 +159,21 @@ for i in "${!inspected_json[@]}"; do
   # Create directory for this base name
   mkdir -p "$pair_dir/$base"
 
-  # Store the JSON keyed by type
-  echo "$json" > "$pair_dir/$base/$type.json"
+  # Store the JSON keyed by type. A second source of the same type for the
+  # same release (a re-download such as "X (1).zip" beside "X.zip") must not
+  # silently replace the first: the release uses the one with the shorter
+  # name (the original, not the browser's copy), the other is reported.
+  if [[ -f "$pair_dir/$base/$type.json" ]]; then
+    kept=$(cat "$pair_dir/$base/$type.json")
+    kept_file=$(echo "$kept" | jq -r '.file')
+    if [[ ${#file} -lt ${#kept_file} ]]; then
+      echo "$json" > "$pair_dir/$base/$type.json"
+      json="$kept"
+    fi
+    echo "$json" | jq -c --arg release "$base" '. + {release: $release}' >> "$pair_dir/duplicates.jsonl"
+  else
+    echo "$json" > "$pair_dir/$base/$type.json"
+  fi
 done
 
 # Build output: iterate unique base names
@@ -212,8 +237,14 @@ for base_dir in "$pair_dir"/*/; do
   fi
 done
 
+duplicates="[]"
+if [[ -f "$pair_dir/duplicates.jsonl" ]]; then
+  duplicates=$(jq -s '.' "$pair_dir/duplicates.jsonl")
+fi
+
 jq -n \
   --argjson releases "$releases" \
   --argjson unmatched "$unmatched" \
+  --argjson duplicates "$duplicates" \
   --argjson total_sources "$total_sources" \
-  '{releases: $releases, unmatched: $unmatched, total_sources: $total_sources}'
+  '{releases: $releases, unmatched: $unmatched, duplicates: $duplicates, total_sources: $total_sources}'

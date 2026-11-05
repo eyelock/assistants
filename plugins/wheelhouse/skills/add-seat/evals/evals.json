@@ -1,0 +1,215 @@
+{
+  "skill_name": "add-seat",
+  "evals": [
+    {
+      "id": 1,
+      "name": "release-manager",
+      "prompt": "Add a standing seat to this Wheelhouse that cuts releases of the YN tools (ynh, ynm, ynf, ynr, eyelock/assistants and the homebrew-tap formulas). It works through release branches and tags, and never publishes or merges without my say-so. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Names the seat Dredd, the first unused name in the standing pool, with command dredd. Writes harnesses/dredd/.agents/harness/plugin.json (name dredd, the wheelhouse plugin and the roster skill from ../.. included, a session-start hook that wakes it with --seat dredd, a session-end hook that runs it with --seat dredd --end and a timeout, no BEADS_ACTOR in env_passthrough, and at least one focus whose prompt names the seat) and a charter in harnesses/dredd/AGENTS.md with the mandate and what it may not do (publish or merge without approval), and the rule to name things fully (web resources by short form as a Markdown link, local paths absolute). Runs ynm client install ynh for the seat, adds it to the desk's delegates_to and to the roster's seats, and says how to start it.",
+      "assertions": [
+        "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
+        "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
+        "That harness's on_session_start hook runs scripts/wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
+        "That harness's on_session_end hook runs scripts/wake.sh with --seat dredd and --end, with a timeout",
+        "That harness's launch_focus is wake, and its focuses include a wake focus",
+        "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
+        "harnesses/dredd/AGENTS.md has the mandate and says it may not publish or merge without the human",
+        "The stubbed calls include ynm client install ynh",
+        "The desk's delegates_to includes harnesses/dredd, and the roster's seats include Dredd as a standing seat",
+        "The reply says how to start the seat",
+        "The roster's new seat records seated-by (human, since no seat is doing the seating)",
+        "harnesses/dredd/AGENTS.md has the rule to name things fully, with both parts and an example of each: a web resource (such as a pull request) by its short form as a Markdown link, never a bare number or URL; and a local path in full (absolute), not relative"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "name-taken",
+      "prompt": "Add a standing seat called Dredd that keeps the docs of the YN tools matching what shipped.",
+      "setup": "../../evals/files/seat-dredd.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Says Dredd is already taken (the PR/CI watcher) and names can't be reused, and offers or uses the next free standing name, Anderson. Dredd's existing harness and roster entry are left exactly as they were.",
+      "assertions": [
+        "The reply says the name Dredd is already taken by an existing seat",
+        "The roster in the evidence still has exactly one seat named Dredd, still the PR/CI watcher",
+        "harnesses/dredd/.agents/harness/plugin.json is unchanged: its description is still the PR and CI watcher",
+        "No second seat with the command dredd was created, and the docs keeper was not written into harnesses/dredd",
+        "If a new seat was created, it is named Anderson (the next free standing name); otherwise the reply offers Anderson"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "pool-empty",
+      "prompt": "Add a standing seat that keeps the dependencies of the YN tools up to date.",
+      "setup": "../../evals/files/seat-empty-standing.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Sees the standing pool has no names and asks the human for more names (from the 2000 AD theme) rather than inventing one or borrowing from another pool. Creates no seat yet.",
+      "assertions": [
+        "The reply says the standing pool has no names left (or is empty) and asks the human for names",
+        "No seat harness was created under harnesses/",
+        "The roster's seats are still empty",
+        "The reply does not pick a name from the crew or workers pool, and does not invent a new name as the seat's name"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "crew-seat",
+      "prompt": "Add a crew seat that designs changes to ynh and breaks them into beads. It reads code but only changes the work graph. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Names the seat Gahan from the crew pool (command gahan), in group crew. Writes its harness and a charter whose mandate is designing ynh changes and breaking them into beads, and which says it may not change code. Adds it to the desk and the roster.",
+      "assertions": [
+        "The evidence shows harnesses/gahan/.agents/harness/plugin.json with name gahan",
+        "The roster's seats include Gahan with group crew",
+        "harnesses/gahan/AGENTS.md says it designs ynh changes and breaks them into beads, and that it may not change code",
+        "The desk's delegates_to includes harnesses/gahan",
+        "No name from the standing or workers pool was used",
+        "harnesses/gahan/AGENTS.md says to raise anything outside its mandate with the human it works with, not to hand it back to the desk"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "workers",
+      "prompt": "Add workers to this Wheelhouse. I want two of them, to implement the beads the crew design.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats each of the two workers as a seat of its own, named from the workers pool: Dalglish (command dalglish) and McCoist (command mccoist). Each gets its own harness, harnesses/dalglish and harnesses/mccoist, with a wake hook naming it and a focus for working the next bead, and the same worker charter with only the name changed: build one bead at a time, only beads assigned to it or unassigned, and act as its own command. Adds both to the roster's seats (group workers) and to the desk's delegates_to. No shared harnesses/worker. Says how to start each by its name (dalglish, mccoist).",
+      "assertions": [
+        "The evidence shows harnesses/dalglish/.agents/harness/plugin.json with name dalglish and harnesses/mccoist/.agents/harness/plugin.json with name mccoist",
+        "There is no shared harnesses/worker, and neither worker's harness lists BEADS_ACTOR in env_passthrough",
+        "Each worker's on_session_start hook runs scripts/wake.sh with --seat naming that worker (dalglish, mccoist)",
+        "Each worker's on_session_end hook runs scripts/wake.sh with --end and --seat naming that worker",
+        "Each worker's AGENTS.md names it, and says it works only on beads assigned to it or unassigned, acting as its own command (--actor dalglish, --actor mccoist)",
+        "The roster's seats include Dalglish and McCoist, each with group workers, and the desk's delegates_to includes harnesses/dalglish and harnesses/mccoist",
+        "The reply names Dalglish and McCoist and shows how to start each by its own command (dalglish, mccoist), without BEADS_ACTOR",
+        "Each worker's AGENTS.md has the rule to name things fully: web resources by short form as a Markdown link, and local paths absolute"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "specialist-worker",
+      "prompt": "Add a worker for the ynr repository.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats one worker named from the workers pool (Dalglish), as a specialist: its roster seat has group workers and \"specialities\": [\"repo:ynr\"], and its charter says it takes only beads labelled repo:ynr, otherwise the usual worker charter (one bead at a time, --actor dalglish). Adds it to the desk's delegates_to. Points out that the Wheelhouse has no general-purpose worker to take overflow or beads no specialist covers, and offers to seat one.",
+      "assertions": [
+        "The roster's seats include a worker (group workers) whose specialities list repo:ynr",
+        "That worker's AGENTS.md says it takes only beads labelled repo:ynr, and acts as its own command (--actor)",
+        "The worker has its own harness under harnesses/<command>/, and the desk's delegates_to includes it",
+        "That worker's harness asks for the ynr repository's folder as its workspace (../../../ynr), and for no other repository's",
+        "The reply says there is no general-purpose worker yet and offers to seat one"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "worker-draft-prs",
+      "prompt": "Add a worker to this Wheelhouse.",
+      "setup": "../../evals/files/seat-draft-prs.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats one worker from the workers pool (Dalglish). The constitution's Handing over work section says workers commit on a branch and open a draft pull request, so the charter says that: commit the bead's work on a branch and open a draft pull request for review, never merge. It does not tell the worker to leave changes uncommitted or never to commit. A standing role or worker charter ends by handing what is outside its mandate back to the desk.",
+      "assertions": [
+        "harnesses/dalglish/AGENTS.md says to commit the work on a branch and open a draft pull request for review",
+        "harnesses/dalglish/AGENTS.md says the worker never merges",
+        "harnesses/dalglish/AGENTS.md does not tell the worker to leave its changes uncommitted, or never to commit or push",
+        "harnesses/dalglish/AGENTS.md says to hand anything outside its mandate back to the desk"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "team-start",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Starts the starter team walk with its first role, the designer: says in a line what a designer is for, suggests the first unused crew name (Gahan), and asks one question (whether to seat it, or to confirm the name). Seats nothing yet.",
+      "assertions": [
+        "The reply starts with the designer role, saying what it is for",
+        "The reply suggests Gahan, the first name in the crew pool, for it",
+        "The reply asks the human a question and waits, rather than going on to seat several roles",
+        "The evidence shows no seat harness and the roster's seats unchanged (nothing seated yet)"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "reviewer-from-template",
+      "prompt": "Seat Gore as our reviewer. Gore may comment on pull requests.",
+      "setup": "../../evals/files/seat-draft-prs.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Seats Gore from the reviewer template, as crew. The constitution says workers open draft pull requests, so Gore reviews draft pull requests against the bead each closes, may comment on them, files follow-up beads, and may not change code, push, approve or merge. Its charter ends by raising what is outside its mandate with the human. The roster seat records role reviewer. Gore's birth is left to the human.",
+      "assertions": [
+        "harnesses/gore/AGENTS.md says Gore reviews draft pull requests against the beads they close, and may comment on them",
+        "harnesses/gore/AGENTS.md says Gore may not change code, push, or approve or merge",
+        "harnesses/gore/AGENTS.md ends by raising what is outside its mandate with the human (not handing it back to the desk)",
+        "The roster's seat for Gore has group crew and role reviewer",
+        "The reply leaves Gore's birth to the human rather than starting it"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "team-resume",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-partial.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The designer (Gahan), reviewer (Gore) and dispatcher (Anderson) are already seated, so the walk skips them and offers the next role, the CI watcher: says what it is for, suggests the first unused standing name (Dredd), and asks. Seats nothing yet.",
+      "assertions": [
+        "The reply does not offer to seat a designer, reviewer or dispatcher again",
+        "The reply offers the CI watcher next, saying what it is for",
+        "The reply suggests Dredd, the first unused name in the standing pool",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "team-custom-role",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-custom.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The Wheelhouse adds its own docs-writer role to the starter team, ordered after the reviewer. With the designer and reviewer seated, the walk offers the docs writer next: what it is for (keeping docs matching what shipped), the next unused crew name (Sumner), and asks. Seats nothing yet.",
+      "assertions": [
+        "The reply offers the docs writer next, saying it keeps the docs matching what shipped",
+        "The reply suggests Sumner, the next unused crew name",
+        "The reply does not offer the designer or reviewer again",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "team-optional-programme-manager",
+      "prompt": "Set up the team for this Wheelhouse.",
+      "setup": "../../evals/files/seat-team-programme.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The designer, reviewer, dispatcher, CI watcher and releaser are already seated, so the walk offers the next role, the programme manager: says it runs the roadmap on the issue tracker so issues close against versioned milestones, and reports to the humans; says it is optional; suggests the first unused standing name (Hershey); and asks whether to seat it. Seats nothing yet.",
+      "assertions": [
+        "The reply does not offer to seat a designer, reviewer, dispatcher, CI watcher or releaser again",
+        "The reply offers the programme manager next, saying it runs the roadmap (issues closing against milestones) and reports on it",
+        "The reply makes clear the programme manager is optional, for example by asking whether the Wheelhouse wants one, rather than assuming it",
+        "The reply suggests Hershey, the first unused name in the standing pool",
+        "The evidence shows no new seat harness and the roster's seats unchanged"
+      ]
+    }
+  ]
+}

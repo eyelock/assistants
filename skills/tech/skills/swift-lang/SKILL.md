@@ -1,6 +1,6 @@
 ---
 name: swift-lang
-description: Swift 6 language and tooling — concurrency model, Sendable, actors, XCTest basics, and xcodebuild. For SwiftUI architecture and view-layer testing, see `swiftui-lang`.
+description: Swift 6 language and tooling - concurrency model, Sendable, actors, replacing DispatchQueue and completion handlers with async/await, XCTest basics, and xcodebuild. Use for Swift code that is not a SwiftUI view. For SwiftUI architecture and view-layer testing, see `swiftui-lang`.
 ---
 
 # Swift Development
@@ -16,17 +16,23 @@ Swift 6 enforces data isolation at compile time. Every type must be either `Send
 actor MyService {
     private var cache: [String: Data] = [:]
 
-    func fetch(key: String) async -> Data? {
+    func store(_ data: Data, for key: String) {
+        cache[key] = data
+    }
+
+    func fetch(key: String) -> Data? {
         cache[key]
     }
 }
 ```
 
+Callers outside the actor `await` its methods; the hop onto the actor makes them asynchronous without marking them `async`.
+
 **`@MainActor`** for UI-bound types:
 ```swift
 @MainActor
 final class ViewModel: ObservableObject {
-    var items: [Item] = []
+    @Published var items: [Item] = []
 }
 ```
 
@@ -86,18 +92,22 @@ do {
 
 ```swift
 final class MyServiceTests: XCTestCase {
-    func testFetchReturnsExpectedValue() async throws {
+    func testFetch_AfterStore_ReturnsStoredData() async {
         let service = MyService()
-        let result = try await service.fetch("key")
-        XCTAssertEqual(result, expectedValue)
+        let data = Data("value".utf8)
+        await service.store(data, for: "key")
+
+        let result = await service.fetch(key: "key")
+
+        XCTAssertEqual(result, data)
     }
 }
 ```
 
 **Rules:**
 - Test names describe the scenario: `test<Subject>_<Condition>_<ExpectedResult>`
-- Async tests use `async throws` — no `XCTestExpectation` for async work
-- Use `setUp()` / `tearDown()` for shared state, not instance properties
+- Async tests are `async` (add `throws` when the code under test throws) — no `XCTestExpectation` for async work
+- Create shared fixtures in `setUp()` and release them in `tearDown()`, not in property initializers
 - Test at the unit boundary — mock only at system edges (network, filesystem)
 
 ## xcodebuild Tooling

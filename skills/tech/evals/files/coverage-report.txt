@@ -1,0 +1,19 @@
+Kanban.app — line coverage by file (xccov, Debug, macOS)
+
+File                                   Lines   Covered   Coverage
+Models/Card.swift                         64        58     90.6%
+Models/Column.swift                       41        37     90.2%
+Services/BoardPersistence.swift          212         0      0.0%   (BoardPersistence.shared, writes ~/Library/Application Support/Kanban/board.json)
+Services/GitService.swift                188         0      0.0%   (GitService.shared, runs /usr/bin/git via Process)
+Services/PreferencesStore.swift           97         0      0.0%   (PreferencesStore.shared, UserDefaults)
+ViewModels/BoardViewModel.swift          301        22      7.3%   (calls BoardPersistence.shared and GitService.shared directly)
+Views/BoardView.swift                    744        12      1.6%   (contains private func escapeForShell(_:) and private func score(card:query:))
+Views/CardEditorView.swift               388         0      0.0%   (title/column/validation held in @State)
+Views/TerminalPane.swift                 266         0      0.0%   (contains private struct LogLineParser)
+Views/SettingsView.swift                 143         0      0.0%
+Utilities/DateFormatting.swift            38        35     92.1%
+
+Total                                   2482       164      6.6%
+
+Tests/KanbanTests: 14 tests. BoardViewTests.swift redefines Card and Column locally "because importing the app's types pulls in BoardPersistence".
+Running the test suite leaves "Test Card 1" entries in the developer's real board.json.

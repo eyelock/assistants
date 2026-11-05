@@ -1,0 +1,36 @@
+{
+  "skill_name": "voice-warm",
+  "fixtures": "Files are copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "warm-slack",
+      "prompt": "Write a warm reply to Sam in data/sam-handover.md. He's been incredible on this migration and I want him to feel it. Yes, I'll be the point of contact.",
+      "files": ["../../evals/files/sam-handover.md"],
+      "expected_output": "A short warm DM: it uses Sam's first name, says yes to being the point of contact, and thanks him for something his message shows (the handover doc for the billing migration). It invents nothing the message or the request does not give: no details of the doc's quality, his character or particular things he did on the migration (a general thanks for his work on it is fine), and no [placeholder] for praise. No superlatives (incredible, amazing, legend), at most one emoji, two or three sentences.",
+      "assertions": [
+        "Says yes to being the point of contact while Sam is away",
+        "Thanks Sam for something his message shows, the handover doc, rather than in general terms",
+        "Invents no specifics that neither Sam's message nor the user's request gives: nothing about how thorough or clear the doc is, Sam's character, or particular things he did on the migration (a general thanks for his work on the migration is fine, since the user asked for it)",
+        "Contains no [placeholder] for praise",
+        "Uses no superlatives such as incredible, amazing, legend or rockstar, and at most one emoji",
+        "The draft itself, not counting any To/On header or Check: note, is at most three sentences"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "warm-celebration",
+      "prompt": "Ana just got her first PR merged, see data/first-pr.md. Reply warmly, she's been amazing.",
+      "files": ["../../evals/files/first-pr.md"],
+      "expected_output": "A warm Slack reply that uses Ana's name and names what she shipped (the invoice CSV export), without gushing: no generic superlatives, at most one emoji, and no longer than three sentences.",
+      "assertions": [
+        "Uses Ana's first name",
+        "Names what Ana shipped: the CSV export for invoices",
+        "The draft contains no [placeholder] for praise; the specific thing comes from the message",
+        "Uses no generic superlatives such as amazing, awesome, incredible or rockstar",
+        "Uses at most one emoji",
+        "The draft itself, not counting any To/On header or Check: note, is at most three sentences"
+      ]
+    }
+  ]
+}

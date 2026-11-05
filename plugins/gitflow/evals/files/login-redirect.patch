@@ -1,0 +1,43 @@
+diff --git a/src/auth/callback.ts b/src/auth/callback.ts
+index 3f1c2a0..8d4e9b1 100644
+--- a/src/auth/callback.ts
++++ b/src/auth/callback.ts
+@@ -1,8 +1,18 @@
+ import type { Request, Response } from "express";
+ import { exchangeCode } from "./oauth";
+ 
++const DEFAULT_RETURN_TO = "/dashboard";
++
++// Only same-site relative paths are allowed.
++export function safeReturnTo(raw: unknown): string {
++  if (typeof raw !== "string" || raw === "") return DEFAULT_RETURN_TO;
++  if (!raw.startsWith("/") || raw.startsWith("//")) return DEFAULT_RETURN_TO;
++  return raw;
++}
++
+ export async function handleCallback(req: Request, res: Response) {
+   const session = await exchangeCode(String(req.query.code));
+   req.session.user = session.user;
+-  res.redirect(`${req.query.returnTo}`);
++  res.redirect(safeReturnTo(req.query.returnTo));
+ }
+diff --git a/src/auth/callback.test.ts b/src/auth/callback.test.ts
+new file mode 100644
+index 0000000..b71e0c4
+--- /dev/null
++++ b/src/auth/callback.test.ts
+@@ -0,0 +1,15 @@
++import { describe, expect, it } from "vitest";
++import { safeReturnTo } from "./callback";
++
++describe("safeReturnTo", () => {
++  it("falls back to the dashboard when returnTo is missing", () => {
++    expect(safeReturnTo(undefined)).toBe("/dashboard");
++  });
++  it("keeps a same-site path", () => {
++    expect(safeReturnTo("/reports/42")).toBe("/reports/42");
++  });
++  it("rejects another host", () => {
++    expect(safeReturnTo("//evil.example")).toBe("/dashboard");
++  });
++});

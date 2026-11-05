@@ -1,0 +1,42 @@
+{
+  "skill_name": "dev-debug",
+  "fixtures": "Shell sandbox cases. dev-debug-setup.sh builds a Go module (stdlib only) checked out on develop, in sync with a local bare origin (.eval/origin.git), with the user's own debugging left uncommitted. git and go are real; gh is a recorder. The evidence shows local branches and commits, what origin holds, everything changed since the start, and the tests (and program output) now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "handler-never-runs",
+      "prompt": "The refund test keeps failing and the debug print I put in the refund handler never shows up. I've stared at the handler for an hour and it looks right. Can you help me fix this?",
+      "setup": "../../evals/files/dev-debug-router-setup.sh",
+      "tools": ["Bash(git:*)", "Bash(go:*)", "Bash(gh:*)", "Edit(./**)", "Write(./**)"],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-debug-evidence.sh\"",
+      "expected_output": "It stops looking at the handler's logic and first establishes whether it runs at all: the missing print means it is never called. It then finds why: Router.Dispatch sends an event to the first route whose prefix matches, and \"order.\" is registered before \"order.refund\", so order.refunded goes to the order handler. It fixes the routing (most specific prefix wins, or registration order), keeps TestOrderAndPayment passing, and removes the temporary debug print. The work happens on a local feature branch, not develop; a local commit is fine. It does not push or open a PR, and ends by asking whether to push / open one.",
+      "assertions": [
+        "The reply says the refund handler is never called (the missing print shows that), rather than treating it as a bug inside the handler",
+        "The reply names the cause: Dispatch takes the first matching prefix and \"order.\" is registered before \"order.refund\", so order.refunded events reach the order handler",
+        "The fix makes refund events reach the refund handler (for example most specific prefix wins, or registering order.refund first), and go test ./... passes in the evidence",
+        "The temporary REFUND HANDLER CALLED print is gone from the code",
+        "The changes were made on a new local branch, not on develop or main",
+        "Nothing was pushed: origin's refs are as they were (main and develop only, at the starting commit), and gh pr create was never called",
+        "The reply ends by asking before any push or PR"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "edits-never-take-effect",
+      "prompt": "I've changed the shipping email subject in email/render.go three times and even added a log line at the top of Subject, but go run ./cmd/notify still prints \"Subject: Your order\" and my log never appears. What is going on?",
+      "setup": "../../evals/files/dev-debug-stale-setup.sh",
+      "tools": ["Bash(git:*)", "Bash(go:*)", "Bash(gh:*)", "Edit(./**)", "Write(./**)"],
+      "evidence": "bash \"$EVAL_FIXTURES/dev-debug-evidence.sh\"",
+      "expected_output": "It treats this as a visibility problem, not a template problem: the log never appearing means the edited Subject never runs. It checks what actually runs (cmd/notify's import, or a print or early exit in the path) and finds cmd/notify imports internal/email, while the edits are in the deprecated copy in email/. It explains this, and applies the subject change where it runs (internal/email) or points cmd/notify at it, without the debug log, so go run ./cmd/notify prints \"Subject: Your order #1042 has shipped\". It does not delete the deprecated package without asking (it notes billing still imports it), works on a local branch if it commits, and does not push or open a PR.",
+      "assertions": [
+        "The reply says the edited Subject in email/ never runs, because cmd/notify imports github.com/acme/notify/internal/email",
+        "The reply explains how it established that (the import, or a print or early exit that never fired), rather than trying more variations of the template",
+        "If it changed code, go run ./cmd/notify in the evidence prints \"Subject: Your order #1042 has shipped\"; if not, the reply says to make the subject change in internal/email (or to point cmd/notify at the edited package)",
+        "The reply says to drop the DEBUG Subject called log line (or it was removed from the code)",
+        "The deprecated email/ package was not deleted",
+        "Nothing was pushed (origin's refs are unchanged) and gh pr create was never called",
+        "If anything was committed, it was on a new local branch, not develop or main"
+      ]
+    }
+  ]
+}

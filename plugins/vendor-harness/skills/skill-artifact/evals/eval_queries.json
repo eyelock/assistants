@@ -1,0 +1,15 @@
+[
+  { "query": "why isn't my SKILL.md showing up in claude code", "should_trigger": true },
+  { "query": "check the frontmatter on skills/pdf-tools/SKILL.md", "should_trigger": true },
+  { "query": "is it ok to put a license field in my skill's frontmatter?", "should_trigger": true },
+  {
+    "query": "copilot cli keeps running some other deploy skill instead of the one in my plugin",
+    "should_trigger": true
+  },
+  { "query": "how do you invoke a plugin skill in codex vs cursor", "should_trigger": true },
+  { "query": "audit the whole plugin for every vendor before we ship it", "should_trigger": false },
+  { "query": "write me a new skill that summarizes pull requests", "should_trigger": false },
+  { "query": "my agents/reviewer.md never gets delegated to", "should_trigger": false },
+  { "query": "find out which repo this skill was installed from", "should_trigger": false },
+  { "query": "the SessionStart hook in my plugin never fires", "should_trigger": false }
+]

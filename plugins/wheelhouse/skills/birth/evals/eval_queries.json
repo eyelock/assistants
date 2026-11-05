@@ -1,0 +1,26 @@
+[
+  {
+    "query": "you are dalglish, this is your first session in the wheelhouse",
+    "should_trigger": true
+  },
+  {
+    "query": "you have just been seated as gore, get yourself set up",
+    "should_trigger": true
+  },
+  {
+    "query": "write who you are in your own words for the roster, you are the new tharg seat",
+    "should_trigger": true
+  },
+  {
+    "query": "add a new seat for docs to the wheelhouse",
+    "should_trigger": false
+  },
+  {
+    "query": "you are mccoist, starting a new session",
+    "should_trigger": false
+  },
+  {
+    "query": "write an about-me section for my personal website",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,15 @@
+[
+  { "query": "push this and open a PR", "should_trigger": true },
+  { "query": "ship this branch: PR it, watch CI, merge when it's green", "should_trigger": true },
+  { "query": "open a pull request for my hotfix branch", "should_trigger": true },
+  {
+    "query": "get this merged once the checks pass and tidy up the worktree",
+    "should_trigger": true
+  },
+  { "query": "send this up for review", "should_trigger": true },
+  { "query": "write the PR description for this change", "should_trigger": false },
+  { "query": "what should my branch be called?", "should_trigger": false },
+  { "query": "run the quality checks before I commit", "should_trigger": false },
+  { "query": "tag the release for v2.0.0", "should_trigger": false },
+  { "query": "add a CI job that runs the tests on every PR", "should_trigger": false }
+]

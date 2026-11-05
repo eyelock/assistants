@@ -1,6 +1,6 @@
 ---
 name: help-me-answer
-description: Guided elicitation for complex questions — one question at a time, conversational, not interrogation.
+description: Guided elicitation for complex questions - one question at a time, conversational, not interrogation. Use when working through a design, decision or plan with the user, when continuing or wrapping up a discussion where they answered one question at a time, or when they ask for help thinking a complex question through.
 ---
 
 # Guided Elicitation
@@ -25,6 +25,14 @@ Asking multiple complex questions in a single prompt leads to:
 3. **Wait for response** — let the user think and answer fully
 4. **Acknowledge and build** — show you understood, then move to the next question
 5. **Iterate** — repeat until the topic is fully explored
+
+Keep each turn short: a sentence or two on their answer, the context for the next question,
+the question. If their answer has a consequence they should know about, name it in a
+sentence; don't work out the mechanism for them, since that is a later decision.
+
+Offer options when they help, but don't pick one before the user has answered. A
+recommendation up front steers them and skips the thinking the question was for. Give your
+view when they ask for it, or once they have answered.
 
 ### Bad: Question Dump
 
@@ -72,7 +80,10 @@ Don't over-elicit when:
 
 ### Closing
 
-"I think we've covered the key decisions. Let me summarize what I understood..." then summarize before implementing.
+"I think we've covered the key decisions. Let me summarize what I understood..." then list
+each decision as the user made it, with their reason, before any design or implementation,
+and invite corrections. Even when they say "go ahead", the list comes first and stands on its
+own: a decision misread is cheap to fix in a list and expensive to find inside a design.
 
 ## Self-Check
 

@@ -1,0 +1,16 @@
+[
+  {
+    "query": "merge what github, slack and gmail said needs doing into one list",
+    "should_trigger": true
+  },
+  { "query": "combine these triage answers from each platform", "should_trigger": true },
+  {
+    "query": "give me one table of everything waiting on me across all my tools",
+    "should_trigger": true
+  },
+  { "query": "format this triage as the standard table", "should_trigger": true },
+  { "query": "merge these two CSV files", "should_trigger": false },
+  { "query": "write a status report for my manager", "should_trigger": false },
+  { "query": "resolve the merge conflict in report.md", "should_trigger": false },
+  { "query": "make a markdown table of our API endpoints", "should_trigger": false }
+]

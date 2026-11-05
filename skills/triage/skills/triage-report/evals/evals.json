@@ -1,0 +1,40 @@
+{
+  "skill_name": "triage-report",
+  "fixtures": "Each file is an answer one platform harness returned, copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "merge-platforms",
+      "prompt": "I asked each of my platform harnesses what needs doing now. Their answers are in data/answers-github.md, data/answers-gmail.md and data/answers-slack.md. Merge them into one list for me.",
+      "files": [
+        "../../evals/files/answers-github.md",
+        "../../evals/files/answers-gmail.md",
+        "../../evals/files/answers-slack.md"
+      ],
+      "expected_output": "One action-now table holding grace's schema question, alice's review of acme/api#41 and the supplier contract, ordered oldest first. The GitHub notification mail for acme/api#41 is dropped as a duplicate, and the GitHub row kept. Counts per platform, and a line saying Slack could not be read.",
+      "assertions": [
+        "There is a single action-now table, not one per platform",
+        "acme/api#41 appears once, with the github.com link, not the mail link",
+        "The supplier contract renewal from gmail is included",
+        "grace's schema version question is included",
+        "Rows are ordered by Since, oldest first",
+        "Rows keep their original wording rather than being rewritten",
+        "There is a line of counts per platform",
+        "It says Slack could not be read"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "empty-shape",
+      "prompt": "Give me the full triage for data/github-empty.json: action now, action soon, and who I'm waiting on.",
+      "files": ["../../evals/files/github-empty.json"],
+      "expected_output": "Three headings, action-now, action-soon and waiting-on-them, each followed by 'Nothing.', then a counts line of zeros.",
+      "assertions": [
+        "Has an action-now heading followed by Nothing.",
+        "Has an action-soon heading followed by Nothing.",
+        "Has a waiting-on-them heading followed by Nothing.",
+        "Ends with a counts line"
+      ]
+    }
+  ]
+}

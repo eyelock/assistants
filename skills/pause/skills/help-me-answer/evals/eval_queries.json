@@ -1,0 +1,36 @@
+[
+  {
+    "query": "help me think through the schema for our event store, one question at a time",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to design our permissions model and there are loads of interlinked decisions. walk me through it",
+    "should_trigger": true
+  },
+  {
+    "query": "Gather requirements from me for the new onboarding flow before you build anything",
+    "should_trigger": true
+  },
+  {
+    "query": "you keep hitting me with ten questions at once, can we go through the cache invalidation design properly",
+    "should_trigger": true
+  },
+  {
+    "query": "help me answer this: should our mobile app sync in the background or on open? there are trade-offs either way",
+    "should_trigger": true
+  },
+  {
+    "query": "take a moment, I think we're talking about different things",
+    "should_trigger": false
+  },
+  {
+    "query": "give me every question I should ask the vendor in one list",
+    "should_trigger": false
+  },
+  {
+    "query": "should I use Postgres or MySQL? just give me your recommendation",
+    "should_trigger": false
+  },
+  { "query": "is this function thread safe, yes or no", "should_trigger": false },
+  { "query": "help me answer this customer email about their refund", "should_trigger": false }
+]

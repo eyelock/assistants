@@ -8,7 +8,7 @@ if [[ "${1:-}" == "--help" ]]; then
 Usage: check-config.sh
 
 Check each MEDIA_MGMT_* path (downloads, library_import, library_storage,
-archive_workdir, processed, rekordbox_mcp_path) against its env var, then
+archive_workdir, processed, rekordbox_mcp_path, cd_read_offset, work_dir) against its env var, then
 against config.json at $MEDIA_MGMT_CONFIG_PATH (default
 ~/.config/media-management/config.json). Takes no arguments.
 
@@ -34,6 +34,8 @@ KEYS=(
   "archive_workdir:MEDIA_MGMT_ARCHIVE_WORKDIR:true"
   "processed:MEDIA_MGMT_PROCESSED:false"
   "rekordbox_mcp_path:MEDIA_MGMT_REKORDBOX_MCP_PATH:false"
+  "cd_read_offset:MEDIA_MGMT_CD_READ_OFFSET:false"
+  "work_dir:MEDIA_MGMT_WORK_DIR:false"
 )
 
 ITEMS="[]"

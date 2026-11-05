@@ -1,33 +1,94 @@
 {
   "skill_name": "process-album",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first. Point MEDIA_MGMT_DOWNLOADS at tests/fixtures/eval-sandbox/downloads, MEDIA_MGMT_LIBRARY_IMPORT at tests/fixtures/eval-sandbox/auto-import, MEDIA_MGMT_LIBRARY_STORAGE at tests/fixtures/eval-sandbox/library, and MEDIA_MGMT_ARCHIVE_WORKDIR at tests/fixtures/eval-sandbox/nas-archive. Note: this eval exercises real sub-skill delegation end to end (extraction, metadata, a real Apple Music import via the auto-import folder, archival, cleanup) — it is the most expensive eval in the plugin to actually run. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "I just bought Test Artist - Test Album, can you process it end to end",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      "name": "stops-at-metadata",
+      "prompt": "I just bought Night Drive - Afterglow, it's in ./Downloads/ — can you process it end to end?",
+      "setup": "../../evals/files/process-afterglow.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Orchestrates the full pipeline via sub-skills (select-release, extract, manage-metadata inspect/update, import-to-apple-music, archive-media for mp3, archive-media for wav, cleanup), stopping at the two mandatory user-confirmation checkpoints (metadata verification, Apple Music import verification) and never re-implementing sub-skill logic inline.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Uses the plugin's skills: identifies the ZIP pair by contents, extracts the MP3 ZIP into its own subfolder Downloads/Night Drive - Afterglow/ (never into Downloads/ itself), inspects the tags, then stops at the mandatory metadata checkpoint: presents track count, artist, album and genre and asks the user to confirm them (genre chosen by the user). Nothing reaches the Apple Music auto-import folder or the NAS; the ZIPs stay in Downloads.",
       "assertions": [
-        "Invokes sub-skills via the Skill tool (e.g. media-management:select-release) rather than calling their scripts directly",
-        "Stops and asks for explicit user confirmation of metadata (artist, album, genre, compilation status) before importing to Apple Music",
-        "Stops and asks the user to verify the Apple Music import before proceeding to NAS archival",
-        "Processes MP3s through the full Apple Music path and WAVs through NAS-only archival, never importing WAVs to Apple Music"
+        "The evidence shows the 4 MP3s extracted into a subfolder of Downloads (such as Downloads/Night Drive - Afterglow/), with no audio files extracted directly into Downloads/",
+        "Stops and asks the user to confirm the metadata (artist, album, genre) before importing",
+        "The evidence shows nothing added to the Apple Music auto-import folder",
+        "The evidence shows nothing added under NAS/",
+        "The evidence shows both original ZIPs still in Downloads/ (not moved or deleted)"
       ]
     },
     {
       "id": 2,
-      "prompt": "process 'Test Artist - Test Album' — I already know it's a straightforward single-artist album",
-      "files": [
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album.zip",
-        "tests/fixtures/eval-sandbox/downloads/Test Artist - Test Album-2.zip"
+      "name": "compilation-question",
+      "prompt": "process the Summer Sampler I just bought, it's in ./Downloads/. That's the right release, so go ahead and extract it and check the tags.",
+      "setup": "../../evals/files/process-sampler.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
       ],
-      "expected_output": "Uses the given release name to skip the select-release disambiguation step, but still performs the mandatory metadata and Apple Music verification checkpoints rather than skipping them because the user described the album type.",
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Finds the Summer Sampler ZIP pair (named after every artist), extracts the MP3s into a subfolder, inspects them, sees four different artists, and at the metadata checkpoint asks whether it is a compilation, proposing Album Artist 'Various Artists' with the compilation flag. Nothing is imported or archived yet.",
       "assertions": [
-        "Passes the user-provided release name through to select-release/downstream steps instead of re-prompting for it",
-        "Still stops for the mandatory metadata confirmation checkpoint even though the user described the album as simple"
+        "Notes that the tracks have four different artists",
+        "Asks whether it is a compilation (or proposes Album Artist 'Various Artists' with the compilation flag) and waits for the user's answer",
+        "The evidence shows nothing added to the Apple Music auto-import folder or under NAS/",
+        "The evidence shows no MP3 tags changed yet (no album_artist or compilation set before the user answers)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "preconfirmed-stops-at-import-check",
+      "prompt": "Process Night Drive - Afterglow from ./Downloads/. I've already checked the tags: genre Electronic, artist Night Drive, album Afterglow, single-artist album — that's all confirmed, go ahead and import it.",
+      "setup": "../../evals/files/process-afterglow.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Treats the metadata as confirmed: extracts the MP3s into a subfolder, applies the confirmed metadata (genre Electronic, Album Artist cleared, tracks numbered n/4), copies the 4 MP3s (and no WAV) into the auto-import folder, then stops at the mandatory Apple Music check: asks the user to verify the import before anything is archived. Nothing is staged on the NAS and the ZIPs stay in Downloads.",
+      "assertions": [
+        "The evidence shows the 4 MP3s added to the Apple Music auto-import folder, with genre Electronic",
+        "No WAV file was added to the auto-import folder",
+        "The evidence shows the imported MP3s numbered 1/4 to 4/4",
+        "Stops and asks the user to check the import in Apple Music before archiving",
+        "The evidence shows nothing added under NAS/ and both ZIPs still in Downloads/"
       ]
     }
   ]

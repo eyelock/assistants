@@ -1,0 +1,42 @@
+[
+  {
+    "query": "set up a remote terraform backend in AWS with an S3 bucket and state locking",
+    "should_trigger": true
+  },
+  {
+    "query": "my terraform state is local, I want to move it to S3",
+    "should_trigger": true
+  },
+  {
+    "query": "bootstrap the state bucket for a new project in eu-west-1",
+    "should_trigger": true
+  },
+  {
+    "query": "how do I move my local tfstate into an S3 backend",
+    "should_trigger": true
+  },
+  {
+    "query": "our S3 backend still locks with a DynamoDB table, how do we switch to use_lockfile and get rid of the table",
+    "should_trigger": true
+  },
+  {
+    "query": "write terraform for an S3 bucket that hosts a static website",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a terraform backend on GCS",
+    "should_trigger": false
+  },
+  {
+    "query": "terraform plan shows drift on my EC2 instances, why",
+    "should_trigger": false
+  },
+  {
+    "query": "set up branch protection and CI for my terraform repo on GitHub",
+    "should_trigger": false
+  },
+  {
+    "query": "how do I configure AWS CLI profiles for two accounts",
+    "should_trigger": false
+  }
+]

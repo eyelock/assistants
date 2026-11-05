@@ -1,0 +1,72 @@
+{
+  "skill_name": "submit-feedback",
+  "fixtures": "Each case gets a finished feedback file (provenance plus the composed report) in data/. setup replaces gh with a stub that answers like gh (no existing issues, a fork whose upstream is tools-co/lint-kit, a URL for a created issue) and logs every call; nothing reaches GitHub. feedback-gh-dup-setup.sh adds an existing open report, tools-co/lint-kit#17, for the searches to find; a body passed with --body-file is copied into the log.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "confirm-before-filing",
+      "prompt": "Submit the feedback in data/feedback-lint-kit.md.",
+      "files": ["../../evals/files/feedback-lint-kit.md"],
+      "setup": "../../evals/files/feedback-gh-setup.sh",
+      "tools": ["Bash(gh:*)"],
+      "expected_output": "Not a committer and a GitHub repo is known, so the channel is a GitHub issue. acme-forks/lint-kit is a fork, so the issue goes to the upstream, tools-co/lint-kit. It searches tools-co/lint-kit for an existing report first. It shows the exact gh issue create --repo tools-co/lint-kit --title \"[style-check] ...\" --body ... command (with a label such as bug) and asks the user to confirm. gh issue create is never called.",
+      "assertions": [
+        "gh issue create was never called (no such line in the stub calls)",
+        "Chooses a GitHub issue as the channel because the user is not a committer",
+        "Targets the upstream tools-co/lint-kit, not the fork acme-forks/lint-kit",
+        "Shows the exact gh issue create command (or the full title and body) it would run",
+        "Asks the user to confirm before submitting",
+        "Searches for an existing issue on tools-co/lint-kit (gh issue list or gh search issues), or says it will before filing"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "cursor-regression-to-forum",
+      "prompt": "Submit the feedback in data/feedback-cursor-rules.md.",
+      "files": ["../../evals/files/feedback-cursor-rules.md"],
+      "setup": "../../evals/files/feedback-gh-setup.sh",
+      "tools": ["Bash(gh:*)", "Bash(git:*)"],
+      "expected_output": "The diagnosis says the artifact is correct and Cursor regressed, so the report belongs on Cursor's tracker, which is the forum at https://forum.cursor.com, not an issue or PR on acme/agent-tools even though the user is a committer with a local checkout. It suggests searching the forum for an existing report first, gives the post title and body formatted for the forum, and asks before anything is submitted. No gh issue create or gh pr create is run.",
+      "assertions": [
+        "Routes the report to Cursor's forum (forum.cursor.com)",
+        "Does not file an issue or open a PR on acme/agent-tools, and explains the artifact is not at fault",
+        "Does not route it to a GitHub repository for Cursor (such as getcursor/cursor)",
+        "No gh issue create or gh pr create appears in the stub calls",
+        "Says to search the forum for an existing report first",
+        "Gives the post's title and body ready to paste"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "already-reported-despite-go-ahead",
+      "prompt": "File data/feedback-lint-kit.md as a GitHub issue now. I've reviewed the text already, no need to check with me again.",
+      "files": ["../../evals/files/feedback-lint-kit.md"],
+      "setup": "../../evals/files/feedback-gh-dup-setup.sh",
+      "tools": ["Bash(gh:*)"],
+      "expected_output": "The go-ahead covers the text, not a duplicate. Before filing it searches the upstream tools-co/lint-kit (not the fork) and finds open issue #17, 'style-check lints the whole repo, not just changed files', the same problem. It does not file a second issue: it tells the user about #17 (https://github.com/tools-co/lint-kit/issues/17), and offers to add the report's reproduction and impact to it (or links it). gh issue create is never called.",
+      "assertions": [
+        "The stub calls show a search for existing issues against tools-co/lint-kit (gh issue list or gh search issues), not against the fork acme-forks/lint-kit",
+        "gh issue create was never called",
+        "The reply tells the user the problem is already reported as tools-co/lint-kit issue #17 and links it (https://github.com/tools-co/lint-kit/issues/17)",
+        "The reply offers, or does, adding the new report's details (reproduction, impact) to the existing issue instead of opening a second one",
+        "Nothing was run against the fork acme-forks/lint-kit as an issue target (no gh issue create or gh issue comment --repo acme-forks/lint-kit)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "file-with-go-ahead",
+      "prompt": "File data/feedback-lint-kit.md as a GitHub issue now. I've reviewed the text already, no need to check with me again.",
+      "files": ["../../evals/files/feedback-lint-kit.md"],
+      "setup": "../../evals/files/feedback-gh-setup.sh",
+      "tools": ["Bash(gh:*)"],
+      "expected_output": "Files exactly one issue with gh issue create --repo tools-co/lint-kit (the upstream, not the fork acme-forks/lint-kit), the title \"[style-check] Skill runs eslint on the whole repo instead of changed files\", and a body carrying the report's sections; a bug label is fine. It may search for duplicates first. It reports the new issue URL https://github.com/tools-co/lint-kit/issues/42.",
+      "assertions": [
+        "The stub calls show exactly one gh issue create",
+        "That gh issue create uses --repo tools-co/lint-kit, not acme-forks/lint-kit",
+        "Its title is the report's title: [style-check] Skill runs eslint on the whole repo instead of changed files",
+        "Its body carries the report's expected behavior, actual behavior and reproduction",
+        "The reply gives the created issue's URL"
+      ]
+    }
+  ]
+}

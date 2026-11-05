@@ -1,0 +1,34 @@
+[
+  {
+    "query": "add a release manager seat to the wheelhouse",
+    "should_trigger": true
+  },
+  {
+    "query": "set up a new standing role that watches CI across the repos",
+    "should_trigger": true
+  },
+  {
+    "query": "create a crew seat for designing ynm changes",
+    "should_trigger": true
+  },
+  {
+    "query": "we need another seat for docs, name it from the roster",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new ynh harness for my Slack workspace",
+    "should_trigger": false
+  },
+  {
+    "query": "what should I pick up next?",
+    "should_trigger": false
+  },
+  {
+    "query": "add a reviewer subagent to this Claude plugin",
+    "should_trigger": false
+  },
+  {
+    "query": "rename the ynh-dev harness",
+    "should_trigger": false
+  }
+]

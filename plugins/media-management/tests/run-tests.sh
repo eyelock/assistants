@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+# Tests never read the user's real configuration: no MEDIA_MGMT_* path from
+# the shell, and a config.json path that does not exist.
+unset MEDIA_MGMT_DOWNLOADS MEDIA_MGMT_LIBRARY_IMPORT MEDIA_MGMT_LIBRARY_STORAGE \
+  MEDIA_MGMT_ARCHIVE_WORKDIR MEDIA_MGMT_PROCESSED MEDIA_MGMT_REKORDBOX_MCP_PATH
+export MEDIA_MGMT_CONFIG_PATH=/nonexistent/media-management/config.json
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 

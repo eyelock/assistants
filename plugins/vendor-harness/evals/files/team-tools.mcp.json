@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "docs-search": {
+      "url": "https://mcp.acme.dev/docs/mcp",
+      "headers": { "Authorization": "Bearer ${ACME_DOCS_TOKEN}" }
+    },
+    "fs": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./workspace"]
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "."]
+    }
+  }
+}

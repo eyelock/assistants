@@ -1,0 +1,18 @@
+[
+  { "query": "my PreToolUse hook isn't firing in Cursor", "should_trigger": true },
+  {
+    "query": "convert this claude hooks.json so copilot cli will actually run it",
+    "should_trigger": true
+  },
+  { "query": "which hook events does Codex support?", "should_trigger": true },
+  {
+    "query": "if my copilot preToolUse script times out does the tool call still go through",
+    "should_trigger": true
+  },
+  { "query": "can I use an agent-type hook in Codex", "should_trigger": true },
+  { "query": "my git pre-commit hook isn't running", "should_trigger": false },
+  { "query": "the MCP server in my plugin won't start in Cursor", "should_trigger": false },
+  { "query": "Claude doesn't seem to read the CLAUDE.md in my repo", "should_trigger": false },
+  { "query": "is this plugin ready for Codex? check all of it", "should_trigger": false },
+  { "query": "file an issue about the broken hook on the plugin's repo", "should_trigger": false }
+]

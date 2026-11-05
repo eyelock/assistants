@@ -1,0 +1,15 @@
+[
+  { "query": "where did this skill come from?", "should_trigger": true },
+  { "query": "which repo is the harness-advisor agent from", "should_trigger": true },
+  { "query": "trace this hooks.json back to its source repo", "should_trigger": true },
+  {
+    "query": "I want to fix this skill upstream, find where it's maintained",
+    "should_trigger": true
+  },
+  { "query": "was this plugin installed through ynh or through copilot?", "should_trigger": true },
+  { "query": "where does copilot look for plugin skills?", "should_trigger": false },
+  { "query": "where should my .mcp.json go for Cursor", "should_trigger": false },
+  { "query": "file an issue on the repo this came from", "should_trigger": false },
+  { "query": "git blame this line in the hooks file", "should_trigger": false },
+  { "query": "which vendors does this plugin support", "should_trigger": false }
+]

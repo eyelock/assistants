@@ -1,0 +1,33 @@
+{
+  "skill_name": "waiting-on-them",
+  "fixtures": "Each file is a snapshot of platform tool results, copied into the run's data/ folder. Its snapshot field gives the time to treat as now.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "github-my-prs",
+      "prompt": "Using data/github-my-prs.json, who am I waiting on for my pull requests?",
+      "files": ["../../evals/files/github-my-prs.json"],
+      "expected_output": "Two items. acme/api#50 waits on erin, Since 2026-10-04: the wait runs from Dave's nudge, not the original request on 10-02. acme/api#57 waits on the acme/security team (the group is the Who), Since 2026-10-01. Not acme/api#58 (gina requested changes, so the next step is Dave's), not acme/web#59 (approved and mergeable, so merging is Dave's step), not acme/web#90 (its e2e check is failing, so the next step is Dave's, not frank's), and not the draft acme/api#52.",
+      "assertions": [
+        "Lists acme/api#50 with erin as Who and 2026-10-04, the date of Dave's nudge, as Since",
+        "Lists acme/api#57 with the acme/security team as Who",
+        "Does not list acme/api#58 or acme/web#59 as waiting on someone else, since the next step on both is Dave's",
+        "Does not list acme/web#90 as waiting on frank, since its failing check makes the next step Dave's",
+        "Does not list the draft acme/api#52"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "slack-chase",
+      "prompt": "who do I need to chase on slack? data/slack.json",
+      "files": ["../../evals/files/slack.json"],
+      "expected_output": "Two items. Lee, on the incident runbook review: Dave asked on 2026-10-01 and nudged on 2026-10-03, and Lee has not answered, so Since is 2026-10-03, the last nudge. The design team (the group Dave asked, not one person) on the final logo files, Since 2026-10-02. Not Nia: Dave's thank-you needs no answer. Nothing others sent to Dave.",
+      "assertions": [
+        "Lists Lee and the incident runbook review, with 2026-10-03 (Dave's nudge) as Since",
+        "Lists the request for the logo files with the design team (the group) as Who",
+        "Does not list Dave's thank-you to Nia",
+        "Does not list messages others sent to Dave (Jo, Omar, Max, Kim, Quinn)"
+      ]
+    }
+  ]
+}

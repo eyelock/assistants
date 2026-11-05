@@ -1,0 +1,5 @@
+---
+"@eyelock-assistants/wheelhouse": minor
+---
+
+The humans' inbox script, `work-graph/scripts/inbox.sh`, copied into every Wheelhouse as `scripts/inbox.sh`. `assign` makes a bead for a human (the default human unless `--to` names one), created as the seat that asked, with `--url` kept as its external reference and `--blocks` holding up the bead it waits for; a merge or review without a URL is refused. `note` leaves an FYI in ynm, namespace `human/<command>`, tagged `inbox`. `show` prints, as JSON, the ready beads and notes for the default human and, when `--name <Name>` says who is at the desk for this session, for them too, each bead with who asked, its short form and URL, and how many beads it unblocks. Only the default human is in the roster; anyone else is per session, and nothing in the inbox stores a person, an email or a username or writes to the repository. If bd or ynm fails, `show` says so rather than showing an empty inbox: it exits 3, lists what failed in `errors`, sets that human's `beads` or `notes` to null and `empty` to null, and still prints what the other tool returned.

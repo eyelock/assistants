@@ -14,8 +14,11 @@ Detect audio tracks exceeding max-minutes (default: 78) and split them
 at quiet sections using ffmpeg silencedetect. Adds 2s fade in/out at
 split points.
 
-Split files replace the original. Output files are named sequentially
-(01, 02, ...) — no "Part X" suffixes.
+Split files replace the original — no "Part X" suffixes. A track alone in
+its folder becomes a mini-album: "01 Title.mp3", "02 Title.mp3", tagged
+1/N, 2/N. A track inside an album keeps its place: parts are named after the
+original file ("03 Title 1.mp3", "03 Title 2.mp3") and keep its track number;
+run update-track-count.sh afterwards to renumber the album.
 
 Output: JSON to stdout
   {"splits": [{"file": "...", "parts": N, "durations": [...]}], "skipped": [...]}
@@ -114,9 +117,17 @@ for f in "${files[@]}"; do
   # Read original metadata
   orig_meta=$(ffprobe -v quiet -print_format json -show_format "$f" 2>/dev/null || echo '{}')
   orig_title=$(echo "$orig_meta" | jq -r '.format.tags.title // ""')
+  orig_track=$(echo "$orig_meta" | jq -r '.format.tags.track // ""')
+
+  # A track on its own becomes a mini-album: "01 Title.mp3", "02 Title.mp3",
+  # tagged 1/N, 2/N. A track inside an album keeps its place: the parts are
+  # named after the original file ("03 Title 1.mp3", "03 Title 2.mp3") and keep
+  # its track number, so they sort where it was and update-track-count.sh
+  # renumbers the whole album in order.
+  others=$(find "$dir" -maxdepth 1 -iname '*.mp3' -type f ! -path "$f" | wc -l | tr -d ' ')
 
   # Split into temp directory to avoid filename collisions
-  split_tmpdir=$(mktemp -d)
+  split_tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/split-long-tracks.XXXXXX")
   part_durations=()
   prev_time="0"
   total_parts=$((${#split_points[@]} + 1))
@@ -124,7 +135,13 @@ for f in "${files[@]}"; do
   for ((p = 0; p < total_parts; p++)); do
     part_num=$((p + 1))
     padded=$(printf "%02d" "$part_num")
-    out_file="${split_tmpdir}/${padded} ${orig_title:-${base}}.${ext}"
+    if [[ "$others" -gt 0 ]]; then
+      out_file="${split_tmpdir}/${base} ${part_num}.${ext}"
+      part_track="${orig_track}"
+    else
+      out_file="${split_tmpdir}/${padded} ${orig_title:-${base}}.${ext}"
+      part_track="${part_num}/${total_parts}"
+    fi
 
     if [[ $p -lt ${#split_points[@]} ]]; then
       end_time="${split_points[$p]}"
@@ -140,17 +157,27 @@ for f in "${files[@]}"; do
       cmd+=(-to "$end_time")
     fi
 
-    # Apply fade in/out only if segment is long enough (>4s for 2s+2s fades)
+    # Fade only at the cuts this split makes (2s in at the start of every part
+    # but the first, 2s out at the end of every part but the last), and only
+    # when the part is long enough (>4s) to carry both fades. The original
+    # track's own start and end are left untouched.
     seg_dur_int=${seg_duration%%.*}
     seg_dur_int=${seg_dur_int:-0}
+    fades=()
     if [[ $seg_dur_int -ge 4 ]]; then
-      fade_out_start=$(echo "$seg_duration - 2" | bc -l)
-      cmd+=(-af "afade=t=in:st=0:d=2,afade=t=out:st=${fade_out_start}:d=2")
+      [[ $p -gt 0 ]] && fades+=("afade=t=in:st=0:d=2")
+      if [[ $p -lt $((total_parts - 1)) ]]; then
+        fade_out_start=$(echo "$seg_duration - 2" | bc -l)
+        fades+=("afade=t=out:st=${fade_out_start}:d=2")
+      fi
+    fi
+    if [[ ${#fades[@]} -gt 0 ]]; then
+      cmd+=(-af "$(IFS=,; echo "${fades[*]}")")
     fi
     cmd+=(-c:a libmp3lame -q:a 0)
     cmd+=(-map_metadata 0)
     cmd+=(-metadata "title=${orig_title:-${base}} ${part_num}")
-    cmd+=(-metadata "track=${part_num}/${total_parts}")
+    [[ -n "$part_track" ]] && cmd+=(-metadata "track=${part_track}")
     cmd+=(-y "$out_file")
 
     if ! "${cmd[@]}" 2>/dev/null; then

@@ -1,0 +1,6 @@
+{
+  "name": "acme.tools",
+  "description": "Acme's review, summary and formatting helpers.",
+  "version": "1.4.0",
+  "author": { "name": "Acme" }
+}

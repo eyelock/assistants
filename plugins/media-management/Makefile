@@ -6,14 +6,16 @@ SHELL       := /bin/bash
 SKILL_SCRIPTS := $(wildcard skills/*/scripts/*.sh)
 # All test scripts
 TEST_SCRIPTS  := $(wildcard tests/scripts/*.sh tests/hooks/*.sh)
+# Eval sandbox builders (setup scripts, evidence, the osascript stub)
+EVAL_SCRIPTS  := $(wildcard evals/files/*.sh)
 # All shellcheck-able scripts
-ALL_SCRIPTS   := $(SKILL_SCRIPTS) hooks/validate-bash-command.sh \
+ALL_SCRIPTS   := $(SKILL_SCRIPTS) $(wildcard hooks/*.sh) \
                  tests/run-tests.sh tests/fixtures/generate-fixtures.sh \
-                 $(TEST_SCRIPTS)
+                 $(TEST_SCRIPTS) $(EVAL_SCRIPTS)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install uninstall fixtures test test-scripts test-hooks lint validate check clean
+.PHONY: help install uninstall fixtures evals test test-scripts test-hooks lint validate check clean
 
 help: ## Show available targets
 	@echo "Media Management Plugin — Development Targets"
@@ -47,8 +49,8 @@ uninstall: ## Remove plugin symlink from ~/.claude/plugins/repos
 fixtures: ## Generate test audio fixtures
 	@bash tests/fixtures/generate-fixtures.sh tests/fixtures
 
-eval-fixtures: ## Assemble the sandbox tree used by skills/*/evals/evals.json
-	@bash tests/fixtures/generate-eval-fixtures.sh
+evals: ## Run every skill's evals (sandboxed, costs money; MODE/RUNS/J as in the repo's make eval)
+	@$(MAKE) -C ../.. eval P=plugins/media-management
 
 test: fixtures ## Run full test suite
 	@bash tests/run-tests.sh
@@ -61,7 +63,7 @@ test-hooks: ## Run hook tests only
 
 lint: ## Shellcheck all scripts
 	@echo "Running shellcheck..."
-	@shellcheck $(ALL_SCRIPTS)
+	@shellcheck -x $(ALL_SCRIPTS)
 	@echo "All scripts pass shellcheck."
 
 validate: ## Validate plugin structure, frontmatter, and conventions
@@ -75,15 +77,6 @@ validate: ## Validate plugin structure, frontmatter, and conventions
 		echo "    FAIL: plugin.json missing required fields (name, description, version)"; errors=$$((errors+1)); \
 	else \
 		echo "    OK: plugin.json"; \
-	fi; \
-	\
-	echo "  Checking settings..."; \
-	if [ ! -f .claude/settings.json ]; then \
-		echo "    FAIL: .claude/settings.json not found"; errors=$$((errors+1)); \
-	elif ! jq empty .claude/settings.json 2>/dev/null; then \
-		echo "    FAIL: .claude/settings.json is not valid JSON"; errors=$$((errors+1)); \
-	else \
-		echo "    OK: settings.json"; \
 	fi; \
 	\
 	echo "  Checking hooks..."; \

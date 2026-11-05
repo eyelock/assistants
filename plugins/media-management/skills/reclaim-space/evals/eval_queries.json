@@ -19,13 +19,32 @@
     "query": "running low on disk, is it safe to remove downloads for tracks that are in icloud",
     "should_trigger": true
   },
-  { "query": "archive this album's wav files to the NAS to save space", "should_trigger": false },
+  {
+    "query": "archive this album's wav files to the NAS to save space",
+    "should_trigger": false
+  },
   {
     "query": "delete these tracks permanently from my library, I don't want them anymore",
     "should_trigger": false
   },
-  { "query": "clean up my downloads folder", "should_trigger": false },
-  { "query": "check disk space on my NAS", "should_trigger": false },
-  { "query": "why is my mac running slow", "should_trigger": false },
-  { "query": "what's a smart playlist in apple music", "should_trigger": false }
+  {
+    "query": "clean up my downloads folder",
+    "should_trigger": false
+  },
+  {
+    "query": "check disk space on my NAS",
+    "should_trigger": false
+  },
+  {
+    "query": "why is my mac running slow",
+    "should_trigger": false
+  },
+  {
+    "query": "what's a smart playlist in apple music",
+    "should_trigger": false
+  },
+  {
+    "query": "my startup disk is full, can you remove the downloaded copies of my apple music tracks for me",
+    "should_trigger": true
+  }
 ]

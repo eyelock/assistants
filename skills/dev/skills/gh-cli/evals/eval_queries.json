@@ -1,0 +1,12 @@
+[
+  { "query": "list my open PRs", "should_trigger": true },
+  { "query": "check the CI status on PR 42", "should_trigger": true },
+  { "query": "comment on issue 17 that it's fixed", "should_trigger": true },
+  { "query": "file a GitHub issue for this bug", "should_trigger": true },
+  { "query": "change the PR's base branch to develop", "should_trigger": true },
+  { "query": "review PR 42 for correctness", "should_trigger": false },
+  { "query": "debug why my workflow script fails locally", "should_trigger": false },
+  { "query": "set up the folder structure for a new repo", "should_trigger": false },
+  { "query": "write a skill that wraps the gh CLI", "should_trigger": false },
+  { "query": "run the tests and fix any lint errors", "should_trigger": false }
+]

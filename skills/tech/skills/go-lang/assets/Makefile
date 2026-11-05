@@ -3,7 +3,7 @@
 BINARY_NAME := # TODO: set binary name
 BUILD_DIR := bin
 GO := go
-GOFLAGS := -v
+BUILD_FLAGS := -v
 INSTALL_DIR := $(HOME)/.local/bin
 
 # Tool paths - use full paths so go-installed tools are found without PATH hacks
@@ -25,7 +25,7 @@ deps: ## Install prerequisites (Go, linter, formatter)
 	@echo "All prerequisites installed."
 
 build: ## Build binary
-	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/$(BINARY_NAME)
+	$(GO) build $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/$(BINARY_NAME)
 
 install: build ## Build and install binary
 	@mkdir -p $(INSTALL_DIR)

@@ -17,6 +17,7 @@
     "lint:fix": "biome check --write && ynd lint && ynd validate",
     "lint:spell": "cspell --no-progress --no-summary \"**/*.md\" \"**/*.mdx\"",
     "test": "node --test",
+    "evals": "node scripts/skill-evals.mjs",
     "check": "pnpm sync-manifests:check && pnpm lint && pnpm format:check && pnpm lint:spell && pnpm test"
   },
   "devDependencies": {

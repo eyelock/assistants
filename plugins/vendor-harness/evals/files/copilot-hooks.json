@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "prompt",
+        "prompt": "/instructions"
+      }
+    ],
+    "preToolUse": [
+      {
+        "matcher": "bash",
+        "type": "command",
+        "bash": "./scripts/block-secrets.sh",
+        "powershell": "./scripts/block-secrets.ps1",
+        "timeoutSec": 120
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "edit|create",
+        "type": "command",
+        "bash": "./scripts/format.sh",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

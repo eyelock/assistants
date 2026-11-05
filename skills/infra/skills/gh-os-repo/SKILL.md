@@ -1,6 +1,6 @@
 ---
 name: gh-os-repo
-description: Set up and harden a public GitHub repository — repo settings, security, branch protection, templates, CI, and dependabot.
+description: Set up and harden a public GitHub repository — repo settings, security, branch protection with a ruleset, templates, CI, and dependabot.
 ---
 
 # Open Source Repository Setup
@@ -60,44 +60,15 @@ This ensures:
 - **Secret scanning** — alerts if secrets are committed
 - **Push protection** — blocks pushes containing detected secrets
 
-## Step 3: Branch protection on main
+## Step 3: Protect main with a ruleset
 
-Set up required status checks and conversation resolution:
+Protect the default branch with one repository ruleset. It is the single source of truth: do not also add classic branch protection (`branches/main/protection`). With both active, a merge must satisfy both, so there are two lists of required checks to keep in step, and they drift. A ruleset is visible to contributors on a public repo, targets the default branch by name, and lists who can bypass it.
 
-```bash
-gh api repos/{owner}/{repo}/branches/main/protection -X PUT \
-  --input - <<'EOF'
-{
-  "required_status_checks": {
-    "strict": true,
-    "contexts": ["Build", "Test", "Lint", "Format Check"]
-  },
-  "enforce_admins": false,
-  "required_pull_request_reviews": null,
-  "restrictions": null,
-  "required_linear_history": false,
-  "allow_force_pushes": false,
-  "allow_deletions": false,
-  "required_conversation_resolution": true
-}
-EOF
-```
-
-Key settings:
-- **strict: true** — branch must be up to date with main before merging
-- **Required checks** — adapt the context names to match your CI job names
-- **required_conversation_resolution** — all review threads must be resolved before merge
-- **allow_force_pushes: false** — protects commit history
-- **allow_deletions: false** — prevents accidental branch deletion
-- **enforce_admins: false** — admins can bypass in emergencies (use sparingly)
-
-### Repository ruleset (additional layer)
-
-Create a ruleset for defense-in-depth:
+The ruleset requires one status check, **All Clear**: a final CI job that depends on all the others (Step 6). Make sure the CI workflow has that job before you create the ruleset; a required check that never reports blocks every PR.
 
 ```bash
 gh api repos/{owner}/{repo}/rulesets -X POST \
-  --input - <<'EOF'
+  --input - <<'JSON'
 {
   "name": "Main Branch Protection",
   "target": "branch",
@@ -109,12 +80,22 @@ gh api repos/{owner}/{repo}/rulesets -X POST \
     }
   },
   "rules": [
-    { "type": "non_fast_forward" },
     { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true
+      }
+    },
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": false,
+        "strict_required_status_checks_policy": true,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           { "context": "All Clear" }
@@ -126,14 +107,25 @@ gh api repos/{owner}/{repo}/rulesets -X POST \
     {
       "actor_id": 5,
       "actor_type": "RepositoryRole",
-      "bypass_mode": "exempt"
+      "bypass_mode": "always"
     }
   ]
 }
-EOF
+JSON
 ```
 
-The "All Clear" context should be a final CI job that depends on all other checks — this way you only maintain one required check in the ruleset even as individual CI jobs change.
+Key settings:
+- **deletion / non_fast_forward** — the branch cannot be deleted or force-pushed
+- **pull_request** — changes reach main only through a PR, and every review thread must be resolved before merge
+- **strict_required_status_checks_policy: true** — the branch must be up to date with main before merging
+- **All Clear as the only required check** — one check to maintain, even as individual CI jobs change
+- **bypass_actors** — repository admins (role 5) can bypass in emergencies; use sparingly
+
+If the repo already has classic branch protection on main, remove it once the ruleset is active, so the ruleset stays the only source:
+
+```bash
+gh api repos/{owner}/{repo}/branches/main/protection -X DELETE
+```
 
 ## Step 4: Essential repo files
 
@@ -150,16 +142,16 @@ Copy `assets/.github/` into the target repo and customize:
 
 | Asset | Customize |
 |-------|-----------|
-| `CODEOWNERS` | Replace `{owner}`, adjust paths to project structure |
+| `CODEOWNERS` | Replace `{owner}` with the user's team or handle; keep the `*` default and replace the example paths with directories and files this repo has (`ls` it; `/src/` and `/tests/` are examples, a path that matches nothing is noise) |
 | `ISSUE_TEMPLATE/bug_report.md` | Add project-specific environment fields |
 | `ISSUE_TEMPLATE/feature_request.md` | Ready to use as-is |
-| `ISSUE_TEMPLATE/infrastructure-change.md` | Ready to use as-is |
+| `ISSUE_TEMPLATE/infrastructure-change.md` | Ready to use as-is: copy it too, every template in the set belongs in the repo |
 | `ISSUE_TEMPLATE/config.yml` | Replace `{owner}/{repo}` in discussions URL |
 | `DISCUSSION_TEMPLATE/ideas.yml` | Update intro text for the project |
 | `DISCUSSION_TEMPLATE/q-a.yml` | Update intro text for the project |
 | `PULL_REQUEST_TEMPLATE.md` | Ready to use as-is |
 | `dependabot.yml` | Uncomment and set language ecosystem |
-| `BRANCH_PROTECTION.md` | Update CI check names to match actual workflow |
+| `BRANCH_PROTECTION.md` | Ready to use as-is if CI's aggregator job is named All Clear |
 
 ## Step 6: CI pipeline
 
@@ -167,7 +159,9 @@ Set up `.github/workflows/ci.yml`:
 
 - Trigger on push to main and pull requests
 - Jobs: build, test, lint, format check
-- Add a final "All Clear" job that depends on all others (for the ruleset)
+- A final job named **All Clear** that depends on all others: the one check the ruleset requires
+
+All Clear must run even when a job it needs fails (`if: always()`) and fail itself in that case. Without `if: always()` it is skipped when a dependency fails, and GitHub counts a skipped required check as passing, so the PR could merge red.
 
 ```yaml
 name: CI
@@ -185,10 +179,19 @@ jobs:
   # Repeat for test, lint, format-check
 
   all-clear:
+    name: All Clear
     runs-on: ubuntu-latest
     needs: [build, test, lint, format-check]
+    if: always()
     steps:
-      - run: echo "All checks passed"
+      - name: Check results
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]] || \
+             [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more checks failed"
+            exit 1
+          fi
+          echo "All checks passed"
 ```
 
 ## Step 7: Release workflow (optional)
@@ -209,11 +212,9 @@ gh repo view {owner}/{repo} --json description,visibility,hasIssuesEnabled,hasDi
 # Security
 gh api repos/{owner}/{repo} --jq '.security_and_analysis'
 
-# Branch protection
-gh api repos/{owner}/{repo}/branches/main/protection
-
-# Rulesets
+# The ruleset, and the rules it enforces on main
 gh api repos/{owner}/{repo}/rulesets
+gh api repos/{owner}/{repo}/rules/branches/main
 
 # License detected
 gh repo view {owner}/{repo} --json licenseInfo

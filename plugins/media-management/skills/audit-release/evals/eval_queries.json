@@ -1,0 +1,66 @@
+[
+  {
+    "query": "my album shows up as two albums in Apple Music, can you fix it",
+    "should_trigger": true
+  },
+  {
+    "query": "Apple Music split the discs of this box set into separate albums",
+    "should_trigger": true
+  },
+  {
+    "query": "the cover art Apple Music picked for this album is completely wrong",
+    "should_trigger": true
+  },
+  {
+    "query": "every track title has '(live at ...)' tacked on the end, clean them up",
+    "should_trigger": true
+  },
+  {
+    "query": "the CD import didn't finish properly, can you check what's missing",
+    "should_trigger": true
+  },
+  {
+    "query": "check Depeche Mode's albums for any that are split",
+    "should_trigger": true
+  },
+  {
+    "query": "is this album properly on the NAS and in Apple Music?",
+    "should_trigger": true
+  },
+  {
+    "query": "undo the album fix you did earlier",
+    "should_trigger": true
+  },
+  {
+    "query": "rip the CD in the drive",
+    "should_trigger": false
+  },
+  {
+    "query": "process the album I just bought, it's in Downloads",
+    "should_trigger": false
+  },
+  {
+    "query": "change the genre of the download I just extracted",
+    "should_trigger": false
+  },
+  {
+    "query": "free up disk space in my Apple Music library",
+    "should_trigger": false
+  },
+  {
+    "query": "split this 80 minute mix into two tracks",
+    "should_trigger": false
+  },
+  {
+    "query": "set up the media management paths",
+    "should_trigger": false
+  },
+  {
+    "query": "import these MP3s into Apple Music",
+    "should_trigger": false
+  },
+  {
+    "query": "what's the best ripper for macOS",
+    "should_trigger": false
+  }
+]

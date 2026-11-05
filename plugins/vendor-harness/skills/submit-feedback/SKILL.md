@@ -33,6 +33,15 @@ Search for an existing report first — cross-vendor format incompatibilities ar
 already filed. Link the existing issue rather than duplicating it.
 
 **Filing a GitHub issue:**
+Search the target repo before filing, whoever the artifact or vendor is:
+`gh issue list --repo owner/repo --state all --search "<key words>"`.
+If an open report already covers the problem, do not file a second one, even when
+the user said to file it now: their go-ahead covers the text, not a duplicate. Give
+them the existing issue's link and offer to add what the new report knows (the
+reproduction, the version, the impact) as a comment on it. File only when nothing
+matches, or when the existing issue is closed and the problem is back (then link it
+from the new one).
+
 `gh issue create --repo owner/repo --title "title" --body "body"`
 Label suggestions: `bug`, `enhancement`, `vendor-compat` (if vendor-specific)
 

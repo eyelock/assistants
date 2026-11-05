@@ -1,0 +1,24 @@
+[
+  { "query": "set up GitHub Actions for our gitflow repo", "should_trigger": true },
+  {
+    "query": "which check should branch protection require when jobs get skipped by a paths filter?",
+    "should_trigger": true
+  },
+  {
+    "query": "add a workflow that blocks PRs into main unless they come from a release or hotfix branch",
+    "should_trigger": true
+  },
+  {
+    "query": "write a release workflow that runs on v* tags and checks CI passed on the commit first",
+    "should_trigger": true
+  },
+  {
+    "query": "my required check sits at pending forever when only docs change",
+    "should_trigger": true
+  },
+  { "query": "CI failed on my PR, watch it and merge when green", "should_trigger": false },
+  { "query": "tag v1.2.0 to release it", "should_trigger": false },
+  { "query": "run lint and tests locally before I commit", "should_trigger": false },
+  { "query": "what commit type do I use for a workflow change?", "should_trigger": false },
+  { "query": "set up a GitLab CI pipeline for our Python package", "should_trigger": false }
+]

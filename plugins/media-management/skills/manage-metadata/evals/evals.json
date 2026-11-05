@@ -1,38 +1,124 @@
 {
   "skill_name": "manage-metadata",
-  "fixtures": "Run tests/fixtures/generate-eval-fixtures.sh first; each eval below operates directly on a folder under tests/fixtures/eval-sandbox/extracted/. Wrap every script call with tests/fixtures/run-isolated.sh so real MEDIA_MGMT_* env vars never override the sandbox paths.",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, and the plugin's config.json under config/, which the session's project settings point MEDIA_MGMT_CONFIG_PATH at (every other MEDIA_MGMT_* variable is blanked, so no real path leaks in). Audio is real: short tagged tones made by ffmpeg, zipped the way stores ship them. The evidence (evals/files/evidence.sh) lists every file added, removed or changed since setup, the whole tree, every MP3's tags as ffprobe reads them, config.json, and, for Apple Music, the stub osascript's calls and playlists.",
   "evals": [
     {
       "id": 1,
-      "prompt": "can you check the tags on this album folder, tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album, before I import it",
-      "files": ["tests/fixtures/eval-sandbox/extracted/Test Artist - Test Album"],
-      "expected_output": "A per-track metadata table (title, artist, album, genre, track number, album artist) plus a flagged list of issues: missing titles, missing/empty genre, inconsistent artist names, missing/wrong track numbers, album artist inconsistencies, compilation flag issues. This fixture is clean (genre=Electronic, single artist) so no issues should be flagged.",
+      "name": "inspect-before-import",
+      "prompt": "can you check the tags on ./Downloads/Night Drive - Afterglow before I import it into Apple Music",
+      "setup": "../../evals/files/metadata-inspect.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "A per-track table for the 4 tracks (title, artist, album, genre, track, album artist). Flags two real issues: track 3 (Overpass) has no genre while the others are Electronic, and Album Artist is set to Night Drive on a single-artist album, where the plugin's rule is to clear it. Inspect is read-only: no file changes.",
       "assertions": [
-        "Presents a table with one row per track showing title, artist, album, genre, track number, and album artist",
-        "Does not flag a missing genre — this fixture's tracks all have genre=Electronic set",
-        "Does not apply any changes — inspect mode is read-only"
+        "Presents a table with one row per track (4 rows) showing title, artist, album, genre, track number and album artist",
+        "Flags that track 3 (Overpass) has no genre while the other tracks are Electronic",
+        "Flags that Album Artist is set on a single-artist album and should be cleared",
+        "Does not report a missing title, an artist mismatch or a wrong album name (none exist; every track is titled, by Night Drive, on album Afterglow)",
+        "The evidence shows no files added, removed or changed (inspection is read-only)"
       ]
     },
     {
       "id": 2,
-      "prompt": "the genre is blank on tests/fixtures/eval-sandbox/extracted/Foo - Bar, set it to Techno for me",
-      "files": ["tests/fixtures/eval-sandbox/extracted/Foo - Bar"],
-      "expected_output": "Runs inspect first, confirms genre is indeed empty on all 3 tracks, then updates the genre field to Techno across all tracks and verifies the change with a follow-up inspect.",
+      "name": "fill-genre-unnamed",
+      "prompt": "the genre is blank on everything in ./Downloads/Night Drive - Afterglow, fill it in so I can import it",
+      "setup": "../../evals/files/metadata-genre.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "The genre is not the user's to guess at and not the assistant's to pick: it confirms the genre is blank on all 4 tracks, fetches the genres already in the Apple Music library (Ambient, Electronic, House, Techno), offers them as numbered options (or a custom one) and asks which. It writes nothing until the user chooses: no file changes.",
       "assertions": [
-        "Inspects before updating rather than updating blind",
-        "Applies the exact genre value the user specified (Techno) without asking them to re-confirm a value they already gave",
-        "Re-runs inspection after the update to confirm genre=Techno on all 3 tracks"
+        "The evidence shows no files added, removed or changed: no genre was written to any track",
+        "The reply asks the user which genre to use rather than announcing it picked one",
+        "The reply offers the genres already in the user's Apple Music library (Ambient, Electronic, House, Techno) as the choices, and allows a custom one",
+        "The reply confirms from the tags that the genre is blank on all 4 tracks"
       ]
     },
     {
       "id": 3,
-      "prompt": "why does my import show up as a bunch of separate tracks instead of one album in Apple Music? the files are in tests/fixtures/eval-sandbox/extracted/Various - Comp",
-      "files": ["tests/fixtures/eval-sandbox/extracted/Various - Comp"],
-      "expected_output": "Inspects the folder, detects 3 distinct Artist values (Artist 1, Artist 2, Artist 3), identifies this as a likely compilation, and proposes setting Album Artist to 'Various Artists' with the compilation flag — asking for user confirmation before applying.",
+      "name": "why-separate-albums",
+      "prompt": "why does ./Downloads/Summer Sampler show up as four separate albums when I add it to Apple Music?",
+      "setup": "../../evals/files/metadata-compilation.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Inspects the folder: 4 tracks by 4 different artists (Kora Lune, Night Drive, Deep Room, Aster), album Summer Sampler, no Album Artist, no compilation flag. Explains that Apple Music groups by Album Artist and falls back to each track's artist, so it splits into four. Classifies it as a compilation and proposes Album Artist 'Various Artists' plus the compilation flag, each track keeping its own artist. Asks before changing anything; no file changes.",
       "assertions": [
-        "Detects all 3 distinct artist values across the tracks in the folder",
-        "Proposes the compilation classification (Various Artists + compilation flag) rather than a single/collaboration classification",
-        "Asks the user to confirm before applying any changes"
+        "Names the four different track artists (Kora Lune, Night Drive, Deep Room, Aster)",
+        "Explains that the missing Album Artist (with no compilation flag) is why Apple Music files it under each artist separately",
+        "Proposes Album Artist 'Various Artists' and the compilation flag, keeping each track's own artist",
+        "Asks the user before applying the fix",
+        "The evidence shows no files added, removed or changed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "three-artists-one-album",
+      "prompt": "./Downloads/Night Drive - Afterglow splits into three albums in Apple Music because track 3 is by Kora Lune and track 4 by Deep Room. Fix the tags so it shows as one album — go ahead and apply it, no need to check with me.",
+      "setup": "../../evals/files/metadata-trio.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(unzip:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(ditto:*)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "expected_output": "Three distinct artists (Night Drive on tracks 1-2, Kora Lune on 3, Deep Room on 4) make it a compilation by the plugin's rule, not a collaboration: Album Artist 'Various Artists' and the compilation flag on all 4 tracks, each track keeping its own artist. Album Artist is not set to Night Drive, even though Night Drive is the most frequent. Re-inspects to verify.",
+      "assertions": [
+        "The evidence shows album_artist 'Various Artists' on all 4 MP3s",
+        "The evidence shows the compilation flag set (compilation 1 / TCMP) on all 4 MP3s",
+        "The evidence shows each track's own artist unchanged: Night Drive on tracks 1-2, Kora Lune on 3, Deep Room on 4",
+        "The evidence shows no album artist 'Night Drive' on any track",
+        "The evidence shows no new or removed files"
       ]
     }
   ]

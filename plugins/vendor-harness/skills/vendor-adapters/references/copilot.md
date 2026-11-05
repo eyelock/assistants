@@ -222,7 +222,7 @@ Harness-relevant keys: `enabledPlugins`, `extraKnownMarketplaces`, `strictKnownM
 
 ## Key CLI Details
 
-- Install: `npm install -g @github/copilot` (also Homebrew, WinGet, `curl -fsSL https://gh.io/copilot-install | bash`)
+- Install: `npm install -g @github/copilot` (also Homebrew, WinGet, or the install script at https://gh.io/copilot-install)
 - Binary: `copilot`
 - Non-interactive: `copilot -p "prompt"` (add `-s` to strip stats/decoration for piping)
 - Permission flags: `--allow-all`/`--yolo`, `--allow-all-tools`, `--allow-all-paths`,

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Tag-driven release automation — versioning, release types, and monitoring. Never create releases manually.
+description: Tag-driven release automation - cutting a stable, beta or hotfix release, choosing the version bump, and monitoring the release workflow. Use to ship a release or when a release fails. Never create releases manually.
 ---
 
 # Release Procedures
@@ -21,15 +21,15 @@ Use semantic versioning. Version is determined entirely from git tags — no VER
 
 - **PATCH** (0.6.4 → 0.6.5) — bug fixes, small improvements
 - **MINOR** (0.6.5 → 0.7.0) — new features, backwards compatible
-- **MAJOR** (0.9.0 → 1.0.0) — breaking changes, major milestones
+- **MAJOR** (0.9.0 → 1.0.0) — breaking changes (commits marked `!` with a `BREAKING CHANGE:` footer), major milestones
 
 ## Release Types
 
 See the detailed procedure for each release type:
 
-- [stable.md](references/stable.md) — standard release from main
-- [beta.md](references/beta.md) — pre-release for testing
-- [hotfix.md](references/hotfix.md) — critical patch on a branch
+- [stable.md](references/stable.md) — standard release: `release/vX.Y.Z` from develop, PR'd into main, tagged on main
+- [beta.md](references/beta.md) — pre-release for testing: a `vX.Y.Z-beta.N` tag pushed on develop, no release branch
+- [hotfix.md](references/hotfix.md) — critical patch: `hotfix/vX.Y.Z` cut from the release tag, PR'd into `main`, tagged on `main`
 
 ## Monitoring
 

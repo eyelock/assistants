@@ -1,0 +1,26 @@
+[
+  {
+    "query": "you are mccoist, starting a new session",
+    "should_trigger": true
+  },
+  {
+    "query": "you are the tharg seat, waking up for the day, where are you",
+    "should_trigger": true
+  },
+  {
+    "query": "gahan here, new session, what is waiting for me",
+    "should_trigger": true
+  },
+  {
+    "query": "wake me up at 7am tomorrow",
+    "should_trigger": false
+  },
+  {
+    "query": "add a release manager seat to the wheelhouse",
+    "should_trigger": false
+  },
+  {
+    "query": "what is blocking the ynh release epic?",
+    "should_trigger": false
+  }
+]

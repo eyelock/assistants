@@ -1,0 +1,54 @@
+{
+  "skill_name": "gh-os-repo",
+  "fixtures": "Shell sandbox cases. gh-os-repo-setup.sh checks out acme/widget, a small Go project about to go public, whose CI runs Build, Test, Lint and Format Check jobs and an All Clear job that needs them but lacks if: always() (it reports on main's commits), and installs a gh (gh-os-repo-stub.sh) that answers like GitHub for it: main still has classic branch protection requiring Build and Test, and there are no rulesets. Every gh call is recorded with its request body. The evidence lists the checkout's files with the contents of .github/ and the root community files.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "harden-github-side",
+      "prompt": "We're making acme/widget (this checkout) public today. Do the GitHub side: repo settings, security features and protecting main. I'll handle the community files and templates later.",
+      "setup": "../../evals/files/gh-os-repo-setup.sh",
+      "tools": ["Bash(gh:*)", "Bash(git:*)", "Edit(./**)", "Write(./**)"],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/gh-os-repo-evidence.sh\"",
+      "expected_output": "Repo settings through gh api -X PATCH: issues and discussions on, wiki off, rebase merge off, squash and merge commits on, delete branch on merge on. Security through security_and_analysis: secret scanning, secret scanning push protection and Dependabot security updates enabled. main is protected by one repository ruleset on ~DEFAULT_BRANCH (POST /rulesets) with deletion, non_fast_forward, a pull_request rule requiring review threads resolved, and required status checks with the single context All Clear, strict. The old classic protection is removed (DELETE branches/main/protection), not added to or kept. CI's All Clear job has no if: always(), so when a job fails it is skipped, and a skipped required check counts as passing: it adds if: always() and a step that fails when any needed job failed or was cancelled. It verifies at the end.",
+      "assertions": [
+        "A gh api PATCH of repos/acme/widget sets has_wiki false, has_discussions true, allow_rebase_merge false and delete_branch_on_merge true",
+        "Secret scanning, secret scanning push protection and Dependabot security updates were enabled (security_and_analysis, or the equivalent endpoints)",
+        "A ruleset was created with POST repos/acme/widget/rulesets targeting the default branch (~DEFAULT_BRANCH or refs/heads/main), with deletion and non_fast_forward rules",
+        "The ruleset's required status checks are the single context All Clear",
+        "The ruleset requires changes through a pull request with review threads resolved, and strict (up-to-date) status checks",
+        "Classic branch protection was not created or updated (no PUT to branches/main/protection), and the existing classic protection was deleted or the reply says it should be removed",
+        "ci.yml's All Clear job now has if: always() and fails when any needed job failed or was cancelled (or the reply flags that it must, because a skipped required check counts as passing)",
+        "The reply reports what was set and what was verified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "community-files",
+      "prompt": "acme/widget (this checkout) goes public next week. Get the community files in place. The maintainers team is @acme/widget-maintainers. Don't touch GitHub settings.",
+      "setup": "../../evals/files/gh-os-repo-setup.sh",
+      "tools": [
+        "Bash(gh:*)",
+        "Bash(git:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(ls:*)",
+        "Edit(./**)",
+        "Write(./**)"
+      ],
+      "stubs": [],
+      "evidence": "bash \"$EVAL_FIXTURES/gh-os-repo-evidence.sh\"",
+      "expected_output": "The skill's full community set, tailored to this repo. At the root: LICENSE (MIT by default, or it asks which license), CONTRIBUTING.md (fork, branch, PR workflow, code style and tests: make build, test, lint, format-check). Under .github/: issue templates for a bug, a feature and an infrastructure change, with config.yml (its discussions link pointing at https://github.com/acme/widget/discussions), discussion templates for ideas and Q&A, a PR template, CODEOWNERS owning everything by @acme/widget-maintainers with paths that exist in this repo (cmd/, internal/, Makefile, .github/workflows/) and not the example /src/ or /tests/, dependabot.yml with github-actions and gomod ecosystems enabled, and BRANCH_PROTECTION.md saying main is protected by one ruleset requiring All Clear. No {owner} or {repo} placeholder is left. No gh write call is made.",
+      "assertions": [
+        "A LICENSE file exists (MIT, or the reply asks which license to use) and CONTRIBUTING.md describes the fork, branch and PR workflow and the make targets to run",
+        "The repo has issue templates for a bug report, a feature request and an infrastructure change under .github/ISSUE_TEMPLATE, plus a config.yml that links to https://github.com/acme/widget/discussions",
+        "The repo has discussion templates for ideas and for Q&A under .github/DISCUSSION_TEMPLATE, and a pull request template (.github/PULL_REQUEST_TEMPLATE.md)",
+        ".github/CODEOWNERS assigns @acme/widget-maintainers, and lists paths that exist in this repo (such as /cmd/, /internal/, /Makefile, /.github/workflows/) rather than /src/ or /tests/",
+        ".github/dependabot.yml has both the github-actions and the gomod ecosystem enabled (not left commented out)",
+        ".github/BRANCH_PROTECTION.md exists and says main is protected by one ruleset that requires the All Clear check, with no classic branch protection",
+        "No {owner} or {repo} placeholder remains in any file",
+        "No gh write call was made (no PATCH, PUT, POST or DELETE, no gh repo edit)"
+      ]
+    }
+  ]
+}

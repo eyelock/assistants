@@ -1,0 +1,18 @@
+[
+  { "query": "design the REST API for invoices", "should_trigger": true },
+  {
+    "query": "how should my service handle a flaky downstream dependency?",
+    "should_trigger": true
+  },
+  { "query": "should I split this into microservices?", "should_trigger": true },
+  { "query": "paginate the list endpoint and return a total count", "should_trigger": true },
+  { "query": "what error response shape should the API return?", "should_trigger": true },
+  { "query": "protect the login endpoint against brute force", "should_trigger": false },
+  {
+    "query": "build the orders table component with loading and empty states",
+    "should_trigger": false
+  },
+  { "query": "scaffold a new Go service repo", "should_trigger": false },
+  { "query": "review my API handler changes", "should_trigger": false },
+  { "query": "my handler never seems to get called, nothing in the logs", "should_trigger": false }
+]

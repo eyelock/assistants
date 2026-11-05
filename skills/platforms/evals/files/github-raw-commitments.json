@@ -1,0 +1,173 @@
+{
+  "snapshot": "Raw results of GitHub MCP tool calls (read-only endpoint) captured 2026-10-19T09:00:00Z (a Monday). Treat this time as now. All timestamps are UTC ISO 8601. The user is in UTC.",
+  "get_me": {
+    "login": "dcollie",
+    "id": 4711,
+    "name": "David Collie",
+    "teams": ["acme/platform"]
+  },
+  "search_issues": {
+    "commenter:@me updated:>=2026-10-05": {
+      "total_count": 3,
+      "items": [
+        {
+          "number": 450,
+          "title": "Ingest retries too aggressively",
+          "state": "open",
+          "user": {
+            "login": "sam"
+          },
+          "repository_url": "https://api.github.com/repos/acme/api",
+          "html_url": "https://github.com/acme/api/issues/450",
+          "created_at": "2026-10-15T09:00:00Z",
+          "updated_at": "2026-10-16T15:00:00Z"
+        },
+        {
+          "number": 402,
+          "title": "Docs: fix install steps",
+          "state": "closed",
+          "user": {
+            "login": "lee"
+          },
+          "repository_url": "https://api.github.com/repos/acme/docs",
+          "html_url": "https://github.com/acme/docs/issues/402",
+          "created_at": "2026-10-10T09:00:00Z",
+          "updated_at": "2026-10-14T12:00:00Z"
+        },
+        {
+          "number": 120,
+          "title": "Rework billing page",
+          "state": "open",
+          "user": {
+            "login": "ana"
+          },
+          "repository_url": "https://api.github.com/repos/acme/web",
+          "html_url": "https://github.com/acme/web/issues/120",
+          "created_at": "2026-10-08T09:00:00Z",
+          "updated_at": "2026-10-12T10:00:00Z"
+        }
+      ]
+    },
+    "retry limit in:comments": {
+      "total_count": 1,
+      "items": [
+        {
+          "number": 450,
+          "title": "Ingest retries too aggressively",
+          "state": "open",
+          "user": {
+            "login": "sam"
+          },
+          "repository_url": "https://api.github.com/repos/acme/api",
+          "html_url": "https://github.com/acme/api/issues/450",
+          "created_at": "2026-10-15T09:00:00Z",
+          "updated_at": "2026-10-16T15:00:00Z"
+        }
+      ]
+    }
+  },
+  "search_pull_requests": {
+    "commenter:@me updated:>=2026-10-05": {
+      "total_count": 1,
+      "items": [
+        {
+          "number": 455,
+          "title": "Batch the spool writes",
+          "state": "open",
+          "draft": false,
+          "user": {
+            "login": "alex"
+          },
+          "repository_url": "https://api.github.com/repos/acme/api",
+          "html_url": "https://github.com/acme/api/pull/455",
+          "created_at": "2026-10-12T09:00:00Z",
+          "updated_at": "2026-10-17T09:00:00Z"
+        }
+      ]
+    }
+  },
+  "issue_read": {
+    "acme/api#450": {
+      "state": "open",
+      "title": "Ingest retries too aggressively",
+      "comments": [
+        {
+          "user": {
+            "login": "sam"
+          },
+          "created_at": "2026-10-15T09:00:00Z",
+          "body": "The retry limit is 5, set in ingest.yaml. It should be lower."
+        },
+        {
+          "user": {
+            "login": "dcollie"
+          },
+          "created_at": "2026-10-16T15:00:00Z",
+          "body": "I'll take a look at this on Monday."
+        }
+      ]
+    },
+    "acme/docs#402": {
+      "state": "closed",
+      "title": "Docs: fix install steps",
+      "comments": [
+        {
+          "user": {
+            "login": "dcollie"
+          },
+          "created_at": "2026-10-12T10:00:00Z",
+          "body": "I'll fix the install steps this week."
+        },
+        {
+          "user": {
+            "login": "dcollie"
+          },
+          "created_at": "2026-10-14T12:00:00Z",
+          "body": "Fixed in acme/docs#404."
+        }
+      ]
+    },
+    "acme/web#120": {
+      "state": "open",
+      "title": "Rework billing page",
+      "comments": [
+        {
+          "user": {
+            "login": "dcollie"
+          },
+          "created_at": "2026-10-12T10:00:00Z",
+          "body": "we should probably split this at some point"
+        }
+      ]
+    }
+  },
+  "pull_request_read": {
+    "acme/api#455": {
+      "state": "open",
+      "draft": false,
+      "merged": false,
+      "user": {
+        "login": "alex"
+      },
+      "body": "Batches the spool writes.",
+      "requested_reviewers": [],
+      "requested_teams": [],
+      "reviews": [
+        {
+          "user": {
+            "login": "dcollie"
+          },
+          "state": "COMMENTED",
+          "submitted_at": "2026-10-13T11:00:00Z",
+          "body": "Looks good overall. I'll re-review once the tests are green."
+        }
+      ],
+      "checks": [
+        {
+          "name": "test",
+          "conclusion": "success"
+        }
+      ]
+    }
+  }
+}

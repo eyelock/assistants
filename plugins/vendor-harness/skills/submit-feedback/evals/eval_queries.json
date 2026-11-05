@@ -1,0 +1,21 @@
+[
+  { "query": "file this report as an issue on the plugin's GitHub repo", "should_trigger": true },
+  {
+    "query": "I have commit access and the repo's checked out, should I open a PR or an issue?",
+    "should_trigger": true
+  },
+  {
+    "query": "this looks like a copilot cli bug, not our plugin. where do I report it?",
+    "should_trigger": true
+  },
+  { "query": "gh isn't installed, how do I submit this issue", "should_trigger": true },
+  {
+    "query": "the plugin I got this from is a fork, where should the issue go?",
+    "should_trigger": true
+  },
+  { "query": "draft the bug report first, I'll file it later", "should_trigger": false },
+  { "query": "where did this plugin come from?", "should_trigger": false },
+  { "query": "open a PR for my feature branch", "should_trigger": false },
+  { "query": "write the PR description for the hooks fix", "should_trigger": false },
+  { "query": "add this to the known gaps table", "should_trigger": false }
+]

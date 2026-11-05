@@ -51,8 +51,12 @@ skipped_json="[]"
 for f in "${files[@]}"; do
   filename=$(basename "$f")
 
+  # Already clean multi-disc names ("1-01 Title.wav", as rip-cd writes them)
+  # stay as they are: pattern 3 would read "1-" as the track number.
+  if [[ "$filename" =~ ^[0-9]+-[0-9]{2}\ .+\.wav$ ]]; then
+    continue
   # Pattern 1: "Artist - Album - 01 Title.wav" or "Artist - Album - 1 Title.wav"
-  if [[ "$filename" =~ ^.+\ -\ .+\ -\ ([0-9]+)\ (.+)\.wav$ ]]; then
+  elif [[ "$filename" =~ ^.+\ -\ .+\ -\ ([0-9]+)\ (.+)\.wav$ ]]; then
     track_num=$(printf "%02d" "$((10#${BASH_REMATCH[1]}))")
     title="${BASH_REMATCH[2]}"
     new_name="${track_num} ${title}.wav"

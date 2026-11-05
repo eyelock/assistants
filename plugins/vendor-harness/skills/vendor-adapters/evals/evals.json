@@ -1,0 +1,48 @@
+{
+  "skill_name": "vendor-adapters",
+  "fixtures": "No files: reference questions whose answers come from the skill's tables and verified known gaps, where vendor docs and general knowledge are wrong or stale.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "subdir-marketplace-entry",
+      "prompt": "Our plugin lives in plugins/release-kit inside github.com/acme/tools. I want a single marketplace.json entry that installs it from both Claude Code and Copilot CLI. What should the source be?",
+      "expected_output": "There is no single entry that works for both. Claude Code needs {\"source\": \"git-subdir\", \"url\": ..., \"path\": \"plugins/release-kit\"} (git-subdir is the only Claude type with a path; Claude's github type takes no path). Copilot CLI rejects git-subdir, and rejects it for the whole index, not just that entry, so one such row makes every plugin uninstallable from Copilot. Copilot accepts exactly three source types (relative path, github, url), and its github type supports path: {\"source\": \"github\", \"repo\": \"acme/tools\", \"path\": \"plugins/release-kit\"}. Fix: publish a Copilot-safe .github/plugin/marketplace.json alongside .claude-plugin/marketplace.json (Copilot reads .github/plugin/ before .claude-plugin/), or use a relative path if the marketplace lives in the same repo.",
+      "assertions": [
+        "Says no single entry satisfies both vendors",
+        "Says Claude Code needs the git-subdir source type for a path, because Claude's github type has no path",
+        "Says Copilot CLI rejects git-subdir and that this fails the whole index, not just the one entry",
+        "Says Copilot accepts exactly three source types: relative path, github and url",
+        "Gives the Copilot form as a github source with repo acme/tools and path plugins/release-kit",
+        "Recommends publishing a separate .github/plugin/marketplace.json alongside the Claude .claude-plugin/marketplace.json"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "copilot-agents-and-iteration",
+      "prompt": "Porting our Claude plugin to Copilot CLI. Two questions: do our agents/reviewer.md and agents/triager.md need renaming to .agent.md for Copilot to pick them up, and how do I iterate on the plugin locally without reinstalling after every edit? Also, what's the command to see which plugins Copilot has loaded?",
+      "expected_output": "No renaming: Copilot CLI registers plain agents/*.md as well as *.agent.md (verified against Copilot CLI v1.0.80; the earlier gap claiming .agent.md was required was withdrawn). For iteration, copilot --plugin-dir ./my-plugin loads the plugin from the directory each run, so edits apply without reinstalling; the flag is repeatable and exists in copilot --help even though the web docs omit it. To list plugins: copilot plugin list (singular); the documented copilot plugins list does not exist in v1.0.80.",
+      "assertions": [
+        "Says plain agents/*.md files register in Copilot CLI, so no renaming to .agent.md is needed",
+        "Recommends copilot --plugin-dir pointing at the plugin directory for iterating without reinstalling",
+        "Notes --plugin-dir is missing from the web docs but present in the CLI",
+        "Gives copilot plugin list (singular) as the listing command",
+        "Says copilot plugins list (plural) does not exist, despite the published docs"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "codex-plugin-contents",
+      "prompt": "Our Claude plugin ships skills, two subagents, .claude/rules/ files, a few commands, hooks, and an MCP server that uses \"type\": \"local\" from a Copilot example. What of that will actually work as a Codex plugin?",
+      "expected_output": "Skills work fully. Subagents are not supported in Codex plugins, nor are rules, nor commands (convert commands to skills). Hooks work but Codex supports command hooks only, across 11 events. MCP works for stdio only, and \"type\": \"local\" is Copilot's spelling, which Codex (and Claude Code) do not recognise: use \"type\": \"stdio\". Codex's manifest is .codex-plugin/plugin.json and its marketplace index is .agents/plugins/marketplace.json.",
+      "assertions": [
+        "Says skills work in a Codex plugin",
+        "Says subagents are not supported in Codex plugins",
+        "Says rules are not supported in Codex plugins",
+        "Says commands are not supported and should become skills",
+        "Says Codex hooks support only the command hook type",
+        "Says Codex MCP supports stdio only",
+        "Says \"type\": \"local\" is not recognised by Codex and should be \"type\": \"stdio\""
+      ]
+    }
+  ]
+}

@@ -196,7 +196,7 @@ if (!harnessDir) {
 }
 
 const root = process.cwd();
-const manifestRel = join(harnessDir, ".ynh-plugin", "plugin.json");
+const manifestRel = join(harnessDir, ".agents", "harness", "plugin.json");
 const manifest = readJson(join(root, manifestRel), "harness manifest");
 if (!manifest.name) {
   fail(`${manifestRel} has no "name" — add one (it becomes the ${SCOPE}/<name> package name)`);

@@ -1,0 +1,54 @@
+{
+  "skill_name": "java-lang",
+  "fixtures": "Java sources copied into data/. There is no build tool or network in the run, so cases review or write code rather than compile it.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "review-order-service",
+      "prompt": "Review data/java-orders/ (OrderService and its test) against our Java conventions and tell me what to change before this merges.",
+      "files": ["../../evals/files/java-orders"],
+      "expected_output": "Production code: Optional must not be a constructor parameter or field (only a return type); findOrder uses Optional.get() and should use orElseThrow() with a descriptive exception; ordersFor returns null and should return an empty list (List.of()); create catches Exception broadly and rethrows a bare RuntimeException instead of a specific exception type with context (e.g. OrderCreationException naming the customer); importSkus swallows IOException in an empty catch and does not use try-with-resources. Tests: JUnit 4 (org.junit.Test, @Before) must become JUnit 5 (org.junit.jupiter); assertions should use AssertJ assertThat; test names test1..3 need @DisplayName and grouping with @Nested per method; Mockito mocks and verify calls should give way to an in-memory fake repository.",
+      "assertions": [
+        "Says Optional should not be used as a constructor parameter or field, only as a return type",
+        "Says to replace Optional.get() with orElseThrow() and a descriptive exception",
+        "Says ordersFor should return an empty list rather than null",
+        "Says create should catch specific exceptions and throw a specific exception type with context, not a bare RuntimeException",
+        "Flags the empty catch in importSkus and says to use try-with-resources for the reader",
+        "Says the tests must move from JUnit 4 to JUnit 5 (org.junit.jupiter)",
+        "Recommends AssertJ assertThat for the assertions",
+        "Recommends @DisplayName (and @Nested grouping) instead of the test1/test2/test3 names",
+        "Recommends replacing the Mockito mocks with an in-memory fake or real implementation of OrderRepository"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "tests-for-price-calculator",
+      "prompt": "Write the unit tests for data/PriceCalculator.java.",
+      "files": ["../../evals/files/PriceCalculator.java"],
+      "expected_output": "A JUnit 5 test class. Tests are grouped in a @Nested class with @DisplayName(\"PriceCalculator.total\") (or similar), each test has a @DisplayName, the input ranges (discounts, quantities, out-of-range values) use @ParameterizedTest with @CsvSource or @MethodSource, assertions use AssertJ (assertThat, assertThatThrownBy(...).isInstanceOf(IllegalArgumentException.class)), and TaxRates is supplied by a lambda or small in-memory fake (e.g. Map::get) rather than a Mockito mock.",
+      "assertions": [
+        "Uses JUnit 5 (org.junit.jupiter), not JUnit 4",
+        "Groups the tests in a @Nested class",
+        "Gives the tests @DisplayName descriptions",
+        "Uses @ParameterizedTest with @CsvSource, @MethodSource or @EnumSource for at least one set of cases",
+        "Uses AssertJ assertThat for value checks",
+        "Checks the IllegalArgumentException cases with AssertJ assertThatThrownBy (or assertThatIllegalArgumentException)",
+        "Supplies TaxRates with a lambda or in-memory fake, not a Mockito mock"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "gradle-ci-jobs",
+      "prompt": "Write the GitHub Actions workflow for our Gradle service. It uses Spotless and SpotBugs, and our branch protection needs one required check.",
+      "expected_output": "Separate jobs for Build (./gradlew compileJava), Test (./gradlew test), Lint (SpotBugs, e.g. ./gradlew spotbugsMain) and Format Check (./gradlew spotlessCheck), every Gradle call through the wrapper with --console=plain, and an All Clear aggregator job that needs all of them and is the single required check for branch protection. The Java version comes from a .java-version file or the Gradle toolchain, not a hard-coded number scattered through the jobs.",
+      "assertions": [
+        "Has separate Build, Test, Lint and Format Check jobs",
+        "Every Gradle invocation uses the wrapper (./gradlew), never a bare gradle",
+        "Gradle invocations pass --console=plain",
+        "Format Check runs Spotless in check mode (spotlessCheck), not spotlessApply",
+        "Has an aggregator job (e.g. All Clear) that needs every other job and is the one required check",
+        "Takes the Java version from a .java-version file or the Gradle toolchain configuration"
+      ]
+    }
+  ]
+}

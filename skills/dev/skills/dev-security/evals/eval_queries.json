@@ -1,0 +1,12 @@
+[
+  { "query": "how should I store user passwords?", "should_trigger": true },
+  { "query": "is this file upload handler safe?", "should_trigger": true },
+  { "query": "check these endpoints for injection and IDOR", "should_trigger": true },
+  { "query": "where should the API keys for this service live?", "should_trigger": true },
+  { "query": "what cookie flags should the session cookie have", "should_trigger": true },
+  { "query": "review this PR before I merge it", "should_trigger": false },
+  { "query": "design the REST endpoints for orders", "should_trigger": false },
+  { "query": "fix the failing lint and tests", "should_trigger": false },
+  { "query": "show validation errors inline next to each form field", "should_trigger": false },
+  { "query": "add retries with backoff to the payments client", "should_trigger": false }
+]

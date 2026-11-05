@@ -1,7 +1,7 @@
 # eyelock/mcp-toolkit Reference
 
-Source: /Users/david/Storage/Workspace/eyelock/mcp-toolkit
-Docs: /Users/david/Storage/Workspace/eyelock/mcp-toolkit/docs/
+Source: https://github.com/eyelock/mcp-toolkit (or a local clone of it)
+Docs: docs/ in that repository
 
 ## Purpose
 

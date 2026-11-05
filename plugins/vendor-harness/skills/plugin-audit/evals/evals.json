@@ -1,0 +1,54 @@
+{
+  "skill_name": "plugin-audit",
+  "fixtures": "acme-tools and notes-kit are small plugin directories, and marketplace.json is a marketplace index, copied into the run's data/ folder. The plugin directories are kept under evals/files/.trees/vendor/ so the repo's own skill discovery skips them.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "acme-tools-audit",
+      "prompt": "Is data/acme-tools ready to ship to Claude Code, Cursor, Codex and Copilot CLI? It has .claude-plugin/ and .cursor-plugin/ manifests, a .mcp.json, hooks/hooks.json, one skill and one agent.",
+      "files": ["../../evals/files/.trees/vendor/acme-tools"],
+      "expected_output": "Not ready. The plugin name acme.tools has a dot, which Copilot rejects (names must be kebab-case). There is no .codex-plugin/plugin.json. skills/summarize has a metadata field, which triggers Claude Code's demotion bug. agents/reviewer.md cannot ship to Codex (no agents), and its skills: key and Claude-only tools are inert on Copilot. hooks.json lacks Copilot's \"version\": 1 and uses three-level nesting. The acme-docs server is HTTP, which Codex does not support, and there is no mcp.json for Cursor. Reported as a per-vendor readiness table and a HIGH/MED/LOW list naming the affected vendors.",
+      "assertions": [
+        "Gives a readiness line for each of Claude Code, Cursor, Codex and Copilot CLI",
+        "Gives a prioritized issue list with HIGH/MED/LOW levels, each naming the vendors it affects",
+        "Flags the plugin name acme.tools as rejected by Copilot because it is not kebab-case",
+        "Flags the missing .codex-plugin/plugin.json manifest",
+        "Flags the metadata field in skills/summarize/SKILL.md as a Claude Code demotion risk",
+        "Flags that Codex does not support agents, so agents/reviewer.md will not ship there",
+        "Flags hooks/hooks.json as missing Copilot's \"version\": 1 or using a nesting shape Copilot does not bind",
+        "Flags that the HTTP acme-docs MCP server is not supported by Codex",
+        "Flags that Cursor needs mcp.json without the dot"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "marketplace-copilot",
+      "prompt": "Will our marketplace install in Copilot CLI? data/marketplace.json is our .claude-plugin/marketplace.json.",
+      "files": ["../../evals/files/marketplace.json"],
+      "expected_output": "No. Copilot accepts only relative paths, github and url sources, and one bad entry fails the whole index, not just that plugin. acme-infra uses git-subdir and acme-lint uses npm, both rejected; docs.helper has a dot in its name, which is not kebab-case. The github source with a path (acme-deploy) and the relative paths are fine. Fix: publish a Copilot-safe .github/plugin/marketplace.json alongside the Claude index, which Copilot reads first. HIGH.",
+      "assertions": [
+        "Says one unsupported entry makes the whole index fail in Copilot, so no plugin from it installs",
+        "Names the git-subdir source (acme-infra) as rejected by Copilot",
+        "Names the npm source (acme-lint) as rejected by Copilot",
+        "Flags docs.helper as not kebab-case",
+        "Does not flag the github source with a path (acme-deploy) as a Copilot problem",
+        "Recommends a separate Copilot-safe .github/plugin/marketplace.json next to the Claude index",
+        "Rates the problem HIGH"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "notes-kit-ready",
+      "prompt": "Before we tag 0.3.0: audit data/notes-kit for cross-vendor readiness. It has .claude-plugin/, .cursor-plugin/ and .codex-plugin/ manifests, .mcp.json plus mcp.json, CLAUDE.md, AGENTS.md and one skill.",
+      "files": ["../../evals/files/.trees/vendor/notes-kit"],
+      "expected_output": "Ready on all four vendors. Copilot needs no manifest of its own: it falls back to .claude-plugin/plugin.json, and the name notes-kit is kebab-case. The skill is valid, the MCP server is stdio with type stdio (fine on Codex too), Cursor has its no-dot mcp.json, and the Codex manifest points at skills and .mcp.json. No HIGH issues.",
+      "assertions": [
+        "Reports Copilot CLI as ready",
+        "Does not ask for a Copilot-specific plugin manifest, and says Copilot falls back to .claude-plugin/plugin.json",
+        "Reports Codex as ready, the stdio MCP server included",
+        "Does not report a HIGH issue",
+        "Does not report problems with skills/find-note/SKILL.md"
+      ]
+    }
+  ]
+}

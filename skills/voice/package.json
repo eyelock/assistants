@@ -1,0 +1,6 @@
+{
+  "name": "@eyelock-assistants/voice-skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform."
+}

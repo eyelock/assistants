@@ -1,0 +1,49 @@
+{
+  "skill_name": "hooks-artifact",
+  "fixtures": "Each file is a hooks.json snapshot, copied into the run's data/ folder.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "claude-hooks-in-copilot",
+      "prompt": "Our plugin's hooks/hooks.json (copy in data/claude-hooks-for-copilot.json) works in Claude Code. In Copilot CLI none of the hooks fire. Why, and what do I change?",
+      "files": ["../../evals/files/claude-hooks-for-copilot.json"],
+      "expected_output": "The file is missing Copilot's required top-level \"version\": 1, and it uses Claude's three-level event -> [{matcher, hooks: [...]}] nesting where Copilot expects two-level event -> [hook]. The PascalCase event names are fine: Copilot accepts them as Claude aliases. Copilot has no agent hook type, so the Stop hook cannot work, and its prompt type only fires on sessionStart, so the UserPromptSubmit prompt hook will not fire either.",
+      "assertions": [
+        "Identifies the missing top-level \"version\": 1 as required by Copilot CLI",
+        "Identifies the three-level {matcher, hooks: [...]} nesting as a shape Copilot does not bind, and says Copilot wants two-level event -> [hook]",
+        "Does not claim the PascalCase event names (PreToolUse, Stop) are themselves rejected by Copilot; says they are accepted as Claude aliases, or leaves them as they are",
+        "Says Copilot has no agent hook type, so the Stop hook will not run",
+        "Says Copilot's prompt hook type only works on sessionStart, so the UserPromptSubmit prompt hook will not fire",
+        "Gives a corrected Copilot hooks file or snippet that has \"version\": 1 and two-level nesting"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "cursor-and-codex",
+      "prompt": "We're porting our plugin to Cursor and Codex. Will data/cursor-codex-hooks.json work in both as it is? It's the Claude Code hooks/hooks.json.",
+      "files": ["../../evals/files/cursor-codex-hooks.json"],
+      "expected_output": "Codex: the three-level shape and PascalCase names are right, but FileChanged is not one of Codex's 11 events, and the Stop hook's prompt type is parsed and silently skipped because Codex runs command hooks only. Cursor: a plugin hooks/hooks.json uses Cursor's flat, two-level format with its own camelCase event names (e.g. beforeShellExecution, afterFileEdit, stop), so this Claude-format file will not bind there.",
+      "assertions": [
+        "Says the three-level nesting and PascalCase event names are correct for Codex",
+        "Says FileChanged is not an event Codex supports",
+        "Says Codex runs command hooks only, so the prompt-type Stop hook is silently skipped",
+        "Says Cursor's plugin hooks file uses a flat two-level shape, not this three-level one",
+        "Says Cursor's plugin format uses different, camelCase event names (such as beforeShellExecution, afterFileEdit or stop)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "valid-copilot-file",
+      "prompt": "Can you check data/copilot-hooks.json before I ship it in our Copilot CLI plugin? The preToolUse one is our secret scanner, it has to block commands that leak keys.",
+      "files": ["../../evals/files/copilot-hooks.json"],
+      "expected_output": "The file is well formed for Copilot: version 1, two-level nesting, camelCase events, Copilot tool names in the matchers, and a prompt hook on sessionStart, the one event where that type works. The one real risk: a preToolUse hook fails closed on a non-zero exit but fails open on a timeout, so with timeoutSec 120 a slow or hung scanner lets the command through. Keep the timeout tight and the script fast.",
+      "assertions": [
+        "Says the file's structure is valid for Copilot CLI (version 1, two-level nesting, camelCase event names)",
+        "Does not flag the prompt hook on sessionStart as unsupported",
+        "Does not tell the user to convert the file to three-level nesting or to PascalCase events",
+        "Warns that a timeout on the preToolUse hook fails open, so a slow or hung secret scanner would let the command run",
+        "Recommends a shorter timeoutSec or a faster script for the secret scanner"
+      ]
+    }
+  ]
+}

@@ -14,7 +14,8 @@ Use this skill when working with hook configurations — validating format, diag
 **Nesting shape by vendor** — check this first, it is the most common silent failure:
 - Claude Code / Codex: three-level — event → `[{matcher, hooks: [...]}]`
 - Cursor / Copilot CLI: two-level — event → `[{...hook}]`
-- Copilot CLI additionally requires a top-level `"version": 1`
+- Copilot CLI requires a top-level `"version": 1`; Cursor's hooks docs ask for it too (its
+  plugin example omits it), so include it
 
 **Diagnostic checklist for hooks that don't fire:**
 1. Check the declaration file location — differs by vendor and context (plugin vs project vs user)
@@ -33,11 +34,11 @@ Use this skill when working with hook configurations — validating format, diag
 
 **Hook types by vendor:**
 - Claude Code: command, http, prompt, agent, mcp_tool
-- Cursor: command, http, prompt, agent
+- Cursor: command, prompt
 - Codex: command only (`prompt`/`agent` parsed but silently skipped)
 - Copilot CLI: command, http, prompt (`sessionStart` only)
 
-**Events by vendor:** See references/ — Claude Code has ~30, Cursor 18+, Copilot CLI 14
+**Events by vendor:** See references/ — Claude Code has ~30, Cursor 21 (18 agent, 2 Tab, 1 app), Copilot CLI 14
 (plus 12 PascalCase Claude aliases), Codex 11.
 
 **Failure semantics:** Copilot fails open on non-zero exits except `preToolUse` (fail-closed)

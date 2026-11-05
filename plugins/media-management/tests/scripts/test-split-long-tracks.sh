@@ -58,4 +58,15 @@ if bash "$SCRIPT" "/nonexistent" 2>/dev/null; then
   exit 1
 fi
 
+# Test 7: A long track inside an album keeps its place: its parts are named
+# after it and keep its track number, so the album order survives
+rm -rf "${TEST_TMPDIR:?}"/*
+cp "$FIXTURES_DIR/track1.mp3" "$TEST_TMPDIR/01 Track 1.mp3"
+cp "$FIXTURES_DIR/long-track.mp3" "$TEST_TMPDIR/02 Long Mix.mp3"
+cp "$FIXTURES_DIR/track3.mp3" "$TEST_TMPDIR/03 Track 3.mp3"
+bash "$SCRIPT" "$TEST_TMPDIR" "0.1" >/dev/null 2>&1
+names=$(cd "$TEST_TMPDIR" && find . -type f | sed 's|^\./||' | LC_ALL=C sort | tr '\n' '|')
+[[ "$names" == "01 Track 1.mp3|02 Long Mix 1.mp3|02 Long Mix 2.mp3|02 Long Mix 3.mp3|03 Track 3.mp3|" ]] ||
+  { echo "FAIL: unexpected names after an in-album split: $names"; exit 1; }
+
 echo "All split-long-tracks tests passed"

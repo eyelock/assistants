@@ -1,0 +1,42 @@
+[
+  {
+    "query": "which invites on my Mac calendar have I not answered?",
+    "should_trigger": true
+  },
+  {
+    "query": "what's on my Apple Calendar tomorrow",
+    "should_trigger": true
+  },
+  {
+    "query": "who hasn't accepted the meeting I organized in Calendar.app",
+    "should_trigger": true
+  },
+  {
+    "query": "check my iCloud calendar for clashes this week",
+    "should_trigger": true
+  },
+  {
+    "query": "when is my meeting with Kim, it's in the Mac calendar",
+    "should_trigger": true
+  },
+  {
+    "query": "find the join link for the customer demo in my calendar",
+    "should_trigger": true
+  },
+  {
+    "query": "what's on my Google Calendar tomorrow",
+    "should_trigger": false
+  },
+  {
+    "query": "create an event in Apple Calendar for lunch",
+    "should_trigger": false
+  },
+  {
+    "query": "accept the design review invite",
+    "should_trigger": false
+  },
+  {
+    "query": "summarise my email from this morning",
+    "should_trigger": false
+  }
+]

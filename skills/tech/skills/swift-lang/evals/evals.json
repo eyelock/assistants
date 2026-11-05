@@ -1,0 +1,38 @@
+{
+  "skill_name": "swift-lang",
+  "fixtures": "Swift sources copied into data/. Runs are read-only, so fixes are shown in the answer rather than written.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "review-repo-sync",
+      "prompt": "Users say a sync sometimes does nothing, and the branch list is randomly empty right after launch. Review data/swift-sync/ (RepoSync and its tests) and show me the fixed code.",
+      "files": ["../../evals/files/swift-sync"],
+      "expected_output": "Diagnoses the try? calls on connect, listBranches and pull as the reason failures are silent ('does nothing'): each must be do/catch with the error logged (the Logger is already there) and surfaced in model state, not swallowed. The Task.sleep after an unawaited connect is a race workaround: await connect() directly (or signal readiness) instead of sleeping. DispatchQueue.main.asyncAfter mixed with async/await is replaced by plain async code on the main actor. BranchCache is shared mutable state across tasks: make it an actor (or main-actor confined), and drop nonisolated(unsafe) on the global. Tests: names follow test<Subject>_<Condition>_<ExpectedResult>, async tests are async (throws) with no XCTestExpectation, no Task.sleep waits, and the fake is created in setUp() and released in tearDown() rather than in a property initializer.",
+      "assertions": [
+        "Identifies the try? calls as why failures are silent, and replaces them with do/catch that logs and surfaces the error",
+        "Replaces the Task.sleep wait for connect with awaiting connect() (or an explicit readiness signal), calling the sleep a race workaround",
+        "Replaces DispatchQueue.main.asyncAfter with async/await code rather than keeping GCD",
+        "Makes BranchCache an actor (or confines it to the main actor) and removes nonisolated(unsafe) from the shared global",
+        "Renames the tests to the test<Subject>_<Condition>_<ExpectedResult> form, e.g. testLoad_WhenConnected_PublishesBranches",
+        "Rewrites testLoad as an async test without XCTestExpectation",
+        "Removes the Task.sleep wait from testPull",
+        "Moves the FakeGitClient fixture out of the property initializer into setUp(), released in tearDown()"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "tests-for-token-store",
+      "prompt": "Write the XCTest tests for data/TokenStore.swift.",
+      "files": ["../../evals/files/TokenStore.swift"],
+      "expected_output": "An XCTestCase whose test names follow test<Subject>_<Condition>_<ExpectedResult> (e.g. testToken_WhenExpired_ReturnsRefreshedToken, testToken_ForUnknownAccount_ThrowsNotFound). Tests are async throws functions that await the actor, with no XCTestExpectation. Shared fixtures (a fixed clock, a recording refresher) are created in setUp() and released in tearDown(), not in property initializers. Expiry is driven by the injected now closure, not by sleeping.",
+      "assertions": [
+        "Every test name has three underscore-separated parts in the form test<Subject>_<Condition>_<ExpectedResult>",
+        "Tests are async functions that await the actor, with no XCTestExpectation",
+        "The TokenStore and the refresher fixture are built in setUp() and released in tearDown(), not in property initializers or rebuilt inline in each test",
+        "Expiry is controlled through the injected now clock, with no Task.sleep or real waiting",
+        "Covers the unknown-account case throwing TokenStoreError.notFound",
+        "Covers an expired token being refreshed and the fresh token being stored for the next call"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+diff --git a/internal/billing/fees.go b/internal/billing/fees.go
+index 5e1a7c2..a93d0b4 100644
+--- a/internal/billing/fees.go
++++ b/internal/billing/fees.go
+@@ -6,10 +6,14 @@ import (
+ 	"time"
+ )
+ 
+-func lateFee(amt int64, days int) int64 {
+-	if days <= 30 {
++// graceDays is how long an invoice can stay unpaid before a late fee applies.
++const graceDays = 30
++
++// lateFee returns the fee in cents for an invoice paid daysLate days after it was issued.
++func lateFee(amountCents int64, daysLate int) int64 {
++	if daysLate <= graceDays {
+ 		return 0
+ 	}
+-	return amt * 2 / 100
++	return amountCents * 2 / 100
+ }
+ 
+diff --git a/internal/billing/fees_test.go b/internal/billing/fees_test.go
+index 0f3c9d1..7b28e45 100644
+--- a/internal/billing/fees_test.go
++++ b/internal/billing/fees_test.go
+@@ -5,16 +5,16 @@ import "testing"
+ func TestLateFee(t *testing.T) {
+ 	cases := []struct {
+-		amt  int64
+-		days int
+-		want int64
++		amountCents int64
++		daysLate    int
++		want        int64
+ 	}{
+ 		{10000, 30, 0},
+ 		{10000, 31, 200},
+ 		{0, 90, 0},
+ 	}
+ 	for _, c := range cases {
+-		if got := lateFee(c.amt, c.days); got != c.want {
+-			t.Errorf("lateFee(%d, %d) = %d, want %d", c.amt, c.days, got, c.want)
++		if got := lateFee(c.amountCents, c.daysLate); got != c.want {
++			t.Errorf("lateFee(%d, %d) = %d, want %d", c.amountCents, c.daysLate, got, c.want)
+ 		}
+ 	}
+ }

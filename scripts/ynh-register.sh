@@ -11,7 +11,7 @@
 #   1. verifies <harness-dir> is covered by a pnpm-workspace.yaml glob
 #      (it never edits workspace topology — that is a reviewed decision)
 #   2. generates/refreshes <harness-dir>/package.json from
-#      <harness-dir>/.ynh-plugin/plugin.json, mapping same-repo includes to
+#      <harness-dir>/.agents/harness/plugin.json, mapping same-repo includes to
 #      @eyelock-assistants workspace:* dependencies (hand-added keys are kept)
 #   3. runs `pnpm install --lockfile-only` so pnpm-lock.yaml stays green in CI
 #
@@ -22,9 +22,10 @@
 #
 # Note: harness entries under ynh/ deliberately carry no vendor manifests
 # (.claude-plugin/, .cursor-plugin/) and are not indexed by the root
-# marketplace files or scripts/sync-manifests.mjs (which only discovers
-# .harness.json / .claude-plugin sources) — verified against ynh/termq-dev.
-# Registration is therefore just the wrapper + lockfile.
+# marketplace files. scripts/sync-manifests.mjs does cover them: it takes
+# .agents/harness/plugin.json as their source, writes the same package.json
+# wrapper as this script, and checks it and the version writeback in CI.
+# Registration is therefore the wrapper + lockfile.
 #
 # Exit codes: 0 success, 1 bad args/validation, 2 file not found, 3 tool error.
 
@@ -78,9 +79,9 @@ if [ ! -d "$harness_dir" ]; then
   fail "harness directory \"$harness_dir\" does not exist under $PWD — publish the harness files first" 2
 fi
 
-manifest="$harness_dir/.ynh-plugin/plugin.json"
+manifest="$harness_dir/.agents/harness/plugin.json"
 if [ ! -f "$manifest" ]; then
-  fail "\"$manifest\" not found — a harness entry must carry its .ynh-plugin/plugin.json manifest" 2
+  fail "\"$manifest\" not found — a harness entry must carry its .agents/harness/plugin.json manifest" 2
 fi
 
 command -v node >/dev/null 2>&1 ||

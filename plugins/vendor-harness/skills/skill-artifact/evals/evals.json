@@ -1,0 +1,48 @@
+{
+  "skill_name": "skill-artifact",
+  "fixtures": "Each case copies a skill directory (or a repo holding skills) into the run's data/ folder. The directories are kept under evals/files/.trees/vendor/ so the repo's own skill discovery does not mistake them for real skills.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "metadata-and-name",
+      "prompt": "My pdf skill installs fine in Claude Code but the model never seems to use it. It's in data/pdf-tools/SKILL.md. Can you check it?",
+      "files": ["../../evals/files/.trees/vendor/pdf-tools"],
+      "expected_output": "Finds three problems. The license and metadata frontmatter fields trigger Claude Code's demotion bug, which leaves the skill effectively invisible to the model, so they should be removed. The name pdf_tools uses an underscore and does not match the directory pdf-tools. The description is about 175 characters, over the 130 the skill recommends for large collections.",
+      "assertions": [
+        "Names the metadata field as a cause of the skill being ignored or demoted in Claude Code",
+        "Names the license field as also triggering the same Claude Code problem",
+        "Recommends removing the license and metadata fields rather than keeping them because the agentskills.io spec allows them",
+        "Flags that the name pdf_tools does not match the directory name pdf-tools",
+        "Flags the underscore in pdf_tools as outside the allowed characters (lowercase letters, digits, hyphens)",
+        "Notes the description is longer than 130 characters"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "user-only-across-vendors",
+      "prompt": "data/release-notes/SKILL.md posts to Slack, so it must only ever run when someone types it, never because the agent decided to. Our plugin ships it to Claude Code, Cursor, Codex and Copilot CLI. Is it set up right for that in all four, and if not what do I add?",
+      "files": ["../../evals/files/.trees/vendor/release-notes"],
+      "expected_output": "The frontmatter is valid: the name matches the directory, the description is short, and none of license, compatibility or metadata is present (allowed-tools does not trigger the demotion bug). disable-model-invocation: true does the job in Claude Code and in Cursor, which both keep the skill out of the model's reach until a user types it. Codex ignores the field; its equivalent is an agents/openai.yaml file beside SKILL.md with policy.allow_implicit_invocation: false. Copilot CLI does not document the field (VS Code's Copilot does), so it cannot be relied on there: the agent may still pick the skill up from its description and post to Slack. Guard it in a way that does not depend on the field: by a confirmation step before posting, a description limited to explicit requests, or leaving it out of the Copilot build. argument-hint is Claude Code only and harmless elsewhere.",
+      "assertions": [
+        "States that disable-model-invocation: true keeps the model from invoking the skill on its own in both Claude Code and Cursor, without hedging Cursor as unknown or claiming Cursor ignores it",
+        "States that Codex ignores disable-model-invocation and that its equivalent is an agents/openai.yaml file beside SKILL.md setting allow_implicit_invocation: false under policy",
+        "For Copilot CLI, does not rely on disable-model-invocation (it is not documented there) and adds a guard that works without it, such as a confirmation step before posting, a description limited to explicit requests, or leaving the skill out of the Copilot build",
+        "Does not claim allowed-tools or argument-hint makes the skill invalid or triggers the Claude Code demotion bug"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "scope-to-terraform-files",
+      "prompt": "data/tf-plan keeps firing in repos that have no Terraform at all. I want it to only kick in when .tf files are involved, rather than relying on the description. We ship it to Claude Code, Cursor, Codex and Copilot CLI. What can I set?",
+      "files": ["../../evals/files/.trees/vendor/tf-plan"],
+      "expected_output": "Claude Code and Cursor support a paths frontmatter field: glob patterns, such as paths: \"**/*.tf\" (a comma-separated string or a YAML list), that keep the skill inactive until matching files are in play; Cursor also accepts the older globs. Codex and Copilot CLI skills have no equivalent field (Copilot's applyTo is for .instructions.md files, not skills), so there the description has to carry the scope, for example by naming .tf files and Terraform modules. The skill is otherwise valid.",
+      "assertions": [
+        "Recommends the paths frontmatter field with a .tf glob (such as **/*.tf) for Claude Code",
+        "States that Cursor supports the same paths field (or its legacy globs)",
+        "States that Codex and Copilot CLI skills have no file-glob field, so there the scope must come from the description",
+        "Does not tell the user to put applyTo, globs or another unsupported field in the SKILL.md for Claude Code, Codex or Copilot CLI",
+        "Does not report the skill's name, directory or description as invalid"
+      ]
+    }
+  ]
+}

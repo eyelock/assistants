@@ -1,0 +1,73 @@
+diff --git a/internal/payments/retry.go b/internal/payments/retry.go
+new file mode 100644
+--- /dev/null
++++ b/internal/payments/retry.go
+@@ -0,0 +1,25 @@
++package payments
++
++import (
++	"context"
++	"time"
++)
++
++// withRetry calls fn until it succeeds, the attempts run out, or ctx is done.
++// It waits between attempts, doubling the wait each time.
++func withRetry(ctx context.Context, attempts int, fn func() error) error {
++	wait := 200 * time.Millisecond
++	var err error
++	for i := 0; i < attempts; i++ {
++		if err = fn(); err == nil || !retryable(err) {
++			return err
++		}
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-time.After(wait):
++		}
++		wait *= 2
++	}
++	return err
++}
+diff --git a/internal/payments/client.go b/internal/payments/client.go
+index 7d2e41a..c19b0f3 100644
+--- a/internal/payments/client.go
++++ b/internal/payments/client.go
+@@ -38,29 +38,19 @@ func (c *Client) Capture(ctx context.Context, chargeID string) error {
+-	var err error
+-	for attempt := 0; attempt < 3; attempt++ {
+-		err = c.post(ctx, "/charges/"+chargeID+"/capture", nil)
+-		if err == nil || !retryable(err) {
+-			return err
+-		}
+-		time.Sleep(200 * time.Millisecond)
+-	}
+-	return err
++	return withRetry(ctx, 5, func() error {
++		return c.post(ctx, "/charges/"+chargeID+"/capture", nil)
++	})
+ }
+ 
+ // Refund refunds amountCents of a captured charge.
+ func (c *Client) Refund(ctx context.Context, chargeID string, amountCents int64) error {
+ 	body := refundRequest{Amount: amountCents}
+-	var err error
+-	for attempt := 0; attempt < 3; attempt++ {
+-		err = c.post(ctx, "/charges/"+chargeID+"/refunds", body)
+-		if err == nil || !retryable(err) {
+-			return err
+-		}
+-		time.Sleep(200 * time.Millisecond)
+-	}
+-	return err
++	return withRetry(ctx, 5, func() error {
++		return c.post(ctx, "/charges/"+chargeID+"/refunds", body)
++	})
+ }
+ 
+ // Void cancels an authorized charge that has not been captured.
+ func (c *Client) Void(ctx context.Context, chargeID string) error {
+-	return c.post(ctx, "/charges/"+chargeID+"/void", nil)
++	return withRetry(ctx, 5, func() error {
++		return c.post(ctx, "/charges/"+chargeID+"/void", nil)
++	})
+ }

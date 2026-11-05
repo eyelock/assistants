@@ -69,4 +69,4 @@ before_tool   → PreToolUse
 after_tool    → PostToolUse
 before_prompt → UserPromptSubmit
 on_stop       → Stop
-(SessionStart not yet mapped — LOW priority gap)
+on_session_start → SessionStart  (eyelock/ynh#204)

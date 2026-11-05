@@ -1,6 +1,6 @@
 ---
 name: vendor-adapters
-description: Master cross-vendor reference for LLM vendor harness formats — complete format mapping tables, documentation URLs, known gaps, and the workflow for keeping references current.
+description: Master cross-vendor reference for Claude Code, Cursor, Codex and Copilot CLI harness formats — support matrix, manifest and marketplace paths, marketplace source types, documentation URLs, and the verified known-gaps table (including where a vendor's own docs are wrong). Use when comparing vendors, porting a plugin from one vendor to another, or keeping the references current.
 ---
 
 This is the single source of truth for how harness artifacts map across Claude Code, Cursor, Codex, and GitHub Copilot CLI. Use it when comparing vendor behavior, checking format compatibility, or running a vendor sync update.
@@ -39,8 +39,11 @@ This is the single source of truth for how harness artifacts map across Claude C
 | Plugin Template | https://github.com/cursor/plugin-template |
 | Official Plugins Repo | https://github.com/cursor/plugins |
 | Marketplace | https://cursor.com/marketplace |
-| MCP Servers | https://docs.cursor.com/advanced/mcp |
-| Rules (.mdc) | https://docs.cursor.com/advanced/rules |
+| Plugins Reference | https://cursor.com/docs/reference/plugins |
+| MCP Servers | https://cursor.com/docs/context/mcp |
+| Rules (.mdc) | https://cursor.com/docs/context/rules |
+| Hooks | https://cursor.com/docs/hooks |
+| Subagents | https://cursor.com/docs/subagents |
 | CLI | https://cursor.com/cli |
 | Forum: .agents/ support | https://forum.cursor.com/t/support-for-agent-folder-compatibility/154167 |
 
@@ -82,7 +85,7 @@ Quick-lookup: what each vendor supports. For format details see references/.
 | Skills | ✓ full | ✓ full | ✓ full | ✓ full (also reads `.claude/skills`) |
 | SubAgents | ✓ full | ✓ full (`name`+`description`) | ✗ not in plugins | ✓ full (`agents/*.md` or `*.agent.md`) |
 | MCP | ✓ stdio + HTTP | ✓ stdio + SSE + OAuth | ✓ stdio only | ✓ stdio/local + HTTP + SSE |
-| Hooks | ✓ ~30 events, 5 types | ✓ 18+ events, flat format | ✓ 11 events, command only | ✓ 14 events, 3 types, `version: 1` |
+| Hooks | ✓ ~30 events, 5 types | ✓ 21 events, flat format | ✓ 11 events, command only | ✓ 14 events, 3 types, `version: 1` |
 | Startup Context | ✓ CLAUDE.md + rules/ | ✓ .cursor/rules/*.mdc | ✓ AGENTS.md only | ✓ AGENTS.md + CLAUDE.md + copilot-instructions.md |
 | Rules in plugins | ✓ .claude/rules/*.md | ✓ .mdc with frontmatter | ✗ not supported | ~ `*.instructions.md` with `applyTo` |
 | Commands | ✓ legacy (prefer skills) | ✓ commands/*.md | ✗ not supported | ~ manifest field only, format undocumented |
@@ -135,11 +138,11 @@ See references/copilot.md for the full detail and the upstream issues.
 
 ## Known Gaps
 
-Track gaps in references/vendor-*.md files. Each gap entry:
+All gaps live in one table: references/known-gaps.md. Each gap entry:
 - Priority: HIGH / MED / LOW
 - Description: what's wrong or missing
 - Vendor: which vendor
-- Status: OPEN / RESOLVED (with resolution note)
+- Status: OPEN / RESOLVED / MITIGATED / WITHDRAWN (with a dated note)
 
 ## Update Workflow
 

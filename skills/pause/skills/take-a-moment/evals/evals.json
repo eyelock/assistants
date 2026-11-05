@@ -1,0 +1,61 @@
+{
+  "skill_name": "take-a-moment",
+  "fixtures": "Files are copied into the run's data/ folder. A transcript file is the conversation so far; the run's reply is the assistant's next turn.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "going-in-circles",
+      "prompt": "Here's our conversation so far in data/circles-transcript.md. We're going in circles. Take a moment.",
+      "files": ["../../evals/files/circles-transcript.md"],
+      "expected_output": "A short checkpoint: names that we are looping, traces the three timing-based attempts in a line or two (the user ruled out sleeps), states the goal (fix the intermittent CI failure of test_export_job_completes, no sleeps), asks exactly one question aimed at breaking the loop, and invites correction. It does not offer a fourth timing-based fix.",
+      "assertions": [
+        "Names concretely what is going wrong (the repeated approach that keeps failing), not just a generic 'stepping back'",
+        "States the goal as fixing the intermittent CI failure of test_export_job_completes",
+        "Recognizes that the user ruled out sleeps in the first message and that all three attempts (sleep(1), sleep(3) with retries, the polling loop) were timing-based",
+        "Gives a short trace of how we got here (a few lines at most) that refers to the attempts or the failing CI runs",
+        "Asks the user one question, aimed at breaking the loop; a single question may spell out its possible answers, but there is no list or series of separate questions",
+        "Explicitly invites the user to correct its understanding",
+        "Does not present another sleep, retry delay or polling interval as the next step",
+        "The reply is short: a checkpoint of a few lines, not a long report with sections"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "rule-violation",
+      "prompt": "data/rule-transcript.md is our conversation so far and data/rules.md is the project's rules file. The rules say to always use the Makefile targets, and you just ran go test directly. Why did you do that? Take a moment.",
+      "files": ["../../evals/files/rule-transcript.md", "../../evals/files/rules.md"],
+      "expected_output": "A short checkpoint that owns the violation without excuses: quotes the Makefile rule from rules.md, names what it did (ran go test ./internal/billing/... directly), briefly diagnoses why (the rule was in context; no excuse), notes the impact (no race detector, build tags or test database URL, so the pass is not trustworthy), says what the user can do, states the goal, asks exactly one question (such as whether to re-run with make test now) and invites correction. It does not re-run the tests in the same reply.",
+      "assertions": [
+        "Acknowledges that the user is right and that it broke the rule, without making excuses",
+        "Quotes or closely paraphrases the 'ALWAYS use Makefile targets' rule from data/rules.md",
+        "Names what it did: ran go test ./internal/billing/... directly",
+        "Diagnoses why it happened, considering whether the rule was in its context and, if so, why it was still missed",
+        "Explains the impact using rules.md: the run skipped the race detector, build tags or test database URL, so the 'all tests pass' result cannot be relied on",
+        "Does not defend running go test directly as acceptable",
+        "Says what the user can do about it (for example keep calling it out, strengthen the rule, or restart the session)",
+        "States the goal as it understands it (for example a trustworthy test result for the ParseInvoice / billing change)",
+        "Asks the user one question; a single question may spell out its possible answers, but there is no list or series of separate questions",
+        "Does not run make test or any other command in this reply; it asks first",
+        "Explicitly invites the user to correct its understanding"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "worried-about-advice",
+      "prompt": "Here's our conversation so far in data/worry-transcript.md. Take a moment.",
+      "files": ["../../evals/files/worry-transcript.md"],
+      "expected_output": "A short checkpoint that acknowledges the user's worry first and states plainly, without defending it, that the advice force-pushed over main, which Priya and Tom also push to. Traces how we got here in a line or two, states the goal (one clean commit without losing teammates' work), says in a line that nothing more is pushed until main's previous contents are checked and can be restored, asks exactly one question about what is at risk (such as whether Priya or Tom pushed recently), and invites correction.",
+      "assertions": [
+        "Opens by acknowledging the user's worry rather than going straight to commands",
+        "States that `git push --force origin HEAD:main` replaced the shared main branch, so commits Priya or Tom pushed may have been overwritten",
+        "Does not defend the earlier advice as correct",
+        "Gives a short trace of how we got here (the squash request, the rebase, the force push to main)",
+        "States the goal as it understands it (for example one clean commit without losing teammates' work on main)",
+        "Asks the user one question, about what is at risk (for example whether teammates pushed recently, or who still has the old main); a single question may spell out its possible answers, but there is no list or series of separate questions",
+        "Indicates a way to check what main contained before the push and to restore it",
+        "Does not advise any further force push to main before that check",
+        "Invites the user to correct its understanding"
+      ]
+    }
+  ]
+}

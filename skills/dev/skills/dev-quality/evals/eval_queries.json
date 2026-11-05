@@ -1,0 +1,12 @@
+[
+  { "query": "run lint, format and tests and fix whatever fails", "should_trigger": true },
+  { "query": "make sure everything is clean before I hand this over", "should_trigger": true },
+  { "query": "type errors and lint warnings everywhere, sort them out", "should_trigger": true },
+  { "query": "did I break anything? run the whole pipeline", "should_trigger": true },
+  { "query": "I changed the parser, make sure it has tests and they pass", "should_trigger": true },
+  { "query": "review my changes for bugs", "should_trigger": false },
+  { "query": "why does this test only crash in CI and never locally?", "should_trigger": false },
+  { "query": "set up eslint and prettier in a brand-new project", "should_trigger": false },
+  { "query": "check this code for SQL injection", "should_trigger": false },
+  { "query": "is CI passing on PR 42?", "should_trigger": false }
+]

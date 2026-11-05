@@ -1,0 +1,7 @@
+[
+  { "query": "reply to this in my formal voice", "should_trigger": true },
+  { "query": "use voice-formal for this answer", "should_trigger": true },
+  { "query": "draft this, formal please", "should_trigger": true },
+  { "query": "what does a formal tone mean in UX writing", "should_trigger": false },
+  { "query": "make the logging more formal", "should_trigger": false }
+]

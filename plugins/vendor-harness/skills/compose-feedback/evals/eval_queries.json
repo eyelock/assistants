@@ -1,0 +1,23 @@
+[
+  {
+    "query": "write up a bug report for the hook that isn't firing in Cursor",
+    "should_trigger": true
+  },
+  {
+    "query": "draft an issue for the plugin maintainers about the broken skill",
+    "should_trigger": true
+  },
+  {
+    "query": "help me write the PR description for my fix to the plugin's mcp config",
+    "should_trigger": true
+  },
+  {
+    "query": "put together a proper report on this agent problem so the maintainer can reproduce it",
+    "should_trigger": true
+  },
+  { "query": "file the issue on github now, the report's done", "should_trigger": false },
+  { "query": "should this bug go to the plugin repo or to anthropic?", "should_trigger": false },
+  { "query": "find out which repo this skill came from", "should_trigger": false },
+  { "query": "write a changelog entry for the 0.3.0 release", "should_trigger": false },
+  { "query": "reply to the maintainer's comment on my issue", "should_trigger": false }
+]

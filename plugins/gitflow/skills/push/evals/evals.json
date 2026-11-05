@@ -1,0 +1,39 @@
+{
+  "skill_name": "push",
+  "fixtures": "Shell sandbox cases. setup builds a git repo in the run's directory whose origin is a local bare repository (.eval/origin.git); git is allowed, and gh is a stub that records every call. The evidence shows the final history, what origin holds, and the gh calls.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "messy-feature-branch",
+      "prompt": "I'm done with this branch, push it and open the PR.",
+      "setup": "../../evals/files/push-setup.sh",
+      "tools": ["Bash(git:*)", "Bash(gh:*)"],
+      "evidence": "git log --oneline --graph --all -n 20; echo; echo '$ git ls-remote origin'; git ls-remote origin",
+      "expected_output": "The branch feat/retry-sync targets develop. Before pushing, its wip/fmt/fix typo commits are squashed (or the run stops to ask about squashing them), and origin/develop's 'fix: Correct version file' is merged in. The PR is opened with gh pr create --base develop. CI status is reported, and it asks before merging: gh pr merge is never called.",
+      "assertions": [
+        "If a PR was opened, gh pr create was called with --base develop",
+        "Before any push of the branch, origin/develop's commit 'fix: Correct version file' was merged or rebased into it",
+        "Either the pushed branch carries no separate 'wip', 'fmt' or 'fix typo' commits, or the run stopped before pushing to ask about squashing them",
+        "gh pr merge was never called",
+        "Nothing was pushed to origin's develop or main",
+        "The reply ends by reporting where things stand and asking before any merge"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "merge-hotfix",
+      "prompt": "CI is green on the hotfix PR and Carol approved it. Merge it, then tell me what is left to finish the hotfix.",
+      "setup": "../../evals/files/push-hotfix-merge-setup.sh",
+      "tools": ["Bash(git:*)", "Bash(gh:*)"],
+      "evidence": "git fetch -q origin; git log --oneline --graph --all -n 20; echo; echo '$ git ls-remote origin'; git ls-remote origin",
+      "expected_output": "PR #12 takes hotfix/v1.0.1 into main. It is merged with gh pr merge --merge, a true merge, never --squash or --rebase, so main keeps the hotfix ancestry. The hotfix is not finished at the merge: the merge commit on main is tagged v1.0.1, which fires the release, and the fix is forward-ported to develop through its own branch (such as fix/forward-port-v1.0.1) and a PR into develop, named as a required next step (or done in the run). develop is never merged into or pushed to directly.",
+      "assertions": [
+        "gh pr merge was called with --merge",
+        "gh pr merge was never called with --squash, --rebase or --admin",
+        "origin develop was not updated directly: in the evidence it still ends at 'fix: Correct version file', and the reply does not propose merging main into develop and pushing develop",
+        "The fix is carried to develop through its own branch and a pull request into develop, either opened in the run or stated as a required next step",
+        "The v1.0.1 tag, if created, is on main's merge commit rather than the hotfix commit; if not created, the reply names tagging main's merge commit as the next step"
+      ]
+    }
+  ]
+}

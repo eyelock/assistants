@@ -1,0 +1,231 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/marketplace.schema.json",
+  "name": "eyelock-assistants",
+  "owner": {
+    "name": "eyelock-assistants"
+  },
+  "metadata": {
+    "description": "Harnesses, plugins, and skills for development workflows, media management, and conversational alignment."
+  },
+  "harnesses": [
+    {
+      "name": "david",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/david"
+      },
+      "description": "David's personal full-stack development persona with Go, infra, and conversational alignment skills",
+      "version": "0.1.0",
+      "keywords": ["go", "development", "full-stack", "infrastructure", "terraform"]
+    },
+    {
+      "name": "planner",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/planner"
+      },
+      "description": "Architecture and implementation planning persona",
+      "version": "0.1.0",
+      "keywords": ["planning", "architecture", "design", "review"]
+    },
+    {
+      "name": "researcher",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/researcher"
+      },
+      "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
+      "version": "0.1.0",
+      "keywords": ["research", "analysis", "investigation", "codebase", "api"]
+    },
+    {
+      "name": "tester",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/tester"
+      },
+      "description": "Testing and quality assurance persona",
+      "version": "0.1.0",
+      "keywords": ["testing", "quality", "qa", "go", "coverage"]
+    },
+    {
+      "name": "ynh-dev",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/ynh-dev"
+      },
+      "description": "Development harness for the ynh project \u2014 Gitflow workflow with Go language support",
+      "version": "0.1.0",
+      "keywords": ["ynh", "go", "development", "gitflow"]
+    },
+    {
+      "name": "termq-dev",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/termq-dev"
+      },
+      "description": "Development harness for the TermQ project \u2014 Gitflow workflow with Swift/SwiftUI language support",
+      "version": "0.1.0",
+      "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
+    },
+    {
+      "name": "gitflow",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/gitflow"
+      },
+      "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
+      "version": "0.1.0",
+      "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"]
+    },
+    {
+      "name": "media-management",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/media-management"
+      },
+      "description": "Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports.",
+      "version": "0.1.0",
+      "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
+    },
+    {
+      "name": "vendor-harness",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/vendor-harness"
+      },
+      "description": "Lifecycle management for LLM vendor harness artifacts \u2014 validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
+      "version": "0.1.0",
+      "keywords": [
+        "vendor",
+        "harness",
+        "skills",
+        "agents",
+        "mcp",
+        "hooks",
+        "claude",
+        "cursor",
+        "codex"
+      ]
+    },
+    {
+      "name": "github",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/github"
+      },
+      "description": "Reads GitHub for what is waiting on you and what you are waiting on: review requests, your PRs' reviews and checks, mentions and assigned issues. Read-only.",
+      "version": "0.1.0",
+      "keywords": ["github", "pull-requests", "reviews", "ci", "triage", "read-only"]
+    },
+    {
+      "name": "slack",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/slack"
+      },
+      "description": "Reads Slack for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only.",
+      "version": "0.1.0",
+      "keywords": ["slack", "chat", "mentions", "messages", "triage", "read-only"]
+    },
+    {
+      "name": "gmail",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/gmail"
+      },
+      "description": "Reads Gmail for what is waiting on you and what you are waiting on: threads whose last message is to you, and threads where you sent last and got no reply. Read-only.",
+      "version": "0.1.0",
+      "keywords": ["gmail", "mail", "email", "google", "triage", "read-only"]
+    },
+    {
+      "name": "apple-calendar",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/apple-calendar"
+      },
+      "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
+      "version": "0.1.0",
+      "keywords": ["calendar", "apple", "icloud", "meetings", "invites", "triage", "read-only"]
+    },
+    {
+      "name": "google-calendar",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/google-calendar"
+      },
+      "description": "Reads Google Calendar for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read-only.",
+      "version": "0.1.0",
+      "keywords": ["calendar", "meetings", "invites", "google", "triage", "read-only"]
+    },
+    {
+      "name": "google-drive",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/google-drive"
+      },
+      "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
+      "version": "0.1.0",
+      "keywords": ["drive", "docs", "comments", "google", "triage", "read-only"]
+    },
+    {
+      "name": "imessage",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "ynh/imessage"
+      },
+      "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
+      "version": "0.1.0",
+      "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"]
+    },
+    {
+      "name": "triage-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/triage"
+      },
+      "description": "Triage skills: what is waiting on me, what am I waiting on, and what to act on now or soon, answered in one shape on any platform.",
+      "version": "0.1.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "platform-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/platforms"
+      },
+      "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar and Google Drive.",
+      "version": "0.1.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "voice-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/voice"
+      },
+      "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
+      "version": "0.1.0",
+      "keywords": ["skills"]
+    }
+  ]
+}

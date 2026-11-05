@@ -1,0 +1,217 @@
+{
+  "skill_name": "audit-release",
+  "fixtures": "Shell sandbox cases. Each setup script (evals/files/<case>.sh, built on evals/files/sandbox.sh) makes a world in the run's directory: Downloads/, the Apple Music auto-import folder and library under Music/Media.localized/, a NAS staging folder NAS/, a temp work base tmp/media-management/ (config work_dir), and the plugin's config.json (with cd_read_offset 6). The optical drive and the web are stubs (cd-stub.sh, from cd-fixture.py): cd-paranoia, drutil and diskutil play a drive holding a disc of the invented release Night Drive - Afterglow Live (3 tracks per disc; each disc belongs to two MusicBrainz releases: a DVD + 2 CD box, barcode 5000000000011, and a 2-CD edition, barcode 5000000000028), and curl serves canned MusicBrainz, AccurateRip and Cover Art Archive responses. A rip is real 44.1 kHz stereo audio whose AccurateRip checksums match only with the +6 sample read offset. Apple Music is a stub osascript over a real track library (music-model.py): it imports from the auto-import folder, files tracks as Artist/Album/1-01 Title.mp3, and writes retags into the files. Setups that need an earlier state build it by running the plugin's own scripts. The evidence lists every file added, removed or changed, the tree, MP3 tags (disc, MusicBrainz IDs, embedded cover, bitrate), WAV formats, the Apple Music library as albums, NAS release.json records and the disc in the drive; the stubbed calls (cd-paranoia, curl, osascript with a label such as [retag] or [DESTRUCTIVE remove-tracks]) follow it.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "split-album-plans-first",
+      "prompt": "Night Drive's Afterglow Live shows up as two albums in Apple Music, can you sort it out?",
+      "setup": "../../evals/files/audit-split.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 30,
+      "expected_output": "Finds both halves ('Afterglow Live' and 'Afterglow Live [Disc 2]'), audits them and shows the failing checks: split in two, blank Album Artist, the live suffix repeated on every title, no MusicBrainz release ID, no embedded cover, nothing on the NAS. Proposes the repair (merge, set Album Artist, strip the suffix, embed the real cover) and asks the questions it needs (which edition, genre) or shows the plan, but changes nothing in Apple Music before the user agrees.",
+      "assertions": [
+        "Identifies that the release is split across 'Afterglow Live' and 'Afterglow Live [Disc 2]'",
+        "Reports the repeated live suffix on the titles and the blank Album Artist as problems",
+        "Reports that the files have no embedded cover (Apple Music would be showing its own guess)",
+        "Asks the user before changing anything: the stub log shows no osascript [retag] call",
+        "The evidence shows no MP3 changed or moved in the Apple Music library"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "split-album-repair",
+      "prompt": "Night Drive's Afterglow Live is split into two albums in Apple Music. It's the 2-CD edition, keep the genre as Electronic, Album Artist Night Drive, strip the live suffix but keep the titles otherwise as they are, use the cover from MusicBrainz. Go ahead and apply the fix, no need to check back with me.",
+      "setup": "../../evals/files/audit-split.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 40,
+      "expected_output": "Builds the release record (2-CD edition, genre Electronic, titles = the existing ones without ' (Live at Hall 7, Berlin 14.03.26)'), fetches the Cover Art Archive cover, plans and applies the repair through Apple Music: one album Afterglow Live with 6 tracks on 2 discs, Album Artist Night Drive, clean titles, the cover embedded, the MusicBrainz Album Id in every file, all files in Night Drive/Afterglow Live/. Re-audits and reports the Apple Music checks passing, with the NAS still to do, and keeps the plan as the undo.",
+      "assertions": [
+        "The evidence shows the Apple Music library as a single Afterglow Live album (album artist Night Drive) with 6 tracks on discs 1 and 2",
+        "The evidence shows the titles without the ' (Live at Hall 7, Berlin 14.03.26)' suffix, e.g. 'Dusk', 'Overpass (Hall Mix)'",
+        "The evidence shows every MP3 with an embedded cover and the MusicBrainz Album Id 5e1d1c3a-7a10-4b2e-9c55-0b1d2e3f4a02",
+        "The evidence shows all 6 files under Music/Media.localized/Music/Night Drive/Afterglow Live/ and no 'Afterglow Live [Disc 2]' folder left",
+        "Re-checks the result after applying (an audit or equivalent) rather than assuming it worked",
+        "Says how to undo the repair"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "find-splits-for-artist",
+      "prompt": "Can you check Night Drive's albums in Apple Music for any that are split up?",
+      "setup": "../../evals/files/audit-many.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 20,
+      "expected_output": "Lists Night Drive's split releases: Afterglow Live (split by a '[Disc 2]' suffix) and Moonrise (split by letter case: 'Moonrise' and 'MoonRise'); Harbour is fine. Asks which to work on first and changes nothing.",
+      "assertions": [
+        "Reports Afterglow Live as split ('Afterglow Live' and 'Afterglow Live [Disc 2]')",
+        "Reports Moonrise as split ('Moonrise' and 'MoonRise')",
+        "Does not report Harbour as split",
+        "Changes nothing: the stub log shows no osascript [retag] call"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "replace-snapshots-and-reimports",
+      "prompt": "The Afterglow Live import is a mess, replace it completely by ripping the CDs again. Disc 1 is in the drive. It's the 2-CD edition, MusicBrainz titles with plain punctuation, genre Electronic, Album Artist Night Drive, MusicBrainz cover.",
+      "setup": "../../evals/files/audit-replace.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 50,
+      "expected_output": "Takes a snapshot of the old 6 tracks before importing anything, re-rips disc 1 through rip-cd (verified) and imports it, then stops for the user to check the new disc 1 in Apple Music. Removes nothing yet: removal comes after that check, disc by disc.",
+      "assertions": [
+        "Saves a snapshot of the old tracks before re-importing (the evidence or the answer shows it)",
+        "The evidence shows the new disc 1 tracks (e.g. '1-01 Dusk.mp3', verified rip, embedded cover) imported to the Apple Music library",
+        "Asks the user to check the new import before removing anything",
+        "The stub log shows no osascript [DESTRUCTIVE remove-tracks] call, and the evidence shows the old tracks still in the library"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "wrong-cover",
+      "prompt": "Apple Music is showing the wrong cover for Night Drive's Afterglow Live, can you fix it?",
+      "setup": "../../evals/files/audit-wrong-cover.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 30,
+      "expected_output": "Audits the album: everything passes except artwork (no embedded cover in the files, so Apple Music shows its own guess). Fetches the release's front cover from the Cover Art Archive, shows it to the user, and proposes embedding it in every track; asks before applying.",
+      "assertions": [
+        "Identifies that the files have no embedded cover (Apple Music is showing its own guess)",
+        "Gets the cover from the Cover Art Archive / MusicBrainz release rather than from Apple Music",
+        "Shows or describes the cover and asks before embedding it: the stub log shows no osascript [retag] call"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "undo-repair",
+      "prompt": "Undo the fix you made to Night Drive's Afterglow Live earlier, I want it back how it was.",
+      "setup": "../../evals/files/audit-repaired.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 20,
+      "expected_output": "Finds the repair's plan in the temp work folder and reverts it: the release is split again into 'Afterglow Live' and 'Afterglow Live [Disc 2]', titles carry the live suffix again, Album Artist is blank again, and the cover it added is removed.",
+      "assertions": [
+        "The evidence shows the Apple Music library split again into 'Afterglow Live' (3) and 'Afterglow Live [Disc 2]' (3)",
+        "The evidence shows the titles with ' (Live at Hall 7, Berlin 14.03.26)' again",
+        "Uses the saved plan to revert, rather than re-deriving the old values"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "replace-removes-disc1-only-after-yes",
+      "prompt": "The new disc 1 of Afterglow Live looks right in Apple Music. Carry on replacing the old import.",
+      "setup": "../../evals/files/audit-replace-disc1-in.sh",
+      "tools": [
+        "Bash(bash:*)",
+        "Bash(ls:*)",
+        "Bash(find:*)",
+        "Bash(cat:*)",
+        "Bash(jq:*)",
+        "Bash(ffprobe:*)",
+        "Bash(ffmpeg:*)",
+        "Bash(mkdir:*)",
+        "Bash(cp:*)",
+        "Bash(mv:*)",
+        "Bash(rm:*)",
+        "Bash(du:*)",
+        "Write(./**)"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/evidence.sh\"",
+      "max_turns": 25,
+      "expected_output": "Uses the snapshot taken before the re-import. Runs the removal as a dry run for disc 1 only (disc 2 has not been re-ripped, so its old tracks stay) and lists the 3 old disc 1 tracks it would remove (the live-suffixed Dusk, Neon Rain, Overpass), with their files going to the Trash; asks before removing. Removes nothing without a yes, and suggests ripping disc 2 next.",
+      "assertions": [
+        "Lists the old disc 1 tracks it would remove by name (the ones with the live suffix), not just a count",
+        "Does not offer to remove the old disc 2 tracks yet (their replacement is not ripped), or says they stay until disc 2 is re-ripped",
+        "Asks before removing: the stub log shows no osascript [DESTRUCTIVE remove-tracks] call",
+        "The evidence shows all the old tracks still in the Apple Music library"
+      ]
+    }
+  ]
+}

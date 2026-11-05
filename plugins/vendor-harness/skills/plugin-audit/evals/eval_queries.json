@@ -1,0 +1,18 @@
+[
+  { "query": "is this plugin ready to ship to every vendor?", "should_trigger": true },
+  { "query": "audit plugins/gitflow for cross-vendor readiness", "should_trigger": true },
+  { "query": "will our marketplace install in copilot cli", "should_trigger": true },
+  {
+    "query": "go through everything in ./my-plugin and tell me what breaks on Codex",
+    "should_trigger": true
+  },
+  {
+    "query": "before I publish, check the skills, agents, hooks and mcp config in this plugin",
+    "should_trigger": true
+  },
+  { "query": "check this one SKILL.md for problems", "should_trigger": false },
+  { "query": "my hook doesn't fire in cursor", "should_trigger": false },
+  { "query": "do a security review of the scripts in this plugin", "should_trigger": false },
+  { "query": "bump the plugin version and sync the manifests", "should_trigger": false },
+  { "query": "what does the vendor support matrix look like for hooks", "should_trigger": false }
+]

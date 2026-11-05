@@ -1,0 +1,74 @@
+{
+  "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
+  "name": "imessage",
+  "version": "0.1.0",
+  "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
+  "default_vendor": "claude",
+  "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"],
+  "includes": [
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/triage"
+    },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "skills/platforms",
+      "pick": ["skills/imessage"]
+    }
+  ],
+  "mcp_servers": {
+    "imessage": {
+      "command": "npx",
+      "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "full", "--contacts", "live"],
+      "env": {
+        "IMESSAGE_UPDATE_CHECK": "0",
+        "IMESSAGE_CACHE": "0"
+      }
+    }
+  },
+  "profiles": {
+    "redacted": {
+      "mcp_servers": {
+        "imessage": {
+          "command": "npx",
+          "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "redacted", "--contacts", "live"]
+        }
+      }
+    },
+    "counts": {
+      "mcp_servers": {
+        "imessage": {
+          "command": "npx",
+          "args": ["-y", "imessage-mcp@3.2.0", "--privacy", "aggregate", "--contacts", "live"]
+        }
+      }
+    }
+  },
+  "agent": {
+    "max_turns": 25,
+    "effort": "low"
+  },
+  "focuses": {
+    "waiting-on-me": {
+      "prompt": "Use the waiting-on-me skill to find what is waiting on me in Messages."
+    },
+    "waiting-on-them": {
+      "prompt": "Use the waiting-on-them skill to find what I am waiting on others for in Messages."
+    },
+    "action-now": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-now: what I need to act on today in Messages."
+    },
+    "action-soon": {
+      "prompt": "Use the waiting-on-me and action-now-or-soon skills to answer action-soon: what I need to act on soon in Messages."
+    },
+    "my-commitments": {
+      "prompt": "Use the my-commitments skill to find the promises I made in Messages: what I said I would do, to whom, the date and whether I appear to have done it. Take the period from the caller; default to the last 14 days."
+    },
+    "catch-up": {
+      "prompt": "Use the catch-up skill to catch me up on one conversation, thread or topic in Messages: where it stands, what happened and what is open. Take the subject from the caller; if none is given, ask for one."
+    },
+    "find": {
+      "prompt": "Use the find skill to find what the caller asks for in Messages (something someone said, a number, an address, a plan) and name where and when. Take the search from the caller; if none is given, ask for one."
+    }
+  }
+}

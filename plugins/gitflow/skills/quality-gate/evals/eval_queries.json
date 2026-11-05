@@ -1,0 +1,18 @@
+[
+  { "query": "run make check before I commit", "should_trigger": true },
+  { "query": "is it ok to add // nolint here so lint passes?", "should_trigger": true },
+  {
+    "query": "build has a couple of warnings but tests pass, fine to commit?",
+    "should_trigger": true
+  },
+  { "query": "what has to pass before I'm allowed to commit?", "should_trigger": true },
+  {
+    "query": "swiftlint and swiftformat disagree on line length, what do I do",
+    "should_trigger": true
+  },
+  { "query": "add a lint job to the GitHub Actions workflow", "should_trigger": false },
+  { "query": "write a commit message for these changes", "should_trigger": false },
+  { "query": "push and open a PR", "should_trigger": false },
+  { "query": "CI is red on my PR, watch it and tell me when it's green", "should_trigger": false },
+  { "query": "should this release be a patch or minor bump?", "should_trigger": false }
+]
