@@ -209,7 +209,7 @@ jq -r '
            end)),
         "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
       end),
-     (if .inbox.unknown then "You haven'"'"'t said who you are at this desk. Say \"it'"'"'s me, <name>\" to get your own inbox.\n" else empty end)
+     (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. A human can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved.\n" else empty end)
    end),
   "## Who you are\n",
   (if .firstWake

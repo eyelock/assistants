@@ -28,7 +28,7 @@
         "AGENTS.md has a rule to name things fully, with both parts and an example of each: a web resource (such as a pull request) by its short form as a Markdown link, never a bare number or URL; and a local path in full (absolute), not relative",
         "skills/roster/assets/roster.json has a humans list, separate from seats, with exactly one entry marked \"default\": true, that entry has a name and a command and no email, and no human appears in seats",
         "AGENTS.md has a rule to ask a human through the inbox: when work needs a human (such as a merge, a decision or a credential), assign them a bead, the default human unless the seat knows who, and tell them things with an inbox note",
-        "AGENTS.md's desk section says that when a person names themselves at the desk (\"it's me, <name>\"), the desk registers them with the inbox script",
+        "AGENTS.md's desk section says that when a person names themselves at the desk (\"it's me, <name>\"), the desk shows their own inbox for that session with the inbox script's show --name, and registers nothing",
         "The reply names the default human"
       ]
     },

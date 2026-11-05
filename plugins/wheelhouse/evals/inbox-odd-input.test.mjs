@@ -1,8 +1,8 @@
 // Odd titles, names and emails never slip past inbox.sh or break it. Each case runs the real
 // inbox.sh against a small Wheelhouse, with bd replaced by a stub that keeps the arguments it was
 // given: a title starting with "-" is created, not read as a flag; a merge or review named anywhere
-// in the title needs --url; register refuses a command that isn't lowercase ASCII, given or
-// derived; an email registered in one case is the same email in another; and an inbox bead carries
+// in the title needs --url; any human's lowercase command can be assigned to without a roster entry, and
+// register is gone; and an inbox bead carries
 // the repo: label of the one repository it touches, which a merge or review must have.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -19,7 +19,6 @@ const roster = {
   seats: [{ name: "Dalglish", group: "workers", command: "dalglish", harness: ".", mandate: "Build." }],
   humans: [
     { name: "Rook", command: "rook", pronouns: "they/them", default: true },
-    { name: "Pat", command: "pat", email: "pat@example.com", pronouns: "they/them" },
   ],
 };
 
@@ -142,42 +141,33 @@ test("assign: --kind is the switch, whatever the title says", () => {
   });
 });
 
-for (const [why, args] of [
-  ["a given command with a path in it", ["--name", "Gahan", "--command", "../seat/gahan"]],
-  ["a given command in capitals", ["--name", "Gahan", "--command", "Gahan"]],
-  ["a given command starting with '-'", ["--name", "Gahan", "--command", "-gahan"]],
-  ["a name that makes the command '-'", ["--name", "-"]],
-  ["a name that makes a command starting with '-'", ["--name", "-Jo"]],
+test("assign: any human's command is accepted without a roster entry", () => {
+  inbox(["assign", "--title", "Decide the cache size", "--from", "dalglish", "--kind", "decision", "--to", "david"], (out, { bdArgs, roster: after }) => {
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(JSON.parse(out.stdout).to, "david");
+    assert.equal(bdArgs[bdArgs.indexOf("--assignee") + 1], "david");
+    assert.deepEqual(after, roster, "the roster is unchanged");
+  });
+});
+
+for (const [why, to, message] of [
+  ["a seat", "dalglish", /is a seat, not a human/],
+  ["a command with a path in it", "../seat/gahan", /is not a human's command/],
+  ["a command in capitals", "David", /is not a human's command/],
+  ["a command starting with '-'", "-david", /is not a human's command/],
 ]) {
-  test(`register: refuses ${why}`, () => {
-    inbox(["register", ...args, "--email", "gahan@example.com"], (out, { roster: after }) => {
+  test(`assign: refuses --to ${why}`, () => {
+    inbox(["assign", "--title", "Decide the cache size", "--from", "dalglish", "--kind", "decision", "--to", to], (out) => {
       assert.equal(out.status, 1, out.stdout);
-      assert.match(out.stderr, /is not a command|can't make a command/);
-      assert.deepEqual(after, roster, "the roster is unchanged");
+      assert.match(out.stderr, message);
     });
   });
 }
 
-test("register: a name in mixed case makes a lowercase command", () => {
-  inbox(["register", "--name", "Jo Ann", "--email", "jo@example.com"], (out, { roster: after }) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).human.command, "joann");
-    assert.equal(after.humans.at(-1).command, "joann");
-  });
-});
-
-test("register: an email already registered in another case is refused", () => {
-  inbox(["register", "--name", "Sam", "--email", "PAT@Example.com"], (out, { roster: after }) => {
+test("register is gone", () => {
+  inbox(["register", "--name", "Sam", "--email", "sam@example.com"], (out, { roster: after }) => {
     assert.equal(out.status, 1);
-    assert.match(out.stderr, /already registered, as pat/);
-    assert.deepEqual(after, roster);
-  });
-});
-
-test("register: the same person, with their email in another case, is already registered", () => {
-  inbox(["register", "--name", "Pat", "--email", "PAT@example.com"], (out, { roster: after }) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).already, true);
+    assert.match(out.stderr, /unknown command: register/);
     assert.deepEqual(after, roster);
   });
 });
