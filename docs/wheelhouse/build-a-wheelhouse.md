@@ -172,9 +172,7 @@ ask Anderson to seat workers. The human seats the crew. Asked to set up the team
 through the starter team, role by role, with the `add-seat` skill. Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
 memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
-question tool, with options. When a person names themselves at the desk ("it's me, <name>"), register them as a human
-with `bash scripts/inbox.sh register --name <Name>`, so your wake shows their own inbox from then
-on, and seats can assign work to them.
+question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run `bash scripts/inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.
 
 ## How tower cares for its seats
 
@@ -1400,7 +1398,7 @@ Notes:
 
 Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
 
-You haven't said who you are at this desk. Say "it's me, <name>" to get your own inbox.
+This is the default human's inbox, and the desk treats the human at the desk as them. A human can name themselves for this session ("it's me, <name>") to see their own inbox instead; nothing is saved.
 
 ## Who you are
 
@@ -1409,8 +1407,9 @@ Tower. I keep the whole Wheelhouse in view and hand work to whoever it suits. I 
 
 Each bead says who asked and how much it holds up: Tharg's decision unblocks one bead, the tag.
 
-The desk knows the human at it by their git email, and nobody has told it yours yet, so it shows
-only Rogue's inbox, and asks. Tell it who you are; the tutorial calls you Pat. Then ask it where
+Who is at the desk is per session, and nobody has told it yours, so it shows only Rogue's inbox,
+the default human's, and says you can name yourself. Tell it who you are; the tutorial calls you
+Pat. Then ask it where
 things stand:
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
@@ -1420,17 +1419,17 @@ tower --model=sonnet --permission-mode=bypassPermissions -- "It's me, Pat. Where
 
 Expected: the desk opens with the humans' inbox: Tharg's question and Tharg's note. Your reply
 is how you read a note, so the desk retires the note once it has relayed it, and leaves the bead
-for you to close. It registers you as Pat, then answers from the graph and the roster: the
+for you to close. It shows Pat's inbox for the session, with nothing saved, then answers from the graph and the roster: the
 retries done by the workers, Gore's follow-ups and Dredd's CI failure open, and Tharg's release
 waiting on them and on your go-ahead.
 
-**What it did:** registered you, from your git email, and retired the note it relayed.
+**What it did:** took you as Pat for this session, and retired the note it relayed. Nothing about
+you is written to the roster or anywhere else.
 
 <details><summary>By hand, without a model</summary>
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-bash scripts/inbox.sh register --name Pat > /dev/null
 note=$(bash scripts/inbox.sh show | jq -r '.humans[] | select(.command == "rogue") | .notes[0].memoryId')
 ynm forget --memory-id "$note" --reason relayed > /dev/null
 ```
@@ -1439,46 +1438,22 @@ Expected: no output.
 
 </details>
 
-Registering changes the roster, and leaves it for you to commit:
+Naming yourself changes nothing in the repository. Ask for your own inbox, then Rogue's, which
+anyone at the desk may pick up:
 
 ```bash
-git add skills/roster/assets/roster.json
-git diff --cached --quiet || git commit -q -m "chore: Pat joins tower"
-jq -c '.humans[] | {name, email, default}' skills/roster/assets/roster.json
+bash scripts/inbox.sh show --name Pat | jq -r '.humans[] | "\(.name) (\(.role)): \(.beads | length) bead(s)"'
 ```
 
-Expected:
-
-```json
-{"name":"Rogue","email":null,"default":true}
-{"name":"Pat","email":"tutorial@example.com","default":null}
-```
-
-Now the desk knows you. Its next wake shows your own inbox, then Rogue's, which anyone at the desk
-may pick up:
-
-```bash
-bash scripts/wake.sh --seat tower --format text --no-sync | sed -n '/^## For the humans/,/^## Who you are/p' | sed '$d' | sed 's/tower-[a-z0-9.]*/<id>/'
-```
-
-Expected, with real seats in Tharg's words:
+Expected: Pat has nothing waiting and Rogue has the decision. The roster is untouched.
 
 ```text
-## For the humans
-
-### Pat (you)
-
-Nothing waiting.
-
-### Rogue (anyone)
-
-- Decide: tag widget v1.2.0 once its changelog is written (<id>, asked by tharg, unblocks 1)
-
-Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
+Pat (you): 0 bead(s)
+Rogue (anyone): 1 bead(s)
 ```
 
 The note is gone, relayed; the bead stays until a human answers it. It is Rogue's, so anyone at
-the desk may: take it as yourself, then close it with your answer, and the tag can go ahead once
+the desk may: take it as yourself (a command is your name in lowercase), then close it with your answer, and the tag can go ahead once
 its changelog is written:
 
 ```bash

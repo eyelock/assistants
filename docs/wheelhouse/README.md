@@ -33,9 +33,10 @@ The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and r
 | workers | each a seat of its own, building one task at a time | the dispatcher |
 
 Beside the seats are the **humans**: the people who work with the Wheelhouse, listed in the
-roster's `humans`, never as seats. One of them is the **default human**, the name for work that
-needs a human but no particular one. A person who names themselves at the desk ("it's me, Pat") is
-registered with their git email, so the desk knows them from then on.
+roster's `humans`, never as seats. The roster holds one of them, the **default human**, the name
+for work that needs a human but no particular one. Anyone else is per session: a person who names
+themselves at the desk ("it's me, Pat") sees their own inbox for that session, and nothing about
+them is saved, no roster entry and no email.
 
 When work needs a human (a merge, a decision, a credential), a seat doesn't wait silently or do it
 itself: it assigns a bead to that human, or to the default human, with `scripts/inbox.sh assign`,

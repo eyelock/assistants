@@ -157,10 +157,10 @@ Some work only a human can do: a merge, a decision, a credential. Never wait for
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
 (`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
 
-1. **Who:** a named person only when you know who: they asked for the work, or the roster says
-   they handle it. Otherwise the default human (`--to default`, the roster's human with
-   `"default": true`), whom every desk shows. Only humans in the roster's `humans` can be
-   assigned; never a name you guessed.
+1. **Who:** a named person only when you know who: they asked for the work, or they have named
+   themselves at the desk this session. Otherwise the default human (`--to default`, the
+   roster's human with `"default": true`), whom every desk shows. A named person is `--to
+   <command>`, their name in lowercase; they need no roster entry. Never a name you guessed.
 2. **Assign a bead** for it, blocking the work it holds up, so that work waits and its wait is
    visible:
 
@@ -206,8 +206,11 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other
-returned: a broken tool never reads as an empty inbox. When someone at the desk names themselves ("it's me, <name>"), the desk registers them with
-`bash scripts/inbox.sh register --name <Name>`, and from then on they can be assigned by name.
+returned: a broken tool never reads as an empty inbox. Who is at the desk is per session: with no name, the desk shows the default
+human's inbox; when someone names themselves ("it's me, <name>"), the desk runs
+`bash scripts/inbox.sh show --name <Name>` for the rest of the session, which adds their inbox
+(the beads assigned to their lowercase name, and the ynm notes in `human/<command>`). Nothing is
+registered or written to the repository: no roster entry, no email, no username.
 
 ## Closing
 

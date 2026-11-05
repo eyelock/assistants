@@ -245,29 +245,29 @@
     },
     {
       "id": 16,
-      "name": "inbox-register",
+      "name": "inbox-name",
       "prompt": "You are hq, the desk of this Wheelhouse. Hi, it's me, Pat.",
-      "setup": "../../evals/files/inbox-register.sh",
+      "setup": "../../evals/files/inbox-name.sh",
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Registers Pat as a human with bash scripts/inbox.sh register: the roster's humans gain Pat, command pat, with git's email pat@example.com and pronouns they/them, beside Rook, still the only default human. Pat is not added to seats. Says Pat now has an inbox of their own.",
+      "expected_output": "Shows Pat's inbox for this session with bash scripts/inbox.sh show --name Pat (Pat's own beads and the notes in human/pat, with no roster entry needed), beside Rook's, the default human's. Writes nothing: no register command, no roster change, no email stored. Pat is not added to the roster's humans or seats.",
       "assertions": [
-        "In the evidence, the roster's humans include Pat with command pat and email pat@example.com, and not marked default",
-        "Rook is still in humans, and still the only one with default true",
-        "Pat is not in the roster's seats (the evidence's humans list is separate; no seat named Pat was made)",
-        "The reply tells Pat they are registered, or have an inbox of their own now"
+        "The run used inbox.sh show --name Pat (or read the same), and did not try to register Pat",
+        "In the evidence, the roster's humans are still only Rook, the default, with no email anywhere in the roster",
+        "In the evidence, git status shows no change to the repository",
+        "The reply shows Pat's inbox, or says Pat has nothing waiting"
       ]
     },
     {
       "id": 17,
       "name": "inbox-show-known",
-      "prompt": "You are hq, the desk of this Wheelhouse. What's waiting for the humans?",
+      "prompt": "You are hq, the desk of this Wheelhouse. It's me, Pat. What's waiting for the humans?",
       "setup": "../../evals/files/inbox-show-known.sh",
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Runs bash scripts/inbox.sh show (or reads the same from the graph and ynm). Git's email is Pat's, so it shows Pat's own inbox first: the decision on dropping Go 1.24, asked by gahan. Then Rook's, the default human's, for anyone: the merge of [widget #12](https://github.com/example/widget/pull/12), asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday.",
+      "expected_output": "Runs bash scripts/inbox.sh show (or reads the same from the graph and ynm). Pat has named themselves, so it runs inbox.sh show --name Pat and shows Pat's own inbox first: the decision on dropping Go 1.24, asked by gahan. Then Rook's, the default human's, for anyone: the merge of [widget #12](https://github.com/example/widget/pull/12), asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday.",
       "assertions": [
         "The reply shows Pat's own inbox, with the decision on dropping Go 1.24 asked by gahan",
         "The reply shows the default human Rook's inbox (for anyone), with the merge of the changelog asked by dalglish",
@@ -285,12 +285,12 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Git's email (sam@example.com) matches no human, so it shows only the default human Rook's inbox: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. It does not show Pat's decision as the reader's own, and invites the person to say who they are (\"it's me, <name>\") to get an inbox of their own.",
+      "expected_output": "Nobody has named themselves, so it shows only the default human Rook's inbox: the merge of [widget #12](https://github.com/example/widget/pull/12) and anderson's note. It does not show Pat's decision as the reader's own, and says the person can name themselves (\"it's me, <name>\") to see their own inbox for the session.",
       "assertions": [
         "The reply shows Rook's inbox: the merge of the changelog and the note about McCoist",
         "The reply does not present Pat's decision as the reader's own inbox",
-        "The reply invites the person at the desk to say who they are, such as \"it's me, <name>\", to get their own inbox",
-        "The roster's humans are unchanged in the evidence: Rook and Pat only, nobody registered unasked"
+        "The reply says the person at the desk can name themselves, such as \"it's me, <name>\", for their own inbox",
+        "The roster's humans are unchanged in the evidence: Rook only, nobody registered"
       ]
     },
     {

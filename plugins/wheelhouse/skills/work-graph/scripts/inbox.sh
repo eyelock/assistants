@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # The humans' inbox: work and notes for the people who work with a Wheelhouse.
-# Every name comes from the roster (skills/roster/assets/roster.json): its
-# `humans` list, beside `seats`, holds the people, and exactly one of them is
-# the default human (`"default": true`), the name for work that needs a human
-# but no particular one.
+# The roster (skills/roster/assets/roster.json) holds one human: the default
+# human (`"default": true` in `humans`), the name for work that needs a human
+# but no particular one. Any other human is per session and is never written
+# down: a person names themselves at the desk, and their command is their name
+# in lowercase. Nothing here stores a person, an email or a username, and
+# nothing here writes to the repository.
 #
 #   assign    a bead for a human to do (a merge, a decision, a credential) or
 #             read (a report),
@@ -12,10 +14,8 @@
 #             touches. A merge or review needs --url and a repository.
 #   note      an FYI for a human: a memory in ynm, namespace human/<command>,
 #             tagged inbox, shown at the desk's wake until it is relayed.
-#   register  add a person who names themselves at the desk to `humans`, with
-#             their git email, so the desk knows them from then on.
-#   show      the ready beads and notes for the human at the desk (matched by
-#             git email, or $WHEELHOUSE_HUMAN_EMAIL) and for the default human.
+#   show      the ready beads and notes for the default human and, when
+#             --name says who is at the desk for this session, for them too.
 #
 # Run it from the Wheelhouse repository's root, or pass --dir.
 # Output: JSON on stdout; diagnostics on stderr.
@@ -31,12 +31,12 @@ Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
                        [--description <text>] [--priority 0-4]
                        [--kind merge|review|decision|credential|report|other]
        inbox.sh note --content <text> --from <seat> [--to default|<command>]
-       inbox.sh register --name <Name> [--command <command>] [--pronouns <p>] [--email <email>]
-       inbox.sh show [--email <email>]
+       inbox.sh show [--name <Name>]
 
 Common: --dir <wheelhouse repo> (default: the current directory).
 
-assign    Creates a bead assigned to a human (--to, default: the default human),
+assign    Creates a bead assigned to a human (--to: default, the default human,
+          or any human's command, their name in lowercase),
           as the seat that asked (--from, default: $BEADS_ACTOR). --url is kept
           as the bead's external_ref; a merge or review is refused without
           one. --kind says which it is; without --kind, a title with the word
@@ -51,17 +51,15 @@ assign    Creates a bead assigned to a human (--to, default: the default human),
           Every kind is labelled inbox:<kind>. --priority sets any bead's
           priority (0 highest, 4 lowest; bd's default, 2, unless given).
 note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
-register  Adds a person to the roster's humans: name, command (the name in
-          lowercase; given or derived, a command is lowercase ASCII,
-          [a-z0-9][a-z0-9-]*), pronouns (they/them unless given) and email
-          (git config user.email unless given; matched ignoring case). Leaves
-          the roster uncommitted.
-show      Prints {you, unknown, email, humans: [{name, command,
+show      Prints {you, humans: [{name, command,
           role: you|anyone, beads: [{id, title, kind, askedBy, priority,
           ref: {short, url}, unblocks}] (reports last, then by priority), notes: [{memoryId, content}]}],
-          errors, empty, relay (what to do with it)}. email is the one the
-          human at the desk was matched by: --email, else
-          $WHEELHOUSE_HUMAN_EMAIL, else git config user.email (null if none).
+          errors, empty, relay (what to do with it)}. --name is the human at
+          the desk for this session ("it's me, <name>"): their inbox is the
+          beads assigned to their command (the name in lowercase ASCII, [a-z0-9][a-z0-9-]*)
+          and the ynm notes in human/<command>, with no roster entry. you is
+          {name, command}, or null with no --name, when the desk treats the
+          human as the default human. Nothing is stored or written.
           If bd or ynm fails, that human's beads or notes are null, errors
           says what failed, empty is null (never true) and show exits 3,
           still printing what the other tool returned.
@@ -73,25 +71,24 @@ die() { echo "$2" >&2; exit "$1"; }
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
 case "$cmd" in
-  assign | note | register | show) ;;
+  assign | note | show) ;;
   --help | -h) usage; exit 0 ;;
   *) echo "unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac
 
 dir="."
 title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""; priority=""
-content=""; name=""; command=""; pronouns="they/them"; email=""
+content=""; name=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
-    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name | --command | --pronouns | --email)
+    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       v="$2"
       case "$1" in
         --dir) dir="$v" ;; --title) title="$v" ;; --from) from="$v" ;; --to) to="$v" ;;
         --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --priority) priority="$v" ;; --description) description="$v" ;;
         --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;;
-        --command) command="$v" ;; --pronouns) pronouns="$v" ;; --email) email="$v" ;;
       esac
       shift 2 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -116,11 +113,21 @@ default_human() {
   jq -r '[.humans[] | select(.default == true)][0].command' "$roster"
 }
 
-# Resolves --to (default, or a human's command) to a human in the roster.
+# A human's command: lowercase ASCII, starting with a letter or digit. It names
+# an ynm namespace (human/<command>), so nothing else gets in.
+valid_command() { [[ "$1" =~ ^[a-z0-9][a-z0-9-]*$ ]]; }
+
+# A name's command: the name in lowercase ASCII, spaces and other characters dropped.
+command_of() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-'; }
+
+# Resolves --to (default, or a human's command) to a command. A human needs no
+# roster entry, but is never a seat.
 resolve_to() {
   if [ "$1" = default ]; then default_human; return; fi
-  jq -e --arg c "$1" '(.humans // []) | any(.command == $c)' "$roster" >/dev/null ||
-    die 1 "$1 is not a human in the roster: use --to default, or one of: $(jq -r '[(.humans // [])[].command] | join(", ")' "$roster")"
+  valid_command "$1" || die 1 "$1 is not a human's command: use --to default, or a name in lowercase ASCII letters, digits and '-', starting with a letter or digit"
+  if jq -e --arg c "$1" '.seats | any(.command == $c)' "$roster" >/dev/null; then
+    die 1 "$1 is a seat, not a human: use --to default, or a human's command"
+  fi
   printf '%s\n' "$1"
 }
 
@@ -196,46 +203,19 @@ case "$cmd" in
       '{to: $to, from: $from, namespace: "human/\($to)", memoryId: (if $id == "" then null else $id end)}'
     ;;
 
-  register)
-    [ -n "$name" ] || die 1 "register needs --name"
-    [ -n "$command" ] || command=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
-    [ -n "$command" ] || die 1 "can't make a command from $name: pass --command"
-    # The roster's rule: lowercase ASCII, starting with a letter or digit. The
-    # command names an ynm namespace (human/<command>), so nothing else gets in.
-    [[ "$command" =~ ^[a-z0-9][a-z0-9-]*$ ]] ||
-      die 1 "$command is not a command: use lowercase ASCII letters, digits and '-', starting with a letter or digit (pass --command)"
-    if [ -z "$email" ]; then
-      need git
-      email=$(git config user.email 2>/dev/null || true)
-    fi
-    [ -n "$email" ] || die 1 "no email: pass --email, or set git config user.email"
-    if jq -e --arg c "$command" '.seats | any(.command == $c)' "$roster" >/dev/null; then
-      die 1 "$command is a seat, not a human: pass another --command"
-    fi
-    existing=$(jq -c --arg c "$command" '[(.humans // [])[] | select(.command == $c)][0] // empty' "$roster")
-    if [ -n "$existing" ]; then
-      [ "$(jq -r '.default // false' <<<"$existing")" != true ] || die 1 "$command is the default human: a person registers under their own name"
-      jq -e --arg e "$email" '(.email // "" | ascii_downcase) == ($e | ascii_downcase)' <<<"$existing" >/dev/null || die 1 "$command is already a human in the roster, with another email"
-      jq -c '{registered: false, already: true, human: .}' <<<"$existing"
-      exit 0
-    fi
-    other=$(jq -r --arg e "$email" '[(.humans // [])[] | select(.email != null and (.email | ascii_downcase) == ($e | ascii_downcase))][0].command // empty' "$roster")
-    [ -z "$other" ] || die 1 "$email is already registered, as $other"
-    human=$(jq -nc --arg n "$name" --arg c "$command" --arg e "$email" --arg p "$pronouns" \
-      '{name: $n, command: $c, email: $e, pronouns: $p}')
-    if ! jq --argjson h "$human" '.humans = ((.humans // []) + [$h])' "$roster" > "$roster.new" || ! mv "$roster.new" "$roster"; then
-      die 3 "could not write $roster"
-    fi
-    jq -c '{registered: true, already: false, human: ., roster: "skills/roster/assets/roster.json", committed: false}' <<<"$human"
-    ;;
-
   show)
     need bd; need ynm
-    if [ -z "$email" ]; then email="${WHEELHOUSE_HUMAN_EMAIL:-}"; fi
-    if [ -z "$email" ] && command -v git >/dev/null 2>&1; then email=$(git config user.email 2>/dev/null || true); fi
     dflt=$(default_human) || exit $?
     you=""
-    [ -n "$email" ] && you=$(jq -r --arg e "$email" '[(.humans // [])[] | select(.default != true and .email != null and (.email | ascii_downcase) == ($e | ascii_downcase))][0].command // empty' "$roster")
+    if [ -n "$name" ]; then
+      you=$(command_of "$name")
+      valid_command "$you" || die 1 "can't make a command from $name: it needs a letter or digit in it"
+      if jq -e --arg c "$you" '.seats | any(.command == $c)' "$roster" >/dev/null; then
+        die 1 "$you is a seat, not a human: name yourself with your own name"
+      fi
+      # The default human at the desk is the default human's inbox, shown once.
+      [ "$you" != "$dflt" ] || { you=""; name=""; }
+    fi
 
     # A web URL's short form, for a Markdown link: <repo> #<n> for a GitHub pull
     # request or issue, <repo> run <id> for a CI run, <repo> <sha> for a commit.
@@ -253,7 +233,7 @@ case "$cmd" in
     errors='[]'
     failed() { errors=$(jq -c --arg e "$1" 'if index($e) then . else . + [$e] end' <<<"$errors"); }
     inbox_of() {
-      local c="$1" role="$2" out beads notes msg
+      local c="$1" role="$2" n="$3" out beads notes msg
       if out=$(bd ready --assignee "$c" --json 2>/dev/null) && beads=$(jq -c "$short"'
         (.data? // .) | map(select(.issue_type != "epic"))
         | map(. + {kind: ([(.labels // [])[] | select(startswith("inbox:")) | ltrimstr("inbox:")][0] // null)})
@@ -272,19 +252,19 @@ case "$cmd" in
         failed "ynm recall failed: ${msg:-no readable output}"
         notes=null
       fi
-      humans=$(jq -c --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" --argjson hs "$humans" \
-        '$hs + [[.humans[] | select(.command == $c)][0] | {name, command, role: $role, beads: $beads, notes: $notes}]' "$roster")
+      humans=$(jq -nc --arg n "$n" --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" --argjson hs "$humans" \
+        '$hs + [{name: $n, command: $c, role: $role, beads: $beads, notes: $notes}]')
     }
     humans='[]'
-    [ -n "$you" ] && inbox_of "$you" you
-    inbox_of "$dflt" anyone
+    [ -n "$you" ] && inbox_of "$you" you "$name"
+    inbox_of "$dflt" anyone "$(jq -r --arg c "$dflt" '[.humans[] | select(.command == $c)][0].name // $c' "$roster")"
     yours='null'
-    [ -n "$you" ] && yours=$(jq -c --arg c "$you" '[.humans[] | select(.command == $c)][0] | {name, command}' "$roster")
+    [ -n "$you" ] && yours=$(jq -nc --arg n "$name" --arg c "$you" '{name: $n, command: $c}')
     # One line, so a reader that keeps only the head of the output keeps it all.
     # empty is true only when everything was read and nothing waits; with
     # errors it is null, never "nothing waiting".
-    jq -nc --argjson you "$yours" --argjson humans "$humans" --arg email "$email" --argjson errors "$errors" \
-      '{you: $you, unknown: ($you == null), email: (if $email == "" then null else $email end), humans: $humans,
+    jq -nc --argjson you "$yours" --argjson humans "$humans" --argjson errors "$errors" \
+      '{you: $you, humans: $humans,
         errors: $errors,
         empty: (if ($errors | length) > 0 then null
                 else ($humans | all((.beads | length) == 0 and (.notes | length) == 0)) end),

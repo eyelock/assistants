@@ -5,7 +5,7 @@
 # (the seat's own wake, the evidence) still works, so the eval shows whether
 # the desk says the inbox couldn't be read rather than that nothing is waiting.
 set -euo pipefail
-bash "$EVAL_FIXTURES/inbox-wake.sh" pat@example.com empty
+bash "$EVAL_FIXTURES/inbox-wake.sh" empty
 
 real_bd=$(command -v bd)
 cat > "$EVAL_BIN/bd" <<SH

@@ -254,14 +254,16 @@ if [ -f "$roster" ]; then
 fi
 
 # --- humans ------------------------------------------------------------------
-# The roster's humans, beside its seats: exactly one is the default human, the
-# name for work that needs a human but no particular one. Every bead still open
-# is assigned to a seat or a human in the roster, so none waits on someone who
-# has never named themselves at the desk and whose inbox nobody shows.
+# The roster's humans, beside its seats: exactly one, the default human, the
+# name for work that needs a human but no particular one. Any other human is per
+# session and never in the roster. Every bead still open is assigned to a seat,
+# to the default human, or to a human command with a human/<command> namespace
+# in ynm (or an inbox bead, which inbox.sh labels), so none waits on someone
+# whose inbox nobody can show.
 if [ -f "$roster" ]; then
   defaults=$(jq '[(.humans // [])[] | select(.default == true)] | length' "$roster" 2>/dev/null || echo 0)
   if [ "${defaults:-0}" -eq 1 ]; then
-    add "default human" true info "$(jq -r '[.humans[] | select(.default == true)][0] | "\(.name) (\(.command))"' "$roster"), beside $(jq '[.humans[] | select(.default != true)] | length' "$roster") named human(s)"
+    add "default human" true info "$(jq -r '[.humans[] | select(.default == true)][0] | "\(.name) (\(.command))"' "$roster"), and no other human in the roster"
   elif [ "${defaults:-0}" -eq 0 ]; then
     add "default human" false warn "the roster has no default human, so work that needs a human has nowhere to go and the desk's wake shows no inbox" \
       "add to the roster's humans one entry with \"default\": true: {\"name\": \"<Name>\", \"command\": \"<name>\", \"pronouns\": \"they/them\", \"default\": true}, named with the human (create-wheelhouse, question 5)"
@@ -278,15 +280,27 @@ if [ -f "$roster" ]; then
   fi
 
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
-    stray=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --slurpfile r "$roster" '
+    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --slurpfile r "$roster" '
       ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command]) as $known
-      | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)))
-      | map("\(.id) (\(.assignee))") | join(" ")' 2>/dev/null)
+      | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
+          and ((.labels // []) | index("inbox") | not)))
+      | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
+    # An assignee outside the roster is a human only if ynm holds a
+    # human/<command> namespace for them.
+    stray=""
+    while read -r sid sassignee; do
+      [ -n "$sid" ] || continue
+      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && command -v ynm >/dev/null 2>&1 &&
+        [ "$(ynm recall --namespace "human/$sassignee" --limit 1 --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null; then
+        continue
+      fi
+      stray="${stray:+$stray }$sid ($sassignee)"
+    done <<<"$strays"
     if [ -n "$stray" ]; then
-      add "assignees known" false warn "open beads assigned to someone who is neither a seat nor a human in the roster, so no seat takes them and no inbox shows them: $stray" \
-        "reassign each to a seat, or to a human (the default human unless you know who); a person who should have them names themselves at the desk (\"it's me, <name>\"), which registers them"
+      add "assignees known" false warn "open beads assigned to someone who is neither a seat, nor the default human, nor a human with a human/<command> namespace in ynm, so no seat takes them and no inbox shows them: $stray" \
+        "reassign each to a seat, or to a human (the default human unless you know who); a person who should have them names themselves at the desk (\"it's me, <name>\"), which shows their inbox for that session"
     else
-      add "assignees known" true info "every open bead is unassigned, or assigned to a seat or a human in the roster"
+      add "assignees known" true info "every open bead is unassigned, or assigned to a seat, the default human, or a human with a ynm namespace"
     fi
   fi
 fi
