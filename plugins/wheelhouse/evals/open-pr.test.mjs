@@ -32,8 +32,8 @@ esac
 const ISSUE = "https://github.com/eyelock/ynh/issues/680";
 const github = {
   kind: "github",
-  item: { name: "issue", pattern: "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$" },
-  release: { name: "milestone", read: "gh issue view {item} --json milestone --jq .milestone.title" },
+  item: { name: "issue", pattern: "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$" },
+  release: { name: "milestone", read: "gh issue view \"$TRACKER_ITEM\" --json milestone --jq .milestone.title" },
 };
 const bead = (id, over = {}) => ({ id, status: "in_progress", labels: ["repo:ynh"], external_ref: ISSUE, ...over });
 
@@ -154,7 +154,7 @@ test("another tracker kind uses the generic adapter: the item in the body, no re
   const jira = {
     kind: "jira",
     item: { name: "ticket", pattern: "^[A-Z][A-Z0-9]+-[0-9]+$" },
-    release: { name: "fixVersion", read: "echo 2.4 {item}" },
+    release: { name: "fixVersion", read: "echo 2.4 \"$TRACKER_ITEM\"" },
   };
   const h = harness({ tracker: jira, beads: [bead("hq-1", { external_ref: "PLAT-12" })] });
   const r = h.run();
@@ -165,14 +165,38 @@ test("another tracker kind uses the generic adapter: the item in the body, no re
   h.done();
 });
 
-test("the item is never parsed as shell, even with no pattern to stop it", () => {
-  const tracker = { kind: "linear", item: { name: "issue" }, release: { name: "milestone", read: "echo {item}" } };
+test("a hostile reference is refused before any command runs", () => {
+  const evil = "https://github.com/a;touch${IFS}PWNED;/b/issues/1";
+  const h = harness({ beads: [bead("hq-1", { external_ref: evil })] });
+  const r = h.run();
+  assert.equal(r.status, 1);
+  assert.match(r.json.refused, /does not look like/);
+  assert.equal(existsSync(join(h.dir, "PWNED")), false);
+  assert.doesNotMatch(h.log(), /issue view|pr create/);
+  h.done();
+});
+
+test("the reference reaches the command only as $TRACKER_ITEM, even when a loose pattern lets metacharacters in", () => {
+  const tracker = {
+    kind: "jira",
+    item: { name: "ticket", pattern: "^.+$" },
+    release: { name: "fixVersion", read: 'echo "$TRACKER_ITEM"' },
+  };
   const evil = "x; touch PWNED";
   const h = harness({ tracker, beads: [bead("hq-1", { external_ref: evil })] });
   const r = h.run(["--bead", "hq-1", "--dry-run"]);
   assert.equal(r.json.release, evil);
-  assert.equal(r.json.item, evil);
   assert.equal(existsSync(join(h.dir, "PWNED")), false);
+  h.done();
+});
+
+test("a tracker config with no item.pattern is a fault, and runs nothing", () => {
+  const tracker = { ...github, item: { name: "issue" } };
+  const h = harness({ tracker });
+  const r = h.run();
+  assert.equal(r.status, 3);
+  assert.match(r.stderr, /item\.pattern/);
+  assert.doesNotMatch(h.log(), /issue view|pr create/);
   h.done();
 });
 

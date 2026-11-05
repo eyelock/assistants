@@ -10,7 +10,7 @@
 # no tracker, so the PR opens with no item and no release. With a tracker the script REFUSES
 # (exit 1, nothing opened) when:
 #   - the bead has no external_ref and is not labelled housekeeping;
-#   - the external_ref does not match item.pattern;
+#   - the external_ref does not match item.pattern (a config with no pattern is a fault, exit 3);
 #   - the item has no release.
 # A bead labelled housekeeping that has no external_ref opens as if there were no tracker.
 #
@@ -21,8 +21,8 @@
 #   tracker-<kind>.sh pr-flags <release>                     prints gh pr create args, one a line
 # <last> means this bead is the last open bead on the item; <more>, that others remain.
 #
-# The item is passed to the release command through the environment ($ITEM), never spliced into
-# the command text: write {item} in tracker.json outside single quotes.
+# The item reaches the release command only as $TRACKER_ITEM in its environment, after it has
+# matched item.pattern (required); it is never spliced into the command text.
 #
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse or the bead not found,
 # 3 a tool (jq, bd, gh) is missing or failed.
@@ -82,16 +82,18 @@ if [ "$kind" != none ] && { [ -n "$ref" ] || [ "$housekeeping" -eq 0 ]; }; then
   name=$(jq -r '.item.name // "item"' "$dir/tracker.json")
   rname=$(jq -r '.release.name // "release"' "$dir/tracker.json")
   [ -n "$ref" ] || refuse "bead $bead has no external_ref: a build bead links its tracker $name (file the $name, then set the bead's external_ref), or carries the housekeeping label if it has none"
+  # The pattern is required, and checked before any command runs: it is what keeps a hostile
+  # reference out of the tracker's commands. The reference then travels in $TRACKER_ITEM, never
+  # as shell text.
   pattern=$(jq -r '.item.pattern // empty' "$dir/tracker.json")
-  if [ -n "$pattern" ] && ! printf '%s\n' "$ref" | grep -Eq -- "$pattern"; then
+  [ -n "$pattern" ] || die 3 "open-pr: tracker.json has no item.pattern; refusing to run its commands"
+  printf '%s\n' "$ref" | grep -Eq -- "$pattern" ||
     refuse "bead $bead's external_ref does not look like a tracker $name (expected to match $pattern)"
-  fi
+  case "$ref" in *$'\n'*) refuse "bead $bead's external_ref spans several lines" ;; esac
   item="$ref"
   rcmd=$(jq -r '.release.read // empty' "$dir/tracker.json")
   [ -n "$rcmd" ] || die 3 "open-pr: tracker.json has no release.read command"
-  # {item} becomes "$ITEM": the value travels in the environment, so it is never parsed as shell.
-  rcmd=${rcmd//\{item\}/\"\$ITEM\"}
-  release=$(ITEM="$item" sh -c "$rcmd" 2>/dev/null | head -n 1) || die 3 "open-pr: the release command failed"
+  release=$(TRACKER_ITEM="$item" sh -c "$rcmd" 2>/dev/null | head -n 1) || die 3 "open-pr: the release command failed"
   [ -n "$release" ] || refuse "the tracker $name $item has no $rname: set it in the tracker, then open the PR"
 
   # Is this the last open bead on the item?
