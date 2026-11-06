@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "google-drive",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
   "default_vendor": "claude",
   "keywords": ["drive", "docs", "comments", "google", "triage", "read-only"],

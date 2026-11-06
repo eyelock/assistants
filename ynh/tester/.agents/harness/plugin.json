@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "tester",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Testing and quality assurance persona",
   "default_vendor": "claude",
   "includes": [

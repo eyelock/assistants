@@ -1,5 +1,40 @@
 # @eyelock-assistants/media-management
 
+## 0.4.0
+
+### Minor Changes
+
+- [#63](https://github.com/eyelock/assistants/pull/63) [`5aa4314`](https://github.com/eyelock/assistants/commit/5aa431458249fa57f528b1e449b9d8e3af9a9aa9) Thanks [@eyelock](https://github.com/eyelock)! - Rip audio CDs and repair bad imports. The new `rip-cd` skill identifies a disc on MusicBrainz from its table of contents, rips it securely with cd-paranoia, verifies it against AccurateRip, and makes tagged MP3 320s (for Apple Music) and WAVs (for the NAS) from the one verified rip, with every disc of a set in one album. The new `audit-release` skill checks an album against a finished import, finds albums Apple Music split per disc, and merges, retitles, re-covers or replaces them in place, with a plan shown first and an undo. Also: temporary work goes to `$TMPDIR/media-management`, multi-disc WAV archives verify correctly and keep `1-01` names, `import-mp3s.sh --wait` confirms Apple Music picked files up, and setup reports `cd_read_offset` and `work_dir` as optional.
+
+- [#48](https://github.com/eyelock/assistants/pull/48) [`1673d5a`](https://github.com/eyelock/assistants/commit/1673d5a5527afac0d011dc7be1ea5b30fbe2cec6) Thanks [@eyelock](https://github.com/eyelock)! - Add sandboxed evals for the media-management skills and fix what they exposed: paths come from check-config.sh, the approval hooks are much narrower, cleanup no longer matches other releases, duplicate downloads are reported, track renumbering and splitting keep album order, and scripts use $TMPDIR and work on bash 3.2.
+
+- [#43](https://github.com/eyelock/assistants/pull/43) [`a4968ff`](https://github.com/eyelock/assistants/commit/a4968ff7363ae68709cca8bce1c2fbb44677f2fe) Thanks [@eyelock](https://github.com/eyelock)! - Fix two real bugs surfaced while processing a Various Artists pre-order release, and document a batch-processing pattern for multi-release runs.
+
+  `archive-media`'s MP3 workflow assumed the NAS/Apple-Music path uses the track Artist
+  (`$LIBRARY_STORAGE/$ARTIST/$ALBUM`), but Apple Music actually files an album under its Album
+  Artist tag — "Various Artists" for a compilation, the primary artist for a collaboration — falling
+  back to the track Artist only when Album Artist is cleared (the single-artist case). Archiving a
+  compilation's MP3s failed with "source folder not found" until the correct folder was found by
+  hand. `archive-media/SKILL.md` now documents the Album Artist fallback rule, and `process-album`
+  threads a tracked `$ALBUM_ARTIST` variable through Steps 6, 9, and 12 instead of reusing `$ARTIST`.
+
+  `cleanup`'s `find-release-artifacts.sh`/`cleanup-release.sh` matched ZIPs and extraction folders
+  by globbing a single `release_name` string against both. That breaks whenever a vendor ZIP's
+  filename diverges from the clean extraction folder name — e.g. a 10-artist compilation ZIP
+  (`lovetrip- monovan- ... - keep it deep (pre-order).zip`) extracted into a folder simply named
+  `keep it deep`: matching on the clean name found the folder but missed the ZIP. Both scripts now
+  accept repeatable `--zip <path>`/`--folder <path>` flags for exact paths, merged and deduplicated
+  with any glob matches; `release_name` may be `""` when only explicit paths are given. `process-album`'s
+  Step 13 now passes the exact paths it already tracked since Steps 1/2/11 instead of re-deriving
+  them from a name.
+
+  `process-album/SKILL.md` gains a "Batch Processing Multiple Releases" section (and a documented
+  exception in `references/safety-rules.md`) for when a user explicitly asks to process several
+  releases with a single confirmation at the end: Steps 4/8 collapse into one consolidated table
+  across all releases, genre may be an inferred best guess (clearly flagged as such) rather than a
+  per-release numbered choice, and a post-hoc genre correction just means re-running the MP3 archive
+  step for that release rather than redoing the whole pipeline.
+
 ## 0.3.0
 
 ### Minor Changes

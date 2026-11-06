@@ -1,5 +1,11 @@
 # @eyelock-assistants/gitflow
 
+## 0.3.0
+
+### Minor Changes
+
+- [#47](https://github.com/eyelock/assistants/pull/47) [`ae48602`](https://github.com/eyelock/assistants/commit/ae486026d5f987201a3d286bef5b4b0fa467eb71) Thanks [@eyelock](https://github.com/eyelock)! - Add evals for every gitflow skill and fix the behavior they exposed: a stable release always goes through release/vX.Y.Z into main, hotfixes branch from main and are forward-ported, slash branch names, breaking-change notation in commits, squash-merge cleanup that actually deletes branches, and a stricter quality gate.
+
 ## 0.2.0
 
 ### Patch Changes

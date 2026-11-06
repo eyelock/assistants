@@ -1,6 +1,6 @@
 {
   "name": "@eyelock-assistants/pause-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Conversational skills: guided elicitation and context checkpoints for alignment."
 }
