@@ -33,8 +33,15 @@ alone is rejected until it merges. It prints
 effort: a crash skips it, and the next wake's sync catches up.
 
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
-rather than starting blind: your identity, handoff notes and Kudos with
-`ynm recall --namespace seat/<command> --subject seat:<command> --tags <identity|handoff|kudos> --json`
+rather than starting blind: your identity, handoff notes and Kudos, one recall for each, since
+`--tags` matches only memories carrying every tag it is given:
+
+```bash
+ynm recall --namespace seat/<command> --subject seat:<command> --tags identity --json
+ynm recall --namespace seat/<command> --subject seat:<command> --tags handoff --json
+ynm recall --namespace seat/<command> --subject seat:<command> --tags kudos --json
+```
+
 (older notes may be outside the namespace: if nothing comes back, try without `--namespace`),
 your charter, and your work with `bd list --status in_progress --assignee <command> --json` and
 `bd ready --assignee <command> --json`. The desk also runs `bash scripts/inbox.sh show` for the
