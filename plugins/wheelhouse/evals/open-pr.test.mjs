@@ -325,6 +325,24 @@ test("a bead in an exempt repository opens with no item, no Closes line and no m
   h.done();
 });
 
+test("an open bead in an exempt repository on the same item is no sibling: Closes stays Closes", () => {
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("a-1"), bead("hq-2", { status: "open", labels: ["repo:hq"] })],
+  });
+  const r = h.run(["--bead", "a-1"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.relation, "closes");
+  assert.equal(r.json.closing, "Closes #680");
+  h.done();
+});
+
+test("an open bead in a non-exempt repository on the same item still means Part of", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("a-1"), bead("b-2", { status: "open" })] });
+  assert.equal(h.run(["--bead", "a-1"]).json.closing, "Part of #680");
+  h.done();
+});
+
 test("an exempt bead's external_ref is ignored: no closing link, and the tracker is not asked", () => {
   const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"] })] });
   const r = h.run();

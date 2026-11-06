@@ -129,8 +129,13 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
   # Capture each step on its own, so a failing bd or jq is a fault (exit 3), never a count of 0
   # that would write "Closes" while other beads are open on the item.
   listing=$(cd "$dir" && bd list --all --json 2>/dev/null) || die 3 "open-pr: bd list failed"
-  refs=$(jq -r --arg id "$bead" \
-    '(.data? // .)[] | select(.id != $id and .status != "closed") | .external_ref // empty' <<<"$listing") ||
+  # A bead in an exempt repository is no sibling: its PR carries no closing link, so it never holds
+  # the item open. (Its external_ref may name the same item as this bead's.)
+  exlist=$(jq -c '(.exempt_repos // [])' "$dir/tracker.json") || die 3 "open-pr: could not read exempt_repos"
+  refs=$(jq -r --arg id "$bead" --argjson ex "$exlist" \
+    '(.data? // .)[] | select(.id != $id and .status != "closed")
+     | select(([(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:") | select(. as $r | $ex | index($r))] | length) == 0)
+     | .external_ref // empty' <<<"$listing") ||
     die 3 "open-pr: could not read bd list's output"
   others=0
   while IFS= read -r sib; do
