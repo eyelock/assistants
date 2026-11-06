@@ -176,7 +176,9 @@ work graph are. Start the body file with your byline. The script:
    and opens a **draft** PR with the release set where the tracker supports it (a GitHub
    milestone);
 2. writes the tracker's own closing link at the end of the body: on GitHub, `Closes #N` when this
-   bead is the last open bead on the item, `Part of #N` when others remain;
+   bead is the last open bead on the item, `Part of #N` when others remain (an open bead in an
+   exempt repository, one whose `repo:` label is in `exempt_repos`, is not counted: it opens no
+   closing link, so it never holds the item open);
 3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
    `housekeeping` and isn't in an exempt repository, a reference that doesn't match `item.pattern`, and an item with no release.
    Fix the cause (file the item, ask the desk to set its release) and run it again;
