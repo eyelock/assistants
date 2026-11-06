@@ -123,7 +123,12 @@ entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' 
 [ -n "$entry" ] || { echo "$seat is not a seat in the roster" >&2; exit 1; }
 group=$(jq -r .group <<<"$entry")
 charter="$(jq -r .harness <<<"$entry")/AGENTS.md"
-mandate=$(sed -n 's/^\*\*Mandate:\*\* *//p' "$charter" 2>/dev/null | head -1)
+# The Mandate is a paragraph: from its "**Mandate:**" line to the next blank line, joined on one line.
+mandate=$(awk '
+  found && /^[[:space:]]*$/ { exit }
+  found { sub(/^[[:space:]]+/, ""); printf " %s", $0; next }
+  /^\*\*Mandate:\*\*/ { found = 1; sub(/^\*\*Mandate:\*\* */, ""); printf "%s", $0 }
+' "$charter" 2>/dev/null)
 [ -n "$mandate" ] || mandate=$(jq -r .mandate <<<"$entry")
 
 # Sync first, so what follows is current.
