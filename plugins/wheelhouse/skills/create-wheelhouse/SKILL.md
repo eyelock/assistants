@@ -85,7 +85,9 @@ the files it finds, and would commit the human's.
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart.
-   5. **Never falsify the record.** Close beads with what actually happened.
+   5. **Never falsify the record.** Close beads with what actually happened. The one forced
+      close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
+      only through `inbox.sh close`, once the work is verified done.
    6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
@@ -128,7 +130,9 @@ the files it finds, and would commit the human's.
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
    The human seats the crew they work with directly. Asked to set up the team, the desk walks the
-   human through the starter team, role by role, with the `add-seat` skill. It answers questions
+   human through the starter team, role by role, with the `add-seat` skill. When a releaser is
+   seated, the desk routes every release bead and every "can we release?" to the releaser, and
+   never to a worker. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool

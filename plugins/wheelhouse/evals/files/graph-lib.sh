@@ -53,6 +53,17 @@ install_ynm_stub() {
   chmod +x "$EVAL_BIN/ynm"
 }
 
+# install_beads_memory: make this Wheelhouse keep its memory in Beads, as create-wheelhouse would:
+# wheelhouse.json says so, and scripts/memory.sh is copied in beside the other scripts. Bd is the
+# case's real bd, so memory lands in its work graph; the ynm stub is left out on purpose, so a seat
+# that reaches for ynm finds nothing.
+install_beads_memory() {
+  printf '{"tasks": "beads", "memory": "beads"}\n' > wheelhouse.json
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  chmod +x scripts/memory.sh
+}
+
 # changelog_in_progress: a CHANGELOG.md for ynh 0.13 with Features written
 # and committed, and the changelog bead claimed by gahan. Prints its bead id.
 changelog_in_progress() {

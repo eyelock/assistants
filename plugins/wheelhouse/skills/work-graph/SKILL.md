@@ -65,7 +65,9 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   so for a bead whose pull request merged the dispatcher runs `bd reclaim`, then `bd close` with what
   happened ([Checking in for lapsed claims](#checking-in-for-lapsed-claims) step 2).
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
-  reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged.
+  reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged. The one forced close a seat may make of
+  a bead it does not hold is the desk's close of a human's inbox bead, only through
+  `inbox.sh close`, once the work is verified done, and never by hand with `bd close --force`.
 
 ## Dispatching
 
@@ -96,6 +98,10 @@ reaching for the same bead. Other seats skip this section.
    Never give a bead to a specialist whose specialities it doesn't carry. If nobody can take it, leave it
    unassigned and say why; if there is no general-purpose worker at all, say the Wheelhouse
    should have one.
+   **Never hand a release bead to a worker.** The releaser owns every release: every tag, release
+   pull request, release check, back-merge and package publish, in any repository. Leave such a
+   bead unassigned and report it to the desk, which routes it to the releaser. The same goes for
+   "can we release?": the releaser keeps each milestone's readiness record and answers it.
 5. **Who goes first:** when more workers could take a bead than there are beads, give it to the
    one who has closed the fewest beads (`bd list --status closed --assignee <worker> --json`), in
    roster order on a tie, so the work is shared out.
@@ -191,11 +197,22 @@ A worker that hands work over with a pull request opens it only with this skill'
 
 ```bash
 bash path/to/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> \
-  --title "<conventional title>" --body-file <file> --base <branch>
+  --body-file <file> [--title "<conventional title>"] [--base <branch>] [--head <branch>]
 ```
 
 Run it from the repository's worktree; `--dir` is the Wheelhouse, where `tracker.json` and the
-work graph are. Start the body file with your byline. The script:
+work graph are. Start the body file with your byline (the byline rule needs a body, so
+`--body-file` is always given). What else defaults:
+
+- `--title` defaults to the bead's title; pass a conventional title when the repository wants one.
+- `--base` defaults to the repository's default branch. Pass it for a gitflow repository whose
+  pull requests target `develop`.
+- `--head`, the remote branch to open from, is taken from your branch's upstream when its name
+  differs from the local one. A seat that pushed another seat's branch from its own worktree
+  (`git push origin HEAD:<their-branch>`) needs no workaround; pass `--head` only to name a branch
+  explicitly.
+
+The script:
 
 1. reads the bead's `external_ref` and the release from the item (the adapter's `release`),
    and opens a **draft** PR with the release set where the tracker supports it (a GitHub
@@ -244,7 +261,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    ```
 
    It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
-   or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. Like
+   or the script refuses it. Ask for a merge only once the pull request has left draft: with `gh`
+   available the script refuses a draft and says why (without `gh` it warns and carries on). Find the pull request's URL, or ask for it. Don't invent one. Like
    every task, it carries the `repo:` label of the one repository it touches: `--repo`, or, left
    out, the `repo:` label of the bead it blocks. A merge or review is refused without one; a
    decision or credential that touches no repository goes without. A merge gets its own small
@@ -275,6 +293,17 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    a bare URL.
 5. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
    once the human closes theirs.
+6. **The desk closes their bead** when they tell you it is done (a merge landed, a decision made)
+   and the work is verified, with a reason saying what they did. Other seats leave it to the
+   desk. `bd close` on a bead like this needs `--force`, and `inbox.sh close` is the only
+   sanctioned way to force it:
+
+   ```bash
+   bash scripts/inbox.sh close <bead> --reason "<what the human did>" --from <desk command>
+   ```
+
+   (`done` is an alias.) It refuses a `--from` that is not the desk, a bead that has no `inbox`
+   label and one that is not assigned to a human, so it cannot close a seat's work.
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other

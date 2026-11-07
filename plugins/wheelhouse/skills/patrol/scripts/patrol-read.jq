@@ -21,11 +21,21 @@ def overall:
     elif index("pending") then "pending"
     else "success" end;
 
+# A draft, green on CI, whose last commit is older than $stale minutes and
+# newer than its last review (or that has no review): nobody has looked at it.
+def stalled($ci):
+  (.commits // [] | map(.committedDate // empty) | max) as $push
+  | (.reviews // [] | map(.submittedAt // empty) | max) as $review
+  | .isDraft == true and .state == "OPEN" and $ci == "success" and $push != null
+    and (now - ($push | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) > ($stale * 60)
+    and ($review == null or $review < $push);
+
 {
   prs: ($prs | map({key: (.number | tostring), value: {
     title, url, state, draft: .isDraft, base: .baseRefName, merge: .mergeStateStatus,
     mergeCommit: (.mergeCommit.oid? // null),
-    ci: (if .state == "OPEN" then (.statusCheckRollup // [] | overall) else null end)
+    ci: (if .state == "OPEN" then (.statusCheckRollup // [] | overall) else null end),
+    stalled: stalled(if .state == "OPEN" then (.statusCheckRollup // [] | overall) else null end)
   }}) | from_entries),
   issues: ($issues | map({key: (.number | tostring), value: {title, url, state, reason: (.stateReason // null)}}) | from_entries),
   ci: ($runs | group_by(.workflowName) | map(first) as $latest
