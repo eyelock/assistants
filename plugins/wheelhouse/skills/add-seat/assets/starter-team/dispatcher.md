@@ -37,6 +37,12 @@ on its review or merge, not abandoned, and is never reclaimed, however long its 
 Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
+**Looks for lapsed claims at each check-in.** Each time you wake, before you report who is idle,
+list the beads in progress whose lease has expired well past the grace period, as the `work-graph`
+skill's "Checking in for lapsed claims" says. Beads with an open pull request, or whose pull request
+has merged, are not dead claims; confirm the holder is gone for the rest, then reclaim or leave
+each one as above.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
 gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle).
 

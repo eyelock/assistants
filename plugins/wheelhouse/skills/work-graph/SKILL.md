@@ -117,6 +117,22 @@ reaching for the same bead. Other seats skip this section.
    parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
    `scripts/model.sh --seat <worker>`.
 
+## Checking in for lapsed claims
+
+The dispatcher looks for lapsed claims at every check-in (each time it wakes, and before it reports
+who is idle), because nothing else prompts it to. Other seats skip this section.
+
+1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show <id>` says
+   "Lease: expired" (with how long ago) or "Lease: expires in ...".
+2. Set aside any bead whose lease is live, and any with an open pull request (its `PR: <url>` note
+   is `OPEN` in `gh pr view <url> --json state`): that is waiting on a review or a merge, not dead.
+   A bead whose pull request has merged but which is still in progress is not a dead claim either:
+   close it, with what happened, as in [Closing](#closing).
+3. For a bead whose lease expired well past the grace period (more than ten minutes ago) with no
+   open pull request, confirm the holder is gone: no live session for that seat. Then reclaim it,
+   record why, and re-dispatch it, as in [Keeping your claim](#keeping-your-claim). If the holder
+   may still be working, leave the bead alone and say so in the report.
+
 ## Breaking work down
 
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
