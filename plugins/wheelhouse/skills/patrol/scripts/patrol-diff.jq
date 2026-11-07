@@ -10,7 +10,8 @@ def pr_changes($r; $n; $was; $is):
   | if $was == null then
       if $is.state == "MERGED" then $base + {kind: "pr-merged", mergeCommit: $is.mergeCommit}
       elif $is.state == "CLOSED" then $base + {kind: "pr-closed"}
-      else $base + {kind: "pr-opened", draft: $is.draft, base: $is.base} end
+      else ($base + {kind: "pr-opened", draft: $is.draft, base: $is.base}),
+        (if $is.stalled == true then $base + {kind: "pr-stalled"} else empty end) end
     else
       (if $was.state != "MERGED" and $is.state == "MERGED" then $base + {kind: "pr-merged", mergeCommit: $is.mergeCommit}
        elif $was.state == "OPEN" and $is.state == "CLOSED" then $base + {kind: "pr-closed"}
@@ -24,7 +25,8 @@ def pr_changes($r; $n; $was; $is):
         (if $was.merge != "DIRTY" and $is.merge == "DIRTY" then $base + {kind: "pr-dirty"} else empty end),
         (if $was.ci != "failure" and $is.ci == "failure" then $base + {kind: "pr-ci-red"}
          elif $was.ci == "failure" and $is.ci == "success" then $base + {kind: "pr-ci-green"}
-         else empty end)
+         else empty end),
+        (if $was.stalled != true and $is.stalled == true then $base + {kind: "pr-stalled"} else empty end)
        else empty end)
     end;
 
