@@ -215,6 +215,15 @@ requests and issues):
   relative one, which hides which checkout or worktree you mean. Code and config keep their
   portable relative paths; this is about what you write for people.
 
+**Never change a shared checkout.** Never switch branches, check out, detach, commit, reset or
+stash in a repository checkout shared with the human and the other seats. Work in your own git
+worktree in your scratchpad, branched from `origin/<default branch>` (shared checkouts are often
+stale), with the worktree and its files named with your own command (subagent seats share the
+desk's scratchpad). Read a branch with `git show` or `git diff`. Never use `git stash`: all
+worktrees of a repository share one stash list. To set work aside, commit it to a throwaway
+branch. A branch already checked out in another worktree: make a new local branch and push it with
+`git push origin HEAD:<remote branch>`.
+
 **Never name a human** in anything you post or write (pull requests, reviews, comments, beads,
 notes, docs, commits): write the next action impersonally. In chat, call the human "you".
 <For a seat that talks to the humans, the crew: Talk to the humans as the `comms` skill says:

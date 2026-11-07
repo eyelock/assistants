@@ -92,7 +92,17 @@ the files it finds, and would commit the human's.
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
-   8. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
+   8. **Never change a shared checkout.** A repository's checkout under "What it reaches" is
+      shared with the human and the other seats. Never switch branches, check out, detach,
+      commit, reset or stash there. To work on or test a branch, use your own git worktree in
+      your scratchpad, branched from `origin/<the branch your pull request targets>` (a shared checkout is
+      often stale), and name the worktree and any file you keep there with your own command, because
+      subagent seats share the desk's scratchpad. To read a branch, use `git show` or `git diff`.
+      Never use `git stash`, even in your own worktree: every worktree of a repository shares one
+      stash list, so a stash lands in the shared checkout too. To set work aside, commit it to a
+      throwaway branch. If the branch you need is already checked out in another worktree, make a
+      new local branch and push it with `git push origin HEAD:<remote branch>`.
+   9. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
       pull requests and issues):
       - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short
         form, always as a link: `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`,
@@ -101,16 +111,16 @@ the files it finds, and would commit the human's.
         a relative one, which hides which checkout or worktree you mean. Code and config keep
         their portable relative paths; this is about what you write for people.
 
-   9. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
+   10. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
       credential), assign them a bead, the default human unless you know who; tell them things
       with an inbox note; never wait silently.
-   10. **Never name a human** in anything you post or write (pull requests, reviews, comments,
+   11. **Never name a human** in anything you post or write (pull requests, reviews, comments,
        beads, notes, docs, commits): write the next action impersonally ("Decision needed before
        merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you".
        Seats that talk to the humans follow the `comms` skill: decisions asked through the
        question tool, with options; a synopsis beside every bead id; the outcome first.
 
-   Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
+   Write rule 9 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.
 
    A `## What it reaches` section lists the repositories, each with where it is checked out
