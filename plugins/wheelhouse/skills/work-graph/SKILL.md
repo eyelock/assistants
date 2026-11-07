@@ -47,7 +47,7 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   letting the lease run out.
 - **What a lapsed lease does on its own:** nothing. The bead stays in progress and assigned to its
   holder, and another seat's `--claim` is still refused. It only looks abandoned in `bd show`
-  ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
+  ("Lease: expires expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
   seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
   there is none) and leaves the bead alone.
 - **A bead with an open pull request is never a dead claim.** (It has a `PR: <url>` note that is
@@ -61,8 +61,11 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   records on the bead why it did, and re-dispatches it. The bead goes back to ready with no
   assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
   heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
+- **A merged bead is closed by reclaiming it first.** `bd close` refuses a bead another seat holds,
+  so for a bead whose pull request merged the dispatcher runs `bd reclaim`, then `bd close` with what
+  happened ([Checking in for lapsed claims](#checking-in-for-lapsed-claims) step 2).
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
-  reclaims, and only for a seat it has confirmed is gone.
+  reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged.
 
 ## Dispatching
 
@@ -122,12 +125,18 @@ reaching for the same bead. Other seats skip this section.
 The dispatcher looks for lapsed claims at every check-in (each time it wakes, and before it reports
 who is idle), because nothing else prompts it to. Other seats skip this section.
 
-1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show <id>` says
-   "Lease: expired" (with how long ago) or "Lease: expires in ...".
+1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show --json <id>`
+   has `lease_expires_at` and `heartbeat_at`: a lease whose `lease_expires_at` is in the past has
+   expired (`bd show` prints it as "Lease: expires expired (heartbeat 28 mins ago)" or "Lease:
+   expires in ...").
 2. Set aside any bead whose lease is live, and any with an open pull request (its `PR: <url>` note
    is `OPEN` in `gh pr view <url> --json state`): that is waiting on a review or a merge, not dead.
-   A bead whose pull request has merged but which is still in progress is not a dead claim either:
-   close it, with what happened, as in [Closing](#closing).
+   A bead whose pull request has merged but which is still in progress is not a dead claim either,
+   but `bd close` from the dispatcher is refused while the worker holds it (`reclaim or use --force
+   to override`), and the dispatcher never uses `--force` on another seat's bead. Close it in two
+   steps: `bd reclaim --id <id> --older-than <grace> --actor <you>` (once its lease has expired and
+   the holder has no live session; if the lease is still live, leave it for the next check-in), then
+   `bd close <id> --reason "<what happened>" --actor <you>`, as in [Closing](#closing).
 3. For a bead whose lease expired well past the grace period (more than ten minutes ago) with no
    open pull request, confirm the holder is gone: no live session for that seat. Then reclaim it,
    record why, and re-dispatch it, as in [Keeping your claim](#keeping-your-claim). If the holder

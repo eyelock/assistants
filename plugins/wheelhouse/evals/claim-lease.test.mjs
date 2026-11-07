@@ -31,7 +31,9 @@ test("work-graph tells seats to heartbeat, and what a lapse does", () => {
 test("the dispatcher looks for lapsed claims at each check-in", () => {
   const section = skill.split("## Checking in for lapsed claims")[1]?.split("\n## ")[0] ?? "";
   assert.match(section, /bd list --status in_progress/);
-  assert.match(section, /Lease: expired/);
+  assert.match(section, /lease_expires_at/);
+  assert.match(section, /bd reclaim --id <id> --older-than <grace> --actor <you>/);
+  assert.match(section, /never uses `--force`/);
   assert.match(section, /open pull request/);
   assert.match(section, /confirm the holder is gone/);
   const dispatcher = readFileSync(join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"), "utf8");
