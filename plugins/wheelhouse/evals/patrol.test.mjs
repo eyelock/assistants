@@ -304,3 +304,44 @@ test("bad arguments are refused", () => {
     h.done();
   }
 });
+
+test("a green draft with commits no review has seen is stalled, once, after --stale-after minutes", () => {
+  const h = harness();
+  try {
+    const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+    const commit = (min) => [{ committedDate: ago(min) }];
+    const draft = (n, over) => pr(n, { isDraft: true, ...over });
+    const state = (prs) => ({ repos: { [R]: { branch: "develop", prs, issues: [], runs: run("success") } } });
+    const start = [draft(1, { commits: commit(5) }), draft(2), draft(3), draft(4), draft(5), draft(6), pr(7)];
+    h.set(state(start));
+    h.patrol();
+    h.set(
+      state([
+        draft(1, { commits: commit(5) }), // pushed 5 minutes ago: too recent
+        draft(2, { commits: commit(60) }), // no review at all
+        draft(3, { commits: commit(60), reviews: [{ submittedAt: ago(90) }] }), // reviewed before the push
+        draft(4, { commits: commit(60), reviews: [{ submittedAt: ago(30) }] }), // reviewed after the push
+        draft(5, { commits: commit(60), statusCheckRollup: red }), // CI red: the red report covers it
+        draft(6, { commits: commit(60) }),
+        pr(7, { commits: commit(60) }), // not a draft
+      ]),
+    );
+    const out = h.patrol();
+    assert.equal(out.status, 0, out.stderr);
+    assert.deepEqual(
+      out.json.filter((c) => c.kind === "pr-stalled").map((c) => c.number),
+      [2, 3, 6],
+    );
+    assert.deepEqual(
+      out.json.map((c) => c.kind).filter((k) => k === "pr-ci-red"),
+      ["pr-ci-red"],
+    );
+    assert.deepEqual(
+      h.patrol().json.filter((c) => c.kind === "pr-stalled"),
+      [],
+      "reported once",
+    );
+  } finally {
+    h.done();
+  }
+});
