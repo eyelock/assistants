@@ -254,6 +254,15 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    a bare URL.
 5. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
    once the human closes theirs.
+6. **Close their bead** when they tell you it is done (a merge landed, a decision made), with a
+   note of what they did. `bd close` on a bead like this needs `--force`, so use the inbox:
+
+   ```bash
+   bash scripts/inbox.sh close --from <your command> --id <bead> --note "<what the human did>"
+   ```
+
+   (`done` is an alias.) It refuses a bead that has no `inbox` label or is not assigned to a
+   human, so it cannot close a seat's work.
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other
