@@ -42,10 +42,7 @@ add() {
 }
 
 # --- memory ------------------------------------------------------------------
-# Where seat and human memory lives is wheelhouse.json's "memory" key (ynm when
-# there is none), read through memory.sh: the Wheelhouse's own copy in scripts/,
-# else the work-graph skill's beside this one. ynm's checks run for ynm only,
-# and Beads' memory checks (below) for Beads.
+# The backend: wheelhouse.json's "memory" (ynm when none), read through memory.sh.
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 memsh=""
 for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
@@ -54,19 +51,19 @@ done
 backend=ynm
 if [ -n "$memsh" ]; then
   if ! backend=$(bash "$memsh" backend --dir "$dir" 2>&1); then
-    add "memory backend" false error "memory.sh could not name the backend: $(printf '%s' "$backend" | head -c 200)" \
-      "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\" (or remove the file for ynm)"
+    add "memory backend" false error "$(printf '%s' "$backend" | head -c 200)" \
+      "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\""
     backend=""
   fi
 elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
-  add "memory backend" false error "wheelhouse.json chooses a memory backend but memory.sh is nowhere to be found (scripts/memory.sh, or the work-graph skill)" \
-    "copy the work-graph skill's scripts/memory.sh into scripts/ beside wake.sh, and commit it"
+  add "memory backend" false error "wheelhouse.json names a memory backend but there is no memory.sh" \
+    "copy the work-graph skill's scripts/memory.sh into scripts/"
   backend=""
 fi
 
 # --- ynm ---------------------------------------------------------------------
 if [ "$backend" != ynm ]; then
-  [ -z "$backend" ] || add "memory backend" true info "$backend: seat and human memory live in Beads, so ynm is not checked"
+  [ -z "$backend" ] || add "memory backend" true info "$backend: ynm is not checked"
 elif ! command -v ynm >/dev/null 2>&1; then
   add "ynm installed" false error "ynm is not on PATH" "brew install eyelock/tap/ynm"
 else
@@ -155,21 +152,18 @@ else
   add "no Beads agent setup" true info "none found"
 fi
 
-# With Beads as the memory backend, seat and human memory is the work graph's own
-# database: readable, and shared through the same Dolt remote.
+# Beads memory: readable, and shared by the work graph's Dolt remote.
 if [ "$backend" = beads ] && command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
   mem=$(cd "$dir" && bd --readonly memories --json 2>/dev/null)
   if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$mem"; then
     add "beads memory readable" true info "$(jq '[keys[] | select(. != "schema_version")] | length' <<<"$mem") memories"
   else
-    add "beads memory readable" false error "bd --readonly memories --json gave no memory map, so seats cannot read their identity, handoff notes or Kudos" \
-      "cd $dir && bd memories, and read the error"
+    add "beads memory readable" false error "bd --readonly memories --json gave no memory map" "cd $dir && bd memories, and read the error"
   fi
   if (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
-    add "beads memory shared" true info "the work graph has a Dolt remote, which carries memory with it"
+    add "beads memory shared" true info "the work graph has a Dolt remote"
   else
-    add "beads memory shared" false warn "the work graph has no Dolt remote, so memory stays on this machine" \
-      "bd dolt remote add origin <the repository's git URL> --allow-git-origin, then bd dolt push"
+    add "beads memory shared" false warn "no Dolt remote, so memory stays on this machine" "bd dolt remote add origin <git URL> --allow-git-origin, then bd dolt push"
   fi
 fi
 
@@ -268,13 +262,8 @@ if [ -f "$roster" ]; then
     fi
   fi
 
-  # A seat is born once its identity is pinned in its own namespace. Until then
-  # its birth is owed: the human's for the desk, crew and standing roles, the
-  # dispatcher's for a worker. With ynm it reads only the repository's own mount,
-  # which ynm always names project, so a slow remote mount can't hold it up.
-  # Without that mount (reported above) it doesn't run: ynm returns nothing, not
-  # an error, for a mount that isn't there, and every seat would look unborn.
-  # With Beads it asks memory.sh for the seat's identity key.
+  # Born: an identity pinned in the seat's namespace. ynm reads the project mount only,
+  # and not at all without it (every seat would look unborn).
   unborn=""
   unread=""
   checkborn=0
@@ -285,21 +274,17 @@ if [ -f "$roster" ]; then
   fi
   if [ "$checkborn" = 1 ]; then
     while IFS=$'\t' read -r cmd by; do
+      q="[.[]? | select(.namespace == \"seat/$cmd\" and .pinned == true)] | length > 0"
       if [ "$backend" = beads ]; then
-        if ! found=$(bash "$memsh" recall --dir "$dir" --seat "$cmd" --kind identity --limit 1 2>/dev/null); then
-          unread="$unread $cmd"
-        elif ! jq -e 'length > 0' <<<"$found" >/dev/null 2>&1; then
-          unborn="$unborn $cmd (birth: $by)"
-        fi
-      elif ! found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null); then
-        unread="$unread $cmd"
-      elif ! jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' <<<"$found" >/dev/null 2>&1; then
-        unborn="$unborn $cmd (birth: $by)"
-      fi
+        q='length > 0'; found=$(bash "$memsh" recall --dir "$dir" --seat "$cmd" --kind identity --limit 1 2>/dev/null)
+      else
+        found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null)
+      fi || unread="$unread $cmd"
+      [[ " $unread " == *" $cmd "* ]] || jq -e "$q" <<<"$found" >/dev/null 2>&1 || unborn="$unborn $cmd (birth: $by)"
     done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
-      add "seats born" false warn "memory couldn't recall the identities of:$unread, so whether they are born is unknown" \
-        "run scripts/memory.sh recall --seat <command> --kind identity from the Wheelhouse root, and see the doctor's memory checks"
+      add "seats born" false warn "memory couldn't recall the identities of:$unread, so birth is unknown" \
+        "run scripts/memory.sh recall --seat <command> --kind identity"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -341,15 +326,12 @@ if [ -f "$roster" ]; then
       | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
-    # An assignee outside the roster is a human only if memory holds a
-    # human/<command> namespace for them: ynm directly, Beads through memory.sh.
+    # Outside the roster, a human is one whose human/<command> memory exists.
     human_known() {
-      if [ "$backend" = beads ]; then
-        [ -n "$memsh" ] && [ "$(bash "$memsh" recall --dir "$dir" --human "$1" --limit 1 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
-      else
-        command -v ynm >/dev/null 2>&1 &&
-          [ "$(ynm recall --namespace "human/$1" --limit 1 --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
-      fi
+      local out
+      if [ "$backend" = beads ]; then out=$(bash "$memsh" recall --dir "$dir" --human "$1" --limit 1 2>/dev/null)
+      else out=$(ynm recall --namespace "human/$1" --limit 1 --json 2>/dev/null); fi
+      [ "$(jq 'length' <<<"$out" 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
     }
     stray=""
     while read -r sid sassignee; do
