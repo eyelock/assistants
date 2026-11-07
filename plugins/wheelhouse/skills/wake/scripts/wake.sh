@@ -26,7 +26,8 @@
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
 # remote and given up after 12 seconds. A full sync, not a push alone: when
 # another seat has pushed since, a push alone is rejected until it merges. It prints
-# {seat, push {memory, work: pushed|skipped|failed}} and nothing else.
+# {seat, push {memory, work: pushed|skipped|failed}} and nothing else. With
+# --no-sync it syncs neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, closeNotes [{bead, note}], record, inProgress, assigned, unassignedReady (titles, most
@@ -45,6 +46,7 @@ Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text]
        wake.sh <name> [--dir <wheelhouse repo>] [--format json|text]
                [--no-sync]
        wake.sh --end [--seat <name> | <name>] [--dir <wheelhouse repo>]
+               [--no-sync]
 
 Syncs memory and work, then prints what a seat should know as it wakes.
 The seat is --seat <name>, or the seat's name given bare; it defaults to
@@ -52,7 +54,8 @@ $BEADS_ACTOR, and without any of them the script stops and lists the roster's
 seats. Run it as bash <wheelhouse>/scripts/wake.sh, and pass --dir <wheelhouse>
 when the current directory is not the Wheelhouse's root. --dir defaults to the
 current directory; --format to json. --no-sync skips the sync. --end, for the
-session-end hook, only syncs memory and work, and prints the result as JSON.
+session-end hook, only syncs memory and work, and prints the result as JSON;
+--end --no-sync syncs neither and reports both as skipped.
 EOF
 }
 
