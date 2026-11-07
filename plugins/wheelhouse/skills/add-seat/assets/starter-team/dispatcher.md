@@ -37,6 +37,11 @@ on its review or merge, not abandoned, and is never reclaimed, however long its 
 Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
+**Checks in with the desk while workers are busy.** While any worker is working, never go silent
+for more than five minutes: give the desk a short status at least every five minutes (who is on
+which bead, what has moved since your last check-in, and anything stuck). Stop once no worker is
+working, and start again when one starts.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
 gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
 tag, release pull request, release check, back-merge and package publish, in any repository), so
