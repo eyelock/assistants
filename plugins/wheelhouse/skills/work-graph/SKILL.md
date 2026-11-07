@@ -93,6 +93,10 @@ reaching for the same bead. Other seats skip this section.
    Never give a bead to a specialist whose specialities it doesn't carry. If nobody can take it, leave it
    unassigned and say why; if there is no general-purpose worker at all, say the Wheelhouse
    should have one.
+   **Never hand a release bead to a worker.** The releaser owns every release: every tag, release
+   pull request, release check, back-merge and package publish, in any repository. Leave such a
+   bead unassigned and report it to the desk, which routes it to the releaser. The same goes for
+   "can we release?": the releaser keeps each milestone's readiness record and answers it.
 5. **Who goes first:** when more workers could take a bead than there are beads, give it to the
    one who has closed the fewest beads (`bd list --status closed --assignee <worker> --json`), in
    roster order on a tie, so the work is shared out.
