@@ -14,6 +14,9 @@
 #             touches. A merge or review needs --url and a repository.
 #   note      an FYI for a human: a memory in ynm, namespace human/<command>,
 #             tagged inbox, shown at the desk's wake until it is relayed.
+#   close     closes a human's inbox bead with a reason, once the human has done
+#             it and the work is verified (alias: done). Only the desk runs it,
+#             and only on an inbox bead assigned to a human.
 #   show      the ready beads and notes for the default human and, when
 #             --name says who is at the desk for this session, for them too.
 #
@@ -31,6 +34,7 @@ Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
                        [--description <text>] [--priority 0-4]
                        [--kind merge|review|decision|credential|report|other]
        inbox.sh note --content <text> --from <seat> [--to default|<command>]
+       inbox.sh close <bead> --reason <text> --from <desk seat>
        inbox.sh show [--name <Name>]
 
 Common: --dir <wheelhouse repo> (default: the current directory).
@@ -53,6 +57,15 @@ assign    Creates a bead assigned to a human (--to: default, the default human,
           Every kind is labelled inbox:<kind>. --priority sets any bead's
           priority (0 highest, 4 lowest; bd's default, 2, unless given).
 note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
+close     (alias: done) Closes a human's bead (<bead>, or --id) with a reason
+          (--reason, or --note), as the seat recording it (--from, default:
+          $BEADS_ACTOR), once the human has done it or told you it is done and
+          the work is verified. Only the desk runs it: --from must be a seat in
+          the desk group. The bead must be an inbox bead (labelled inbox)
+          assigned to a human, never a seat's work. bd refuses a plain close of
+          a bead like this, so close forces it: the one forced close a seat
+          makes of a bead it does not hold, which is why it is limited to inbox
+          beads. Prints {id, closedBy, note}.
 show      Prints {you, humans: [{name, command,
           role: you|anyone, beads: [{id, title, kind, askedBy, priority,
           ref: {short, url}, unblocks}] (reports last, then by priority), notes: [{memoryId, content}]}],
@@ -73,27 +86,31 @@ die() { echo "$2" >&2; exit "$1"; }
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
 case "$cmd" in
-  assign | note | show) ;;
+  assign | note | show | close | done) ;;
   --help | -h) usage; exit 0 ;;
   *) echo "unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac
 
 dir="."
 title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""; priority=""
-content=""; name=""
+content=""; name=""; id=""; note=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
-    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name)
+    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name | --id | --note | --reason)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       v="$2"
       case "$1" in
         --dir) dir="$v" ;; --title) title="$v" ;; --from) from="$v" ;; --to) to="$v" ;;
         --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --priority) priority="$v" ;; --description) description="$v" ;;
-        --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;;
+        --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;; --id) id="$v" ;; --note | --reason) note="$v" ;;
       esac
       shift 2 ;;
-    *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    *)
+      # close takes the bead bare: inbox.sh close <bead> --reason <text>
+      if { [ "$cmd" = close ] || [ "$cmd" = done ]; } && [ -z "$id" ]; then id="$1"; shift
+      else echo "unknown argument: $1" >&2; usage >&2; exit 1; fi ;;
   esac
 done
 
@@ -214,6 +231,28 @@ case "$cmd" in
     [ -n "$memid" ] || memid=$(grep -oE '[0-9A-Z]{26}' <<<"$out" | head -1)
     jq -n --arg to "$human" --arg from "$from" --arg id "$memid" \
       '{to: $to, from: $from, namespace: "human/\($to)", memoryId: (if $id == "" then null else $id end)}'
+    ;;
+
+  close | done)
+    need bd
+    [ -n "$id" ] || die 1 "close needs the bead to close: inbox.sh close <bead> --reason <text>"
+    [ -n "$note" ] || die 1 "close needs --reason: what the human did, for the close reason"
+    check_from
+    jq -e --arg c "$from" '.seats | any(.command == $c and .group == "desk")' "$roster" >/dev/null ||
+      die 1 "$from is not the desk: only the desk closes a human's bead (hand it to the desk)"
+    out=$(bd show "$id" --json 2>/dev/null) || die 1 "no bead $id"
+    bead=$(jq -c '(.data? // .) | if type == "array" then .[0] else . end' <<<"$out" 2>/dev/null)
+    [ -n "$bead" ] && [ "$bead" != null ] || die 1 "no bead $id"
+    jq -e '(.labels // []) | index("inbox")' <<<"$bead" >/dev/null ||
+      die 1 "$id is not an inbox bead (no inbox label): close it with bd close, not through the inbox"
+    owner=$(jq -r '.assignee // ""' <<<"$bead")
+    if [ -z "$owner" ] || jq -e --arg c "$owner" '.seats | any(.command == $c)' "$roster" >/dev/null; then
+      die 1 "$id is not assigned to a human (assignee: ${owner:-none}): close it with bd close"
+    fi
+    status=$(jq -r '.status // ""' <<<"$bead")
+    [ "$status" != closed ] || die 1 "$id is already closed"
+    res=$(bd close "$id" --reason "$note" --force --actor "$from" 2>&1) || die 3 "bd close failed: $res"
+    jq -n --arg id "$id" --arg from "$from" --arg note "$note" '{id: $id, closedBy: $from, note: $note}'
     ;;
 
   show)

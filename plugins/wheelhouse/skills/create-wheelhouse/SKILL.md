@@ -85,7 +85,9 @@ the files it finds, and would commit the human's.
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart.
-   5. **Never falsify the record.** Close beads with what actually happened.
+   5. **Never falsify the record.** Close beads with what actually happened. The one forced
+      close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
+      only through `inbox.sh close`, once the work is verified done.
    6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
