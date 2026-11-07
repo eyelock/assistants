@@ -39,7 +39,9 @@ assign    Creates a bead assigned to a human (--to: default, the default human,
           or any human's command, their name in lowercase),
           as the seat that asked (--from, default: $BEADS_ACTOR). --url is kept
           as the bead's external_ref; a merge or review is refused without
-          one. --kind says which it is; without --kind, a title with the word
+          one. A merge whose pull request is still a draft is refused when gh
+          can tell (with gh missing or failing, it warns and carries on).
+          --kind says which it is; without --kind, a title with the word
           "merge" or "review" in it (any case, anywhere) is taken as one.
           --blocks makes the given bead wait on this one. --repo labels the
           bead repo:<repo>, the one repository it touches; without --repo it
@@ -156,6 +158,17 @@ case "$cmd" in
     fi
     if [ -z "$url" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --url: the pull request it is about, so the human can open it"
+    fi
+    # A merge is asked of a human only once its pull request has left draft.
+    # With gh, a draft is refused; without gh, or if gh can't tell, warn and go on.
+    if [ "$kind" = merge ]; then
+      if ! command -v gh >/dev/null 2>&1; then
+        echo "warning: gh is not installed, so I can't check $url is out of draft" >&2
+      elif draft=$(gh pr view "$url" --json isDraft --jq .isDraft 2>/dev/null) && [ "$draft" = true ]; then
+        die 1 "$url is still a draft: ask a human to merge it only once it has left draft (the review seat takes it out of draft when satisfied)"
+      elif [ "$draft" != false ]; then
+        echo "warning: couldn't ask gh whether $url is a draft; carrying on" >&2
+      fi
     fi
     # The repository: --repo (with or without its repo: prefix), else the
     # repo: label of the bead this one blocks. One name, never a list: bd
