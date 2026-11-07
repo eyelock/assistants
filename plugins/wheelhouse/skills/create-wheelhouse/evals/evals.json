@@ -22,6 +22,7 @@
         ".ynm/config.json in the evidence has a sync block with auto true",
         "git remote -v in the evidence shows no remote, and nothing was pushed",
         "The reply tells the human about the ynm push sync for the Beads pre-push hook (as a step for them, or offered), and the hook was not changed unasked",
+        "AGENTS.md has a rule never to change a shared checkout (no switching branches, checking out, committing, resetting or stashing there): work in your own git worktree in the scratchpad, and never use git stash",
         "AGENTS.md has a section saying how finished work is handed over for review (uncommitted in the working tree, or a draft pull request), and that a human merges or commits",
         "The desk's .agents/harness/plugin.json includes ynh's own skills from https://github.com/eyelock/ynh, picking skills/ynh-compose and skills/ynh-troubleshoot",
         "The reply ends by offering to set up the starter team next, role by role",
