@@ -110,6 +110,7 @@ roster_wheelhouse() {
   "version": "0.1.0",
   "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
+  "labels": ["wheelhouse:hq"],
   "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
   "delegates_to": []
 }
@@ -131,7 +132,7 @@ MD
   case "$1" in
     dredd) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."}]'
            mkdir -p harnesses/dredd/.agents/harness
-           echo '{"name":"dredd","version":"0.1.0","description":"Dredd, standing seat: PR and CI watcher."}' > harnesses/dredd/.agents/harness/plugin.json ;;
+           echo '{"name":"dredd","version":"0.1.0","description":"Dredd, standing seat: PR and CI watcher.","labels":["wheelhouse:hq"]}' > harnesses/dredd/.agents/harness/plugin.json ;;
     seated) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."},{"name":"Tharg","group":"standing","command":"tharg","harness":"harnesses/tharg","mandate":"Cuts releases of the YN tools when asked."}]' ;;
     empty-standing) standing='[]' ;;
   esac
@@ -215,13 +216,13 @@ specialist_wheelhouse() {
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  printf '{"name":"hq","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
+  printf '{"name":"hq","version":"0.1.0","description":"The desk.","labels":["wheelhouse:hq"],"delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
     name=${w%%=*}; label=; [ "$w" != "$name" ] && label=${w#*=}
     cmd=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     mkdir -p "harnesses/$cmd/.agents/harness"
-    jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c,
+    jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c, labels: ["wheelhouse:hq"],
       hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
       on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
       launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' \

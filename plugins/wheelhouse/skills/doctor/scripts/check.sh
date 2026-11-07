@@ -192,6 +192,28 @@ if [ -f "$roster" ]; then
   else
     add "seats wake by themselves" true info "every seat's launch focus starts its session"
   fi
+  # Every harness, the desk's too, carries wheelhouse:<this Wheelhouse's name> in its
+  # labels (the ynh release with harness labels), so ynr query --label wheelhouse:<name> picks out this
+  # Wheelhouse's records when several share a spool. The name is the desk's.
+  wname=$(jq -r '.name // empty' "$dir/.agents/harness/plugin.json" 2>/dev/null)
+  if [ -n "$wname" ]; then
+    nolabel=""
+    wronglabel=""
+    while IFS=$'\t' read -r cmd harness; do
+      manifest="$dir/$harness/.agents/harness/plugin.json"
+      jq -e --arg l "wheelhouse:$wname" '(.labels // []) | index($l)' "$manifest" >/dev/null 2>&1 || nolabel="$nolabel $cmd"
+      jq -e --arg l "wheelhouse:$wname" '(.labels // []) | map(select(startswith("wheelhouse:") and . != $l)) | length > 0' "$manifest" >/dev/null 2>&1 && wronglabel="$wronglabel $cmd"
+    done < <({ printf 'desk\t.\n'; jq -r '.seats[] | select(.harness != ".") | [.command, .harness] | @tsv' "$roster" 2>/dev/null; })
+    if [ -n "$nolabel" ] || [ -n "$wronglabel" ]; then
+      detail=""
+      [ -n "$nolabel" ] && detail="harnesses without the label wheelhouse:$wname:$nolabel"
+      [ -n "$wronglabel" ] && detail="${detail:+$detail; }harnesses carrying another Wheelhouse's label:$wronglabel"
+      add "seats labelled" false warn "$detail" \
+        "add \"labels\": [\"wheelhouse:$wname\"] to each harness's .agents/harness/plugin.json, replacing any other wheelhouse: label (the add-seat skill; needs the ynh release with harness labels), then ynh update. ynr query --label wheelhouse:$wname then picks out this Wheelhouse's records"
+    else
+      add "seats labelled" true info "the desk and every seat carry wheelhouse:$wname; ynr query --label wheelhouse:$wname picks out this Wheelhouse's records"
+    fi
+  fi
   if [ -n "$missing" ]; then
     add "workspace folders" false warn "seats ask for folders that don't exist, which ynh refuses:$missing" \
       "check where each repository is checked out (the constitution's What it reaches), and fix the seat's workspace paths, which are relative to its own folder"

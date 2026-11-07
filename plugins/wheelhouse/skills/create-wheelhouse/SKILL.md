@@ -203,6 +203,7 @@ the files it finds, and would commit the human's.
      "version": "0.1.0",
      "description": "The desk of the <name> Wheelhouse: <purpose>.",
      "default_vendor": "claude",
+     "labels": ["wheelhouse:<name>"],
      "includes": [
        { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
@@ -218,6 +219,11 @@ the files it finds, and would commit the human's.
      "delegates_to": []
    }
    ```
+
+   `labels` stamps every run record of the desk with `wheelhouse:<name>`, the Wheelhouse's own
+   name, and `add-seat` writes the same label into every seat's harness. When several
+   Wheelhouses share the laptop spool, `ynr query --label wheelhouse:<name>` picks out this one's
+   records. It needs the ynh release with harness labels: older ynh rejects or ignores the field.
 
    ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
    profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
