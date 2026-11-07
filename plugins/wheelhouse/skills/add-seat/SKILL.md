@@ -150,7 +150,7 @@ rules. In short:
   "version": "0.1.0",
   "description": "<Name>, <group> seat of the <wheelhouse> Wheelhouse: <mandate>",
   "default_vendor": "claude",
-  "labels": ["wheelhouse:<wheelhouse>"],
+  "labels": { "wheelhouse": "<wheelhouse>" },
   "includes": [
     { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
     { "git": "../..", "pick": ["skills/roster"] }
@@ -171,11 +171,12 @@ rules. In short:
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
-- `labels` stamps every run record of the seat with `wheelhouse:<wheelhouse>`, filled in with the
-  Wheelhouse's own name (the desk harness's `name`). Every seat carries it, so
-  `ynr query --label wheelhouse:<wheelhouse>` picks out this Wheelhouse's records when several
-  share the laptop spool. It needs the ynh release with harness labels: older ynh rejects or
-  ignores the field. Never write another Wheelhouse's name here, or a human's.
+- `labels` is an object of key to value, and stamps every run record of the seat with
+  `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
+  `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out
+  this Wheelhouse's records when several share the laptop spool. It needs ynh 0.17.0 or later: an
+  older ynh refuses the field, so a seat written with it won't start there. The value is always
+  the desk's own name, never another Wheelhouse's or a person's.
 - Add only what the mandate needs: other includes (such as `plugins/gitflow` for releases),
   MCP servers, and the environment variables they need in `env_passthrough`. Don't pass
   `BEADS_ACTOR` through: the seat names itself, so a variable left over in the human's shell

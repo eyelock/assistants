@@ -7,7 +7,7 @@ specialist_wheelhouse Dalglish=repo:ynh Strachan
 m=harnesses/strachan/.agents/harness/plugin.json
 jq 'del(.labels)' "$m" > .p && mv .p "$m"
 m=harnesses/dalglish/.agents/harness/plugin.json
-jq '.labels = ["wheelhouse:other"]' "$m" > .p && mv .p "$m"
+jq '.labels = {wheelhouse: "other"}' "$m" > .p && mv .p "$m"
 git add -A && git commit -qm "chore: seat the team"
 ynm_doctor ok registered ok
 git init -q --bare .eval/origin.git

@@ -268,11 +268,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; for m in .agents/harness/plugin.json harnesses/*/.agents/harness/plugin.json; do echo \"$ jq -c .labels $m\"; jq -c .labels \"$m\"; done",
-      "expected_output": "Runs the check. The Wheelhouse is set up right and shared, but two seats need fixing: strachan's harness has no wheelhouse:hq label, and dalglish's carries wheelhouse:other, another Wheelhouse's. Reports both as warnings with the fix (labels: [\"wheelhouse:hq\"] in each harness's plugin.json, replacing the other label), mentions that ynr query --label wheelhouse:hq then picks out this Wheelhouse's records, and asks before changing either.",
+      "expected_output": "Runs the check. The Wheelhouse is set up right and shared, but two seats need fixing: strachan's harness has no wheelhouse:hq label, and dalglish's carries wheelhouse:other, another Wheelhouse's. Reports both as warnings with the fix (labels: {\"wheelhouse\": \"hq\"} in each harness's plugin.json, replacing the other value), mentions that ynr query runs --label wheelhouse:hq then picks out this Wheelhouse's records, and asks before changing either.",
       "assertions": [
         "The reply says strachan's harness is missing the wheelhouse:hq label",
         "The reply says dalglish's harness carries another Wheelhouse's label (wheelhouse:other)",
-        "The reply gives the fix: labels containing wheelhouse:hq in each harness's plugin.json",
+        "The reply gives the fix: a labels object with wheelhouse set to hq in each harness's plugin.json",
         "Nothing was changed: the evidence shows strachan still without labels and dalglish still labelled wheelhouse:other"
       ]
     }

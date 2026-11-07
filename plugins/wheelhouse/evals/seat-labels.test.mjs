@@ -40,7 +40,7 @@ const labelled = (dir) => {
 
 test("the doctor passes a desk and seats that all carry the Wheelhouse's label", () => {
   withWheelhouse(
-    { desk: manifest("hq", ["wheelhouse:hq"]), seats: { okafor: manifest("okafor", ["wheelhouse:hq", "other"]) } },
+    { desk: manifest("hq", { wheelhouse: "hq" }), seats: { okafor: manifest("okafor", { wheelhouse: "hq", team: "x" }) } },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, true);
@@ -51,7 +51,7 @@ test("the doctor passes a desk and seats that all carry the Wheelhouse's label",
 
 test("the doctor warns about a harness without the label, the desk's included, and says how to fix it", () => {
   withWheelhouse(
-    { desk: manifest("hq"), seats: { okafor: manifest("okafor", ["wheelhouse:hq"]), gore: manifest("gore") } },
+    { desk: manifest("hq"), seats: { okafor: manifest("okafor", { wheelhouse: "hq" }), gore: manifest("gore") } },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, false);
@@ -59,15 +59,15 @@ test("the doctor warns about a harness without the label, the desk's included, a
       assert.match(c.detail, /desk/);
       assert.match(c.detail, /gore/);
       assert.doesNotMatch(c.detail, /okafor/);
-      assert.match(c.fix, /"labels": \["wheelhouse:hq"\]/);
-      assert.match(c.fix, /ynr query --label wheelhouse:hq/);
+      assert.match(c.fix, /"labels": \{"wheelhouse": "hq"\}/);
+      assert.match(c.fix, /ynr query runs --label wheelhouse:hq/);
     },
   );
 });
 
 test("the doctor warns about a harness carrying another Wheelhouse's label", () => {
   withWheelhouse(
-    { desk: manifest("hq", ["wheelhouse:hq"]), seats: { okafor: manifest("okafor", ["wheelhouse:other"]) } },
+    { desk: manifest("hq", { wheelhouse: "hq" }), seats: { okafor: manifest("okafor", { wheelhouse: "other" }) } },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, false);
@@ -79,9 +79,9 @@ test("the doctor warns about a harness carrying another Wheelhouse's label", () 
 
 test("add-seat, create-wheelhouse and the doctor document the label, and name no Wheelhouse or human", () => {
   const read = (...p) => readFileSync(join(plugin, "skills", ...p), "utf8");
-  assert.match(read("add-seat", "SKILL.md"), /"labels": \["wheelhouse:<wheelhouse>"\]/);
-  assert.match(read("create-wheelhouse", "SKILL.md"), /"labels": \["wheelhouse:<name>"\]/);
-  assert.match(read("doctor", "SKILL.md"), /ynr query --label wheelhouse:<name>/);
+  assert.match(read("add-seat", "SKILL.md"), /"labels": \{ "wheelhouse": "<wheelhouse>" \}/);
+  assert.match(read("create-wheelhouse", "SKILL.md"), /"labels": \{ "wheelhouse": "<name>" \}/);
+  assert.match(read("doctor", "SKILL.md"), /ynr query runs --label wheelhouse:<name>/);
   for (const f of [["add-seat", "SKILL.md"], ["create-wheelhouse", "SKILL.md"], ["doctor", "SKILL.md"], ["doctor", "scripts", "check.sh"]]) {
     assert.doesNotMatch(read(...f), /wheelhouse:(ynw|hq)\b/, `${f.join("/")} names a Wheelhouse in a label`);
   }
