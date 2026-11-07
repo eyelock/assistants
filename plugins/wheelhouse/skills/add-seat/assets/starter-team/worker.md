@@ -29,7 +29,8 @@ assigned to you, and you make it on the same branch.
 reset or stash there). Make a git worktree in your scratchpad, branched from `origin/<the branch your
 pull request targets>`, and name the worktree and its files with your own command, since subagent seats share the
 desk's scratchpad. Never `git stash`: the stash list is shared by every worktree. If the branch is
-already checked out elsewhere, branch anew and push with `git push origin HEAD:<remote branch>`.
+already checked out elsewhere, branch anew, tracking the remote branch (`git worktree add -b <new branch> <path> --track
+origin/<remote branch>`), and push with `git -c push.default=upstream push`.
 
 **May not:** take a bead assigned to another worker, design or review work (that is the crew's),
 or merge anything.
