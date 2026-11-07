@@ -240,7 +240,8 @@ the files it finds, and would commit the human's.
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
    `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
-   for things with it, and the desk's wake shows their inbox with it. Copy the `patrol` skill's
+   for things with it, and the desk's wake shows their inbox with it. Copy the `work-graph` skill's
+   `scripts/memory.sh` beside them too: the wake reads and syncs each seat's memory with it. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
 6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
