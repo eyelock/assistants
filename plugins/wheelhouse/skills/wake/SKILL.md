@@ -92,7 +92,7 @@ read, never that nothing is waiting.
    finish, `ynm forget --memory-id <memoryId> --reason "relayed"`, so it isn't shown twice. Don't
    wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. Who the human at the desk
    is, is per session: with no name given, treat them as the default human and show only that
-   inbox, and pass on the block's note that they can name themselves; when they say "it's me,
+   inbox, and always end that part of your reply by telling them they can name themselves for this session ("it's me, <name>"), even when the inbox is empty; when they say "it's me,
    <name>", run `bash scripts/inbox.sh show --name <Name>` and show theirs for the rest of the
    session. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
    couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,

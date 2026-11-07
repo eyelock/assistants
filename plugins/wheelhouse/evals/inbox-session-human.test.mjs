@@ -167,7 +167,8 @@ test("the desk's wake: no name shows Stakker's inbox and says the human can name
     assert.match(wake.stdout, /### Stakker \(anyone\)/);
     assert.match(wake.stdout, /Merge the changelog/);
     assert.doesNotMatch(wake.stdout, /Decide the cache size/);
-    assert.match(wake.stdout, /name themselves for this session/);
+    assert.match(wake.stdout, /tell the human so in your reply, and that they can name themselves for this session/);
+    assert.match(wake.stdout, /Always say it/);
     assert.doesNotMatch(wake.stdout, /register/i);
     assert.doesNotMatch(wake.stdout, /haven't said who you are/);
   } finally {

@@ -1415,7 +1415,7 @@ Notes:
 
 Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
 
-This is the default human's inbox, and the desk treats the human at the desk as them. A human can name themselves for this session ("it's me, <name>") to see their own inbox instead; nothing is saved.
+This is the default human's inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session ("it's me, <name>") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.
 
 ## Who you are
 
