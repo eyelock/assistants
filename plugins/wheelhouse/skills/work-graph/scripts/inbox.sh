@@ -268,7 +268,8 @@ case "$cmd" in
         errors: $errors,
         empty: (if ($errors | length) > 0 then null
                 else ($humans | all((.beads | length) == 0 and (.notes | length) == 0)) end),
-        relay: "Relay this to the human first. Retire each note you relay, in the same turn: ynm forget --memory-id <its memoryId> --reason relayed. Leave the beads to the human."}'
+        relay: ("Relay this to the human first. Retire each note you relay, in the same turn: ynm forget --memory-id <its memoryId> --reason relayed. Leave the beads to the human."
+                + (if $you == null then " With no name given, this is the default human\u0027s inbox: always end by telling the human they can name themselves for this session (\"it\u0027s me, <name>\") to see their own; nothing is saved." else "" end))}'
     if [ "$errors" != '[]' ]; then
       jq -r '.[]' <<<"$errors" >&2
       exit 3

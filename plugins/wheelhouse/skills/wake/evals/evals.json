@@ -93,10 +93,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Nothing waits for the humans: the desk's wake says \"Nothing waiting for the humans.\", and the reply says so briefly (or nothing waiting) before going on, without inventing anything for the inbox.",
+      "expected_output": "Nothing waits for the humans: the desk's wake says \"Nothing waiting for the humans.\", and the reply says so briefly before going on, without inventing anything for the inbox. It still says they can name themselves (\"it's me, <name>\") for this session.",
       "assertions": [
         "The reply says nothing is waiting for the humans, or makes no claim that anything is",
         "The reply invents no inbox item: it names no merge, decision or note for the humans",
+        "The reply says the person at the desk can name themselves, such as \"it's me, <name>\", to see their own inbox for the session, even though nothing is waiting",
         "In the evidence, no bead is assigned to rook or pat"
       ]
     },

@@ -89,6 +89,7 @@ test("no name: show gives the default human's inbox, and nobody else's", () => {
     assert.equal(json.humans[0].beads[0].id, "hq-1");
     assert.equal(json.humans[0].notes[0].memoryId, "M-STAKKER");
     assert.equal("email" in json, false);
+    assert.match(json.relay, /always end by telling the human they can name themselves/);
   });
 });
 
@@ -104,6 +105,7 @@ test("--name David: show adds David's inbox for the session, with no roster entr
     assert.equal(david.beads[0].id, "hq-2");
     assert.equal(david.notes[0].memoryId, "M-DAVID");
     assert.equal(json.humans[1].beads[0].id, "hq-1");
+    assert.doesNotMatch(json.relay, /name themselves/);
   });
 });
 
