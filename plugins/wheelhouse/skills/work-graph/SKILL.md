@@ -7,7 +7,7 @@ allowed-tools: Bash Read
 # Work graph
 
 A Wheelhouse keeps all its work in one Beads graph (`bd`), in the Wheelhouse repository. Beads
-holds **work only**. Memory (facts, preferences, what happened) goes to ynm.
+holds **work only**. Memory (facts, preferences, what happened) goes through `scripts/memory.sh`.
 
 ## Who you are
 
@@ -310,11 +310,11 @@ When a bead closes depends on what kind it is:
    **The record is never falsified.** If something was skipped, failed or left for later, the
    reason says so, plainly: "Released for macOS; the Linux build was skipped (runner down)."
    Create a new bead for the leftover work if it still needs doing.
-2. Then leave an episodic memory in ynm, so the Wheelhouse learns from it:
+2. Then leave a shared fact, so the Wheelhouse learns from it:
 
    ```bash
-   ynm remember --type episodic --level distributed --subject repo:<repo> \
-     --tags bead,<id> --content "<id>: <what happened, including anything skipped>"
+   bash scripts/memory.sh remember --actor <command> --kind fact --slug <id> \
+     --text "<id>: <what happened, including anything skipped>"
    ```
 
 3. Write your close note: one memory in your own namespace, two lines, no more. The first line is
@@ -324,26 +324,26 @@ When a bead closes depends on what kind it is:
    bead closes. Your next wake shows the latest three.
 
    ```bash
-   ynm remember --type reflective --namespace seat/<command> --subject <id> \
-     --tags close-note --content "Surprised: <what>.
+   bash scripts/memory.sh remember --actor <command> --seat <command> --kind close-note \
+     --bead <id> --text "Surprised: <what>.
    Sharp edges: <where>."
    ```
 
    If nothing surprised you, say so in the line; don't invent a lesson.
 4. If the work taught you something for next time, a gotcha or a step that was nearly missed, keep
-   it in ynm as well (see below), not in the bead and not in a file.
+   it in the Wheelhouse's memory as well (see below), not in the bead and not in a file.
 5. Run `bd ready --json` and say what the close unblocked.
 
-## Memory goes to ynm, never Beads
+## Memory goes through memory.sh, never `bd remember`
 
 Beads ships its own memory (`bd remember`, `bd memories`) and `bd prime` tells agents to use it.
-**In a Wheelhouse, don't.** It would split memory across two stores. When asked to remember
-something, use ynm:
+**In a Wheelhouse, don't call them.** The Wheelhouse chooses where memory lives, and
+`scripts/memory.sh` is the one way in. When asked to remember something, use it:
 
 | What | Command |
 |---|---|
-| A fact or gotcha | `ynm remember --type semantic --level distributed --content "..."` |
-| How to do something | `ynm remember --type procedural --level distributed --content "..."` |
-| What happened | `ynm remember --type episodic --level distributed --content "..."` |
+| A fact or gotcha, for everyone | `bash scripts/memory.sh remember --actor <command> --kind fact --text "..."` |
+| Read the facts back | `bash scripts/memory.sh recall --shared` |
+| Retire a memory | `bash scripts/memory.sh forget --id <id> --reason "..."` |
 
-Likewise, don't track work in Markdown files, TODO lists or ynm. If it is work, it is a bead.
+Likewise, don't track work in Markdown files, TODO lists or memory. If it is work, it is a bead.

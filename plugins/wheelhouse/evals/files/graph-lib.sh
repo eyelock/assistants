@@ -51,6 +51,10 @@ install_ynm_stub() {
   mkdir -p .eval
   cp "$EVAL_FIXTURES/ynm-stub.sh" "$EVAL_BIN/ynm"
   chmod +x "$EVAL_BIN/ynm"
+  # Memory goes through scripts/memory.sh, which runs this stub (no wheelhouse.json means ynm).
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  chmod +x scripts/memory.sh
 }
 
 # install_beads_memory: make this Wheelhouse keep its memory in Beads, as create-wheelhouse would:
@@ -60,7 +64,7 @@ install_ynm_stub() {
 install_beads_memory() {
   printf '{"tasks": "beads", "memory": "beads"}\n' > wheelhouse.json
   mkdir -p scripts
-  cp "$EVAL_FIXTURES/../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   chmod +x scripts/memory.sh
 }
 

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in ynm, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", "we're done for today", or asked to /exit, quit or stop mid-work.
+description: End a Wheelhouse seat's session by handing off instead of stopping - reach a clean stopping point, write your own notes for your next session in the Wheelhouse's memory, and ask to be restarted; and, when a seat wakes, pick up from its own handoff notes. Use when told "take a beat, then hand off", "take a break", "hand off", "wrap up for now", "we're done for today", or asked to /exit, quit or stop mid-work.
 ---
 
 # Handoff
@@ -19,16 +19,14 @@ You are your seat's command name, which your charter gives. If you don't know it
    seat's normal practice.
 2. **Keep your claims.** The beads you have claimed stay claimed by you. Your next session carries
    on with them. Don't close or release a bead just because you are handing off.
-3. **Write your own notes** as one episodic memory in ynm ("what happened, when"):
+3. **Write your own notes** as a handoff memory ("what happened, when"):
 
    ```bash
-   ynm remember --type episodic --level distributed --namespace seat/<name> \
-     --subject seat:<name> --tags handoff --content "<notes>"
+   bash scripts/memory.sh remember --actor <name> --seat <name> --kind handoff --text "<notes>"
    ```
 
-   Not `working` memory: ynm keeps that in one session's namespace and drops it when the session
-   ends, and handoff notes are for the next session. They go in your own namespace,
-   `seat/<name>`: your private home in the Wheelhouse's memory.
+   Not a scratch note that dies with the session: handoff notes are for the next session. They
+   are kept in your own place in the Wheelhouse's memory, your private home there.
 
    The notes are for you, tomorrow, and are short and concrete:
 
@@ -44,7 +42,7 @@ You are your seat's command name, which your charter gives. If you don't know it
    seat unfinished. If you closed a bead this session, make sure its close note is written too.
 
 4. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
-   notes are saved in ynm (subject seat:<name>). Restart me when you're ready and I'll pick up from
+   notes are saved in my memory. Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.
 
 ## When asked to /exit or stop mid-work
@@ -63,8 +61,8 @@ If nothing would be lost, stop as asked.
 At the start of a seat's session, before anything else:
 
 1. Look for your notes:
-   `ynm recall --namespace seat/<name> --subject seat:<name> --tags handoff --type episodic --limit 1 --json`. It
-   prints a JSON array; the newest note is first, and its id is in `memoryId`.
+   `bash scripts/memory.sh recall --seat <name> --kind handoff --limit 1`. It prints a JSON
+   array; the newest note is first, with its text in `text` and its id in `id`.
 2. If there are none, start as usual (for example, with "what's next" from the work graph).
 3. If there are, read them, then check they still hold: `bd show <id> --json` for the bead in
    progress (still claimed by you, still open), and the repository state they describe.
@@ -72,7 +70,7 @@ At the start of a seat's session, before anything else:
    back, open with the pick-up, in this shape: "Picking up from my notes: <what they say is done>.
    Next: <the step I took>." Then the rest.
 5. Once you have picked up, retire the notes so they aren't read twice:
-   `ynm forget --memory-id <memoryId> --reason "picked up"`.
+   `bash scripts/memory.sh forget --id <id> --reason "picked up"`.
 
 If the notes and the world disagree, such as a bead now closed or claimed by someone else, trust
 the world, say what changed and ask the desk before going on.
