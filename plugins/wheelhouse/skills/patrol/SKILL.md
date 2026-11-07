@@ -45,7 +45,7 @@ title, url}` plus what the kind needs:
 | `pr-retargeted` | its base branch changed (`from`, `to`) |
 | `pr-dirty` | it now conflicts with its base (merge state `DIRTY`) |
 | `pr-ci-red`, `pr-ci-green` | its checks failed, or passed again after failing |
-| `pr-stalled` | a draft, green on CI, whose last commit is older than `--stale-after` minutes (default 30) and newer than its last review, or that has no review: nobody is looking at it |
+| `pr-stalled` | a draft, green on CI, whose last commit is older than `--stale-after` minutes (default 30) and newer than its last review, or that has no review: nobody is looking at it (a commit's time is when it was committed, not pushed, so a commit made before a push can read as stalled or as already reviewed; close enough to prompt a look) |
 | `issue-opened`, `issue-closed`, `issue-reopened` | an issue's state changed (`reason` on close) |
 | `ci-red`, `ci-green` | the default branch's CI failed, or passed again (`branch` instead of `number`) |
 | `error` | `gh` couldn't read a repository (`detail`); exit 3 |
@@ -83,7 +83,7 @@ Pick one; the human chooses, since each runs on their machine or account:
 
 ## Acting on the list
 
-Report each change to the desk, one line each (a `pr-stalled` one means the desk should send that pull request to review), naming the pull request or issue by its short form
+Report each change to the desk, one line each (a `pr-stalled` one means the desk should send that pull request to review, and gets no bead), naming the pull request or issue by its short form
 as a Markdown link (`[api #12](https://github.com/<owner>/api/pull/12)`), and say how a merged
 one was merged. The humans don't announce merges; the patrol does. File work for what needs it as
 the CI watcher's charter says (a red CI, a conflicting pull request), skipping what an open bead
