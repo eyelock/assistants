@@ -60,7 +60,7 @@ test("--end --no-sync performs no sync", () => {
 });
 
 // A sync stub that sleeps, or fails with a message, to exercise the session-end time budget.
-function runStub(ynmBody, env = {}) {
+function runStub(ynmBody, env = {}, bdBody = "exit 0") {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-end-budget-"));
   try {
     mkdirSync(join(dir, "scripts"));
@@ -69,7 +69,7 @@ function runStub(ynmBody, env = {}) {
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));
     writeFileSync(join(dir, "bin", "ynm"), `#!/bin/sh\n${ynmBody}\n`);
-    writeFileSync(join(dir, "bin", "bd"), "#!/bin/sh\nexit 0\n");
+    writeFileSync(join(dir, "bin", "bd"), `#!/bin/sh\nif [ "$1" = dolt ]; then echo '[{"name":"origin"}]'; exit 0; fi\n${bdBody}\n`);
     chmodSync(join(dir, "bin", "ynm"), 0o755);
     chmodSync(join(dir, "bin", "bd"), 0o755);
     spawnSync("git", ["init", "-q"], { cwd: dir });
@@ -83,6 +83,18 @@ function runStub(ynmBody, env = {}) {
     rmSync(dir, { recursive: true, force: true });
   }
 }
+
+test("--end with both syncs hanging finishes inside the 30-second session-end hook, errors kept", () => {
+  const start = Date.now();
+  const r = runStub("sleep 60; exit 0", { WHEELHOUSE_END_SYNC_SECS: "99" }, "sleep 60; exit 0");
+  const secs = (Date.now() - start) / 1000;
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(secs < 30, `took ${secs}s, the hook allows 30`);
+  const out = JSON.parse(r.stdout);
+  assert.deepEqual(out.push, { memory: "timeout", work: "timeout" });
+  assert.match(out.errors.memory, /^exit 142/);
+  assert.match(out.errors.work, /^exit 142/);
+});
 
 test("--end reports a sync slower than the old 12 seconds, inside the budget, as pushed", () => {
   const r = runStub("sleep 14; exit 0");

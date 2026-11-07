@@ -28,9 +28,11 @@ shows. `--no-sync` skips both.
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
 when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
-alone is rejected until it merges. It prints
-`{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running after
-30 seconds; `WHEELHOUSE_END_SYNC_SECS` changes the budget) or `failed`, and, for the last two, an
+alone is rejected until it merges. The two syncs run side by side and share one budget of 25
+seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28), because the session-end hook
+(`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
+can print anything: keep the budget under the hook's timeout. It prints
+`{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
 `errors` object with the exit code and the first line the sync printed. It wakes nobody. It is best
 effort: a crash skips it, and the next wake's sync catches up.
 
