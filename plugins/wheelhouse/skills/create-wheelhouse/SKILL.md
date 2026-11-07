@@ -101,7 +101,8 @@ the files it finds, and would commit the human's.
       Never use `git stash`, even in your own worktree: every worktree of a repository shares one
       stash list, so a stash lands in the shared checkout too. To set work aside, commit it to a
       throwaway branch. If the branch you need is already checked out in another worktree, make a
-      new local branch and push it with `git push origin HEAD:<remote branch>`.
+      new local branch that tracks the remote branch (`git worktree add -b <new branch> <path> --track
+      origin/<remote branch>`) and push it with `git -c push.default=upstream push`.
    9. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
       pull requests and issues):
       - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short

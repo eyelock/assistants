@@ -221,8 +221,9 @@ worktree in your scratchpad, branched from `origin/<default branch>` (shared che
 stale), with the worktree and its files named with your own command (subagent seats share the
 desk's scratchpad). Read a branch with `git show` or `git diff`. Never use `git stash`: all
 worktrees of a repository share one stash list. To set work aside, commit it to a throwaway
-branch. A branch already checked out in another worktree: make a new local branch and push it with
-`git push origin HEAD:<remote branch>`.
+branch. A branch already checked out in another worktree: make a new local branch that tracks the
+remote branch (`git worktree add -b <new branch> <path> --track origin/<remote branch>`) and push it
+with `git -c push.default=upstream push`.
 
 **Never name a human** in anything you post or write (pull requests, reviews, comments, beads,
 notes, docs, commits): write the next action impersonally. In chat, call the human "you".
