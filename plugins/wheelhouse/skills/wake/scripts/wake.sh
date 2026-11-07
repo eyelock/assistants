@@ -104,14 +104,14 @@ limited() {
 hasgitremote() { git remote 2>/dev/null | grep -q .; }
 hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; }
 
-# At the end of a session, sync what it wrote and stop.
+# At the end of a session, sync what it wrote and stop (--no-sync skips both).
 if [ "$end" = 1 ]; then
   mempush=skipped
   workpush=skipped
-  if hasgitremote; then
+  if [ "$sync" = 1 ] && hasgitremote; then
     if limited 12 ynm sync --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
   fi
-  if hasdoltremote; then
+  if [ "$sync" = 1 ] && hasdoltremote; then
     if limited 12 bd sync >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
   fi
   jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
