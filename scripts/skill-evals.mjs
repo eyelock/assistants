@@ -34,9 +34,10 @@
 //   "evidence": a shell command run after the agent; its output, with the
 //               stub log, is saved and shown to the judge.
 //   "tool_calls": tools whose calls the judge should see, with their input,
-//               such as ["AskUserQuestion"] for a case about how the agent
-//               asks: the calls go to the judge with the evidence. Grant
-//               the tool in "tools" too.
+//               with their input: the calls go to the judge with the
+//               evidence. Grant the tool in "tools" too. Not every tool
+//               loads in an eval session: AskUserQuestion does not
+//               (assistants #133), so check the plain-text fallback.
 //   "max_turns": this case's turn cap, for a long workflow (default: the
 //               --max-turns option).
 // The sandbox also points git at an empty global config and gh at a host that
