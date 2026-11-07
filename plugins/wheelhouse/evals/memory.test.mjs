@@ -217,6 +217,23 @@ test("ynm: runs today's ynm commands (namespace, subject, tags, pin on identity)
   }
 });
 
+test("ynm: a close note with subject seat:<c> never reports that subject as its bead", () => {
+  const w = wheelhouse("ynm");
+  try {
+    const note = (id, subject, tags, data = {}) => ({ memoryId: id, namespace: "seat/gahan", tags, subject, content: "c " + id, level: "distributed", data, updatedAt: "2026-11-01T00:00:0" + id.slice(1) + "Z" });
+    writeFileSync(join(w.dir, "stub", "ynm.json"), JSON.stringify([
+      note("M1", "seat:gahan", ["close-note", "ynw-wckn"]),
+      note("M2", "seat:gahan", ["close-note"]),
+      note("M3", "ynw-abc1", ["close-note"]),
+      note("M4", "seat:gahan", ["close-note", "ynw-zzz"], { bead: "ynw-data" }),
+    ]));
+    const beads = Object.fromEntries(w.json(["recall", "--seat", "gahan", "--kind", "close-note"]).map((m) => [m.id, m.bead]));
+    assert.deepEqual(beads, { M1: "ynw-wckn", M2: null, M3: "ynw-abc1", M4: "ynw-data" });
+  } finally {
+    w.done();
+  }
+});
+
 test("ynm: a second identity supersedes the first and is pinned", () => {
   const w = wheelhouse("ynm");
   try {

@@ -263,7 +263,7 @@ ynm_shape='[ .[] | (.tags // []) as $t
      text: (if $n then $n.rest else $c end),
      at: .updatedAt,
      by: (.data.by // (if $n then $n.by else null end)),
-     bead: (.data.bead // (if $k == "close-note" then .subject else null end))} ]'
+     bead: (.data.bead // (if $k == "close-note" then ([.subject] + $t | map(select(. != null and . != "close-note" and test("^[a-z][a-z0-9]*-[a-z0-9]+(\\.[0-9]+)*$")))[0]) else null end))} ]'
 
 if [ "$backend" = ynm ]; then
   need ynm
