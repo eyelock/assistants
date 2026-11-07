@@ -4,17 +4,15 @@
     {
       "id": 1,
       "name": "desk-asks-three-decisions",
-      "prompt": "You are hq, the desk of this Wheelhouse. data/comms-pending.md has what's waiting on me. Sort it out with me.",
+      "prompt": "You are hq, the desk of this Wheelhouse. data/comms-pending.md has what's waiting on me. Sort it out with me. This session has no structured question tool, so ask in plain text.",
       "files": ["../../evals/files/comms-pending.md"],
-      "tools": ["AskUserQuestion"],
-      "tool_calls": ["AskUserQuestion"],
-      "expected_output": "Asks one decision first through AskUserQuestion, in a single call holding a single question: the 1.4 release (wait for widget #12, recommended, or tag now), the most urgent. Its context line names hq-14 with a synopsis and [widget #12](https://github.com/example/widget/pull/12) as a link, and says two more decisions wait after this one. 2 to 4 options, the recommended one first and labelled (Recommended). It does not ask the --dry-run rename or the programme manager yet, does not list them as prose questions, addresses the human as you, and never names Pat.",
+      "expected_output": "With no question tool, asks one decision first in plain text, a single question with lettered or numbered options: the 1.4 release (wait for widget #12, recommended, or tag now), the most urgent. Its context line names hq-14 with a synopsis and [widget #12](https://github.com/example/widget/pull/12) as a link, and shows there are three decisions in all (two more after this one). 2 to 4 options, the recommended one first and marked (Recommended), then stops to wait for the answer. It does not ask the --dry-run rename or the programme manager yet, does not list them as prose questions, addresses the human as you, and never names Pat.",
       "assertions": [
-        "The evidence shows an AskUserQuestion call holding exactly one question, not all three decisions batched into one call",
-        "That question is the 1.4 release (hq-14), the most urgent, and the --dry-run rename and the programme manager are not asked in the same call",
-        "The question has between 2 and 4 options, and the first option's label ends with (Recommended), waiting for #12",
+        "The reply asks exactly one question in plain text as lettered or numbered options, not all three decisions batched together",
+        "That question is the 1.4 release (hq-14), the most urgent, and the --dry-run rename and the programme manager are not asked in the same reply",
+        "The question has between 2 and 4 options, and the first option, waiting for #12, is marked (Recommended)",
         "The question carries a line of context saying what it is about, with its bead id (hq-14) and [widget #12](https://github.com/example/widget/pull/12) as a link",
-        "The context or reply says how many decisions are still waiting after this one, such as two more",
+        "The context or reply shows where this question sits among the three, such as two more after this one or question 1 of 3",
         "Neither the question nor the reply name Pat; the reply addresses the human as you",
         "The reply does not list the other two decisions as prose questions"
       ]
