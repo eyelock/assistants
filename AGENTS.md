@@ -82,6 +82,24 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 - No interactive prompts — all input via arguments
 - macOS compatible — no bash 4+ features, no GNU-only flags
 
+## Merge queue
+
+`develop` and `main` are meant to be protected by a merge queue: a pull request merges only after All
+Clear passes on the branch as it will be with the queued pull requests ahead of it merged, so two pull
+requests that are each green cannot combine red. `develop` queues as squash; `main` queues as a merge
+commit. **This is not on yet.** It starts when the rulesets exist (see the pull request that added this
+section), and GitHub offers merge queues to organization-owned repositories, so a personal-account
+repository like this one may be refused; the fallback is strict required status checks. Until the
+rulesets exist, protection is the classic rule requiring `Check`.
+`ci.yml` triggers on `merge_group` and every job in it runs there. Any new required check must also
+trigger on `merge_group`, and must never be skipped by a path filter or by a missing head ref in the queue.
+
+Cutting a release: the `release/YYYY-MM-DD` pull request into `main` and the `changeset-release/main`
+Version Packages pull request go through the queue. The back-merge of `main` into `develop` after a
+release is the exception: it must land as a merge commit, which the `develop` queue (squash) cannot do,
+so an admin merges that pull request directly with a merge commit, around the queue:
+`gh pr merge <number> --repo eyelock/assistants --merge --admin`.
+
 ## Working with this repo
 
 - Do not modify skills content without understanding the agentskills.io spec
