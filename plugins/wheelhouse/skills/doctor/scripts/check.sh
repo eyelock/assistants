@@ -42,22 +42,10 @@ add() {
 }
 
 # --- memory ------------------------------------------------------------------
-# The backend: wheelhouse.json's "memory" (ynm when none), read through memory.sh.
-here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-memsh=""
-for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
-  [ -f "$f" ] && { memsh="$f"; break; }
-done
-backend=ynm
-if [ -n "$memsh" ]; then
-  if ! backend=$(bash "$memsh" backend --dir "$dir" 2>&1); then
-    add "memory backend" false error "$(printf '%s' "$backend" | head -c 200)" \
-      "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\""
-    backend=""
-  fi
-elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
-  add "memory backend" false error "wheelhouse.json names a memory backend but there is no memory.sh" \
-    "copy the work-graph skill's scripts/memory.sh into scripts/"
+# ynm or Beads, by wheelhouse.json's "memory" key.
+mc="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/memory-checks.sh"
+if ! backend=$(bash "$mc" backend --dir "$dir"); then
+  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\", or add scripts/memory.sh"
   backend=""
 fi
 
@@ -151,21 +139,7 @@ if [ -n "$found" ]; then
 else
   add "no Beads agent setup" true info "none found"
 fi
-
-# Beads memory: readable, and shared by the work graph's Dolt remote.
-if [ "$backend" = beads ] && command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
-  mem=$(cd "$dir" && bd --readonly memories --json 2>/dev/null)
-  if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$mem"; then
-    add "beads memory readable" true info "$(jq '[keys[] | select(. != "schema_version")] | length' <<<"$mem") memories"
-  else
-    add "beads memory readable" false error "bd --readonly memories --json gave no memory map" "cd $dir && bd memories, and read the error"
-  fi
-  if (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
-    add "beads memory shared" true info "the work graph has a Dolt remote"
-  else
-    add "beads memory shared" false warn "no Dolt remote, so memory stays on this machine" "bd dolt remote add origin <git URL> --allow-git-origin, then bd dolt push"
-  fi
-fi
+[ "$backend" != beads ] || checks=$(jq -c --argjson m "$(bash "$mc" beads --dir "$dir")" '. + $m' <<<"$checks")
 
 # --- seats -------------------------------------------------------------------
 # Every seat in the roster but the desk has a harness of its own whose wake hook
@@ -262,29 +236,20 @@ if [ -f "$roster" ]; then
     fi
   fi
 
-  # Born: an identity pinned in the seat's namespace. ynm reads the project mount only,
-  # and not at all without it (every seat would look unborn).
-  unborn=""
-  unread=""
-  checkborn=0
-  if [ "$backend" = ynm ] && command -v ynm >/dev/null 2>&1 && [ "${projectmount:-0}" = 1 ]; then
-    checkborn=1
-  elif [ "$backend" = beads ] && [ -n "$memsh" ] && command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
-    checkborn=1
-  fi
-  if [ "$checkborn" = 1 ]; then
+  # Born: an identity pinned in the seat's namespace. ynm is read only with the project mount.
+  if { [ "$backend" = ynm ] && [ "${projectmount:-0}" = 1 ]; } || [ "$backend" = beads ]; then
+    unborn=""
+    unread=""
     while IFS=$'\t' read -r cmd by; do
-      q="[.[]? | select(.namespace == \"seat/$cmd\" and .pinned == true)] | length > 0"
-      if [ "$backend" = beads ]; then
-        q='length > 0'; found=$(bash "$memsh" recall --dir "$dir" --seat "$cmd" --kind identity --limit 1 2>/dev/null)
-      else
-        found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null)
-      fi || unread="$unread $cmd"
-      [[ " $unread " == *" $cmd "* ]] || jq -e "$q" <<<"$found" >/dev/null 2>&1 || unborn="$unborn $cmd (birth: $by)"
+      if ! born=$(bash "$mc" born --dir "$dir" --seat "$cmd"); then
+        unread="$unread $cmd"
+      elif [ "$born" = no ]; then
+        unborn="$unborn $cmd (birth: $by)"
+      fi
     done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
       add "seats born" false warn "memory couldn't recall the identities of:$unread, so birth is unknown" \
-        "run scripts/memory.sh recall --seat <command> --kind identity"
+        "run scripts/memory.sh recall --seat <command> --kind identity, and see ynm doctor"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -326,17 +291,11 @@ if [ -f "$roster" ]; then
       | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
-    # Outside the roster, a human is one whose human/<command> memory exists.
-    human_known() {
-      local out
-      if [ "$backend" = beads ]; then out=$(bash "$memsh" recall --dir "$dir" --human "$1" --limit 1 2>/dev/null)
-      else out=$(ynm recall --namespace "human/$1" --limit 1 --json 2>/dev/null); fi
-      [ "$(jq 'length' <<<"$out" 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
-    }
+    # Outside the roster, a human is one with human/<command> memory.
     stray=""
     while read -r sid sassignee; do
       [ -n "$sid" ] || continue
-      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && human_known "$sassignee"; then
+      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && [ "$(bash "$mc" human --dir "$dir" --name "$sassignee")" = yes ]; then
         continue
       fi
       stray="${stray:+$stray }$sid ($sassignee)"
