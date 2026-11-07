@@ -62,7 +62,9 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
   heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
-  reclaims, and only for a seat it has confirmed is gone.
+  reclaims, and only for a seat it has confirmed is gone. The one forced close a seat may make of
+  a bead it does not hold is the desk's close of a human's inbox bead, only through
+  `inbox.sh close`, once the work is verified done, and never by hand with `bd close --force`.
 
 ## Dispatching
 
@@ -254,15 +256,17 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    a bare URL.
 5. Then carry on with other ready work, or hand off: your blocked bead comes back to `bd ready`
    once the human closes theirs.
-6. **Close their bead** when they tell you it is done (a merge landed, a decision made), with a
-   note of what they did. `bd close` on a bead like this needs `--force`, so use the inbox:
+6. **The desk closes their bead** when they tell you it is done (a merge landed, a decision made)
+   and the work is verified, with a reason saying what they did. Other seats leave it to the
+   desk. `bd close` on a bead like this needs `--force`, and `inbox.sh close` is the only
+   sanctioned way to force it:
 
    ```bash
-   bash scripts/inbox.sh close --from <your command> --id <bead> --note "<what the human did>"
+   bash scripts/inbox.sh close <bead> --reason "<what the human did>" --from <desk command>
    ```
 
-   (`done` is an alias.) It refuses a bead that has no `inbox` label or is not assigned to a
-   human, so it cannot close a seat's work.
+   (`done` is an alias.) It refuses a `--from` that is not the desk, a bead that has no `inbox`
+   label and one that is not assigned to a human, so it cannot close a seat's work.
 
 `bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other

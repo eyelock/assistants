@@ -60,7 +60,7 @@ exit 1
 
 test("close closes a human's inbox bead with the note, forced, as the asking seat", () => {
   for (const verb of ["close", "done"]) {
-    const { r, log } = run([verb, "--id", "hq-1", "--note", "Merged by the human", "--from", "hq"]);
+    const { r, log } = run([verb, "hq-1", "--reason", "Merged by the human", "--from", "hq"]);
     assert.equal(r.status, 0, r.stderr);
     assert.deepEqual(JSON.parse(r.stdout), { id: "hq-1", closedBy: "hq", note: "Merged by the human" });
     assert.match(log, /^close hq-1 --reason Merged by the human --force --actor hq$/m);
@@ -73,9 +73,10 @@ test("close refuses a seat's bead, a bead outside the inbox, a closed one and mi
     [["--id", "hq-3", "--note", "x", "--from", "hq"], /not an inbox bead/],
     [["--id", "hq-4", "--note", "x", "--from", "hq"], /already closed/],
     [["--id", "hq-9", "--note", "x", "--from", "hq"], /no bead hq-9/],
-    [["--note", "x", "--from", "hq"], /needs --id/],
-    [["--id", "hq-1", "--from", "hq"], /needs --note/],
+    [["--note", "x", "--from", "hq"], /needs the bead to close/],
+    [["--id", "hq-1", "--from", "hq"], /needs --reason/],
     [["--id", "hq-1", "--note", "x", "--from", "nobody"], /not a seat/],
+    [["hq-1", "--reason", "x", "--from", "dal"], /not the desk/],
   ];
   for (const [args, msg] of cases) {
     const { r, log } = run(["close", ...args]);
