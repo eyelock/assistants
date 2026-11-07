@@ -223,7 +223,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    ```
 
    It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
-   or the script refuses it: find the pull request's URL, or ask for it. Don't invent one. Like
+   or the script refuses it. Ask for a merge only once the pull request has left draft: with `gh`
+   available the script refuses a draft and says why (without `gh` it warns and carries on). Find the pull request's URL, or ask for it. Don't invent one. Like
    every task, it carries the `repo:` label of the one repository it touches: `--repo`, or, left
    out, the `repo:` label of the bead it blocks. A merge or review is refused without one; a
    decision or credential that touches no repository goes without. A merge gets its own small
