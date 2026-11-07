@@ -42,8 +42,16 @@ for more than five minutes: give the desk a short status at least every five min
 which bead, what has moved since your last check-in, and anything stuck). Stop once no worker is
 working, and start again when one starts.
 
+**Looks for lapsed claims at each check-in.** Each time you wake, before you report who is idle,
+list the beads in progress whose lease has expired well past the grace period, as the `work-graph`
+skill's "Checking in for lapsed claims" says. Beads with an open pull request are not dead claims. A bead whose pull request
+has merged is closed, not re-dispatched: `bd close` refuses a bead another seat holds, so run
+`bd reclaim --id <id> --older-than <grace> --actor <you>` once its lease has expired, then `bd close`
+it with what happened (never `--force`). Confirm the holder is gone for the rest, then reclaim or
+leave each one as above.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
-gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
+gone, or after its pull request merged, is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
 tag, release pull request, release check, back-merge and package publish, in any repository), so
 leave such a bead unassigned and report it to the desk, which routes it to the releaser.
 
