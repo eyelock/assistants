@@ -24,9 +24,10 @@
 #
 # Its session-end hook runs it with --end, which only syncs what the session
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
-# remote and given up after 12 seconds. A full sync, not a push alone: when
+# remote and given up after 30 seconds (WHEELHOUSE_END_SYNC_SECS sets the budget). A full sync, not a push alone: when
 # another seat has pushed since, a push alone is rejected until it merges. It prints
-# {seat, push {memory, work: pushed|skipped|failed}} and nothing else. With
+# {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a sync did not
+# push, errors {memory, work}: its exit code and the first line it printed. With
 # --no-sync it syncs neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
@@ -111,13 +112,31 @@ hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) 
 if [ "$end" = 1 ]; then
   mempush=skipped
   workpush=skipped
-  if [ "$sync" = 1 ] && hasgitremote; then
-    if limited 12 ynm sync --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
-  fi
-  if [ "$sync" = 1 ] && hasdoltremote; then
-    if limited 12 bd sync >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
-  fi
-  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
+  memerr=""
+  workerr=""
+  budget="${WHEELHOUSE_END_SYNC_SECS:-30}"
+  case "$budget" in '' | *[!0-9]*) budget=30 ;; esac
+  # Runs one sync with the budget and keeps its output: sets <var> to pushed, timeout
+  # (the alarm killed it: exit 142) or failed, and <errvar> to "exit N: first line".
+  endsync() {
+    local var="$1" errvar="$2"; shift 2
+    local out rc first
+    out=$(mktemp "${TMPDIR:-/tmp}/wake-end.XXXXXX")
+    limited "$budget" "$@" >"$out" 2>&1
+    rc=$?
+    if [ "$rc" = 0 ]; then
+      printf -v "$var" pushed
+    else
+      if [ "$rc" = 142 ]; then printf -v "$var" timeout; else printf -v "$var" failed; fi
+      first=$(grep -m1 . "$out" 2>/dev/null | cut -c1-200)
+      printf -v "$errvar" '%s' "exit $rc${first:+: $first}"
+    fi
+    rm -f "$out"
+  }
+  if [ "$sync" = 1 ] && hasgitremote; then endsync mempush memerr ynm sync --quiet; fi
+  if [ "$sync" = 1 ] && hasdoltremote; then endsync workpush workerr bd sync; fi
+  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" --arg me "$memerr" --arg we "$workerr" \
+    '{seat: $seat, push: {memory: $m, work: $w}} + (if $me != "" or $we != "" then {errors: ({memory: $me, work: $we} | with_entries(select(.value != "")))} else {} end)'
   exit 0
 fi
 

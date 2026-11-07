@@ -29,7 +29,9 @@ When the session ends, the seat's session-end hook runs the script again with `-
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
 when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. It prints
-`{seat, push: {memory, work}}`, each `pushed`, `skipped` or `failed`, and wakes nobody. It is best
+`{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running after
+30 seconds; `WHEELHOUSE_END_SYNC_SECS` changes the budget) or `failed`, and, for the last two, an
+`errors` object with the exit code and the first line the sync printed. It wakes nobody. It is best
 effort: a crash skips it, and the next wake's sync catches up.
 
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself

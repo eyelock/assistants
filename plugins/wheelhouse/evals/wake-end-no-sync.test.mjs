@@ -58,3 +58,52 @@ test("--end --no-sync performs no sync", () => {
   assert.doesNotMatch(calls, /bd sync/);
   assert.deepEqual(JSON.parse(r.stdout).push, { memory: "skipped", work: "skipped" });
 });
+
+// A sync stub that sleeps, or fails with a message, to exercise the session-end time budget.
+function runStub(ynmBody, env = {}) {
+  const dir = mkdtempSync(join(tmpdir(), "wheelhouse-end-budget-"));
+  try {
+    mkdirSync(join(dir, "scripts"));
+    writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
+    writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
+    mkdirSync(join(dir, "bin"));
+    writeFileSync(join(dir, "bin", "ynm"), `#!/bin/sh\n${ynmBody}\n`);
+    writeFileSync(join(dir, "bin", "bd"), "#!/bin/sh\nexit 0\n");
+    chmodSync(join(dir, "bin", "ynm"), 0o755);
+    chmodSync(join(dir, "bin", "bd"), 0o755);
+    spawnSync("git", ["init", "-q"], { cwd: dir });
+    spawnSync("git", ["remote", "add", "origin", "https://example.invalid/x.git"], { cwd: dir });
+    return spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--end", "hynde"], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, ...env, PATH: `${join(dir, "bin")}:${process.env.PATH}` },
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test("--end reports a sync slower than the old 12 seconds, inside the budget, as pushed", () => {
+  const r = runStub("sleep 14; exit 0");
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.push.memory, "pushed");
+  assert.equal(out.errors, undefined);
+});
+
+test("--end reports a sync killed by the budget as a timeout", () => {
+  const r = runStub("sleep 30; exit 0", { WHEELHOUSE_END_SYNC_SECS: "1" });
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.push.memory, "timeout");
+  assert.match(out.errors.memory, /^exit 142/);
+});
+
+test("--end reports a failing sync with its exit code and first error line", () => {
+  const r = runStub("echo 'rejected: non-fast-forward' >&2; echo second line >&2; exit 7");
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.push.memory, "failed");
+  assert.equal(out.errors.memory, "exit 7: rejected: non-fast-forward");
+});
