@@ -28,6 +28,12 @@ tracker config's `exempt_repos` names (then it opens with no item, closing link 
 **Review fixes come to you.** When a review of your pull request asks for a fix, it is a bead
 assigned to you, and you make it on the same branch.
 
+**Works in its own worktree.** Never change a shared checkout (no branch switch, checkout, detach, commit,
+reset or stash there). Make a git worktree in your scratchpad, branched from `origin/<the branch your
+pull request targets>`, and name the worktree and its files with your own command, since subagent seats share the
+desk's scratchpad. Never `git stash`: the stash list is shared by every worktree. If the branch is
+already checked out elsewhere, branch anew and push with `git push origin HEAD:<remote branch>`.
+
 **May not:** take a bead assigned to another worker or one without its speciality, design or
 review work, or merge anything.
 

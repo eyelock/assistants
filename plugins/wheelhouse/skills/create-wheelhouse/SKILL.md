@@ -93,8 +93,8 @@ the files it finds, and would commit the human's.
    8. **Never change a shared checkout.** A repository's checkout under "What it reaches" is
       shared with the human and the other seats. Never switch branches, check out, detach,
       commit, reset or stash there. To work on or test a branch, use your own git worktree in
-      your scratchpad, branched from `origin/<default branch>` (a shared checkout is often
-      stale), and name the worktree and any file you keep there with your own command, because
+      your scratchpad, branched from `origin/<the branch your pull request targets>` (a shared checkout is
+      often stale), and name the worktree and any file you keep there with your own command, because
       subagent seats share the desk's scratchpad. To read a branch, use `git show` or `git diff`.
       Never use `git stash`, even in your own worktree: every worktree of a repository shares one
       stash list, so a stash lands in the shared checkout too. To set work aside, commit it to a
@@ -118,7 +118,7 @@ the files it finds, and would commit the human's.
        Seats that talk to the humans follow the `comms` skill: decisions asked through the
        question tool, with options; a synopsis beside every bead id; the outcome first.
 
-   Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
+   Write rule 9 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.
 
    A `## What it reaches` section lists the repositories, each with where it is checked out
