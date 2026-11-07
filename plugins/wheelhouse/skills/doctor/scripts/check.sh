@@ -41,8 +41,33 @@ add() {
     '. + [{name: $n, ok: $ok, level: $l, detail: $d, fix: (if $f == "" then null else $f end)}]' <<<"$checks")
 }
 
+# --- memory ------------------------------------------------------------------
+# Where seat and human memory lives is wheelhouse.json's "memory" key (ynm when
+# there is none), read through memory.sh: the Wheelhouse's own copy in scripts/,
+# else the work-graph skill's beside this one. ynm's checks run for ynm only,
+# and Beads' memory checks (below) for Beads.
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+memsh=""
+for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
+  [ -f "$f" ] && { memsh="$f"; break; }
+done
+backend=ynm
+if [ -n "$memsh" ]; then
+  if ! backend=$(bash "$memsh" backend --dir "$dir" 2>&1); then
+    add "memory backend" false error "memory.sh could not name the backend: $(printf '%s' "$backend" | head -c 200)" \
+      "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\" (or remove the file for ynm)"
+    backend=""
+  fi
+elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
+  add "memory backend" false error "wheelhouse.json chooses a memory backend but memory.sh is nowhere to be found (scripts/memory.sh, or the work-graph skill)" \
+    "copy the work-graph skill's scripts/memory.sh into scripts/ beside wake.sh, and commit it"
+  backend=""
+fi
+
 # --- ynm ---------------------------------------------------------------------
-if ! command -v ynm >/dev/null 2>&1; then
+if [ "$backend" != ynm ]; then
+  [ -z "$backend" ] || add "memory backend" true info "$backend: seat and human memory live in Beads, so ynm is not checked"
+elif ! command -v ynm >/dev/null 2>&1; then
   add "ynm installed" false error "ynm is not on PATH" "brew install eyelock/tap/ynm"
 else
   add "ynm installed" true info "$(command -v ynm)"
@@ -128,6 +153,24 @@ if [ -n "$found" ]; then
     "remove the BEGIN BEADS ... END BEADS blocks and the beads skill, rule and bd prime hooks; seats get Beads through the wheelhouse plugin"
 else
   add "no Beads agent setup" true info "none found"
+fi
+
+# With Beads as the memory backend, seat and human memory is the work graph's own
+# database: readable, and shared through the same Dolt remote.
+if [ "$backend" = beads ] && command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
+  mem=$(cd "$dir" && bd --readonly memories --json 2>/dev/null)
+  if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$mem"; then
+    add "beads memory readable" true info "$(jq '[keys[] | select(. != "schema_version")] | length' <<<"$mem") memories"
+  else
+    add "beads memory readable" false error "bd --readonly memories --json gave no memory map, so seats cannot read their identity, handoff notes or Kudos" \
+      "cd $dir && bd memories, and read the error"
+  fi
+  if (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
+    add "beads memory shared" true info "the work graph has a Dolt remote, which carries memory with it"
+  else
+    add "beads memory shared" false warn "the work graph has no Dolt remote, so memory stays on this machine" \
+      "bd dolt remote add origin <the repository's git URL> --allow-git-origin, then bd dolt push"
+  fi
 fi
 
 # --- seats -------------------------------------------------------------------
@@ -227,23 +270,36 @@ if [ -f "$roster" ]; then
 
   # A seat is born once its identity is pinned in its own namespace. Until then
   # its birth is owed: the human's for the desk, crew and standing roles, the
-  # dispatcher's for a worker. It reads only the repository's own mount, which
-  # ynm always names project, so a slow remote mount can't hold it up. Without
-  # that mount (reported above) it doesn't run: ynm returns nothing, not an
-  # error, for a mount that isn't there, and every seat would look unborn.
-  if command -v ynm >/dev/null 2>&1 && [ "${projectmount:-0}" = 1 ]; then
-    unborn=""
-    unread=""
+  # dispatcher's for a worker. With ynm it reads only the repository's own mount,
+  # which ynm always names project, so a slow remote mount can't hold it up.
+  # Without that mount (reported above) it doesn't run: ynm returns nothing, not
+  # an error, for a mount that isn't there, and every seat would look unborn.
+  # With Beads it asks memory.sh for the seat's identity key.
+  unborn=""
+  unread=""
+  checkborn=0
+  if [ "$backend" = ynm ] && command -v ynm >/dev/null 2>&1 && [ "${projectmount:-0}" = 1 ]; then
+    checkborn=1
+  elif [ "$backend" = beads ] && [ -n "$memsh" ] && command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
+    checkborn=1
+  fi
+  if [ "$checkborn" = 1 ]; then
     while IFS=$'\t' read -r cmd by; do
-      if ! found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null); then
+      if [ "$backend" = beads ]; then
+        if ! found=$(bash "$memsh" recall --dir "$dir" --seat "$cmd" --kind identity --limit 1 2>/dev/null); then
+          unread="$unread $cmd"
+        elif ! jq -e 'length > 0' <<<"$found" >/dev/null 2>&1; then
+          unborn="$unborn $cmd (birth: $by)"
+        fi
+      elif ! found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null); then
         unread="$unread $cmd"
       elif ! jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' <<<"$found" >/dev/null 2>&1; then
         unborn="$unborn $cmd (birth: $by)"
       fi
     done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
-      add "seats born" false warn "ynm couldn't recall the identities of:$unread, so whether they are born is unknown" \
-        "run ynm recall --mount project --namespace seat/<command> --tags identity from the Wheelhouse root, and see ynm doctor"
+      add "seats born" false warn "memory couldn't recall the identities of:$unread, so whether they are born is unknown" \
+        "run scripts/memory.sh recall --seat <command> --kind identity from the Wheelhouse root, and see the doctor's memory checks"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -285,13 +341,20 @@ if [ -f "$roster" ]; then
       | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
-    # An assignee outside the roster is a human only if ynm holds a
-    # human/<command> namespace for them.
+    # An assignee outside the roster is a human only if memory holds a
+    # human/<command> namespace for them: ynm directly, Beads through memory.sh.
+    human_known() {
+      if [ "$backend" = beads ]; then
+        [ -n "$memsh" ] && [ "$(bash "$memsh" recall --dir "$dir" --human "$1" --limit 1 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
+      else
+        command -v ynm >/dev/null 2>&1 &&
+          [ "$(ynm recall --namespace "human/$1" --limit 1 --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null
+      fi
+    }
     stray=""
     while read -r sid sassignee; do
       [ -n "$sid" ] || continue
-      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && command -v ynm >/dev/null 2>&1 &&
-        [ "$(ynm recall --namespace "human/$sassignee" --limit 1 --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null; then
+      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && human_known "$sassignee"; then
         continue
       fi
       stray="${stray:+$stray }$sid ($sassignee)"
@@ -341,7 +404,7 @@ fi
 # Memory pushes itself too once sync.auto is on (ynm 0.5.0): ynm's stop hook
 # syncs in the background after a turn, at most once an interval. ynm layers
 # its config files, and the last one with a sync block wins.
-if [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/null 2>&1; then
+if [ "$backend" = ynm ] && [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/null 2>&1; then
   syncblock=$(for f in "${YNM_HOME:-$HOME/.ynm}/config.json" "$dir/.ynm/config.json" "$dir/.ynm/config.local.json"; do
     [ -f "$f" ] && jq -c 'select(has("sync")) | .sync' "$f" 2>/dev/null
   done | tail -1)

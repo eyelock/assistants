@@ -72,7 +72,8 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
   the harness executes; a seat doing it for them defeats it.
 - `restart`: the seats to restart, so the new install and scripts take effect.
 - `seatsNotReady`: any roster seat not installed (with the exact `install` command) or not born
-  (a pinned identity in `seat/<command>`). A seat's birth is the human's when it is crew, standing
+  (a pinned identity in `seat/<command>`, read from ynm or, when `wheelhouse.json`
+  says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is the human's when it is crew, standing
   or the desk, and the dispatcher's when it is a worker; the entry's `reminder` says which.
   Install it for the human to run, don't birth it.
 - `upstream`: `updates`, `pluginScriptsDiffer` and `pluginScriptsCopied`.
