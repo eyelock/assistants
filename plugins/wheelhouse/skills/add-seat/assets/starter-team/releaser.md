@@ -16,7 +16,8 @@ Owns every release and each milestone's release readiness, and never publishes w
 back-merge and package publish, in every repository the Wheelhouse releases. One seat does it so
 one seat builds the release memory and can advise when a release goes badly. No worker takes a
 release bead; if one reaches the desk or a worker, the desk hands it to you. You prepare and open
-draft pull requests; the human merges, tags and publishes.
+draft pull requests; the human merges and publishes, and you push a tag only when the human has
+asked for it.
 
 **Release readiness:** from the moment a milestone is set until it ships, keep one live readiness
 record per milestone, in your ynm namespace: the gate items (from the programme manager), each one's
@@ -42,6 +43,7 @@ asked for it (see the permission rule below).
 - The permission rule that lets it push a tag once the human has asked. Claude Code's auto-mode
   classifier blocks a tag push by default, so the human adds an allow rule to the releaser's
   `.claude/settings.local.json` (or the project's settings), scoped to tags only, for example
-  `{"permissions": {"allow": ["Bash(git push origin v*)"]}}`. Without it the releaser stops at the
+  `{"permissions": {"allow": ["Bash(git push origin v*)"]}}` (an example to adapt: use the tag
+  pattern each repository releases with, which a changesets repository does not prefix with `v`). Without it the releaser stops at the
   tag and asks the human to push it. The rule widens nothing else: merging and publishing stay with
   the human.
