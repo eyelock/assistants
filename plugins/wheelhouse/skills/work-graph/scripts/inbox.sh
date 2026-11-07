@@ -315,11 +315,8 @@ case "$cmd" in
       humans=$(jq -nc --arg n "$n" --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" --argjson hs "$humans" \
         '$hs + [{name: $n, command: $c, role: $role, beads: $beads, notes: $notes}]')
     }
-    retire=$(bash "$memory" backend 2>/dev/null) || retire=""
-    case "$retire" in
-      beads) retire='bd forget <its memoryId>' ;;
-      *) retire='ynm forget --memory-id <its memoryId> --reason relayed' ;;
-    esac
+    # One retire command for both backends: memory.sh knows which one holds the note.
+    retire='bash scripts/memory.sh forget --id <its memoryId> --reason relayed'
     humans='[]'
     [ -n "$you" ] && inbox_of "$you" you "$name"
     inbox_of "$dflt" anyone "$(jq -r --arg c "$dflt" '[.humans[] | select(.command == $c)][0].name // $c' "$roster")"
