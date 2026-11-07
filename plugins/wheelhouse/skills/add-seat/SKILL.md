@@ -6,7 +6,7 @@ description: Add a named seat to a Wheelhouse - a crew member, a standing role (
 # Add a seat
 
 A seat is a named role with a lasting identity: its claims and closes in Beads, its memories and
-Kudos in ynm. Each seat is a ynh harness under `harnesses/<command>/` in the Wheelhouse
+Kudos in the Wheelhouse's memory. Each seat is a ynh harness under `harnesses/<command>/` in the Wheelhouse
 repository, started by its own name, and the desk (the repository's own harness) delegates to it.
 Who seats a seat depends on who works with it. The human seats the crew they work with directly.
 The desk seats the standing roles. The human is there for the births of both, since they talk to
