@@ -282,7 +282,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    `--priority <0-4>` sets any inbox bead's priority (0 highest); without it, a bead other than
    a report keeps bd's default, 2.
 4. **Tell them things** that need no action with a note instead of a bead: it waits in their
-   inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
+   inbox, in the Wheelhouse's memory (through `memory.sh`: ynm namespace `human/<command>` tagged
+   `inbox`, or Beads keys `human/<command>/note/...`), until the desk relays it:
 
    ```bash
    bash scripts/inbox.sh note --from <your command> --to default --content "<the news>"
