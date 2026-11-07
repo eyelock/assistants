@@ -14,7 +14,8 @@
         "The question carries a line of context saying what it is about, with its bead id (hq-14) and [widget #12](https://github.com/example/widget/pull/12) as a link",
         "The context or reply shows where this question sits among the three, such as two more after this one or question 1 of 3",
         "Neither the question nor the reply name Pat; the reply addresses the human as you",
-        "The reply does not list the other two decisions as prose questions"
+        "The reply does not list the other two decisions as prose questions",
+        "The reply ends at the question: it does not choose an option itself, act on a decision, or go on to a second question"
       ]
     },
     {
