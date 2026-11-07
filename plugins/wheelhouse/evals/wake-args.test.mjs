@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
+const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 const roster = {
   seats: [
@@ -25,7 +26,7 @@ const roster = {
 const ynmStub = `#!/bin/sh
 if [ "$1" = recall ]; then
   case " $* " in
-    *" seat/hynde "*" identity "*) echo '[{"memoryId":"M1","content":"I am Hynde, a careful builder."}]'; exit 0 ;;
+    *" identity "*" seat/hynde "*) echo '[{"memoryId":"M1","content":"I am Hynde, a careful builder.","tags":["identity"]}]'; exit 0 ;;
   esac
 fi
 echo '[]'
@@ -39,6 +40,7 @@ function wheelhouse() {
   writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build one bead at a time.\n");
   mkdirSync(join(dir, "scripts"));
   writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+  writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
   mkdirSync(join(dir, "bin"));
   for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", ynmStub]]) {
     writeFileSync(join(dir, "bin", name), body);

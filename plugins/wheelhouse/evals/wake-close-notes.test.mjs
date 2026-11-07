@@ -11,13 +11,14 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
+const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 const roster = {
   seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
-const note = (id, bead, content, updatedAt) => ({ memoryId: id, subject: bead, content, updatedAt });
+const note = (id, bead, content, updatedAt) => ({ memoryId: id, subject: bead, content, updatedAt, tags: ["close-note"] });
 const four = [
   note("N1", "b-1", "Surprised: oldest.\nSharp edges: one.", "2026-11-01T10:00:00Z"),
   note("N2", "b-2", "Surprised: second.\nSharp edges: two.", "2026-11-02T10:00:00Z"),
@@ -33,7 +34,7 @@ if [ "$1" = recall ]; then
 ${JSON.stringify(notes)}
 JSON
     exit 0 ;;
-    *" identity "*) echo '[{"memoryId":"M1","content":"I am Hynde."}]'; exit 0 ;;
+    *" identity "*) echo '[{"memoryId":"M1","content":"I am Hynde.","tags":["identity"]}]'; exit 0 ;;
   esac
 fi
 echo '[]'
@@ -49,6 +50,7 @@ function wake(notes, format) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build.\n");
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     mkdirSync(join(dir, "bin"));
     for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", ynmStub(notes)]]) {
       writeFileSync(join(dir, "bin", name), body);

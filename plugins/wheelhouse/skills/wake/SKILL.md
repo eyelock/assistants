@@ -19,15 +19,20 @@ is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh
 too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
 seats. Without `--format text` it prints the same as JSON.
 
-It syncs first, so you wake to what other machines and seats wrote: ynm's memory (`ynm sync`)
-when the repository has a git remote, and the work graph (`bd sync`, which pulls and then pushes)
-when it has a Dolt remote. A sync never stops the wake. If one fails, the block opens with
+Memory is read and synced through `scripts/memory.sh` (copied from the work-graph skill), which
+follows `wheelhouse.json`'s `memory` key: ynm (the default) or Beads. It syncs first, so you wake
+to what other machines and seats wrote. With ynm that is memory (`ynm sync`) when the repository
+has a git remote, and the work graph (`bd sync`, which pulls and then pushes) when it has a Dolt
+remote. With Beads, memory and work are one database, so one `bd sync` (needing a Dolt remote)
+gives one result for both. With Beads the block also shows the shared facts under `wheelhouse/`
+(at most ten) as **What the Wheelhouse knows**, and the command to retire your handoff note is
+`bd forget -- <key>` rather than `ynm forget`. A sync never stops the wake. If one fails, the block opens with
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
-when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
+when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28), because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
@@ -75,6 +80,7 @@ read, never that nothing is waiting.
 | Section | Where it comes from |
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
+| What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
 | Where you left off | your latest handoff notes |
