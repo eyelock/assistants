@@ -24,9 +24,11 @@
 #
 # Its session-end hook runs it with --end, which only syncs what the session
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
-# remote and given up after 12 seconds. A full sync, not a push alone: when
+# remote and run side by side and given up after 25 seconds, inside the 30-second session-end hook
+# (WHEELHOUSE_END_SYNC_SECS sets the budget, at most 28). A full sync, not a push alone: when
 # another seat has pushed since, a push alone is rejected until it merges. It prints
-# {seat, push {memory, work: pushed|skipped|failed}} and nothing else. With
+# {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a sync did not
+# push, errors {memory, work}: its exit code and the first line it printed. With
 # --no-sync it syncs neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
@@ -111,13 +113,49 @@ hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) 
 if [ "$end" = 1 ]; then
   mempush=skipped
   workpush=skipped
-  if [ "$sync" = 1 ] && hasgitremote; then
-    if limited 12 ynm sync --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
-  fi
-  if [ "$sync" = 1 ] && hasdoltremote; then
-    if limited 12 bd sync >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
-  fi
-  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
+  memerr=""
+  workerr=""
+  # The two syncs run side by side, each given the same budget, so the worst case is the budget
+  # itself, not twice it. The session-end hook gives wake.sh 30 seconds and kills it after that,
+  # before the JSON below prints, so the budget stays under it: 25 seconds by default, never more
+  # than 28 (WHEELHOUSE_END_SYNC_SECS lowers or raises it within that).
+  budget="${WHEELHOUSE_END_SYNC_SECS:-25}"
+  case "$budget" in '' | *[!0-9]*) budget=25 ;; esac
+  [ "$budget" -gt 28 ] && budget=28
+  [ "$budget" -lt 1 ] && budget=1
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/wake-end.XXXXXX")
+  # Runs one sync with the budget and keeps its output in <tmp>/<name>.rc and .err: the exit code
+  # (142 when the alarm killed it) and "exit N: first line".
+  endsync() {
+    local name="$1"; shift
+    local rc first
+    limited "$budget" "$@" >"$tmp/$name.out" 2>&1
+    rc=$?
+    echo "$rc" >"$tmp/$name.rc"
+    if [ "$rc" != 0 ]; then
+      first=$(grep -m1 . "$tmp/$name.out" 2>/dev/null | cut -c1-200)
+      printf '%s' "exit $rc${first:+: $first}" >"$tmp/$name.err"
+    fi
+  }
+  if [ "$sync" = 1 ] && hasgitremote; then endsync mem ynm sync --quiet & fi
+  if [ "$sync" = 1 ] && hasdoltremote; then endsync work bd sync & fi
+  wait
+  # <var> becomes pushed, timeout or failed from the sync's exit code; <errvar> its error text.
+  endresult() {
+    local name="$1" var="$2" errvar="$3" rc
+    [ -f "$tmp/$name.rc" ] || return 0
+    rc=$(cat "$tmp/$name.rc")
+    if [ "$rc" = 0 ]; then printf -v "$var" pushed
+    else
+      if [ "$rc" = 142 ]; then printf -v "$var" timeout; else printf -v "$var" failed; fi
+      printf -v "$errvar" '%s' "$(cat "$tmp/$name.err")"
+    fi
+  }
+  endresult mem mempush memerr
+  endresult work workpush workerr
+  rm -rf "$tmp"
+  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" --arg me "$memerr" --arg we "$workerr" \
+    '{seat: $seat, push: {memory: $m, work: $w}} + (if $me != "" or $we != "" then {errors: ({memory: $me, work: $we} | with_entries(select(.value != "")))} else {} end)'
   exit 0
 fi
 
