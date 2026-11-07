@@ -170,11 +170,22 @@ A worker that hands work over with a pull request opens it only with this skill'
 
 ```bash
 bash path/to/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> \
-  --title "<conventional title>" --body-file <file> --base <branch>
+  --body-file <file> [--title "<conventional title>"] [--base <branch>] [--head <branch>]
 ```
 
 Run it from the repository's worktree; `--dir` is the Wheelhouse, where `tracker.json` and the
-work graph are. Start the body file with your byline. The script:
+work graph are. Start the body file with your byline (the byline rule needs a body, so
+`--body-file` is always given). What else defaults:
+
+- `--title` defaults to the bead's title; pass a conventional title when the repository wants one.
+- `--base` defaults to the repository's default branch. Pass it for a gitflow repository whose
+  pull requests target `develop`.
+- `--head`, the remote branch to open from, is taken from your branch's upstream when its name
+  differs from the local one. A seat that pushed another seat's branch from its own worktree
+  (`git push origin HEAD:<their-branch>`) needs no workaround; pass `--head` only to name a branch
+  explicitly.
+
+The script:
 
 1. reads the bead's `external_ref` and the release from the item (the adapter's `release`),
    and opens a **draft** PR with the release set where the tracker supports it (a GitHub
