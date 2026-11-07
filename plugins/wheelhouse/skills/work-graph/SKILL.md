@@ -208,8 +208,8 @@ work graph are. Start the body file with your byline (the byline rule needs a bo
 - `--base` defaults to the repository's default branch. Pass it for a gitflow repository whose
   pull requests target `develop`.
 - `--head`, the remote branch to open from, is taken from your branch's upstream when its name
-  differs from the local one. A seat that pushed another seat's branch from its own worktree
-  (`git push origin HEAD:<their-branch>`) needs no workaround; pass `--head` only to name a branch
+  differs from the local one. A seat that pushed to another seat's branch from its own worktree,
+  with that branch set as the upstream, needs no workaround; pass `--head` only to name a branch
   explicitly.
 
 The script:
