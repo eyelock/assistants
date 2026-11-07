@@ -30,11 +30,10 @@ function ynmStub(notes) {
   return `#!/bin/sh
 if [ "$1" = recall ]; then
   case " $* " in
-    *" close-note "*) cat <<'JSON'
+    *" seat/hynde "*) jq -c '. + [{"memoryId":"M1","content":"I am Hynde.","tags":["identity"]}]' <<'JSON'
 ${JSON.stringify(notes)}
 JSON
     exit 0 ;;
-    *" identity "*) echo '[{"memoryId":"M1","content":"I am Hynde.","tags":["identity"]}]'; exit 0 ;;
   esac
 fi
 echo '[]'

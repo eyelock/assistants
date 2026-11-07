@@ -22,11 +22,11 @@ const roster = {
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
-// ynm: recall answers a seat's identity from its own namespace; anything else is empty.
+// ynm: recall answers a seat's memories from its own namespace (wake.sh reads them in one recall); anything else is empty.
 const ynmStub = `#!/bin/sh
 if [ "$1" = recall ]; then
   case " $* " in
-    *" identity "*" seat/hynde "*) echo '[{"memoryId":"M1","content":"I am Hynde, a careful builder.","tags":["identity"]}]'; exit 0 ;;
+    *" seat/hynde "*) echo '[{"memoryId":"M1","content":"I am Hynde, a careful builder.","tags":["identity"]}]'; exit 0 ;;
   esac
 fi
 echo '[]'

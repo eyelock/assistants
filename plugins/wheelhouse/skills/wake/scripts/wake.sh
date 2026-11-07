@@ -221,13 +221,17 @@ done
 [ -n "$memorysh" ] || { echo "no memory.sh beside wake.sh: copy it from the work-graph skill into scripts/" >&2; exit 3; }
 # A recall that fails reads as nothing; memory.sh says why on stderr, which the wake does not show.
 recall() { bash "$memorysh" recall --dir . "$@" 2>/dev/null | jq -c . 2>/dev/null || echo '[]'; }
-identity=$(recall --seat "$seat" --kind identity --limit 1 | jq -c '[.[] | .text][0] // null')
-notes=$(recall --seat "$seat" --kind handoff --limit 1)
+# One recall for the whole seat (each memory.sh recall asks the store afresh, about 3s on ynm),
+# split by kind here. Newest first, so each slice keeps the latest.
+mine=$(recall --seat "$seat" --limit 200)
+of() { jq -c --arg k "$1" '[.[] | select(.kind == $k)]' <<<"$mine"; }
+identity=$(of identity | jq -c '[.[] | .text][0] // null')
+notes=$(of handoff | jq -c '.[:1]')
 handoff=$(jq -c '[.[] | .text][0] // null' <<<"$notes")
 handoffid=$(jq -c '[.[] | .id][0] // null' <<<"$notes")
-kudos=$(recall --seat "$seat" --kind kudos --limit 5 | jq -c '[.[] | .text]')
+kudos=$(of kudos | jq -c '.[:5] | [.[] | .text]')
 # Close notes are about a bead, not the seat: the latest three, newest first.
-closenotes=$(recall --seat "$seat" --kind close-note --limit 3 | jq -c 'map({bead: .bead, note: .text})')
+closenotes=$(of close-note | jq -c '.[:3] | map({bead: .bead, note: .text})')
 # What the whole Wheelhouse knows (shared facts), capped.
 facts=$(recall --shared --limit 10 | jq -c '[.[] | .text]')
 
