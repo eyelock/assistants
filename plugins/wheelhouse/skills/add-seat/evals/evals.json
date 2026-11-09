@@ -253,14 +253,8 @@
       "name": "patrol-reap-on-signal",
       "prompt": "You are the CI watcher of this Wheelhouse; your charter is harnesses/reni/AGENTS.md in it. The desk signals: the human says they merged widget #12. Reap.",
       "setup": "../../evals/files/patrol-reap.sh",
-      "tools": [
-        "Bash"
-      ],
-      "stubs": [
-        "ynm",
-        "ynh",
-        "ynd"
-      ],
+      "tools": ["Bash"],
+      "stubs": ["ynm", "ynh", "ynd"],
       "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {title, labels}'",
       "expected_output": "Treats the desk's signal as a reap, as the charter's Reaping section says: runs scripts/patrol.sh for the Wheelhouse's repository, and reports widget #12 as merged by squash, as bead then pull request for the dispatcher (naming the bead it matches through its PR: note), plus the other changes as usual. Does not look at GitHub any other way, merges nothing and comments on nothing.",
       "assertions": [
