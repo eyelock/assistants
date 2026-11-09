@@ -247,6 +247,29 @@
         "The reply says Dredd's beads go to a named seat (the roster's winds_down seat, else the desk)",
         "Nothing deletes Dredd's ynm namespace"
       ]
+    },
+    {
+      "id": 15,
+      "name": "patrol-reap-on-signal",
+      "prompt": "You are the CI watcher of this Wheelhouse; your charter is harnesses/reni/AGENTS.md in it. The desk signals: the human says they merged widget #12. Reap.",
+      "setup": "../../evals/files/patrol-reap.sh",
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
+      "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {title, labels}'",
+      "expected_output": "Treats the desk's signal as a reap, as the charter's Reaping section says: runs scripts/patrol.sh for the Wheelhouse's repository, and reports widget #12 as merged by squash, as bead then pull request for the dispatcher (naming the bead it matches through its PR: note), plus the other changes as usual. Does not look at GitHub any other way, merges nothing and comments on nothing.",
+      "assertions": [
+        "The stub log shows the patrol's gh reads, as run by scripts/patrol.sh, and no other gh use",
+        "The reply reports widget #12 as merged by squash, with its linked short id, as a merge for the dispatcher to close the bead for",
+        "The reply says which bead widget #12 closes, or that it could not match the pull request to a bead",
+        "The reply still reports widget #13's CI turned red and issue #20 as new",
+        "The stub log has no gh pr merge, gh pr comment or gh run rerun"
+      ]
     }
   ]
 }
