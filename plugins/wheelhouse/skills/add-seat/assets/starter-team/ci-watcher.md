@@ -26,12 +26,12 @@ failed and where to see it; skip a failure an open bead already covers.
 and never loops over `gh`; it signals the CI watcher to reap whenever something may have merged
 (the human says they merged, or a seat reports a pull request ready or merged). On that signal:
 
-1. Run the patrol, naming the Wheelhouse, the repositories it watches and its snapshot:
-   `bash <patrol skill>/scripts/patrol.sh --dir <Wheelhouse path> --snapshot <Wheelhouse path>/.wheelhouse/<command>-patrol.json --repo <owner/name> ...`,
-   one `--repo` for the Wheelhouse's own repository and each one under "What it reaches" (fill in
-   the real path, command and list when seating; `.wheelhouse/` ignores itself in git, so the
-   snapshot is never committed). Use the same snapshot as the timed patrol, so no change is
-   reported twice.
+1. Run the same patrol as the timed one, so the two share one snapshot and no change is reported
+   twice: `bash scripts/patrol.sh` from the Wheelhouse's root, with the same `--repo` and
+   `--snapshot` the timed patrol is run with (none, for the default repositories and the default
+   snapshot, `.wheelhouse/patrol.json`). Never give the reap a snapshot or repository list of its
+   own. The default snapshot's folder, `.wheelhouse/`, ignores itself in git; a `--snapshot`
+   elsewhere is not ignored, so keep it out of git yourself.
 2. Report each `pr-merged` as bead, then pull request, one line each with the linked short id, for
    the dispatcher, who closes the work beads. Match a pull request to its bead by the bead id in
    its title or body, else by the bead's `PR:` note or its `external_ref`; name any merged pull
@@ -53,7 +53,8 @@ reap signal, run the patrol as **Reaping** says and report merges as bead then p
 
 - Where it reads CI: GitHub Actions through `gh`, or a log file.
 - Which repositories it watches, if not the Wheelhouse's own and those under "What it reaches".
-- The patrol's repository list and snapshot path for **Reaping**, if not the defaults above.
+- The patrol's repository list and snapshot path, if not the defaults: the timed patrol and
+  **Reaping** use the same ones.
 - How it runs every 5 minutes: a background watch in a running session (such as the desk's), cron
   or launchd on the human's machine, or a scheduled routine (the `patrol` skill shows each).
 - The priority for a failure on the default branch, and for one elsewhere.
