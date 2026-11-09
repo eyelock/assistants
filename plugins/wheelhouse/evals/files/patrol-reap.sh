@@ -3,7 +3,7 @@
 # watcher, Reni, holds the starter-team template's charter (harnesses/reni/AGENTS.md: the template
 # without its front matter, so its Reaping section is there to read), its dispatcher, Marr, is
 # seated, and the work graph holds the bead that widget #12 closes, with a PR: note naming its
-# pull request. The pull request names the bead in its title too, so no second look at GitHub is needed.
+# pull request. REAP_CONTROL=1 removes the Reaping section from that charter. The pull request names the bead in its title too, so no second look at GitHub is needed.
 set -euo pipefail
 . "$EVAL_FIXTURES/patrol-lib.sh"
 patrol_wheelhouse
@@ -11,6 +11,15 @@ patrol_wheelhouse
 mkdir -p harnesses/reni
 awk 'BEGIN{n=0} /^---$/ && n<2 {n++; next} n>=2' \
   "$EVAL_FIXTURES/../../skills/add-seat/assets/starter-team/ci-watcher.md" > harnesses/reni/AGENTS.md
+# The case's own control (patrol-reap-control.sh sets REAP_CONTROL=1): the same charter with the
+# Reaping section, and the two lines that point to it, taken out, so the run without it is
+# the run without the thing under test.
+if [ "${REAP_CONTROL:-}" = 1 ]; then
+  awk '/^\*\*Reaping\.\*\*/ {skip=1} /^\*\*May not:\*\*/ {skip=0} !skip' harnesses/reni/AGENTS.md |
+    perl -0pe 's/ On the desk.s\s+reap signal, run the patrol as \*\*Reaping\*\* says and report merges as bead then pull request\.//; s/: the timed patrol and\s+\*\*Reaping\*\* use the same ones\././' > harnesses/reni/AGENTS.md.control
+  mv harnesses/reni/AGENTS.md.control harnesses/reni/AGENTS.md
+  grep -qi "reaping" harnesses/reni/AGENTS.md && { echo "control charter still names Reaping" >&2; exit 1; }
+fi
 mkdir -p harnesses/marr
 printf '# Marr\n\nThe dispatcher: closes work beads whose pull requests merged, and hands ready work to idle workers.\n' > harnesses/marr/AGENTS.md
 git add harnesses && git commit -qm "chore: Seat Reni, the CI watcher"

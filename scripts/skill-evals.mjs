@@ -20,6 +20,13 @@
 //   "setup":    a script (relative to the skill) run with bash in the temp
 //               directory first, e.g. to build a git repo with a local bare
 //               origin. It gets $EVAL_FIXTURES, the skill's evals/files/.
+//   "baseline_setup": a script run in place of "setup" in the without_skill arm,
+//               the case's own control. The baseline hides the plugin and this
+//               checkout, which is a fair control when the behaviour is written
+//               in the skill. A case that grades text its setup installs (a
+//               seat's charter, say) needs one that installs the same fixtures
+//               without that text, or both arms read it. The report names each
+//               run's control: "plugin hidden" (the default) or "baseline_setup".
 //   "tools":    extra tools for the agent, e.g. ["Bash", "Edit(./**)"]. Any
 //               Bash entry means shell access, and both arms get the same
 //               unrestricted shell: the OS sandbox below is the boundary,
@@ -65,7 +72,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -302,10 +309,20 @@ const BASE_ARGS = [
   "--no-session-persistence",
 ];
 
+// The setup script a run uses, and the control it stands for. The with_skill arm always runs
+// the case's setup; the without_skill arm runs its baseline_setup when it names one.
+export function setupFor(c, arm) {
+  if (arm === "without_skill" && c.baseline_setup) {
+    return { script: c.baseline_setup, control: "baseline_setup" };
+  }
+  return { script: c.setup, control: arm === "without_skill" ? "plugin hidden" : null };
+}
+
 // Sets up a case's shell sandbox, if it asks for one: stub commands on PATH
 // that only record their calls, git and gh cut off from real config and
 // hosts, then the case's setup script. Returns the environment for the run.
-async function prepareSandbox(c, work, ctx) {
+async function prepareSandbox(c, work, ctx, arm) {
+  const { script: setupScript } = setupFor(c, arm);
   const wantsShell = (c.tools ?? []).some((tool) => tool.startsWith("Bash"));
   const stubs = c.stubs ?? (wantsShell ? ["gh"] : []);
   const binDir = join(work, ".eval", "bin");
@@ -343,15 +360,15 @@ async function prepareSandbox(c, work, ctx) {
     GH_TOKEN: "eval-stub",
     GH_HOST: "stub.invalid",
   };
-  if (c.setup) {
-    const script = resolve(ctx.skillDir, c.setup);
-    if (!existsSync(script)) fail(`case ${c.id}: setup not found: ${c.setup}`, 2);
+  if (setupScript) {
+    const script = resolve(ctx.skillDir, setupScript);
+    if (!existsSync(script)) fail(`case ${c.id}: setup not found: ${setupScript}`, 2);
     const res = await run("bash", [script], work, env);
     if (res.code !== 0) {
       fail(`case ${c.id}: setup failed (exit ${res.code}): ${res.stderr.trim().slice(0, 300)}`, 3);
     }
   }
-  return { env, stubLog, wantsShell, used: wantsShell || stubs.length > 0 || Boolean(c.setup) };
+  return { env, stubLog, wantsShell, used: wantsShell || stubs.length > 0 || Boolean(setupScript) };
 }
 
 // What a sandboxed run did, for the judge: the case's evidence command and
@@ -382,7 +399,7 @@ async function runCase(c, arm, runNo, ctx) {
         cpSync(src, join(work, "data", basename(f)), { recursive: true });
       }
     }
-    const sandbox = await prepareSandbox(c, work, ctx);
+    const sandbox = await prepareSandbox(c, work, ctx, arm);
     // Shell access is all-or-nothing: the OS sandbox confines it, so a case's
     // Bash patterns widen to plain Bash, for both arms alike.
     const extra = sandbox.wantsShell
@@ -739,7 +756,14 @@ async function main() {
               ? `, ${r.timing.permission_denials.length} command(s) refused: widen the case's tools`
               : ""),
         );
-        return { case: caseSlug(c), arm, run: runNo, ...r.timing, ...g.summary };
+        return {
+          case: caseSlug(c),
+          arm,
+          run: runNo,
+          control: setupFor(c, arm).control,
+          ...r.timing,
+          ...g.summary,
+        };
       }),
     ),
   );
@@ -772,4 +796,6 @@ async function main() {
   process.stdout.write(`${JSON.stringify(benchmark, null, 2)}\n`);
 }
 
-main().catch((err) => fail(err.stack ?? String(err), 3));
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch((err) => fail(err.stack ?? String(err), 3));
+}
