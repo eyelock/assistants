@@ -55,7 +55,8 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
    you are the desk, ask the dispatcher; if there is no dispatcher yet, say the workers come after
    one.
 6. Then stop. Offer the next role only when the human asks for another seat, once this one is
-   official or dropped. Never go on to it yourself.
+   official or dropped (in a throwaway sandbox, once it is born: see "The throwaway sandbox").
+   Never go on to it yourself.
 
 **Asked for a particular seat** ("Seat Gore as our reviewer", "Add a worker for the api
 repository"), seat what was asked, straight away, starting from the
@@ -68,8 +69,9 @@ in your report, after seating.
 
 Seating is intentional and led by the human: they ask for one seat, and it goes through these
 steps before the next is started. Asked for several at once ("Add two workers"), seat the first
-and say the next waits for the first to be made official or dropped. A new seat is a **trial**
-until the human makes it official, so nothing about it is official when it is written.
+and say the next waits for the first to be made official or dropped (in a throwaway sandbox, for
+its birth: see "The throwaway sandbox"). A new seat is a **trial** until the human makes it
+official, so nothing about it is official when it is written.
 
 1. **Write it on a branch.** The seating seat (the desk, or the dispatcher for a worker) works in
    its own git worktree, in its scratchpad, on a branch `seat/<command>` from
@@ -111,7 +113,6 @@ it. Set it when the Wheelhouse has a seat for it (a coach, say); never assume on
 ends the trial. A reviewer who finds it ready says so in its review, and leaves the pull request
 in draft.
 
-
 ## The throwaway sandbox
 
 One exception skips the trial: a throwaway sandbox, a Wheelhouse with no pull requests (a tutorial
@@ -139,7 +140,7 @@ You need three things. Ask for any you can't tell from the request, one question
 
 Workers share a mandate, not a self. Each worker is a seat of its own, with its own name, harness
 and command (`harnesses/okafor/`, started as `okafor`), so it is spoken to by name like any other
-seat. Asked for several workers, seat one, and the next when it is official or dropped.
+seat. Asked for several workers, seat one, and the next when it is official or dropped (in a throwaway sandbox, when it is born).
 
 - Every worker gets the same mandate, standing order and charter, with only its name changed:
   build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
