@@ -244,7 +244,7 @@ labelled `housekeeping`; do not close a tracker item from it.
 
 Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
-(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
+(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
 
 1. **Who:** a named person only when you know who: they asked for the work, or they have named
    themselves at the desk this session. Otherwise the default human (`--to default`, the

@@ -57,7 +57,7 @@ at a time**, in this order. Don't create anything until you have the first four.
    be opened through `open-pr.sh` for that tracker. Say so, and offer to write the adapter as a
    bead. If the request doesn't say and you aren't asking, use none, and say so in the report.
 9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
-   walks through with the human role by role.
+   offers the human one role at a time.
 
 ## 2. Check the tools
 
@@ -140,8 +140,9 @@ the files it finds, and would commit the human's.
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
-   The human seats the crew they work with directly. Asked to set up the team, the desk walks the
-   human through the starter team, role by role, with the `add-seat` skill. When a releaser is
+   The human seats the crew they work with directly. Asked to set up the team, the desk offers the
+   starter team's first missing role with the `add-seat` skill, one seat at a time, each a trial
+   until the human makes it official. When a releaser is
    seated, the desk routes every release bead and every "can we release?" to the releaser, and
    never to a worker. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
@@ -306,11 +307,11 @@ edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
 can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (the push hook, a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict. To join from another machine: `git clone` the repository, then
 `bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
 push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and
-`ynh install harnesses/<command>` for each seat run there. End by offering to set up the starter team
-next, role by role, with the `add-seat` skill.
+`ynh install ./harnesses/<command>` for each seat run there. End by offering the first role of the starter
+team, one seat at a time, with the `add-seat` skill.

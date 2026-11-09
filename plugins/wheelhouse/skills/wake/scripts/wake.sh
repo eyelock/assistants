@@ -161,9 +161,18 @@ fi
 
 # Which seat this is.
 entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' "$roster")
-[ -n "$entry" ] || { echo "$seat is not a seat in the roster" >&2; exit 1; }
+if [ -z "$entry" ]; then
+  # A seat on trial is not in the roster until the trial ends, but its harness is on its
+  # trial branch, checked out here: read it from there.
+  if [ -f "$dir/harnesses/$seat/AGENTS.md" ]; then
+    entry=$(jq -nc --arg s "$seat" '{command: $s, group: "trial", harness: ("harnesses/" + $s), mandate: ""}')
+  else
+    echo "$seat is not a seat in the roster, and there is no harnesses/$seat/AGENTS.md here (a seat on trial has one on its branch)" >&2
+    exit 1
+  fi
+fi
 group=$(jq -r .group <<<"$entry")
-charter="$(jq -r .harness <<<"$entry")/AGENTS.md"
+charter="$dir/$(jq -r .harness <<<"$entry")/AGENTS.md"
 # The Mandate is a paragraph: from its "**Mandate:**" line to the next blank line, joined on one line.
 mandate=$(awk '
   found && /^[[:space:]]*$/ { exit }

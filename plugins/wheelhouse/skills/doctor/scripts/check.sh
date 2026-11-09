@@ -286,8 +286,11 @@ if [ -f "$roster" ]; then
   fi
 
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
-    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --slurpfile r "$roster" '
-      ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command]) as $known
+    # A seat on trial is not in the roster until the trial ends; its harness, on its branch,
+    # is what makes it known meanwhile.
+    trials=$(for h in "$dir"/harnesses/*/AGENTS.md; do [ -f "$h" ] && basename "$(dirname "$h")"; done | jq -R . | jq -sc .)
+    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --argjson t "${trials:-[]}" --slurpfile r "$roster" '
+      ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command] + $t) as $known
       | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)

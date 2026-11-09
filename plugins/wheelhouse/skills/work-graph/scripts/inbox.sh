@@ -31,7 +31,7 @@ set -uo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
+Usage: inbox.sh assign --title <title> --from <seat or seat on trial> [--to default|<command>]
                        [--url <url>] [--blocks <bead>] [--repo <repo>]
                        [--description <text>] [--priority 0-4]
                        [--kind merge|review|decision|credential|report|other]
@@ -159,11 +159,14 @@ resolve_to() {
   printf '%s\n' "$1"
 }
 
-# The seat that asked must be a seat in the roster.
+# The seat that asked must be a seat in the roster, or a seat on trial: one whose
+# harness (harnesses/<command>/AGENTS.md) is on the checked-out branch and which has no
+# roster entry until the trial ends. wake.sh and the doctor recognise it the same way.
 check_from() {
   [ -n "$from" ] || die 1 "say which seat is asking: --from <seat>, or set BEADS_ACTOR"
-  jq -e --arg c "$from" '.seats | any(.command == $c)' "$roster" >/dev/null ||
-    die 1 "$from is not a seat in the roster"
+  jq -e --arg c "$from" '.seats | any(.command == $c)' "$roster" >/dev/null && return 0
+  if valid_command "$from" && [ -f "harnesses/$from/AGENTS.md" ]; then return 0; fi
+  die 1 "$from is not a seat in the roster, and there is no harnesses/$from/AGENTS.md here (a seat on trial has one on its branch)"
 }
 
 case "$cmd" in
