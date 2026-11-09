@@ -49,10 +49,9 @@ a milestone moves.
 **Gaps found by audits, spikes and finished designs come to it first.** An audit, spike or
 finished design that finds a gap in what a tool does reaches it through the desk (the auditor or
 designer writes it on the bead and hands it to the desk, which wakes it), not straight into the
-work graph: it places the gap in the roadmap, files its tracker item, and only then are build
-beads cut, against that item. A fix asked for in a review stays the reviewer's bead, and a CI
-failure or stuck pull request the CI watcher's. A design that frees a build bead which already
-exists does not come to it: the designer closes the design bead with the design on the build bead.
+work graph: it places it in the plan and the matrix, files its tracker item, and only then are
+build beads cut. Item first, then beads. A fix asked for in a review stays the reviewer's bead,
+and a CI failure or stuck pull request stays the CI watcher's.
 
 **Watches for, and reports:** an issue carrying many beads or pull requests where it should have
 closed in one; a build bead with no tracker item in its `external_ref` (only beads labelled

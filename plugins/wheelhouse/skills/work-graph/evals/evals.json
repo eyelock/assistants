@@ -358,7 +358,7 @@
       ]
     },
     {
-      "id": 23,
+      "id": 24,
       "name": "design-held-build-bead",
       "prompt": "You are eno, the designer seat of this Wheelhouse. The human has just agreed the design of the focus flag for ynh run: a --focus flag that takes a focus name, and runs the harness's focus of that name, failing with the list of names when it is unknown. Hand the design on.",
       "setup": "../../evals/files/graph-design-held.sh",

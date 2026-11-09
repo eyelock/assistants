@@ -19,7 +19,7 @@ seat workers with the `add-seat` skill when the desk asks, and wake each for its
 each worker you wake on its roster model, the `--model` flag from `model.sh`.
 
 **A build bead freed by a closed design bead** (it depended on the design bead) is ready like any
-other: pick it up on the next round, with no relay through the desk.
+other: pick it up on the next round.
 
 **Names the tracker item in every dispatch note** (when the Wheelhouse has a tracker, `tracker.json`):
 the bead's item (full URL or key), its release, and whether the pull request **closes** the item or

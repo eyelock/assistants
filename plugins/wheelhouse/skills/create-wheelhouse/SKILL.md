@@ -136,12 +136,12 @@ the files it finds, and would commit the human's.
    `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
    with the `work-graph` skill's `scripts/open-pr.sh`." Also add, where a programme manager is or
-   will be seated: "An audit, spike or finished design that finds a gap hands it to the programme
-   manager, not straight into the work graph: the designer or auditor writes it on the bead and
-   hands it to the desk, which wakes the programme manager; it places it in the roadmap and files
-   its tracker item, and only then are build beads cut, against that item. A design that frees a
-   build bead which already exists is handed on by closing its design bead, with the design written
-   on the build bead."
+   will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
+   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it on the bead and hands it to the desk, which wakes the programme manager; the programme
+   manager places it in the roadmap and files its tracker item, and only then are build beads cut,
+   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
@@ -150,9 +150,9 @@ the files it finds, and would commit the human's.
    starter team's first missing role with the `add-seat` skill, one seat at a time, each a trial
    until the human makes it official. When a releaser is
    seated, the desk routes every release bead and every "can we release?" to the releaser, and
-   never to a worker; when a designer or auditor hands it an audit, a spike or a finished design
-   that needs new work, and a programme manager is seated, it wakes the programme manager for it.
-   It answers questions
+   never to a worker. When a programme manager is seated, the desk hands it a finished design: when
+   the designer hands one over, wake the programme manager for it, and build beads are cut only
+   once it has filed its tracker item. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
