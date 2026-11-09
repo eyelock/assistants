@@ -307,7 +307,7 @@ edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
 can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (the push hook, a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict. To join from another machine: `git clone` the repository, then

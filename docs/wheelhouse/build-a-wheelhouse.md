@@ -463,6 +463,14 @@ depends on who works with it:
 You are there for the birth of every seat you talk to: the crew and the standing roles. The
 workers are Anderson's to wake. Either way, each seat writes who it is in its own words.
 
+**This tutorial skips the trial.** In a real Wheelhouse the `add-seat` skill seats one seat at a
+time: it writes the seat on a `seat/<command>` branch with a draft pull request, you try it in the
+shared checkout, and the roster entry and the desk's `delegates_to` come only when you make it
+official. This sandbox is throwaway and has no pull requests, so the prompts below say so: they
+tell the desk to skip the trial, and to write each seat, with its roster entry and the delegate,
+on the current branch, one after another. Seating a real Wheelhouse's team, do it one seat at a
+time instead.
+
 ### The crew, by you
 
 This function writes a seat's harness. Each seat's harness includes:
@@ -606,7 +614,9 @@ commits it, and leaves their births to you:
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
-Seat the standing roles with the add-seat skill, exactly as follows. Every harness includes the
+Seat the standing roles with the add-seat skill, one after another, exactly as follows. This
+sandbox is a throwaway tutorial: skip the trial, with no branch or pull request. Write each seat on
+the current branch with its roster entry and your delegates_to entry. Every harness includes the
 wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is in ../widget.
 
 - Anderson, the dispatcher. Mandate: keep the workers busy: assign ready work to idle workers,
@@ -622,7 +632,8 @@ wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is
   epic, write changelogs and prepare tags. May not: push a tag, publish a release or merge
   without me. Also includes plugins/gitflow. Focus "plan-release".
 
-Install and commit each, but don't wake them: I'll be there for their births.
+Install (ynh install ./harnesses/<command>) and commit each, but don't wake them: I'll be there
+for their births.
 EOF
 )"
 ```
@@ -747,7 +758,9 @@ the desk for workers; it asks Anderson, who seats each one and wakes it for its 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
-We need three workers: Dalglish, McCoist and Strachan. Ask Anderson to seat them:
+We need three workers: Dalglish, McCoist and Strachan. This sandbox is a throwaway tutorial, so
+tell Anderson to skip the trial (no branch or pull request) and to seat them one after another,
+each with its roster entry and your delegates_to entry, on the current branch. Ask Anderson:
 anderson --model=sonnet --permission-mode=bypassPermissions -- "<your request>"
 Each worker builds one bead at a time, first one assigned to it, else one nobody holds. It may
 change code for the bead it holds, leaving it uncommitted for review, and close the bead with
@@ -1538,7 +1551,7 @@ cd /tmp/wheelhouse-tutorial/tower
 ```
 
 Expected: `true`, then `1`. The clone has the work graph and Gahan's identity. On a real second
-machine, also run `ynm client install ynh` once, and `ynh install harnesses/<command>` for each seat
+machine, also run `ynm client install ynh` once, and `ynh install ./harnesses/<command>` for each seat
 you run there.
 
 ## Clean up
