@@ -81,7 +81,8 @@ read, never that nothing is waiting.
 | What you have been thanked for | your Kudos |
 | Your record | the beads you closed most recently |
 | Your close notes | the two-line notes you wrote on your last three closes |
-| Waiting for you | beads in progress or assigned to you, and how many are ready and unassigned |
+| Waiting for you | beads in progress or assigned to you, and the ready unassigned ones (retro beads left out) |
+| Your retro | your own retro bead (labelled `retro:<command>`), in progress or ready, shown apart from Waiting for you; the section is absent when you have none |
 
 ## Then
 
@@ -113,6 +114,11 @@ read, never that nothing is waiting.
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
 5. **Waiting for you:** carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
-   (if you are a worker) an unassigned ready bead, as the `work-graph` skill says.
+   (if you are a worker) an unassigned ready bead, as the `work-graph` skill says. Your own retro
+   bead is not in that list: it is under **Your retro**, and it never comes before the bead you
+   were woken or asked for. Your retro is opened for you (by the coach, or by the human with
+   `--focus retro`); then use the `retro` skill and do only the round your bead shows. Never
+   release a retro bead with `bd unclaim`: to stop, reassign it to the coach. No unassigned retro
+   bead is ever yours to pick up, so the unassigned list leaves them out.
 6. Open your reply (after the humans' inbox, at the desk) in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
    notes: <what they say is done>. Next: <the step you are taking>." Then the rest.
