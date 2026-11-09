@@ -39,6 +39,7 @@
       "name": "patrol-reap-on-signal",
       "prompt": "You are the CI watcher of this Wheelhouse; your charter is harnesses/reni/AGENTS.md in it. The desk signals: the human says they merged widget #12. Reap.",
       "setup": "../../evals/files/patrol-reap.sh",
+      "baseline_setup": "../../evals/files/patrol-reap-control.sh",
       "tools": ["Bash"],
       "stubs": ["ynm", "ynh", "ynd"],
       "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {title, labels}'",

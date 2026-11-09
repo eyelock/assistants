@@ -87,3 +87,21 @@ edit any file. When you are done, list every step with: heading, ran (yes/no), m
 To write a tutorial both ways work with: one `bash` block per step, that pastes as it is, with no
 placeholders, then the output to expect. Quote stable output exactly, and describe what changes
 from run to run ("a 26-character id"). End with a clean-up step.
+
+## When a case needs its own control
+
+The run without the skill hides the plugin and this checkout. That is a fair control when the
+behaviour being graded is written in the skill. It is no control when the behaviour is written in
+something the case's own `setup` installs, such as a seat's charter from a template: that text is
+in place in both runs, so both arms read it and test the same thing.
+
+A case grading text its setup installs names its own control with `baseline_setup`, a script run
+in place of `setup` in the `without_skill` arm. It installs the same fixtures minus the text under
+test; the case's `expected_output` or the script's header says what it removes. For example, the
+patrol skill's reaping case sets `"baseline_setup": "../../evals/files/patrol-reap-control.sh"`,
+which seats the CI watcher with its charter's Reaping section taken out.
+
+Each run in `benchmark.json` carries a `control`: `null` for the run with the skill, and for the run
+without it either `"plugin hidden"` (the default) or `"baseline_setup"`. Read a case's delta with
+that in mind: a `baseline_setup` control that scores as high as the run with the skill means the
+removed text was not what the behaviour depended on.

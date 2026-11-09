@@ -64,6 +64,9 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
 - **A merged bead is closed by reclaiming it first.** `bd close` refuses a bead another seat holds,
   so for a bead whose pull request merged the dispatcher runs `bd reclaim`, then `bd close` with what
   happened ([Checking in for lapsed claims](#checking-in-for-lapsed-claims) step 2).
+- **Add to a bead's notes only with `bd update <id> --append-notes "<text>"` (or `bd note <id> "<text>"`), never `--notes`.**
+  `--notes` replaces every note on the bead, wiping lines others rely on, such as the
+  `PR: <url>` line that marks a pull request open.
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
   reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged. The one forced close a seat may make of
   a bead it does not hold is the desk's close of a human's inbox bead, only through

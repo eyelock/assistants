@@ -148,7 +148,8 @@ the files it finds, and would commit the human's.
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
    The human seats the crew they work with directly. Asked to set up the team, the desk offers the
    starter team's first missing role with the `add-seat` skill, one seat at a time, each a trial
-   until the human makes it official. When a releaser is
+   until the human makes it official (a throwaway sandbox the human names as one skips the trial,
+   as `add-seat` says). When a releaser is
    seated, the desk routes every release bead and every "can we release?" to the releaser, and
    never to a worker. When a programme manager is seated, the desk hands it a finished design: when
    the designer hands one over, wake the programme manager for it, and build beads are cut only
@@ -251,6 +252,10 @@ the files it finds, and would commit the human's.
    profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
    seat's: it wakes with purpose, and pushes what it wrote when its session ends. Its launch focus
    means it never wakes bare: started by its name, it acts on its wake block straight away.
+
+   The desk includes the whole `plugins/wheelhouse` plugin, with no `pick`, so it gains every skill
+   the plugin gains, `refresh` among them. Every other seat picks the wheelhouse skills and leaves
+   `refresh` out (the `add-seat` skill says how).
 
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the

@@ -172,7 +172,7 @@ This section is the desk's charter. You act in the work graph as `tower`: pass `
 every `bd` command that changes it. You seat the standing roles with the `add-seat` skill, and
 ask Anderson to seat workers. The human seats the crew. Asked to set up the team, offer the first
 missing role of the starter team with the `add-seat` skill, one seat at a time: each is a trial
-on a branch until the human makes it official. Answer questions about the
+on a branch until the human makes it official (a throwaway sandbox is the one exception). Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
 memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
 question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run `bash scripts/inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.
@@ -463,7 +463,7 @@ depends on who works with it:
 You are there for the birth of every seat you talk to: the crew and the standing roles. The
 workers are Anderson's to wake. Either way, each seat writes who it is in its own words.
 
-**This tutorial skips the trial.** In a real Wheelhouse the `add-seat` skill seats one seat at a
+**This tutorial skips the trial,** under the `add-seat` skill's throwaway-sandbox exception. In a real Wheelhouse the `add-seat` skill seats one seat at a
 time: it writes the seat on a `seat/<command>` branch with a draft pull request, you try it in the
 shared checkout, and the roster entry and the desk's `delegates_to` come only when you make it
 official. This sandbox is throwaway and has no pull requests, so the prompts below say so: they
@@ -615,7 +615,7 @@ commits it, and leaves their births to you:
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
 Seat the standing roles with the add-seat skill, one after another, exactly as follows. This
-sandbox is a throwaway tutorial: skip the trial, with no branch or pull request. Write each seat on
+sandbox is a throwaway tutorial, so the add-seat skill's throwaway-sandbox exception applies: skip the trial, with no branch or pull request. Write each seat on
 the current branch with its roster entry and your delegates_to entry. Every harness includes the
 wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is in ../widget.
 
@@ -759,7 +759,7 @@ the desk for workers; it asks Anderson, who seats each one and wakes it for its 
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
 We need three workers: Dalglish, McCoist and Strachan. This sandbox is a throwaway tutorial, so
-tell Anderson to skip the trial (no branch or pull request) and to seat them one after another,
+tell Anderson to skip the trial, as add-seat's throwaway-sandbox exception allows (no branch or pull request) and to seat them one after another,
 each with its roster entry and your delegates_to entry, on the current branch. Ask Anderson:
 anderson --model=sonnet --permission-mode=bypassPermissions -- "<your request>"
 Each worker builds one bead at a time, first one assigned to it, else one nobody holds. It may
