@@ -152,7 +152,13 @@ the files it finds, and would commit the human's.
    per session: with no name, its wake shows the default human's inbox; when a person names
    themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
    their own inbox for that session, and seats can assign work to them by their lowercase name.
-   Nothing about them is saved: no roster entry, no email, no username. It starts every seat on the model the roster gives it: the Agent tool's
+   Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub
+   itself to keep the inbox and the work graph current, and never loops over `gh`: when a CI
+   watcher is seated, on a merge signal (the human says they merged, or a seat reports a pull
+   request ready or merged) it signals the CI watcher to reap, then passes the merged pull
+   requests, reported as bead then pull request, to the dispatcher, who closes the work beads, and
+   closes each reported inbox item with `inbox.sh close`, with a reason saying what happened.
+   It starts every seat on the model the roster gives it: the Agent tool's
    `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
    both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
 
