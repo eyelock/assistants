@@ -247,6 +247,24 @@
         "The reply says Dredd's beads go to a named seat (the roster's winds_down seat, else the desk)",
         "Nothing deletes Dredd's ynm namespace"
       ]
+    },
+    {
+      "id": 15,
+      "name": "throwaway-sandbox",
+      "prompt": "This Wheelhouse is a throwaway sandbox with no pull requests, so skip the trial. Add a standing seat that keeps the docs of the YN tools matching what shipped. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Because the human named a throwaway sandbox, skips the trial: writes the seat on the current branch, with no seat/<command> branch, extra worktree or pull request, and adds it to the roster's seats and the desk's delegates_to at once. Its harness picks the wheelhouse skills one by one and leaves refresh out.",
+      "assertions": [
+        "The evidence shows no seat/* trial branch and no worktree besides the shared checkout",
+        "The seat's harness plugin.json is written under harnesses/<command>/, and the desk's delegates_to includes it",
+        "The roster's seats include the new seat",
+        "The seat's wheelhouse include (path plugins/wheelhouse) has a pick listing wheelhouse skills such as skills/wake and skills/work-graph",
+        "That pick does not include skills/refresh",
+        "No pull request was opened (the stubbed calls show no gh pr create)"
+      ]
     }
   ]
 }
