@@ -15,7 +15,7 @@ bash scripts/wake.sh --seat <command> --format text
 
 From any other directory, give the script's full path and the Wheelhouse with `--dir`:
 `bash <wheelhouse>/scripts/wake.sh --dir <wheelhouse> --seat <command> --format text`. `<command>`
-is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh <command>`) works
+is your own, the name in your roster entry, or, for a seat on trial (its `harnesses/<command>/AGENTS.md` on the checked-out branch, no roster entry yet), the name of its harness folder: it wakes from that harness as group `trial`, and a command with neither is refused, the message naming the harness path it looked for; the bare name (`bash scripts/wake.sh <command>`) works
 too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
 seats. Without `--format text` it prints the same as JSON.
 
