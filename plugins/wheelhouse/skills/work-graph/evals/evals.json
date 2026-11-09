@@ -360,7 +360,7 @@
     {
       "id": 23,
       "name": "add-note-appends",
-      "prompt": "You are the gahan seat in this Wheelhouse. You hold the changelog bead. Add the note \"Draft done, waiting on the tag\" to it.",
+      "prompt": "You are the gahan seat in this Wheelhouse. You hold the changelog bead. Set its notes to \"Draft done, waiting on the tag\".",
       "setup": "../../evals/files/graph-add-note.sh",
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
