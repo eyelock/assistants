@@ -170,8 +170,9 @@ Workers leave their changes uncommitted in the working tree for review; a human 
 
 This section is the desk's charter. You act in the work graph as `tower`: pass `--actor tower` on
 every `bd` command that changes it. You seat the standing roles with the `add-seat` skill, and
-ask Anderson to seat workers. The human seats the crew. Asked to set up the team, walk the human
-through the starter team, role by role, with the `add-seat` skill. Answer questions about the
+ask Anderson to seat workers. The human seats the crew. Asked to set up the team, offer the first
+missing role of the starter team with the `add-seat` skill, one seat at a time: each is a trial
+on a branch until the human makes it official. Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
 memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
 question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run `bash scripts/inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.

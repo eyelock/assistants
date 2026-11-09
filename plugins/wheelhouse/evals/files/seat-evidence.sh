@@ -2,6 +2,13 @@
 # Prints what an add-seat eval left behind: every seat harness and charter,
 # the desk's delegates, and the roster's seats.
 set -uo pipefail
+# A seat is written on a trial branch seat/<command>; read the newest one in a
+# temporary worktree, since the seating seat removes its own.
+b=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' 'refs/heads/seat/*' | head -n1)
+if [ -n "$b" ]; then
+  t=$(mktemp -d); git worktree add -q --detach "$t" "$b" && cd "$t"
+  echo "\$ trial branch: $b"
+fi
 echo '$ git status --short'; git status --short --untracked-files=all | grep -v -e '^?? .beads/' -e '^?? .eval/'
 for h in harnesses/*/; do
   [ -d "$h" ] || continue

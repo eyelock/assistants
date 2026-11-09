@@ -1,6 +1,6 @@
 ---
 name: add-seat
-description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or a worker - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name, or to set up a Wheelhouse's team (its starter team) role by role.
+description: Add a named seat to a Wheelhouse - a crew member, a standing role (such as a dispatcher) or a worker - as a ynh harness with its charter, standing orders and only the tools its job needs, named from the Wheelhouse's roster. Use when asked to add, create or set up a seat, role, worker or agent in a Wheelhouse (a release manager, a PR watcher, a dispatcher, a designer, more workers), or to give a role a name, or to start on a Wheelhouse's team (its starter team), one role at a time. Also use to trial, make official or drop a seat.
 ---
 
 # Add a seat
@@ -12,6 +12,8 @@ Who seats a seat depends on who works with it. The human seats the crew they wor
 The desk seats the standing roles. The human is there for the births of both, since they talk to
 both. The dispatcher seats the workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
 the human lets you; if asked for a seat that is someone else's to make, say whose it is.
+
+A new seat is a **trial** until the human makes it official: see "Seating one seat at a time".
 
 Work from the Wheelhouse repository root, the folder holding `.agents/harness/plugin.json`,
 `.beads/` and `skills/roster/`.
@@ -31,11 +33,13 @@ A Wheelhouse can change its team: a file of the same name in its own
 `skills/roster/assets/starter-team/` replaces the template, and a new file adds a role. Read both
 folders, the Wheelhouse's winning.
 
-**Asked to set up the team,** walk the templates in `order` (a Wheelhouse's file with no `order`
-goes last), one role at a time:
+**Asked to set up the team,** don't seat the team: seating is one seat at a time (see "Seating one
+seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's file with no
+`order` goes last) that isn't already seated, and wait:
 
 1. Skip a role that is already seated: a seat in the roster with that `role`, or, for a seat with
-   no `role`, one whose mandate is clearly the same job.
+   no `role`, one whose mandate is clearly the same job. A seat on trial (a branch with an open
+   draft pull request) counts as seated.
 2. Say in a line what the role is for, and ask one question: whether to seat it, under the first
    name in the group's pool that no seat holds and `excluded` doesn't list, in the pool's order
    ("Seat a designer, as Gahan?"). The human can change the name in the answer. A template with
@@ -43,19 +47,68 @@ goes last), one role at a time:
    stop and wait for the answer: one question per message.
 3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
    request, the constitution or the roster already answers.
-4. Don't change anything else while you walk, such as the constitution or the scripts; mention
+4. Don't change anything else while you seat it, such as the constitution or the scripts; mention
    what you'd fix, and leave it to the human.
-5. Seat it from the template, through sections 2 to 4 below, and record `"role": "<template>"` on
-   its roster seat. In the walk, the workers are the dispatcher's to seat: if you are the desk,
-   ask the dispatcher; if there is no dispatcher yet, say the workers come after one.
-6. Then go on to the next role.
+5. Seat it from the template, through "Seating one seat at a time" and sections 2 to 4 below, and
+   record `"role": "<template>"` on its roster seat. The workers are the dispatcher's to seat: if
+   you are the desk, ask the dispatcher; if there is no dispatcher yet, say the workers come after
+   one.
+6. Then stop. Offer the next role only when the human asks for another seat, once this one is
+   official or dropped. Never go on to it yourself.
 
-**Asked for a particular seat** ("Seat Gore as our reviewer", "Add two workers", "Add a worker for
-the api repository"), don't walk the team: seat what was asked, straight away, starting from the
+**Asked for a particular seat** ("Seat Gore as our reviewer", "Add a worker for the api
+repository"), seat what was asked, straight away, starting from the
 role's template if there is one. The human asking is the human letting you. Ask first only for
 what would change the charter and you can't tell; take everything else from the template, the
 constitution and the roster, and raise anything else (such as where a repository is checked out)
 in your report, after seating.
+
+## Seating one seat at a time
+
+Seating is intentional and led by the human: they ask for one seat, and it goes through these
+steps before the next is started. Asked for several at once ("Add two workers"), seat the first
+and say the next waits for the first to be made official or dropped. A new seat is a **trial**
+until the human makes it official, so nothing about it is official when it is written.
+
+1. **Write it on a branch.** The seating seat (the desk, or the dispatcher for a worker) works in
+   its own git worktree, in its scratchpad, on a branch `seat/<command>` from
+   `origin/<default branch>` (a shared checkout is often stale, and a seat never changes one).
+   Do sections 1 to 4 below there, the roster entry and the desk's `delegates_to` excepted: they
+   wait for the end of the trial (step 5). Commit it (`feat: seat <Name>`).
+2. **Push it and open a draft pull request.** Open it as the constitution's `## Handing over work`
+   says (a Wheelhouse with a tracker opens it with its `open-pr.sh`). Its description names the
+   seat, its group and mandate, and says it is a trial: how to start it, and that the roster entry
+   and the delegate come when the trial ends.
+3. **Remove your own worktree,** once the branch is pushed, so the human can check the branch out.
+4. **The trial, in the shared checkout.** The human checks the branch out there themselves, runs
+   `ynh install ./harnesses/<command>` and starts the seat, so its paths are the real ones and
+   nothing needs cleaning up later. Never check the branch out for them. Its install, its birth
+   and its conversations are real: it has real memory and works real beads. Only the roster entry
+   and the desk's `delegates_to` wait for the end of the trial, so the roster does not list it and
+   the desk does not delegate to it yet. A charter change found in the trial goes onto the branch.
+5. **Made official.** When the human ends the trial they switch the shared checkout back to the
+   default branch. Then the seating seat adds the roster entry and the desk's `delegates_to` to
+   the branch (in a new worktree of its own, removed again), so they arrive with the merge. The
+   pull request leaves draft and is reviewed, and the human merges, pulls, and reinstalls the seat
+   from the same path: `ynh install ./harnesses/<command>`. Then check the Wheelhouse with the
+   `doctor` skill.
+6. **Dropped.** The human switches back to the default branch and closes the pull request. Then
+   the seat that winds down a dropped seat (below) does the rest:
+   - uninstall it: `ynh uninstall local/<command>`;
+   - hand every bead the dropped seat filed, claimed or was assigned to a named seat, the winding
+     down seat by default (`bd update <id> --assignee <command> --actor <command>`, after reading
+     each, since a claimed bead may be half-built);
+   - add the dropped seat's name to the roster's `excluded` list, with the reason, so it is never
+     reused;
+   - leave its ynm namespace `seat/<command>` as it is: it is the record.
+
+**Who winds a dropped seat down** is the seat the roster's `winds_down` names, the command of a
+seat, such as `"winds_down": "<command>"`, beside `excluded`. Where it is not set, the desk does
+it. Set it when the Wheelhouse has a seat for it (a coach, say); never assume one exists.
+
+**A reviewer keeps a trial seat's pull request in draft,** whatever its verdict, until the human
+ends the trial. A reviewer who finds it ready says so in its review, and leaves the pull request
+in draft.
 
 ## 1. Pin down the role
 
@@ -74,7 +127,7 @@ You need three things. Ask for any you can't tell from the request, one question
 
 Workers share a mandate, not a self. Each worker is a seat of its own, with its own name, harness
 and command (`harnesses/okafor/`, started as `okafor`), so it is spoken to by name like any other
-seat. Asked for several workers, seat each one in turn, through steps 2 to 4 and its birth.
+seat. Asked for several workers, seat one, and the next when it is official or dropped.
 
 - Every worker gets the same mandate, standing order and charter, with only its name changed:
   build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
@@ -248,20 +301,23 @@ with; a standing role or a worker hands it back to the desk.
 1. Give the seat ynm: run `ynm client install ynh` inside `harnesses/<command>/`. It adds ynm's
    MCP server, hooks and memory skill to the seat's harness.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
-   `{ "git": ".", "path": "harnesses/<command>" }`.
+   `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
+   the trial.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
    path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, the command of the seat seating it (or `human` when you aren't in
    a seat, or the human wrote every word); `role` when it was seated from a starter-team template;
-   and `specialities` for a specialist worker.
+   and `specialities` for a specialist worker. On a trial, the same applies: it waits for the
+   end of the trial.
 4. Check the Wheelhouse with the `doctor` skill.
-5. Commit the seat (`feat: seat <Name>`), unless the human said not to. The desk reads its
-   delegates from the repository's commits, so it won't start until every seat in
-   `delegates_to` is committed.
+5. Commit the seat on its branch (`feat: seat <Name>`) and go on to the draft pull request, as
+   "Seating one seat at a time" says. The desk reads its delegates from the repository's commits,
+   so it won't start until every seat in `delegates_to` is committed.
 
 The seat's first session is its **birth** (the `birth` skill): it reads its charter, meets the
 team and writes who it is, in its own words. Don't write its identity for it. A
 seat's birth belongs to whoever works with it. The dispatcher wakes each worker it seats, once it
-is installed: `ynh install harnesses/<command>`, then
+is installed (the human installs a trial seat, from the shared checkout): `ynh install ./harnesses/<command>`,
+then
 `<command> <flags> -- "This is your first session in <wheelhouse>. You were seated by <your command>."`,
 as its own session. Nobody is there to approve what a birth does, so `<flags>` are the ones
 you were given for starting seats (such as `--permission-mode`): without them its memory writes
@@ -274,9 +330,10 @@ it, but don't start it.
 ## 5. Report
 
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
-start it: `ynh install harnesses/<command>`, then `<command>` to wake it, or
+start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command>` to wake it, or
 `<command> --focus <order>` for one standing order, written out for each seat when there are
-several. If it asks for workspace folders, say they are refused until the human grants them:
+several. Say it is a trial and where the draft pull request is, and that it becomes official on
+review and merge, or is dropped. If it asks for workspace folders, say they are refused until the human grants them:
 `ynh trust show local/<command>` lists them, and `ynh trust accept local/<command>` grants them, unless their
 `workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
-until it is committed.
+until it is committed. Say which seat is next only if asked.
