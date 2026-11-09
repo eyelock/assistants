@@ -98,7 +98,7 @@ in place in both runs, so both arms read it and test the same thing.
 A case grading text its setup installs names its own control with `baseline_setup`, a script run
 in place of `setup` in the `without_skill` arm. It installs the same fixtures minus the text under
 test; the case's `expected_output` or the script's header says what it removes. For example, the
-patrol skill's reaping case sets `"baseline_setup": "../../evals/files/patrol-reap-control.sh"`,
+add-seat skill's reaping case sets `"baseline_setup": "../../evals/files/patrol-reap-control.sh"`,
 which seats the CI watcher with its charter's Reaping section taken out.
 
 Each run in `benchmark.json` carries a `control`: `null` for the run with the skill, and for the run

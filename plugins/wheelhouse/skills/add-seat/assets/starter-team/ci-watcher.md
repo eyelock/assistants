@@ -33,9 +33,10 @@ and never loops over `gh`; it signals the CI watcher to reap whenever something 
    own. The default snapshot's folder, `.wheelhouse/`, ignores itself in git; a `--snapshot`
    elsewhere is not ignored, so keep it out of git yourself.
 2. Report each `pr-merged` as bead, then pull request, one line each with the linked short id, for
-   the dispatcher, who closes the work beads. Match a pull request to its bead by the bead id in
-   its title or body, else by the bead's `PR:` note or its `external_ref`; name any merged pull
-   request it can't match. With no dispatcher seated, report them to the desk.
+   the dispatcher, who closes the work beads. Match a pull request to its bead by the bead's `PR:` note first
+   (the worker's pull request tool notes it on the bead the moment it opens, and the patrol reads
+   titles only), then by the bead id in its title, then in its body, then by the bead's
+   `external_ref`; name any merged pull request it can't match. With no dispatcher seated, report them to the desk.
 3. Report each merged pull request that a human's inbox bead names (its `--url`) as done, for the
    desk, which closes it with `inbox.sh close`.
 4. File CI beads, and report the other changes, as above. If the patrol prints `[]`, say nothing

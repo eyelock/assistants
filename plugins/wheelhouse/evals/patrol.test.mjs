@@ -154,6 +154,30 @@ test("first run: saves the snapshot, ignored by git, and prints []", () => {
   }
 });
 
+test("a relative script path with --dir elsewhere still finds its .jq files", () => {
+  const h = harness();
+  try {
+    h.set(before);
+    const out = spawnSync("bash", ["scripts/patrol.sh", "--dir", h.wh, "--repo", R], {
+      cwd: join(plugin, "skills", "patrol"),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(h.dir, "bin")}:${process.env.PATH}`,
+        GH_STATE: join(h.dir, "state.json"),
+        GH_LOG: join(h.dir, "gh.log"),
+        GH_FAIL: "",
+        WHEELHOUSE_REPOS: "",
+      },
+    });
+    assert.equal(out.status, 0, out.stderr);
+    assert.deepEqual(JSON.parse(out.stdout), []);
+    assert.ok(existsSync(join(h.wh, ".wheelhouse", "patrol.json")));
+  } finally {
+    h.done();
+  }
+});
+
 test("nothing changed: [] and exit 0", () => {
   const h = harness();
   try {
