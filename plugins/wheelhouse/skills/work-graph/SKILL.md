@@ -160,9 +160,26 @@ who is idle), because nothing else prompts it to. Other seats skip this section.
    `repo:docs`. Split a task that touches two. The one exception is a bead for a human (see
    "Needing a human") whose work touches no repository, such as a decision.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
-   where the order matters; tasks that can run side by side stay unlinked.
+   where the order matters; tasks that can run side by side stay unlinked. A build bead that
+   waits on a design depends on the design bead (`bd dep add <build> <design>`); whoever files the
+   design bead adds the link.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.
 5. Report the epic, its tasks in order and what is ready first. Don't claim them unless asked.
+
+## Handing a design on
+
+When a design is agreed, it goes one of two ways:
+
+- **Build work already exists:** the build bead depends on the design bead (`bd dep add <build>
+  <design>`). The designer writes the design on the build bead (`bd update <build>
+  --append-notes "<the design>"`) and closes the design bead. Closing it frees the build bead: it
+  appears in `bd ready` and the dispatcher picks it up on its next round, like any ready work. The
+  designer asks the desk for nothing, and the desk is never asked to relay it.
+- **New work, with no build bead yet:** the designer writes the design on its bead and hands it to
+  the desk, which wakes the programme manager (where one is seated): an audit, a spike or a
+  finished design goes to the programme manager first, who places it in the roadmap and files its
+  tracker item, and only then are build beads cut, against that item (see "Linking the tracker").
+  Review fixes stay the reviewer's beads and CI failures the CI watcher's.
 
 ## Linking the tracker
 
