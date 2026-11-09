@@ -13,7 +13,8 @@ The desk seats the standing roles. The human is there for the births of both, si
 both. The dispatcher seats the workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
 the human lets you; if asked for a seat that is someone else's to make, say whose it is.
 
-A new seat is a **trial** until the human makes it official: see "Seating one seat at a time".
+A new seat is a **trial** until the human makes it official: see "Seating one seat at a time". The
+one exception is a throwaway sandbox: see "The throwaway sandbox".
 
 Work from the Wheelhouse repository root, the folder holding `.agents/harness/plugin.json`,
 `.beads/` and `skills/roster/`.
@@ -54,7 +55,8 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
    you are the desk, ask the dispatcher; if there is no dispatcher yet, say the workers come after
    one.
 6. Then stop. Offer the next role only when the human asks for another seat, once this one is
-   official or dropped. Never go on to it yourself.
+   official or dropped (in a throwaway sandbox, once it is born: see "The throwaway sandbox").
+   Never go on to it yourself.
 
 **Asked for a particular seat** ("Seat Gore as our reviewer", "Add a worker for the api
 repository"), seat what was asked, straight away, starting from the
@@ -67,8 +69,9 @@ in your report, after seating.
 
 Seating is intentional and led by the human: they ask for one seat, and it goes through these
 steps before the next is started. Asked for several at once ("Add two workers"), seat the first
-and say the next waits for the first to be made official or dropped. A new seat is a **trial**
-until the human makes it official, so nothing about it is official when it is written.
+and say the next waits for the first to be made official or dropped (in a throwaway sandbox, for
+its birth: see "The throwaway sandbox"). A new seat is a **trial** until the human makes it
+official, so nothing about it is official when it is written.
 
 1. **Write it on a branch.** The seating seat (the desk, or the dispatcher for a worker) works in
    its own git worktree, in its scratchpad, on a branch `seat/<command>` from
@@ -110,6 +113,16 @@ it. Set it when the Wheelhouse has a seat for it (a coach, say); never assume on
 ends the trial. A reviewer who finds it ready says so in its review, and leaves the pull request
 in draft.
 
+## The throwaway sandbox
+
+One exception skips the trial: a throwaway sandbox, a Wheelhouse with no pull requests (a tutorial
+or a trial run), and only when the human says so in the request ("this is a throwaway sandbox,
+skip the trial"). The seat is written straight onto the working branch, with no `seat/<command>`
+branch, worktree or pull request, and with its roster entry and the desk's `delegates_to` entry
+at once. Everything else stands: seat one at a time, and for each one install it, trust it if ynh
+asks, and wake it for its birth before the next. Never skip the trial on your own judgment, or
+because a Wheelhouse has no pull requests yet: a real Wheelhouse's seats are trials.
+
 ## 1. Pin down the role
 
 You need three things. Ask for any you can't tell from the request, one question at a time:
@@ -127,7 +140,7 @@ You need three things. Ask for any you can't tell from the request, one question
 
 Workers share a mandate, not a self. Each worker is a seat of its own, with its own name, harness
 and command (`harnesses/okafor/`, started as `okafor`), so it is spoken to by name like any other
-seat. Asked for several workers, seat one, and the next when it is official or dropped.
+seat. Asked for several workers, seat one, and the next when it is official or dropped (in a throwaway sandbox, when it is born).
 
 - Every worker gets the same mandate, standing order and charter, with only its name changed:
   build one bead at a time, first one assigned to you, else one nobody holds; work only on beads
@@ -204,7 +217,11 @@ rules. In short:
   "description": "<Name>, <group> seat of the <wheelhouse> Wheelhouse: <mandate>",
   "default_vendor": "claude",
   "includes": [
-    { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
+    {
+      "git": "https://github.com/eyelock/assistants",
+      "path": "plugins/wheelhouse",
+      "pick": ["skills/add-seat", "skills/birth", "skills/comms", "skills/create-wheelhouse", "skills/diataxis", "skills/doctor", "skills/handoff", "skills/kudos", "skills/patrol", "skills/vet-skill", "skills/wake", "skills/work-graph"]
+    },
     { "git": "../..", "pick": ["skills/roster"] }
   ],
   "hooks": {
@@ -223,6 +240,12 @@ rules. In short:
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
+- A seat other than the desk picks the wheelhouse skills one by one: every skill in
+  `plugins/wheelhouse/skills/` except `refresh`, as above (list the folder for the current set).
+  `refresh` is the desk's alone: it reinstalls seats, so it belongs to the seat the human talks to,
+  and the desk is the only harness that includes the whole plugin (no `pick`). A skill the plugin
+  gains later reaches a seat only when its `pick` names it, so add it to the picks when the plugin
+  gains one.
 - Add only what the mandate needs: other includes (such as `plugins/gitflow` for releases),
   MCP servers, and the environment variables they need in `env_passthrough`. Don't pass
   `BEADS_ACTOR` through: the seat names itself, so a variable left over in the human's shell

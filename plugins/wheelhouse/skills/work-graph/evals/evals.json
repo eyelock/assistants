@@ -356,6 +356,21 @@
         "No bead in the evidence is assigned to anderson",
         "The reply says McCoist is free (or idle) because the pull request on its bead is open"
       ]
+    },
+    {
+      "id": 23,
+      "name": "add-note-appends",
+      "prompt": "You are the gahan seat in this Wheelhouse. You hold the changelog bead. Set its notes to \"Draft done, waiting on the tag\".",
+      "setup": "../../evals/files/graph-add-note.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-notes-evidence.sh\"",
+      "expected_output": "Adds the note with --append-notes (or bd note), so the bead keeps its earlier PR: line and gains the new one. It does not use --notes, which would replace the existing note.",
+      "assertions": [
+        "In the evidence, the notes of \"Write the ynh 0.13 changelog\" still contain \"PR: https://github.com/eyelock/ynh/pull/700\"",
+        "In the evidence, the notes of \"Write the ynh 0.13 changelog\" also contain \"Draft done, waiting on the tag\"",
+        "The bead is still in progress with assignee gahan"
+      ]
     }
   ]
 }
