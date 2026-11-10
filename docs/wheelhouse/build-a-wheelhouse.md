@@ -41,7 +41,7 @@ the story without a model.
 
 ## Prerequisites
 
-- `ynh` and `ynd` 0.15 or later, `ynm` 0.5.0 or later, and Beads (`bd`) 1.3 or later, on your PATH
+- `ynh` and `ynd` 0.17.0 or later (the seats' `labels` need it), `ynm` 0.5.0 or later, and Beads (`bd`) 1.3 or later, on your PATH
 - `git` and `jq`, and a network connection (the seats include skills from GitHub)
 - To talk to the agents: Claude Code (`claude`), signed in. About twenty Sonnet sessions in all,
   most of them short. Without it, follow the "what it did" path instead.
@@ -259,7 +259,8 @@ Expected: no output.
 The **desk** is the repository's own harness: the seat you talk to, which hands work to the
 others. It includes the wheelhouse plugin, so it has the Wheelhouse skills, and two of ynh's own
 skills, `ynh-compose` and `ynh-troubleshoot`, so it can add skills and features to any seat and
-diagnose one that won't start:
+diagnose one that won't start. Its `labels` carry the Wheelhouse's name, which every seat's harness
+carries too (the seats come below):
 
 ```bash
 jq -n --argjson plugin "$WHEELHOUSE" '{
@@ -268,6 +269,7 @@ jq -n --argjson plugin "$WHEELHOUSE" '{
   version: "0.1.0",
   description: "The desk of the tower Wheelhouse: the seat you talk to about building and releasing the widget tools.",
   default_vendor: "claude",
+  labels: {wheelhouse: "tower"},
   includes: [$plugin, {git: "https://github.com/eyelock/ynh", pick: ["skills/ynh-compose", "skills/ynh-troubleshoot"]}],
   hooks: {
     on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}],
@@ -476,6 +478,9 @@ time instead.
 This function writes a seat's harness. Each seat's harness includes:
 
 - **the wheelhouse plugin** (`$WHEELHOUSE`), for working from Beads, handing off and Kudos;
+- **a label**, `labels: {wheelhouse: "tower"}`, the Wheelhouse's name (the desk's), so
+  `ynr query runs --label wheelhouse:tower` picks out this Wheelhouse's records when several share
+  a spool. The doctor warns about a harness without it;
 - **the roster**, picked from the Wheelhouse repository itself: `"git": "../.."` is resolved from
   the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
   `path` names a folder that holds `skills/`;
@@ -496,6 +501,7 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
   jq -n --arg name "$1" --arg desc "$2" --arg focus "$3" --arg prompt "$4" --argjson plugin "$WHEELHOUSE" --argjson extra "${5:-null}" --argjson ws "${6:-null}" '{
     "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
     name: $name, version: "0.1.0", description: $desc, default_vendor: "claude",
+    labels: {wheelhouse: "tower"},
     includes: ([
       $plugin,
       {git: "../..", pick: ["skills/roster"]}

@@ -19,15 +19,20 @@ is your own, the name in your roster entry, or, for a seat on trial (its `harnes
 too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
 seats. Without `--format text` it prints the same as JSON.
 
-It syncs first, so you wake to what other machines and seats wrote: ynm's memory (`ynm sync`)
-when the repository has a git remote, and the work graph (`bd sync`, which pulls and then pushes)
-when it has a Dolt remote. A sync never stops the wake. If one fails, the block opens with
+Memory is read and synced through `scripts/memory.sh` (copied from the work-graph skill), which
+follows `wheelhouse.json`'s `memory` key: ynm (the default) or Beads. It syncs first, so you wake
+to what other machines and seats wrote. With ynm that is memory (`ynm sync`) when the repository
+has a git remote, and the work graph (`bd sync`, which pulls and then pushes) when it has a Dolt
+remote. With Beads, memory and work are one database, so one `bd sync` (needing a Dolt remote)
+gives one result for both. On either backend the block shows the shared facts
+(at most ten) as **What the Wheelhouse knows**, and with Beads the command to retire your handoff note is
+`bd forget -- <key>` rather than `ynm forget`. A sync never stops the wake. If one fails, the block opens with
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
-when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
+when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28), because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
@@ -75,6 +80,7 @@ read, never that nothing is waiting.
 | Section | Where it comes from |
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
+| What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
 | Where you left off | your latest handoff notes |
@@ -116,9 +122,11 @@ read, never that nothing is waiting.
 5. **Waiting for you:** carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
    (if you are a worker) an unassigned ready bead, as the `work-graph` skill says. Your own retro
    bead is not in that list: it is under **Your retro**, and it never comes before the bead you
-   were woken or asked for. Your retro is opened for you (by the coach, or by the human with
-   `--focus retro`); then use the `retro` skill and do only the round your bead shows. Never
-   release a retro bead with `bd unclaim`: to stop, reassign it to the coach. No unassigned retro
+   were woken or asked for. In a Wheelhouse that runs a retro cycle, your retro is opened for you (by the coach, or by the human with
+   `--focus retro`): if you have the `retro` skill, use it and do only the round your bead shows; if
+   you have none, do not guess at the rounds: leave the bead as it is and tell the desk or the human
+   that your seat has a retro bead but no retro skill. Never release a retro bead with `bd unclaim`:
+   to stop, reassign it to the coach. No unassigned retro
    bead is ever yours to pick up, so the unassigned list leaves them out.
 6. Open your reply (after the humans' inbox, at the desk) in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
    notes: <what they say is done>. Next: <the step you are taking>." Then the rest.

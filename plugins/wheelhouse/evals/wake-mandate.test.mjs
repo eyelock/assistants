@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
+const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 const roster = {
   seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Roster fallback." }],
@@ -25,6 +26,7 @@ function mandateFor(charter) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), charter);
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     mkdirSync(join(dir, "bin"));
     for (const [name, body] of [
       ["bd", "#!/bin/sh\necho '[]'\n"],

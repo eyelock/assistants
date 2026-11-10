@@ -232,6 +232,7 @@ the files it finds, and would commit the human's.
      "version": "0.1.0",
      "description": "The desk of the <name> Wheelhouse: <purpose>.",
      "default_vendor": "claude",
+     "labels": { "wheelhouse": "<name>" },
      "includes": [
        { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
@@ -248,6 +249,12 @@ the files it finds, and would commit the human's.
    }
    ```
 
+   `labels` is an object of key to value, and stamps every run record of the desk with
+   `wheelhouse:<name>`, the value being the Wheelhouse's own name, and `add-seat` writes the same
+   label into every seat's harness. When several Wheelhouses share the laptop spool,
+   `ynr query runs --label wheelhouse:<name>` picks out this one's records. It needs ynh 0.17.0 or
+   later: an older ynh refuses the field, so a desk written with it won't start there.
+
    ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
    profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
    seat's: it wakes with purpose, and pushes what it wrote when its session ends. Its launch focus
@@ -260,7 +267,8 @@ the files it finds, and would commit the human's.
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
    `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
-   for things with it, and the desk's wake shows their inbox with it. Copy the `patrol` skill's
+   for things with it, and the desk's wake shows their inbox with it. Copy the `work-graph` skill's
+   `scripts/memory.sh` beside them too: the wake reads and syncs each seat's memory with it. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
 6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's

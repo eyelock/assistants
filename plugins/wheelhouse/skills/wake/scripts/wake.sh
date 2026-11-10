@@ -5,12 +5,16 @@
 # (its Kudos), its record (what it closed lately), its latest close notes (the
 # two lines it wrote on closing a bead) and what is waiting for it.
 #
-# First it syncs, so the seat wakes to what other machines and seats wrote:
-# ynm's memory when the repository has a git remote, and the Beads work graph
-# when it has a Dolt remote (bd sync pulls, then pushes). Each sync is skipped
-# when there is no remote, gives up after 60 seconds, and never stops the
-# wake; one that fails is named in the block. --no-sync skips both. It
-# changes nothing else.
+# Memory is read and synced through memory.sh (beside this script, as
+# create-wheelhouse copies it, or in the work-graph skill), which follows
+# wheelhouse.json's "memory" key: ynm (the default) or Beads.
+#
+# First it syncs, so the seat wakes to what other machines and seats wrote.
+# With ynm, memory syncs when the repository has a git remote and the Beads work
+# graph when it has a Dolt remote. With Beads, memory and work are one database
+# and one bd sync, with one result for both. Each sync is skipped when there is
+# no remote, gives up after 60 seconds, and never stops the wake; one that fails
+# is named in the block. --no-sync skips both. It changes nothing else.
 #
 # The desk (the seat in the desk group) also wakes to the humans' inbox, first:
 # what the seats have asked of the human at the desk and of the default human,
@@ -24,17 +28,17 @@
 #
 # Its session-end hook runs it with --end, which only syncs what the session
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
-# remote and run side by side and given up after 25 seconds, inside the 30-second session-end hook
+# remote and run side by side (with Beads, memory and work are one bd sync, reported for both) and given up after 25 seconds, inside the 30-second session-end hook
 # (WHEELHOUSE_END_SYNC_SECS sets the budget, at most 28). A full sync, not a push alone: when
 # another seat has pushed since, a push alone is rejected until it merges. It prints
 # {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a sync did not
 # push, errors {memory, work}: its exit code and the first line it printed. With
 # --no-sync it syncs neither and reports both as skipped.
 #
-# Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
-# handoff, handoffId, kudos, closeNotes [{bead, note}], record, inProgress, assigned, retro (the seat's
-# own beads labelled retro, in progress and ready, kept apart from the two before it), unassignedReady
-# (titles, most urgent first, retro beads skipped), sync {memory, work: synced|skipped|failed}, inbox (the desk's
+# Output: JSON on stdout by default, {seat, group, backend, firstWake, identity, mandate,
+# handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned,
+# retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
+# unassignedReady (titles, most urgent first, retro beads skipped), sync {memory, work: synced|skipped|failed}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
 # null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
@@ -89,7 +93,7 @@ if [ -n "$positional" ]; then
   seat="$positional"
 fi
 case "$format" in json | text) ;; *) echo "--format must be json or text" >&2; exit 1 ;; esac
-for tool in jq ynm bd; do
+for tool in jq bd; do
   command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required" >&2; exit 3; }
 done
 roster="$dir/skills/roster/assets/roster.json"
@@ -100,6 +104,16 @@ if [ -z "$seat" ]; then
   exit 1
 fi
 cd "$dir" || exit 2
+
+# Where memory lives: wheelhouse.json's "memory", ynm when there is no file or no key.
+backend=ynm
+if [ -f wheelhouse.json ]; then
+  backend=$(jq -r '.memory // "ynm"' wheelhouse.json 2>/dev/null) || backend=""
+  case "$backend" in ynm | beads) ;; *) echo "wheelhouse.json: memory must be \"ynm\" or \"beads\"" >&2; exit 2 ;; esac
+fi
+if [ "$backend" = ynm ]; then
+  command -v ynm >/dev/null 2>&1 || { echo "ynm is required" >&2; exit 3; }
+fi
 
 # A sync that hangs gives up after this many seconds (perl's alarm: macOS has
 # no timeout).
@@ -138,9 +152,17 @@ if [ "$end" = 1 ]; then
       printf '%s' "exit $rc${first:+: $first}" >"$tmp/$name.err"
     fi
   }
-  if [ "$sync" = 1 ] && hasgitremote; then endsync mem ynm sync --quiet & fi
-  if [ "$sync" = 1 ] && hasdoltremote; then endsync work bd sync & fi
+  # With Beads, memory and work are one database: one bd sync, and its result is both.
+  if [ "$backend" = ynm ]; then
+    if [ "$sync" = 1 ] && hasgitremote; then endsync mem ynm sync --quiet & fi
+    if [ "$sync" = 1 ] && hasdoltremote; then endsync work bd sync & fi
+  else
+    if [ "$sync" = 1 ] && hasdoltremote; then endsync work bd sync & fi
+  fi
   wait
+  if [ "$backend" = beads ]; then
+    for f in rc err; do [ -f "$tmp/work.$f" ] && cp "$tmp/work.$f" "$tmp/mem.$f"; done
+  fi
   # <var> becomes pushed, timeout or failed from the sync's exit code; <errvar> its error text.
   endresult() {
     local name="$1" var="$2" errvar="$3" rc
@@ -186,26 +208,42 @@ mandate=$(awk '
 memsync=skipped
 worksync=skipped
 if [ "$sync" = 1 ]; then
-  if hasgitremote; then
-    if limited 60 ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
-  fi
-  if hasdoltremote; then
-    if limited 60 bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
+  if [ "$backend" = ynm ]; then
+    if hasgitremote; then
+      if limited 60 ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
+    fi
+    if hasdoltremote; then
+      if limited 60 bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
+    fi
+  elif hasdoltremote; then
+    # Memory and work are one database: one sync, one result for both.
+    if limited 60 bd sync >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
+    worksync=$memsync
   fi
 fi
 
-# The seat's own memory lives in its namespace, seat/<name>.
-recall() { ynm recall --namespace "seat/$seat" --subject "seat:$seat" --tags "$1" --limit "$2" --json 2>/dev/null || echo '[]'; }
-identity=$(recall identity 1 | jq -c '[.[] | .content][0] // null')
-notes=$(recall handoff 1)
-handoff=$(jq -c '[.[] | .content][0] // null' <<<"$notes")
-handoffid=$(jq -c '[.[] | .memoryId][0] // null' <<<"$notes")
-kudos=$(recall kudos 5 | jq -c '[.[] | .content]')
-# Close notes are subjected to the bead they are about, not to the seat, so they are
-# recalled by tag alone: the latest three, newest first.
-closenotes=$(ynm recall --namespace "seat/$seat" --tags close-note --limit 20 --json 2>/dev/null \
-  | jq -c 'sort_by(.updatedAt) | reverse | .[:3] | map({bead: .subject, note: .content})' 2>/dev/null)
-[ -n "$closenotes" ] || closenotes='[]'
+# The seat's own memory, read through memory.sh: ynm namespace seat/<name>, or Beads keys seat/<name>/....
+here=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+memorysh=""
+for f in "$here/memory.sh" "scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
+  [ -f "$f" ] && { memorysh="$f"; break; }
+done
+[ -n "$memorysh" ] || { echo "no memory.sh beside wake.sh: copy it from the work-graph skill into scripts/" >&2; exit 3; }
+# A recall that fails reads as nothing; memory.sh says why on stderr, which the wake does not show.
+recall() { bash "$memorysh" recall --dir . "$@" 2>/dev/null | jq -c . 2>/dev/null || echo '[]'; }
+# One recall for the whole seat (each memory.sh recall asks the store afresh, about 3s on ynm),
+# split by kind here. Newest first, so each slice keeps the latest.
+mine=$(recall --seat "$seat" --limit 200)
+of() { jq -c --arg k "$1" '[.[] | select(.kind == $k)]' <<<"$mine"; }
+identity=$(of identity | jq -c '[.[] | .text][0] // null')
+notes=$(of handoff | jq -c '.[:1]')
+handoff=$(jq -c '[.[] | .text][0] // null' <<<"$notes")
+handoffid=$(jq -c '[.[] | .id][0] // null' <<<"$notes")
+kudos=$(of kudos | jq -c '.[:5] | [.[] | .text]')
+# Close notes are about a bead, not the seat: the latest three, newest first.
+closenotes=$(of close-note | jq -c '.[:3] | map({bead: .bead, note: .text})')
+# What the whole Wheelhouse knows (shared facts), capped.
+facts=$(recall --shared --limit 10 | jq -c '[.[] | .text]')
 
 # Its record and its work, from the graph.
 # Beads' --json output is an array, or {"data": [...]} with BD_JSON_ENVELOPE=1 (the
@@ -215,6 +253,8 @@ record=$(beads list --status closed --assignee "$seat" | jq -c 'sort_by(.updated
 # A bead whose notes carry "PR: <url>" (open-pr.sh writes it) and whose pull request is open is
 # waiting on a review or a merge, not work to carry on with: its title is marked "(waiting on PR
 # <url>)". If gh cannot say, the mark says the state is unknown rather than guessing.
+mine_active=$(beads list --status in_progress --assignee "$seat")
+mine_ready=$(beads ready --assignee "$seat")
 inprogress='[]'
 while IFS=$'\t' read -r title prurl; do
   [ -n "$title" ] || continue
@@ -227,8 +267,7 @@ while IFS=$'\t' read -r title prurl; do
     esac
   fi
   inprogress=$(jq -c --arg t "$title" '. + [$t]' <<<"$inprogress")
-done < <(beads list --status in_progress --assignee "$seat" |
-  jq -r --arg own "retro:$seat" '.[] | select(((.labels // []) | index($own)) | not) | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' 2>/dev/null)
+done < <(jq -r --arg own "retro:$seat" '.[] | select(((.labels // []) | index($own)) | not) | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' <<<"$mine_active" 2>/dev/null)
 # The seat's own retro bead (labelled retro:<seat>) is its retro cycle, not its work: it is shown
 # apart, and never comes before the bead the seat was woken or asked for. Other beads labelled retro
 # (a review bead, a bead handed to the coach between rounds) are ordinary work for whoever holds
@@ -237,9 +276,9 @@ own="retro:$seat"
 notown='select(((.labels // []) | index($own)) | not)'
 isown='select(((.labels // []) | index($own)))'
 notretro='select(((.labels // []) | index("retro")) | not)'
-assigned=$(beads ready --assignee "$seat" | jq -c --arg own "$own" "map(select(.issue_type != \"epic\") | $notown | .title)")
+assigned=$(jq -c --arg own "$own" "map(select(.issue_type != \"epic\") | $notown | .title)" <<<"$mine_ready")
 unassigned=$(beads ready --unassigned | jq -c "map(select(.issue_type != \"epic\") | $notretro) | sort_by(.priority) | map(.title)")
-retro=$( { beads list --status in_progress --assignee "$seat"; beads ready --assignee "$seat"; } |
+retro=$( { echo "$mine_active"; echo "$mine_ready"; } |
   jq -sc --arg own "$own" "[.[][] | $isown | {id, title}] | unique_by(.id) | map(.title)" 2>/dev/null)
 [ -n "$retro" ] || retro='[]'
 
@@ -270,12 +309,12 @@ if [ "$group" = desk ]; then
 fi
 
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
-  --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" \
+  --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" \
   --argjson inbox "$inbox" '{
-    seat: $seat, group: $group, firstWake: ($identity == null), identity: $identity,
-    mandate: $mandate, handoff: $handoff, handoffId: $handoffid, kudos: $kudos, closeNotes: $closenotes, record: $record,
+    seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
+    mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned,
     sync: {memory: $memsync, work: $worksync}, inbox: $inbox
   }')
@@ -286,10 +325,11 @@ if [ "$format" = json ]; then
 fi
 
 jq -r '
+  def retire(id; why): if .backend == "beads" then "bd forget -- \(id)" else "ynm forget --memory-id \(id) --reason \"\(why)\"" end;
   def list(xs; empty_text): if (xs | length) == 0 then empty_text else (xs | map("- " + .) | join("\n")) end;
   "# Waking: \(.seat)\n",
-  ([if .sync.memory == "failed" then "memory (ynm sync)" else empty end,
-    if .sync.work == "failed" then "the work graph (bd sync)" else empty end] as $failed
+  ([if .sync.memory == "failed" then (if .backend == "beads" then "memory and the work graph (bd sync)" else "memory (ynm sync)" end) else empty end,
+    if .sync.work == "failed" and .backend != "beads" then "the work graph (bd sync)" else empty end] as $failed
    | if ($failed | length) > 0
      then "**Not synced:** \($failed | join(" and ")) failed, so what follows may be out of date. Say so when you reply, and run the sync by hand before relying on it.\n"
      else empty end),
@@ -318,7 +358,7 @@ jq -r '
              (if ($reports | length) > 0 then "Reports:\n" + ($reports | map(bead) | join("\n")) + "\n" else empty end),
              (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
            end)),
-        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
+        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `bash scripts/memory.sh forget --id <its memoryId> --reason relayed`.\n"
       end),
      (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
    end),
@@ -329,8 +369,11 @@ jq -r '
   "## Your purpose\n", "\(.mandate) (\(.group))\n",
   "## Where you left off\n",
   (if .handoff
-    then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `ynm forget --memory-id \(.handoffId) --reason \"picked up\"`.\n"
+    then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `\(retire(.handoffId; "picked up"))`.\n"
     else "No handoff notes: start fresh.\n" end),
+  (if (.facts | length) == 0 then empty
+    else "## What the Wheelhouse knows\n", (.facts | map("- " + (. | gsub("\n"; " / "))) | join("\n")) + "\n"
+    end),
   "## What you have been thanked for\n",
   (if (.kudos | length) == 0 then "Nothing yet.\n"
     else list(.kudos; "") + "\n\nMention them in a line when you reply.\n" end),
@@ -345,6 +388,6 @@ jq -r '
     else "Ready and unassigned:\n" + (.unassignedReady | map("- " + .) | join("\n")) end),
   (if (.retro | length) == 0 then empty
     else "\n## Your retro\n", (.retro | map("- " + .) | join("\n")),
-      "\nA retro bead never comes before the bead you were woken or asked for: finish that first. Your retro is opened for you (by Martin, or by the human with --focus retro): then do only the round your bead shows, and report back. Never release one with bd unclaim: if you must stop, reassign it to martin. The retro skill says what to do.\n"
+      "\nA retro bead never comes before the bead you were woken or asked for: finish that first. In a Wheelhouse that runs a retro cycle, your retro is opened for you (by the coach, or by the human with --focus retro): then do only the round your bead shows, and report back. Never release one with bd unclaim: if you must stop, reassign it to the coach. If you have a retro skill, it says what to do; if you have none, do not guess at the rounds: leave the bead as it is and tell the desk or the human that your seat has a retro bead but no retro skill.\n"
     end)
 ' <<<"$json"
