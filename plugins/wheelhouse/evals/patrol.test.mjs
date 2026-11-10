@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -285,6 +285,23 @@ test("--snapshot keeps the snapshot where it's told, and a new repository starts
     assert.equal(out.status, 0, out.stderr);
     assert.deepEqual(out.json, [], "a repository the last run never saw reports nothing");
     assert.deepEqual(Object.keys(JSON.parse(readFileSync(snap, "utf8")).repos).sort(), ["example/gadget", R]);
+  } finally {
+    h.done();
+  }
+});
+
+test("--snapshot under .wheelhouse/ still makes the folder ignore itself", () => {
+  const h = harness();
+  try {
+    h.set(before);
+    for (const name of [".wheelhouse/reni-patrol.json", join(h.wh, ".wheelhouse", "abs-patrol.json"), ".wheelhouse/sub/nested.json"]) {
+      rmSync(join(h.wh, ".wheelhouse"), { recursive: true, force: true });
+      mkdirSync(dirname(resolve(h.wh, name)), { recursive: true });
+      const out = h.patrol(["--repo", R, "--snapshot", name]);
+      assert.equal(out.status, 0, out.stderr);
+      assert.ok(existsSync(resolve(h.wh, name)));
+      assert.equal(readFileSync(join(h.wh, ".wheelhouse", ".gitignore"), "utf8"), "*\n", name);
+    }
   } finally {
     h.done();
   }
