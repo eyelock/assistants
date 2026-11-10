@@ -202,6 +202,32 @@ exits 4 when there is none. **Launch with it:** pass `$(model.sh --seat <command
 model, so the roster is where it is declared, and the launcher or the Agent call is where it is
 applied. The `doctor` warns about a seat with no model.
 
+**Name the session.** A seat's session is named `<wheelhouse>-<command>`, and the desk's is named
+just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find it without asking
+the human which is which. `scripts/session-name.sh --seat <command> [--format value|flag]` (in
+this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`.
+**Launch with it:** pass it with the other launch flags, `<command> --name=hq-okafor`. Write it with
+the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` or `--name hq-okafor`
+launches with `hq-okafor` as the prompt. ynh's `plugin.json` has no field for launch flags, so the
+launcher is where the name is set, as with the model, and `ynh run --session-name` is a different
+thing (on Claude it binds `--resume`, and it sets no display name).
+
+On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
+session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
+`-n`; the session's file under `~/.claude/sessions/` carries it too). A seat messages another by that name. Other vendors differ, and a seat never relies on
+messaging a live session: asks go through the work graph (the bead and the check-in rule), and the
+name is only a fast path.
+
+| Vendor | Name a session at launch | Message a live session |
+|---|---|---|
+| Claude | `--name=<name>` (checked live) | by name, through the session list (SendMessage) |
+| Copilot | `-n`, `--name <name>` (from its help, not run) | no command found |
+| Codex | no launch flag found; sessions have names, and `codex queue --thread <name>` takes an exact session name | `codex queue --thread <name> --message <text>` (from its help, not run) |
+| OpenCode | `opencode run --title <title>` for a run; no flag for an interactive session | through its server (`opencode api`, `--server`), not tried |
+| Cursor | no flag found; `agent persist` manages sessions by id | no command found |
+
+Where a vendor can't be named or messaged, nothing breaks: the ask is a bead.
+
 ## 2. Name it
 
 Read `skills/roster/SKILL.md` and `skills/roster/assets/roster.json`, and follow the roster's
@@ -363,7 +389,7 @@ as its own session. Nobody is there to approve what a birth does, so `<flags>` a
 you were given for starting seats (such as `--permission-mode`): without them its memory writes
 are refused, and it can't save who it is. If you weren't given any, ask for them before you wake
 anyone. Add the model from the roster (`--model=<model>`, from `model.sh`), never one copied
-from another seat. Leave the birth
+from another seat, and the session name (`--name=<name>`, from `session-name.sh`). Leave the birth
 of a crew or standing seat to the human, who works with it directly and meets it themselves: install
 it, but don't start it.
 
