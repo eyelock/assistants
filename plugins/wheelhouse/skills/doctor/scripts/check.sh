@@ -237,23 +237,25 @@ if [ -f "$roster" ]; then
     fi
   fi
   # Every wheelhouse script sources scripts/wheelhouse-lib.sh, which ships in the work-graph
-  # skill, the one place ynh delivers it to a seat. A harness that picks skills but not
-  # work-graph has scripts that exit 3. A harness with an include that has no pick (the whole
-  # plugin, as the desk does) gets work-graph with it.
+  # skill, the one place ynh delivers it to a seat. Only the include of the wheelhouse plugin
+  # (path ending plugins/wheelhouse) counts: with no pick it is the whole plugin, as the desk
+  # has, and work-graph comes with it; with a pick it must name skills/work-graph or the seat's
+  # scripts exit 3. Another plugin included whole proves nothing. A harness with no wheelhouse
+  # include has no wheelhouse scripts to run, so it is left alone.
   nolib=""
   while IFS=$'\t' read -r cmd harness; do
     manifest="$dir/$harness/.agents/harness/plugin.json"
     [ -f "$manifest" ] || continue
-    jq -e '(.includes // []) | any(.pick != null)' "$manifest" >/dev/null 2>&1 || continue
-    if ! jq -e '(.includes // []) | any(.pick == null or ((.pick | type) == "array" and any(.pick[]; . == "skills/work-graph" or . == "work-graph")))' "$manifest" >/dev/null 2>&1; then
+    if jq -e '[(.includes // [])[] | select((.path // "") | test("(^|/)plugins/wheelhouse/?$"))] as $w
+        | ($w | length) > 0 and ($w | any(.pick == null or ((.pick | type) == "array" and any(.pick[]; . == "skills/work-graph" or . == "work-graph"))) | not)' "$manifest" >/dev/null 2>&1; then
       nolib="$nolib $cmd"
     fi
   done < <({ printf 'desk\t.\n'; jq -r '.seats[] | select(.harness != ".") | [.command, .harness] | @tsv' "$roster" 2>/dev/null; })
   if [ -n "$nolib" ]; then
-    add "seats pick work-graph" false warn "harnesses that pick skills but not skills/work-graph, so their wheelhouse scripts exit 3 for want of wheelhouse-lib.sh:$nolib" \
+    add "seats pick work-graph" false warn "harnesses whose wheelhouse include picks skills but not skills/work-graph, so their wheelhouse scripts exit 3 for want of wheelhouse-lib.sh:$nolib" \
       "add \"skills/work-graph\" to the pick of each (the add-seat skill), then ynh update"
   else
-    add "seats pick work-graph" true info "every harness that picks skills picks skills/work-graph, which carries the shared wheelhouse-lib.sh"
+    add "seats pick work-graph" true info "every harness that includes the wheelhouse plugin gets skills/work-graph, which carries the shared wheelhouse-lib.sh"
   fi
   if [ -n "$missing" ]; then
     add "workspace folders" false warn "seats ask for folders that don't exist, which ynh refuses:$missing" \

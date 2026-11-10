@@ -241,13 +241,24 @@ test("a seat that picks skills but not work-graph is warned, the desk and a seat
       writeFileSync(join(dir, "plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0", includes }));
     };
     harness("hq", [{ git: "../..", path: "plugins/wheelhouse" }]);
-    harness("eno", [{ git: "../..", pick: ["skills/wake", "skills/work-graph"] }]);
-    harness("wick", [{ git: "../..", pick: ["skills/wake", "skills/doctor"] }]);
+    harness("eno", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
+    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/doctor"] }]);
     const bad = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
     assert.equal(bad.ok, false);
     assert.equal(bad.level, "warn");
     assert.match(bad.detail, /: wick$/);
-    harness("wick", [{ git: "../..", pick: ["skills/wake", "skills/work-graph"] }]);
+    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
+    // Entwistle's shape: a pick without work-graph, plus another plugin included whole, still warns.
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake"] },
+      { git: "../..", path: "plugins/gitflow" },
+    ]);
+    const shaped = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(shaped.ok, false);
+    assert.match(shaped.detail, /: wick$/);
+    // A seat with no wheelhouse include has no wheelhouse scripts, so it is not checked.
+    harness("wick", [{ git: "../..", path: "plugins/gitflow", pick: ["skills/branching"] }]);
     assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
   } finally {
     w.done();
