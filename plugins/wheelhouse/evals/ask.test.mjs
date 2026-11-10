@@ -339,14 +339,96 @@ test("show with nothing open is an empty list, not an error; with bd failing it 
   }
 });
 
-test("every bd call is bounded, and a bd that hangs fails the call rather than the seat", () => {
+test("every bd call is bounded: the whole process group is killed, so a child holding the pipe doesn't outlast the limit", () => {
   const w = world();
   try {
-    writeFileSync(join(w.dir, "bin", "bd"), "#!/bin/sh\nexec sleep 30\n");
+    // bd starts a child that keeps the output pipe open, then hangs itself.
+    writeFileSync(join(w.dir, "bin", "bd"), "#!/bin/sh\nsleep 30 &\nsleep 30\n");
     const started = Date.now();
     const r = w.ask(["show", "--seat", "gore"], { ASK_BD_TIMEOUT: "1" });
     assert.equal(r.status, 3);
-    assert.ok(Date.now() - started < 10000, "show waited on a hung bd");
+    assert.match(r.stderr, /bd list timed out after 1s/);
+    assert.ok(Date.now() - started < 8000, `show waited ${Date.now() - started}ms on a hung bd`);
+  } finally {
+    w.done();
+  }
+});
+
+test("after bd fails, show calls it no more: one list call, and one dep list call when that fails", () => {
+  const log = (w) => readFileSync(join(w.dir, "calls.log"), "utf8").trim().split("\n");
+  // A failing list is run once, not again for its message.
+  let w = world();
+  try {
+    writeFileSync(join(w.dir, "bin", "bd"), `#!/bin/sh\necho "$@" >> "${join(w.dir, "calls.log")}"\necho 'dolt is down' >&2\nexit 1\n`);
+    const r = w.ask(["show", "--all"]);
+    assert.equal(r.status, 3);
+    assert.match(r.stderr, /bd list failed: dolt is down/);
+    assert.equal(log(w).length, 1);
+  } finally {
+    w.done();
+  }
+  // A list that works and a dep list that fails: the remaining asks are not looked up.
+  w = world([
+    seed("hq-1", { labels: ["ask", "ask:question"], assignee: "gore", created_by: "dalglish" }),
+    seed("hq-2", { labels: ["ask", "ask:question"], assignee: "gore", created_by: "dalglish" }),
+    seed("hq-3", { labels: ["ask", "ask:question"], assignee: "gore", created_by: "dalglish" }),
+  ]);
+  try {
+    const real = join(w.dir, "bin", "bd");
+    copyFileSync(real, join(w.dir, "bd-real"));
+    writeFileSync(
+      real,
+      `#!/bin/bash\necho "$@" >> "${join(w.dir, "calls.log")}"\n[ "$1" = dep ] && { echo 'no db' >&2; exit 1; }\nexec "${join(w.dir, "bd-real")}" "$@"\n`,
+    );
+    chmodSync(real, 0o755);
+    const r = w.ask(["show", "--all"]);
+    assert.equal(r.status, 3);
+    const out = JSON.parse(r.stdout);
+    assert.equal(out.count, 3);
+    assert.deepEqual(
+      out.asks.map((a) => a.blocks),
+      [null, null, null],
+    );
+    assert.equal(out.errors.length, 1);
+    assert.equal(log(w).filter((l) => l.startsWith("dep")).length, 1);
+  } finally {
+    w.done();
+  }
+});
+
+test("a returned ask carries ask:return and no other kind: the desk sees a return to route, and can't answer it", () => {
+  const w = world([
+    seed("hq-1", { labels: ["ask", "ask:request"], assignee: "gore", status: "in_progress", created_by: "dalglish" }),
+    seed("hq-2", { labels: ["ask", "ask:question"], assignee: "gore", status: "in_progress", created_by: "dalglish" }),
+  ]);
+  try {
+    json(w.ask(["return", "hq-1", "--reason", "not mine", "--from", "gore"]));
+    json(w.ask(["return", "hq-2", "--reason", "not mine either", "--from", "gore"]));
+    for (const id of ["hq-1", "hq-2"]) assert.deepEqual(w.bead(id).labels, ["ask", "ask:return"]);
+    const out = json(w.ask(["show", "--seat", "hq"]));
+    assert.deepEqual(
+      out.asks.map((a) => [a.id, a.kind, a.answered]),
+      [
+        ["hq-1", "return", false],
+        ["hq-2", "return", false],
+      ],
+    );
+    const refused = w.ask(["answer", "hq-1", "--text", "x", "--from", "hq"]);
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /returned bead/);
+  } finally {
+    w.done();
+  }
+});
+
+test("show reports return when a bead carries both a kind and ask:return (one returned before the kind was dropped)", () => {
+  const w = world([seed("hq-1", { labels: ["ask", "ask:request", "ask:return"], assignee: "hq", created_by: "dalglish" })]);
+  try {
+    const out = json(w.ask(["show", "--seat", "hq"]));
+    assert.deepEqual(
+      out.asks.map((a) => [a.kind, a.answered]),
+      [["return", false]],
+    );
   } finally {
     w.done();
   }

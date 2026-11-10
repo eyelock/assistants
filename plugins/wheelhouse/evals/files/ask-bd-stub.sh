@@ -36,11 +36,12 @@ case "$sub" in
   update)
     id="$1"; shift
     jq -e --arg id "$id" '.beads[] | select(.id == $id)' "$store" >/dev/null || { echo "no issue $id" >&2; exit 1; }
-    assignee=""; has_assignee=0; status=""; add='[]'; guard=""; has_guard=0
+    assignee=""; has_assignee=0; status=""; add='[]'; rm='[]'; guard=""; has_guard=0
     while [ $# -gt 0 ]; do
       case "$1" in
         --assignee) assignee="$2"; has_assignee=1; shift 2 ;; --status) status="$2"; shift 2 ;;
         --add-label) add=$(jq -c --arg l "$2" '. + [$l]' <<<"$add"); shift 2 ;;
+        --remove-label) rm=$(jq -c --arg l "$2" '. + [$l]' <<<"$rm"); shift 2 ;;
         --if-assignee) guard="$2"; has_guard=1; shift 2 ;; --actor) shift 2 ;; *) shift ;;
       esac
     done
@@ -48,11 +49,11 @@ case "$sub" in
       cur=$(jq -r --arg id "$id" '.beads[] | select(.id == $id) | .assignee // ""' "$store")
       [ "$cur" = "$guard" ] || { echo "assignee mismatch" >&2; exit 13; }
     fi
-    jq -c --arg id "$id" --arg a "$assignee" --argjson ha "$has_assignee" --arg s "$status" --argjson add "$add" \
+    jq -c --arg id "$id" --arg a "$assignee" --argjson ha "$has_assignee" --arg s "$status" --argjson add "$add" --argjson rm "$rm" \
       '.beads |= map(if .id == $id then
           (if $ha == 1 then .assignee = $a else . end)
           | (if $s != "" then .status = $s else . end)
-          | .labels = ((.labels + $add) | unique) else . end)' "$store" >"$store.new" && mv "$store.new" "$store"
+          | .labels = (((.labels + $add) | unique) - $rm) else . end)' "$store" >"$store.new" && mv "$store.new" "$store"
     echo "updated $id"
     ;;
   comments)
