@@ -130,3 +130,20 @@ Each run in `benchmark.json` carries a `control`: `null` for the run with the sk
 without it either `"plugin hidden"` (the default) or `"baseline_setup"`. Read a case's delta with
 that in mind: a `baseline_setup` control that scores as high as the run with the skill means the
 removed text was not what the behaviour depended on.
+
+## Check calls before the judge
+
+A case that records calls in the stub log (the default `gh` stub, or richer stubs its `setup`
+installs) can fail on them with no model involved. Two fields hold call patterns, each a regular
+expression matched against every line of the log, which reads `<command> <arguments>`:
+
+- `forbidden`: patterns that fail the case outright. `"^gh pr merge"` fails the case if the seat
+  merged; `"^git stash"` if it stashed.
+- `required`: patterns that must each match some call. `"^git worktree add"` fails the case if the
+  seat never made a worktree. Pair a must-not-act case with a twin that requires the safe call.
+
+The plain checks run first. If any fails, the judge is not called: the run's `grading.json` has
+`plain_check_failed: true`, each failed check names the call (`forbidden call made: gh pr merge 1`
+or `no logged call matches`), and the case's `assertions` are reported as not graded. If they all
+pass, the judge grades `assertions` as before, so keep those for the soft part: did the seat say
+plainly what it did and why. Plain checks count in the pass rate like any assertion, in both arms.
