@@ -77,12 +77,16 @@ official, so nothing about it is official when it is written.
    its own git worktree, in its scratchpad, on a branch `seat/<command>` from
    `origin/<default branch>` (a shared checkout is often stale, and a seat never changes one).
    Do sections 1 to 4 below there, the roster entry and the desk's `delegates_to` excepted: they
-   wait for the end of the trial (step 5). Commit it (`feat: seat <Name>`).
+   wait for the end of the trial (step 5). Pick a worktree path that does not exist yet, and if
+   `git worktree add` fails, fix the path before anything else: the later commands would otherwise run
+   in the shared checkout. Commit it (`feat: seat <Name>`).
 2. **Push it and open a draft pull request.** Open it as the constitution's `## Handing over work`
    says (a Wheelhouse with a tracker opens it with its `open-pr.sh`). Its description names the
    seat, its group and mandate, and says it is a trial: how to start it, and that the roster entry
    and the delegate come when the trial ends.
-3. **Remove your own worktree,** once the branch is pushed, so the human can check the branch out.
+3. **Remove your own worktree,** once the branch is pushed (with no remote to push to, once it is
+   committed: the branch survives the worktree), so the human can check the branch out. Never leave
+   it in place.
 4. **The trial, in the shared checkout.** The human checks the branch out there themselves, runs
    `ynh install ./harnesses/<command>` and starts the seat, so its paths are the real ones and
    nothing needs cleaning up later. Never check the branch out for them. Its install, its birth
@@ -362,8 +366,9 @@ it, but don't start it.
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
 start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command>` to wake it, or
 `<command> --focus <order>` for one standing order, written out for each seat when there are
-several. Say it is a trial and where the draft pull request is, and that it becomes official on
-review and merge, or is dropped. If it asks for workspace folders, say they are refused until the human grants them:
+several. Say it is a trial and where the draft pull request is, and say in so many words that it
+is made official only by review and merge of that pull request, or is dropped (with no remote, there
+is no pull request yet: say so, and that review and merge follow once the branch is pushed). If it asks for workspace folders, say they are refused until the human grants them:
 `ynh trust show local/<command>` lists them, and `ynh trust accept local/<command>` grants them, unless their
 `workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
 until it is committed. Say which seat is next only if asked.
