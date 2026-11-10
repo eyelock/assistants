@@ -35,13 +35,13 @@ from parts that work on any vendor:
 
 ## Setting up
 
-Needs `ynh`, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`) and Beads (`brew install beads`).
+Needs `ynh`, Beads (`brew install beads`) and, when memory is in ynm, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`). `create-wheelhouse` asks where Agent Tasks (Beads) and Agent Memory (ynm or Beads) live, and records the answer in `wheelhouse.json`.
 
 - Start Beads with `bd init --skip-agents --non-interactive --role maintainer`. In a terminal,
   `bd init` otherwise asks questions. Without `--skip-agents`, Beads writes its own agent
-  setup, which tells agents to keep memory in Beads rather than ynm. `bd init` also commits the
+  setup, which tells agents to keep memory in `bd remember` instead of through `scripts/memory.sh`. `bd init` also commits the
   files it finds, so run it in a clean tree.
-- Run `ynm init` in the Wheelhouse repository, and `ynm client install ynh` in each harness folder.
+- With ynm memory, run `ynm init` in the Wheelhouse repository, and `ynm client install ynh` in each harness folder. With Beads memory, skip this and the next step.
 - Beads takes over the repository's git hooks, so `ynm init` can't add its pre-push sync. Append
   `ynm sync` to `.beads/hooks/pre-push`, after the Beads block; the `doctor` skill prints the line.
 - `.claude/settings.json` can't be changed from inside a Claude Code session, so remove any Beads

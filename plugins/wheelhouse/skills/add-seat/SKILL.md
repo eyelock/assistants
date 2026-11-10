@@ -336,8 +336,10 @@ with; a standing role or a worker hands it back to the desk.
 
 ## 4. Connect it
 
-1. Give the seat ynm: run `ynm client install ynh` inside `harnesses/<command>/`. It adds ynm's
-   MCP server, hooks and memory skill to the seat's harness.
+1. Give the seat ynm, when the Wheelhouse's memory is in ynm (`bash scripts/memory.sh backend`
+   prints `ynm`): run `ynm client install ynh` inside `harnesses/<command>/`. It adds ynm's
+   MCP server, hooks and memory skill to the seat's harness. With Beads memory there is nothing to
+   install: the seat reads and writes memory through `scripts/memory.sh`.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
    the trial.
