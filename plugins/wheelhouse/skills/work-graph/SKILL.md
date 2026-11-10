@@ -356,10 +356,12 @@ When a bead closes depends on what kind it is:
    **The record is never falsified.** If something was skipped, failed or left for later, the
    reason says so, plainly: "Released for macOS; the Linux build was skipped (runner down)."
    Create a new bead for the leftover work if it still needs doing.
-2. Then leave a shared fact, so the Wheelhouse learns from it:
+2. Then record what happened as an event, so the Wheelhouse can look it up. An event is not a
+   fact: it does not top every wake, and `memory.sh recall --shared` does not return it (ask with
+   `--kind event`). Keep `--kind fact` for what stays true, such as a gotcha.
 
    ```bash
-   bash scripts/memory.sh remember --actor <command> --kind fact --slug <id> \
+   bash scripts/memory.sh remember --actor <command> --kind event --bead <id> \
      --text "<id>: <what happened, including anything skipped>"
    ```
 
@@ -390,6 +392,7 @@ Beads ships its own memory (`bd remember`, `bd memories`) and `bd prime` tells a
 |---|---|
 | A fact or gotcha, for everyone | `bash scripts/memory.sh remember --actor <command> --kind fact --text "..."` |
 | Read the facts back | `bash scripts/memory.sh recall --shared` |
+| What happened to a bead (events, not facts) | `bash scripts/memory.sh remember --actor <command> --kind event --bead <id> --text "..."`; read back with `recall --shared --kind event` |
 | Retire a memory | `bash scripts/memory.sh forget --id <id> --reason "..."` |
 
 Likewise, don't track work in Markdown files, TODO lists or memory. If it is work, it is a bead.

@@ -76,7 +76,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Leaves a shared fact (through scripts/memory.sh) of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
+      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Records an event (through scripts/memory.sh, kind event, not a fact) of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
       "assertions": [
         "In the evidence, \"Bump the ynh formula in homebrew-tap\" is closed",
         "Its close_reason says the Linux bottle (or Linux build) was skipped",

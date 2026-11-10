@@ -24,7 +24,7 @@ follows `wheelhouse.json`'s `memory` key: ynm (the default) or Beads. It syncs f
 to what other machines and seats wrote. With ynm that is memory (`ynm sync`) when the repository
 has a git remote, and the work graph (`bd sync`, which pulls and then pushes) when it has a Dolt
 remote. With Beads, memory and work are one database, so one `bd sync` (needing a Dolt remote)
-gives one result for both. On either backend the block shows the shared facts
+gives one result for both. On either backend the block shows the shared facts (never the events, which record bead outcomes)
 (at most ten) as **What the Wheelhouse knows**, and with Beads the command to retire your handoff note is
 `bd forget -- <key>` rather than `ynm forget`. A sync never stops the wake. If one fails, the block opens with
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
