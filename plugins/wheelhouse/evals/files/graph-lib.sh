@@ -178,6 +178,7 @@ team_wheelhouse() {
   stub_ynh_ynd
   mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/dalglish harnesses/mccoist harnesses/anderson
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   cat >> AGENTS.md <<'MD'
 
 ## Rules
@@ -227,6 +228,7 @@ specialist_wheelhouse() {
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   printf '{"name":"hq","version":"0.1.0","description":"The desk.","labels":{"wheelhouse":"hq"},"delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
