@@ -366,7 +366,8 @@ with; a standing role or a worker hands it back to the desk.
    the trial.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
    path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, the command of the seat seating it (or `human` when you aren't in
-   a seat, or the human wrote every word; never the Wheelhouse's own name or label, such as `hq`); `role` when it was seated from a starter-team template;
+   a seat, or the human wrote every word; the desk's own command is valid even when it is the
+   Wheelhouse's name, such as `hq`, but a Wheelhouse's label that is no seat's command is not); `role` when it was seated from a starter-team template;
    and `specialities` for a specialist worker. On a trial, the same applies: it waits for the
    end of the trial.
 4. Check the Wheelhouse with the `doctor` skill.
@@ -376,7 +377,7 @@ with; a standing role or a worker hands it back to the desk.
 
 The seat's first session is its **birth** (the `birth` skill): it reads its charter, meets the
 team and writes who it is, in its own words. Don't write its identity for it. A
-seat's birth belongs to whoever works with it. The dispatcher wakes each worker it seats, once it
+seat's birth belongs to whoever its roster entry's `seated-by` names (a worker with none falls back to the dispatcher, any other seat to the human). The dispatcher wakes each worker it seats, once it
 is installed (the human installs a trial seat, from the shared checkout): `ynh install ./harnesses/<command>`,
 then
 `<command> <flags> -- "This is your first session in <wheelhouse>. You were seated by <your command>."`,
@@ -385,8 +386,7 @@ you were given for starting seats (such as `--permission-mode`): without them it
 are refused, and it can't save who it is. If you weren't given any, ask for them before you wake
 anyone. Add the model from the roster (`--model=<model>`, from `model.sh`), never one copied
 from another seat. Leave the birth
-of a crew or standing seat to the human, who works with it directly and meets it themselves: install
-it, but don't start it.
+of a seat that isn't yours to wake under that rule to the one who is: install it, but don't start it.
 
 ## 5. Report
 
@@ -396,9 +396,9 @@ start it, on trial: the human checks the branch out in the shared checkout, runs
 several. Say it is a trial and where the draft pull request is, and say in so many words that it
 is made official only by review and merge of that pull request, or is dropped (with no remote, there
 is no pull request yet: say so, and that review and merge follow once the branch is pushed). Say that
-its roster entry and the desk's `delegates_to` come when the trial ends, not before. For a crew or
-standing seat, say that its birth, its first session, is the human's to start, since they work with
-it directly: you installed nothing and woke nothing. If it asks for workspace folders, say they are refused until the human grants them:
+its roster entry and the desk's `delegates_to` come when the trial ends, not before. Say who
+starts its birth, its first session, by the same rule (the seat its `seated-by` names, else the
+dispatcher for a worker, else the human), and that you installed nothing and woke nothing. If it asks for workspace folders, say they are refused until the human grants them:
 `ynh trust show local/<command>` lists them, and `ynh trust accept local/<command>` grants them, unless their
 `workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
 until it is committed. Say which seat is next only if asked.
