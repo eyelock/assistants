@@ -109,8 +109,9 @@ read, never that nothing is waiting.
    wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. Who the human at the desk
    is, is per session: with no name given, treat them as the default human and show only that
    inbox, and always end that part of your reply by telling them they can name themselves for this session ("it's me, <name>"), even when the inbox is empty; when they say "it's me,
-   <name>", run `bash scripts/inbox.sh show --name <Name>` and show theirs for the rest of the
-   session. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
+   <name>", run `bash scripts/inbox.sh show --name <Name>` and show theirs as well, for the rest of the
+   session: the default human's inbox stays in your reply (it is the Wheelhouse's, not a stranger's),
+   with its notes relayed and retired, and theirs is added beside it. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
    couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,
    relay what could be read, and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the

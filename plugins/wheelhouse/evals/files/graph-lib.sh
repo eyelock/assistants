@@ -313,7 +313,7 @@ and issues):
 The desk is hq. It starts every session with its wake (`bash scripts/wake.sh --seat hq --format text`,
 which its session-start hook runs; run it yourself if the hook didn't), whose block opens with the
 humans' inbox. Who is at the desk is per session: with no name, the wake shows the default human's
-inbox; when a person names themselves ("it's me, <name>"), it shows theirs with
+inbox; when a person names themselves ("it's me, <name>"), it shows theirs as well, with
 `bash scripts/inbox.sh show --name <Name>`. Nothing about them is saved.
 MD
   jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \

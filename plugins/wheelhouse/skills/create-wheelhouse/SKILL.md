@@ -168,7 +168,7 @@ the files it finds, and would commit the human's.
    runs; run it yourself if the hook didn't), whose block opens with the humans' inbox. Who is at
    the desk is per session: with no name, the wake shows the default human's inbox; when a person names
    themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
-   their own inbox for that session, and seats can assign work to them by their lowercase name.
+   their own inbox for that session as well as the default human's, and seats can assign work to them by their lowercase name.
    Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub
    itself to keep the inbox and the work graph current, and never loops over `gh`: when a CI
    watcher is seated, on a merge signal (the human says they merged, or a seat reports a pull
