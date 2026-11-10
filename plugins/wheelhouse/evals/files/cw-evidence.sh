@@ -20,3 +20,5 @@ if [ -d ../.eval/origin.git ]; then
   echo; echo '$ git -C .eval/origin.git for-each-ref (what reached the remote)'
   git -C ../.eval/origin.git for-each-ref | grep . || echo "(nothing)"
 fi
+echo; echo '$ cat wheelhouse.json'; cat wheelhouse.json 2>/dev/null || echo "(missing)"
+echo; echo '$ ls scripts'; ls scripts 2>/dev/null || echo "(none)"

@@ -1,6 +1,6 @@
 ---
 name: create-wheelhouse
-description: Create a new Wheelhouse for a space of work - a repository with a desk harness, a constitution, a roster of naming pools, a Beads work graph and ynm memory, ready for named seats. Use when asked to set up, create or start a Wheelhouse (for developing a set of tools, running the day, a project), or to turn a way of working into one.
+description: Create a new Wheelhouse for a space of work - a repository with a desk harness, a constitution, a roster of naming pools, a Beads work graph and memory in ynm or Beads, ready for named seats. Use when asked to set up, create or start a Wheelhouse (for developing a set of tools, running the day, a project), or to turn a way of working into one.
 ---
 
 # Create a Wheelhouse
@@ -12,7 +12,7 @@ A Wheelhouse is a bespoke set of named agents for one space, built to fit it. It
 | Seats | named roles, each a ynh harness with only the tools its job needs | `harnesses/<command>/` |
 | The desk | the seat the human talks to, which hands work to the others | the repository's own harness |
 | Work | tasks, dependencies, claims and an honest record | Beads, in `.beads/` |
-| Memory | facts, handoff notes, what happened, Kudos | ynm, a distributed mount here |
+| Memory | facts, handoff notes, what happened, Kudos | ynm, a distributed mount here, or Beads, as `wheelhouse.json` says |
 | Who's who | the naming pools and who holds which seat | the `roster` skill |
 
 ## 1. Understand the space
@@ -43,8 +43,8 @@ at a time**, in this order. Don't create anything until you have the first four.
    ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
    in the report.
 7. **Where it shares** code, memory and work. By default it is the Wheelhouse's own repository,
-   through its git remote: code on its branches, memory in ynm's notes, and the work graph in
-   Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
+   through its git remote: code on its branches, memory in ynm's notes (or, with Beads memory, in the
+   same Dolt refs as the work graph), and the work graph in Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
    separate Dolt remote, or a Wheelhouse that never leaves this machine.
 8. **The tracker:** where the humans see the project, apart from the work graph: GitHub Issues,
    JIRA, another, or none. For one, gather what `tracker.json` needs (the `work-graph` skill's
@@ -62,14 +62,25 @@ at a time**, in this order. Don't create anything until you have the first four.
    offers the human one role at a time. When the human names a role of their own, put it in a
    group by asking whether they will work with that seat directly (crew) or whether it runs on the
    desk's or a timer's say-so (standing).
+10. **Agent Tasks:** where the seats' work lives. Beads is the only option; ask so the choice is
+    explicit and recorded, and take "Beads" as the answer when the request says nothing.
+11. **Agent Memory:** where the seats' identity, handoff notes, Kudos and close notes live: **ynm**
+    (the default) or **Beads** (`bd remember`, in the same database as the work graph, shared by
+    the same Dolt remote). Say what Beads gives up: no private home (everyone who syncs the graph
+    sees every memory), no search by meaning, no ynm tools or `ynm-memory` skill (seats use
+    `scripts/memory.sh`), and no forget reason or history of superseded memories. If the request
+    doesn't say and you aren't asking, use ynm, and say so in the report.
+
+Ask questions 10 and 11 one at a time like the rest. Both go into `wheelhouse.json` (step 3.6).
 
 ## 2. Check the tools
 
-`ynh`, `ynm`, `bd` (Beads) and `jq` must be on the PATH. If any is missing, say which and ask
-before installing: `brew install eyelock/tap/ynh eyelock/tap/ynm beads jq`. Seats' launch focus
-and workspace folders need ynh 0.15.0 or later, and memory's own sync needs ynm 0.5.0 or later (an older ynm
-refuses the config that turns it on): if `ynh version` or `ynm --version` reports an older one,
-say so and offer `brew upgrade ynh ynm`.
+`ynh`, `bd` (Beads) and `jq` must be on the PATH, and `ynm` too when memory is in ynm (a Beads
+Wheelhouse needs no ynm). If any is missing, say which and ask before installing:
+`brew install eyelock/tap/ynh eyelock/tap/ynm beads jq` (leave out `eyelock/tap/ynm` for Beads
+memory). Seats' launch focus and workspace folders need ynh 0.15.0 or later, and ynm's own sync
+needs ynm 0.5.0 or later (an older ynm refuses the config that turns it on): if `ynh version` or
+`ynm --version` reports an older one, say so and offer `brew upgrade ynh ynm`.
 
 ## 3. Lay it out
 
@@ -84,8 +95,13 @@ the files it finds, and would commit the human's.
 
    1. **A human decides.** Seats propose; they never merge, release, publish or send without
       being told to.
-   2. **Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no work
-      tracked in Markdown files.
+   2. **Work lives in Beads, memory in <ynm or Beads, as chosen in question 11>.** Write it as
+      one of these two, whichever the human chose:
+      - ynm: "**Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no
+        work tracked in Markdown files."
+      - Beads: "**Work and memory live in Beads.** Read and write memory only through
+        `scripts/memory.sh`, never `bd remember` or `ynm` by hand, never `bd prime`, and no work
+        tracked in Markdown files."
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
@@ -94,7 +110,7 @@ the files it finds, and would commit the human's.
    5. **Never falsify the record.** Close beads with what actually happened. The one forced
       close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
       only through `inbox.sh close`, once the work is verified done.
-   6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
+   6. **Blame is structural.** Fix it, write down why in memory (`scripts/memory.sh`), and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
@@ -161,7 +177,7 @@ the files it finds, and would commit the human's.
    the designer hands one over, wake the programme manager for it, and build beads are cut only
    once it has filed its tracker item. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
-   what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
+   what it checks then, with the `doctor` skill, `bd` and the memory (`scripts/memory.sh`), not from recall. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
    with options, never as a list in prose. Who is at the desk is
    per session: with no name, its wake shows the default human's inbox; when a person names
@@ -185,7 +201,10 @@ the files it finds, and would commit the human's.
    - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
      to seats waiting on them.
    - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
-   - **A private home.** Each seat's memory is its own, in its namespace `seat/<name>`.
+   - **A private home.** With ynm memory: each seat's memory is its own, in its namespace
+     `seat/<name>`. With Beads memory, which has no private home, write: "**A home of its own.**
+     Each seat's memory is its own to write, under its keys `seat/<name>/`; everyone who syncs the
+     work graph can read it."
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
@@ -226,7 +245,7 @@ the files it finds, and would commit the human's.
    (question 5). There is always exactly one. No other human is written to the roster, and no
    email or username is stored anywhere: a person is at the desk for a session by naming
    themselves, and their command is their name in lowercase. Every open bead is unassigned or assigned to
-   a seat, the default human, a human command with a `human/<command>` namespace in ynm, or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
+   a seat, the default human, a human command with a `human/<command>` namespace in ynm (with Beads memory, `human/<command>/` keys), or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 
@@ -275,27 +294,35 @@ the files it finds, and would commit the human's.
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
    `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
    for things with it, and the desk's wake shows their inbox with it. Copy the `work-graph` skill's
-   `scripts/memory.sh` beside them too: the wake reads and syncs each seat's memory with it. Copy the `patrol` skill's
+   `scripts/memory.sh` beside them too, for either choice: the wake, the inbox and the skills read
+   and write each seat's memory only with it, over ynm or Beads as `wheelhouse.json` says. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
-6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
+6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
+   `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
+   it is run. Without the file, or without the `memory` key, the scripts assume ynm.
+7. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
    `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
    "Handing over work" section says that a build bead's `external_ref` holds its tracker item.
-7. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+8. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
 ## 4. Work and memory
+
+Memory follows the choice in question 11. With Beads memory, do steps 1 and 4 only: memory is in the
+same database as the work graph, so there is no `ynm init`, no `ynm client install ynh`, no ynm
+config and no ynm push sync.
 
 1. **Beads:** `bd init --skip-agents --non-interactive --role maintainer --prefix <name>`. Always
    non-interactive: in a terminal `bd init` asks questions. Always `--skip-agents`: without it, Beads
    writes its own skill, hooks and AGENTS.md block telling agents to keep memory in Beads. It
    commits what it creates.
-2. **ynm:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
+2. **ynm** (ynm memory only)**:** `ynm init` here (the distributed mount the seats share), then `ynm client install ynh`
    at the root (ynm's server, hooks and memory skill for the desk). Add
    `"sync": { "auto": true, "intervalMinutes": 5 }` to `.ynm/config.json` (ynm 0.5.0 or later), so
    memory syncs itself after a turn, as the work graph does after a write. Commit
    `.ynm/config.json` and the desk's manifest.
-3. **Push sync:** Beads points the git hooks at `.beads/hooks`, so `ynm init` can't add its
+3. **Push sync** (ynm memory only)**:** Beads points the git hooks at `.beads/hooks`, so `ynm init` can't add its
    pre-push sync. Ask the human to append, after the Beads block in `.beads/hooks/pre-push`:
 
    ```sh
@@ -313,7 +340,8 @@ the files it finds, and would commit the human's.
    ```
 
    With auto-push on, the graph pushes itself after each write. Every seat's wake runs `bd sync`
-   and `ynm sync`, so it starts current, and its session-end hook pushes both stores. The first push (`git push -u origin main`, then
+   (and `ynm sync` with ynm memory), so it starts current, and its session-end hook pushes the
+   stores. With Beads memory that is one store, so the one `bd sync` and push carry both. The first push (`git push -u origin main`, then
    `bd dolt push`) publishes the Wheelhouse, so don't run it: offer to, in the report, and run it
    when the human says yes. If there is no remote yet, say in the report to do this once
    there is one.
@@ -342,10 +370,11 @@ edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
 can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
 (`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
-do (the push hook, a remote, the first push of the work graph, and granting each seat's
+do (with ynm memory, the push hook; a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
-and the doctor's verdict. To join from another machine: `git clone` the repository, then
-`bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
-push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and
+and the doctor's verdict, saying whether any fix was needed to reach it (none, when the layout passed as written). To join from another machine: `git clone` the repository, then
+`bd bootstrap` (the work graph, and its remote, which carries Beads memory too), `git config
+core.hooksPath .beads/hooks` (the push hooks), and, with ynm memory, `ynm sync` (the memory) and
+`ynm client install ynh` if this machine hasn't yet, and
 `ynh install ./harnesses/<command>` for each seat run there. End by offering the first role of the starter
 team, one seat at a time, with the `add-seat` skill.
