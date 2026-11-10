@@ -8,9 +8,11 @@ description: Add a named seat to a Wheelhouse - a crew member, a standing role (
 A seat is a named role with a lasting identity: its claims and closes in Beads, its memories and
 Kudos in ynm. Each seat is a ynh harness under `harnesses/<command>/` in the Wheelhouse
 repository, started by its own name, and the desk (the repository's own harness) delegates to it.
-Who seats a seat depends on who works with it. The human seats the crew they work with directly.
-The desk seats the standing roles. The human is there for the births of both, since they talk to
-both. The dispatcher seats the workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
+Who seats a seat depends on whether the human talks with it. A seat is **crew** when the human
+talks with it directly (a designer, a reviewer, a tutor, a programme architect) and **standing**
+when it runs on the desk's or a timer's say-so (a dispatcher, a CI watcher, a releaser). The human
+seats the crew they work with directly. The desk seats the standing roles. The human is there for
+the births of both, since they talk to both. The dispatcher seats the workers, when the desk asks: it runs them, and knows who is idle. Seat only what your charter or
 the human lets you; if asked for a seat that is someone else's to make, say whose it is.
 
 A new seat is a **trial** until the human makes it official: see "Seating one seat at a time". The
@@ -127,8 +129,10 @@ because a Wheelhouse has no pull requests yet: a real Wheelhouse's seats are tri
 
 You need three things. Ask for any you can't tell from the request, one question at a time:
 
-- **Group:** `crew` (designs work and reviews it), `standing` (one mandate, runs unattended) or
-  `workers` (implements ready beads; see below). It is the pool's key in the roster, and the
+- **Group:** `crew` (the human talks with it directly: it designs, reviews, teaches or plans with
+  them), `standing` (one mandate, run on the desk's or a timer's say-so, so the human does not
+  talk with it) or `workers` (implements ready beads; see below). Choose by that one question: does
+  the human talk with this seat? If you can't tell, ask. It is the pool's key in the roster, and the
   seat's `group`.
 - **Mandate:** one sentence, the job and nothing else, such as "Cuts releases when asked, and
   nothing else."
