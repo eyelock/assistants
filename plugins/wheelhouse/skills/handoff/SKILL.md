@@ -47,6 +47,22 @@ You are your seat's command name, which your charter gives. If you don't know it
    notes are saved in ynm (subject seat:<name>). Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.
 
+## When seats are running as subagents
+
+A seat woken as a subagent (the Agent tool, as the desk does for the dispatcher or a worker) lives only as long
+as the desk's session that woke it. If the desk hands off, exits or restarts while one runs, that
+seat dies with it: its work is cut off and nobody is left to restart it.
+
+- **The desk:** don't hand off or exit while a seat you woke as a subagent is still running. Wait for
+  its report first, or ask the human to let it finish. If the human insists, say plainly which seats
+  would be lost.
+- **A subagent seat:** you don't hand off and you don't ask to be restarted, because there is no
+  session of your own to restart. You end by returning your report to the seat that woke you, after
+  syncing your memory (a close note, if a bead closed). Anything the next run needs goes in the
+  report or on the bead.
+
+A seat in a session of its own (started by the human, with `ynh run`) hands off as above.
+
 ## When asked to /exit or stop mid-work
 
 First look: `git status` in the repository you are working in, and the bead you have claimed.

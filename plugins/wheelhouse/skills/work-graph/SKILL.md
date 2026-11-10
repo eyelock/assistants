@@ -128,6 +128,10 @@ reaching for the same bead. Other seats skip this section.
 9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
    parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
    `scripts/model.sh --seat <worker>`.
+10. **A worker woken as a subagent ends with its report.** It lives only as long as the desk's
+    session, so its brief says to finish by returning its report (after syncing memory), not by
+    asking to be restarted. Before the desk hands off or exits, check for workers still running:
+    the desk waits for them or tells the human which would be lost.
 
 ## Checking in for lapsed claims
 
