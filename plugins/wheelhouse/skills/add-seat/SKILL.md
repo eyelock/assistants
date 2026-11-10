@@ -44,11 +44,14 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
 1. Skip a role that is already seated: a seat in the roster with that `role`, or, for a seat with
    no `role`, one whose mandate is clearly the same job. A seat on trial (a branch with an open
    draft pull request) counts as seated.
-2. Say in a line what the role is for, and ask one question: whether to seat it, under the first
+2. Say in a line what the role is for, in the template's own words (its opening line, such as
+   "runs the roadmap on the issue tracker, so real issues close against versioned milestones"), and
+   ask one question: whether to seat it, under the first
    name in the group's pool that no seat holds and `excluded` doesn't list, in the pool's order
    ("Seat a designer, as Gahan?"). The human can change the name in the answer. A template with
-   `optional: true` is offered, not assumed. Never seat a role the human hasn't agreed to. Then
-   stop and wait for the answer: one question per message.
+   `optional: true` is offered, not assumed. Never seat a role the human hasn't agreed to. Say
+   that you offer only this one, and that further seats come one at a time, after this one is made
+   official or dropped. Then stop and wait for the answer: one question per message.
 3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
    request, the constitution or the roster already answers.
 4. Don't change anything else while you seat it, such as the constitution or the scripts; mention
@@ -211,7 +214,8 @@ rules. In short:
 - Never reuse a name already in `seats`, even a retired seat's, and never use one in `excluded`.
   If the human asks for a taken or excluded name, say so and offer the next free one.
 - The command is the name in lowercase ASCII, and `command -v <command>` must find nothing.
-- If the pool is empty or used up, ask the human for more names. Don't invent any.
+- If the pool is empty or used up, say so and ask the human for more names, and seat nothing yet.
+  Don't invent any, and don't offer candidates of your own, even as options for them to pick from.
 
 ## 3. Write the harness
 
@@ -374,7 +378,10 @@ start it, on trial: the human checks the branch out in the shared checkout, runs
 `<command> --focus <order>` for one standing order, written out for each seat when there are
 several. Say it is a trial and where the draft pull request is, and say in so many words that it
 is made official only by review and merge of that pull request, or is dropped (with no remote, there
-is no pull request yet: say so, and that review and merge follow once the branch is pushed). If it asks for workspace folders, say they are refused until the human grants them:
+is no pull request yet: say so, and that review and merge follow once the branch is pushed). Say that
+its roster entry and the desk's `delegates_to` come when the trial ends, not before. For a crew or
+standing seat, say that its birth, its first session, is the human's to start, since they work with
+it directly: you installed nothing and woke nothing. If it asks for workspace folders, say they are refused until the human grants them:
 `ynh trust show local/<command>` lists them, and `ynh trust accept local/<command>` grants them, unless their
 `workspace_roots` already covers them. If you left the seat uncommitted, say that the desk won't start
 until it is committed. Say which seat is next only if asked.
