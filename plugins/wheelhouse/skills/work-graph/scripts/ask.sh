@@ -78,11 +78,11 @@ USAGE
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
-  # shellcheck source=../../../lib/wheelhouse-lib.sh
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
   [ -f "$lib" ] && { . "$lib"; break; }
 done
-type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 case "$cmd" in
   open | answer | return | show) ;;
   --help | -h) usage; exit 0 ;;

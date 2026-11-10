@@ -75,11 +75,11 @@ while [ $# -gt 0 ]; do
 done
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
-  # shellcheck source=../../../lib/wheelhouse-lib.sh
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
   [ -f "$lib" ] && { . "$lib"; break; }
 done
-type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 for t in jq git; do need "$t"; done
 [ -d "$dir" ] || { echo "not a directory: $dir" >&2; exit 2; }
 dir=$(cd "$dir" && pwd)
@@ -255,9 +255,9 @@ if [ "$upstream" = 1 ]; then
       done
     fi
     if [ -n "$plugin" ] && [ -d "$plugin/skills" ]; then
-      # The shared library sits in the plugin's lib folder; a Wheelhouse that still carries
+      # The shared library sits in the work-graph skill's scripts folder; a Wheelhouse that still carries
       # copies of the scripts needs it beside them (until it carries none).
-      for f in $(cd "$plugin/skills" && ls */scripts/*.sh */scripts/*.jq 2>/dev/null) ../lib/wheelhouse-lib.sh; do
+      for f in $(cd "$plugin/skills" && ls */scripts/*.sh */scripts/*.jq 2>/dev/null); do
         b=$(basename "$f")
         [ -f "$dir/scripts/$b" ] || { [ "$b" = wheelhouse-lib.sh ] && [ -d "$dir/scripts" ] || continue; }
         [ -f "$plugin/skills/$f" ] || continue

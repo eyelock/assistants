@@ -426,7 +426,7 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     git(pluginDir, "commit", "-qm", "v1");
     write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v2\n");
     write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# not carried here\n");
-    write(pluginDir, "lib/wheelhouse-lib.sh", "# lib v2\n");
+    write(pluginDir, "skills/work-graph/scripts/wheelhouse-lib.sh", "# lib v2\n");
     git(pluginDir, "add", "-A");
     git(pluginDir, "commit", "-qm", "v2");
 

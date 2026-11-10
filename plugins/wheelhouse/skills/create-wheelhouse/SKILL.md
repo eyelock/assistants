@@ -300,7 +300,7 @@ the files it finds, and would commit the human's.
    and write each seat's memory only with it, over ynm or Beads as `wheelhouse.json` says. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
-   Copy the plugin's `lib/wheelhouse-lib.sh` beside them all, as `scripts/wheelhouse-lib.sh`: every
+   Copy the `work-graph` skill's `scripts/wheelhouse-lib.sh` beside them all, as `scripts/wheelhouse-lib.sh`: every
    script sources the helpers it shares from beside itself, and none runs without it.
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in

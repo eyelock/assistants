@@ -21,7 +21,7 @@ function run(args, { mode, env = {}, remote = false } = {}) {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "lib", "wheelhouse-lib.sh")));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Tess", group: "workers", command: "tess", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));

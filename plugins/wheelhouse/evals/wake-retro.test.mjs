@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const wakeSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "wake", "scripts", "wake.sh");
 const memorySrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "memory.sh");
-const libSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "lib", "wheelhouse-lib.sh");
+const libSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "wheelhouse-lib.sh");
 const roster = {
   seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],

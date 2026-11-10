@@ -27,7 +27,7 @@ function mandateFor(charter) {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "lib", "wheelhouse-lib.sh")));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
     mkdirSync(join(dir, "bin"));
     for (const [name, body] of [
       ["bd", "#!/bin/sh\necho '[]'\n"],

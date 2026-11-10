@@ -48,7 +48,7 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
   }
   const scripts = join(dir, "scripts");
   cpSync(scriptsDir, scripts, { recursive: true });
-  cpSync(join(plugin, "lib", "wheelhouse-lib.sh"), join(scripts, "wheelhouse-lib.sh"));
+  cpSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(scripts, "wheelhouse-lib.sh"));
   for (const [kind, body] of Object.entries(adapters)) writeFileSync(join(scripts, `tracker-${kind}.sh`), body);
   const script = join(scripts, "open-pr.sh");
   const wh = join(dir, "wh");

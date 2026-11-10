@@ -2,13 +2,13 @@
 // library in bash and calls one helper, with stubs of bd and ynm where it calls them.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-const lib = join(dirname(fileURLToPath(import.meta.url)), "..", "lib", "wheelhouse-lib.sh");
+const lib = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "wheelhouse-lib.sh");
 
 function scratch() {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-lib-"));
@@ -199,5 +199,36 @@ test("WL_JQ_MODELS resolves a seat's model from its tier, group default or per-v
     assert.deepEqual(JSON.parse(r.stdout), [["a", "sonnet"], ["b", "big"], ["c", "haiku"], ["d", null]]);
   } finally {
     s.done();
+  }
+});
+
+// ynh delivers only skill folders to a seat. A seat picks wake and work-graph (the desk picks
+// them all), so each skill's scripts/ is copied alone into <seat>/.claude/skills/<skill>/ and
+// every script that sources the library must still find it there: no repository tree, no lib/.
+test("every script finds the library from an installed seat layout of picked skill folders only", () => {
+  const dir = mkdtempSync(join(tmpdir(), "wheelhouse-install-"));
+  try {
+    const skills = join(dirname(lib), "..", "..");
+    const installed = join(dir, ".claude", "skills");
+    const picked = ["wake", "work-graph", "add-seat", "doctor", "refresh", "patrol"];
+    for (const name of picked) cpSync(join(skills, name), join(installed, name), { recursive: true });
+    const scripts = readdirSync(installed)
+      .flatMap((name) => readdirSync(join(installed, name, "scripts")).filter((f) => f.endsWith(".sh")).map((f) => join(installed, name, "scripts", f)))
+      .filter((f) => readFileSync(f, "utf8").includes("wheelhouse-lib.sh") && !f.endsWith("wheelhouse-lib.sh"));
+    assert.ok(scripts.length >= 10, `found ${scripts.length} scripts that source the library`);
+    for (const script of scripts) {
+      const r = spawnSync("/bin/bash", [script, "--help"], { cwd: dir, encoding: "utf8" });
+      assert.notEqual(r.status, 3, `${script} could not find the library: ${r.stderr}`);
+      assert.doesNotMatch(r.stderr, /wheelhouse-lib\.sh not found/, script);
+    }
+    // A seat that picks only wake and work-graph still runs its own scripts.
+    rmSync(join(installed, "add-seat"), { recursive: true });
+    rmSync(join(installed, "doctor"), { recursive: true });
+    rmSync(join(installed, "refresh"), { recursive: true });
+    rmSync(join(installed, "patrol"), { recursive: true });
+    const wake = spawnSync("/bin/bash", [join(installed, "wake", "scripts", "wake.sh"), "--help"], { encoding: "utf8" });
+    assert.equal(wake.status, 0, wake.stderr);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

@@ -1,9 +1,9 @@
 # wheelhouse-lib.sh: the helpers every wheelhouse script shares. Source it; never run it.
 #
-# A script sources it from beside itself, or from the plugin's lib folder:
+# A script sources it from beside itself, or from the work-graph skill's scripts folder (ynh delivers only skill folders, so the library rides in a skill every seat picks):
 #
 #   here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-#   for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
+#   for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
 #     [ -f "$lib" ] && { . "$lib"; break; }
 #   done
 #   type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found" >&2; exit 3; }
