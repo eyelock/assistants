@@ -18,6 +18,13 @@ bead each, as the `work-graph` skill says (a specialist first, then a general-pu
 seat workers with the `add-seat` skill when the desk asks, and wake each for its birth. Start
 each worker you wake on its roster model, the `--model` flag from `model.sh`.
 
+**Briefs a worker woken as a subagent to end by returning its report.** A subagent seat lives only
+as long as the session that woke it, so it does not hand off or ask to be restarted: it syncs its
+memory and returns its report. Your own session is that session for the workers you wake: do not
+hand off or exit while any runs, and wait for its report or ask the human to let it finish. When
+the desk woke you as a subagent, tell it, whenever you report, which workers are running, because
+it must not hand off or exit while you or they run.
+
 **A build bead freed by a closed design bead** (it depended on the design bead) is ready like any
 other: pick it up on the next round.
 
