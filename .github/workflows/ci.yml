@@ -5,10 +5,16 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # The merge queue runs the required check (All Clear) on the branch as it will be
+  # with the queued pull requests merged. Every job runs there: there is no pull
+  # request to diff, and a skipped required job would stall the queue.
+  merge_group:
 
+# Only a pull request's superseded runs are cancelled. A push run on develop or main
+# is never cancelled by the next merge, so a red result always surfaces.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -89,8 +95,28 @@ jobs:
 
       # Pull requests scan the skills they change; pushes scan every skill.
       # Eval fixtures and e2e fixtures are test data, not shipped skills.
-      - uses: eyelock/actions/skillspector@skillspector-v1
+      - uses: eyelock/actions/skillspector@2b4b0eafc45da186506a6fd72774482b636d55aa # skillspector-v1
         with:
           exclude: |
             */evals/files/*
             e2e-fixtures/*
+
+  # The one required check. It fails when any job it needs failed, was cancelled or
+  # was skipped, so a green All Clear means every gate actually ran and passed.
+  all-clear:
+    name: All Clear
+    if: always()
+    needs: [check, skillspector]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every gate passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Gate results: $RESULTS"
+          for result in $RESULTS; do
+            if [[ "$result" != "success" ]]; then
+              echo "::error::A required job finished as '$result', not 'success'"
+              exit 1
+            fi
+          done

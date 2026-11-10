@@ -57,7 +57,7 @@ at a time**, in this order. Don't create anything until you have the first four.
    be opened through `open-pr.sh` for that tracker. Say so, and offer to write the adapter as a
    bead. If the request doesn't say and you aren't asking, use none, and say so in the report.
 9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
-   walks through with the human role by role.
+   offers the human one role at a time.
 
 ## 2. Check the tools
 
@@ -135,15 +135,25 @@ the files it finds, and would commit the human's.
    full URL or key of its tracker item; only beads labelled `housekeeping`, or in a repository the tracker config's
    `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
-   with the `work-graph` skill's `scripts/open-pr.sh`."
+   with the `work-graph` skill's `scripts/open-pr.sh`." Also add, where a programme manager is or
+   will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
+   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it on the bead and hands it to the desk, which wakes the programme manager; the programme
+   manager places it in the roadmap and files its tracker item, and only then are build beads cut,
+   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
-   The human seats the crew they work with directly. Asked to set up the team, the desk walks the
-   human through the starter team, role by role, with the `add-seat` skill. When a releaser is
+   The human seats the crew they work with directly. Asked to set up the team, the desk offers the
+   starter team's first missing role with the `add-seat` skill, one seat at a time, each a trial
+   until the human makes it official (a throwaway sandbox the human names as one skips the trial,
+   as `add-seat` says). When a releaser is
    seated, the desk routes every release bead and every "can we release?" to the releaser, and
-   never to a worker. It answers questions
+   never to a worker. When a programme manager is seated, the desk hands it a finished design: when
+   the designer hands one over, wake the programme manager for it, and build beads are cut only
+   once it has filed its tracker item. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
@@ -151,7 +161,13 @@ the files it finds, and would commit the human's.
    per session: with no name, its wake shows the default human's inbox; when a person names
    themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
    their own inbox for that session, and seats can assign work to them by their lowercase name.
-   Nothing about them is saved: no roster entry, no email, no username. It starts every seat on the model the roster gives it: the Agent tool's
+   Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub
+   itself to keep the inbox and the work graph current, and never loops over `gh`: when a CI
+   watcher is seated, on a merge signal (the human says they merged, or a seat reports a pull
+   request ready or merged) it signals the CI watcher to reap, then passes the merged pull
+   requests, reported as bead then pull request, to the dispatcher, who closes the work beads, and
+   closes each reported inbox item with `inbox.sh close`, with a reason saying what happened.
+   It starts every seat on the model the roster gives it: the Agent tool's
    `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
    both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
 
@@ -216,6 +232,7 @@ the files it finds, and would commit the human's.
      "version": "0.1.0",
      "description": "The desk of the <name> Wheelhouse: <purpose>.",
      "default_vendor": "claude",
+     "labels": { "wheelhouse": "<name>" },
      "includes": [
        { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
@@ -232,15 +249,26 @@ the files it finds, and would commit the human's.
    }
    ```
 
+   `labels` is an object of key to value, and stamps every run record of the desk with
+   `wheelhouse:<name>`, the value being the Wheelhouse's own name, and `add-seat` writes the same
+   label into every seat's harness. When several Wheelhouses share the laptop spool,
+   `ynr query runs --label wheelhouse:<name>` picks out this one's records. It needs ynh 0.17.0 or
+   later: an older ynh refuses the field, so a desk written with it won't start there.
+
    ynh's own `ynh-compose` and `ynh-troubleshoot` skills let the desk add skills, includes,
    profiles and focuses to any seat, and diagnose a seat that won't start. Its hooks are every
    seat's: it wakes with purpose, and pushes what it wrote when its session ends. Its launch focus
    means it never wakes bare: started by its name, it acts on its wake block straight away.
 
+   The desk includes the whole `plugins/wheelhouse` plugin, with no `pick`, so it gains every skill
+   the plugin gains, `refresh` among them. Every other seat picks the wheelhouse skills and leaves
+   `refresh` out (the `add-seat` skill says how).
+
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
    `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
-   for things with it, and the desk's wake shows their inbox with it. Copy the `patrol` skill's
+   for things with it, and the desk's wake shows their inbox with it. Copy the `work-graph` skill's
+   `scripts/memory.sh` beside them too: the wake reads and syncs each seat's memory with it. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
 6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
@@ -306,11 +334,11 @@ edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
 can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (the push hook, a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict. To join from another machine: `git clone` the repository, then
 `bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
 push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and
-`ynh install harnesses/<command>` for each seat run there. End by offering to set up the starter team
-next, role by role, with the `add-seat` skill.
+`ynh install ./harnesses/<command>` for each seat run there. End by offering the first role of the starter
+team, one seat at a time, with the `add-seat` skill.

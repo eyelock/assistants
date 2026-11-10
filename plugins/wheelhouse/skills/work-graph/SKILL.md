@@ -64,6 +64,9 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
 - **A merged bead is closed by reclaiming it first.** `bd close` refuses a bead another seat holds,
   so for a bead whose pull request merged the dispatcher runs `bd reclaim`, then `bd close` with what
   happened ([Checking in for lapsed claims](#checking-in-for-lapsed-claims) step 2).
+- **Add to a bead's notes only with `bd update <id> --append-notes "<text>"` (or `bd note <id> "<text>"`), never `--notes`.**
+  `--notes` replaces every note on the bead, wiping lines others rely on, such as the
+  `PR: <url>` line that marks a pull request open.
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
   reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged. The one forced close a seat may make of
   a bead it does not hold is the desk's close of a human's inbox bead, only through
@@ -157,9 +160,26 @@ who is idle), because nothing else prompts it to. Other seats skip this section.
    `repo:docs`. Split a task that touches two. The one exception is a bead for a human (see
    "Needing a human") whose work touches no repository, such as a decision.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
-   where the order matters; tasks that can run side by side stay unlinked.
+   where the order matters; tasks that can run side by side stay unlinked. A build bead that
+   waits on a design depends on the design bead (`bd dep add <build> <design>`); whoever files the
+   design bead adds the link.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.
 5. Report the epic, its tasks in order and what is ready first. Don't claim them unless asked.
+
+## Handing a design on
+
+When a design is agreed, it goes one of two ways:
+
+- **Build work already exists:** the build bead depends on the design bead (`bd dep add <build>
+  <design>`). The designer writes the design on the build bead (`bd update <build>
+  --append-notes "<the design>"`) and closes the design bead. Closing it frees the build bead: it
+  appears in `bd ready` and the dispatcher picks it up on its next round, like any ready work. The
+  designer asks the desk for nothing, and the desk is never asked to relay it.
+- **New work, with no build bead yet:** the designer writes the design on its bead and hands it to
+  the desk, which wakes the programme manager (where one is seated): an audit, a spike or a
+  finished design goes to the programme manager first, who places it in the roadmap and files its
+  tracker item, and only then are build beads cut, against that item (see "Linking the tracker").
+  Review fixes stay the reviewer's beads and CI failures the CI watcher's.
 
 ## Linking the tracker
 
@@ -244,7 +264,7 @@ labelled `housekeeping`; do not close a tracker item from it.
 
 Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
-(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
+(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
 
 1. **Who:** a named person only when you know who: they asked for the work, or they have named
    themselves at the desk this session. Otherwise the default human (`--to default`, the
@@ -282,7 +302,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    `--priority <0-4>` sets any inbox bead's priority (0 highest); without it, a bead other than
    a report keeps bd's default, 2.
 4. **Tell them things** that need no action with a note instead of a bead: it waits in their
-   inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
+   inbox, in the Wheelhouse's memory (through `memory.sh`: ynm namespace `human/<command>` tagged
+   `inbox`, or Beads keys `human/<command>/note/...`), until the desk relays it:
 
    ```bash
    bash scripts/inbox.sh note --from <your command> --to default --content "<the news>"

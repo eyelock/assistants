@@ -31,6 +31,7 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 
 - `setup`: a script, relative to the skill, that builds the case's world in the run's directory. Examples: a git repo whose `origin` is a local bare repository, or real audio files made with ffmpeg. It gets `$EVAL_FIXTURES` (the package's `evals/files/`), and `$EVAL_BIN` for realistic stub commands, which log to `$EVAL_STUB_LOG`.
 - `tools`: extra tools, such as `"Edit(./**)"`. Any `Bash` entry means shell access, and both arms get the same unrestricted shell: the OS sandbox below is the boundary, since a command allow-list breaks as soon as a model phrases a command differently.
+- `baseline_setup`: the case's own control, a script run in place of `setup` in the run without the skill. A case that grades text its `setup` installs (a seat's charter, say) needs one that installs the same fixtures without that text, or both runs read it. `benchmark.json` reports each run's `control`: `null` with the skill, `"plugin hidden"` or `"baseline_setup"` without it. See `docs/testing/run-evals.md`.
 - `stubs`: commands replaced by recorders, such as `gh` (the default once any shell access is granted). Nothing reaches a real service.
 - `evidence`: a command run afterwards, for example `git log --all` or `find . -type f`. Its output and the stub calls go to the judge, so assertions can check what was actually done.
 - `tool_calls`: tools whose calls the judge sees, with their input, which must be granted in `tools` too. Not every tool loads in an eval session: `AskUserQuestion` does not (see [assistants #133](https://github.com/eyelock/assistants/issues/133)), so a case about how the agent asks checks the plain-text fallback instead.
@@ -81,6 +82,35 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 - Scripts are idempotent and safe to re-run
 - No interactive prompts — all input via arguments
 - macOS compatible — no bash 4+ features, no GNU-only flags
+
+## Merge queue
+
+`develop` and `main` are meant to be protected by a merge queue: a pull request merges only after All
+Clear passes on the branch as it will be with the queued pull requests ahead of it merged, so two pull
+requests that are each green cannot combine red. `develop` queues as squash; `main` queues as a merge
+commit. GitHub offers merge queues to organization-owned repositories, so a personal-account repository
+like this one may be refused; the fallback is strict required status checks.
+
+What protects each branch depends on how far the admin step got (it has three stages):
+
+- Before stage 2 finishes for a branch: the classic rule, requiring `Check`, with admins enforced.
+- After stage 2, with stage 3 not run or refused: the branch's ruleset (All Clear, a pull request,
+  no deletion, no force push), and no queue. Pull requests merge one at a time, as before.
+- After stage 3: the ruleset and the merge queue.
+
+The rulesets' bypass list holds the repository admin role in `"bypass_mode": "pull_request"`, not
+`"always"`. Every seat pushes under the admin account, and classic protection refuses even an admin's
+direct push (`enforce_admins`); `"always"` would let a seat's direct push to `develop` or `main` land.
+`pull_request` lets the admin bypass the rules only on a pull request, which is all the release
+back-merge below needs, and a direct push is still refused.
+`ci.yml` triggers on `merge_group` and every job in it runs there. Any new required check must also
+trigger on `merge_group`, and must never be skipped by a path filter or by a missing head ref in the queue.
+
+Cutting a release: the `release/YYYY-MM-DD` pull request into `main` and the `changeset-release/main`
+Version Packages pull request go through the queue. The back-merge of `main` into `develop` after a
+release is the exception: it must land as a merge commit, which the `develop` queue (squash) cannot do,
+so an admin merges that pull request directly with a merge commit, around the queue:
+`gh pr merge <number> --repo eyelock/assistants --merge --admin`.
 
 ## Working with this repo
 
