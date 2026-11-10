@@ -1,6 +1,7 @@
 ---
 name: wake
 description: Start a Wheelhouse seat's session with purpose, not amnesia - who you are, what you are for, where you left off, what you have been thanked for, your record and what is waiting for you, in one block from scripts/wake.sh. Use at the start of every session of the desk or any named seat or worker (the desk's block opens with the humans' inbox), or when a seat asks where it is or what to do now.
+allowed-tools: Bash(bash:*) Bash(bd:*) Bash(ynm:*) Bash(gh:*)
 ---
 
 # Wake

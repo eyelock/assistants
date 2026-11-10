@@ -219,7 +219,7 @@ rules:
   - id: "AE1"
     path: "plugins/wheelhouse/skills/wake/SKILL.md"
     message: "*scripts/wake.sh*"
-    reason: "static_parse_limit: wake.sh (about 25 KB) is past the scanner's parse limit and reported as partially inspected. Read by a person and accepted for now; it reads the work graph and memory with bounded calls and runs no network call of its own. Temporary: ynw-v981 designs the split that lets the scanner read it whole, and this rule goes when that is built."
+    reason: "static_parse_limit: wake.sh (about 25 KB) is past the scanner's parse limit and reported as partially inspected. Read by a person and accepted for now; it reads the work graph (bd), memory (ynm) and, for a bead noting an open pull request, that pull request's state (one read-only gh pr view), each call time-limited, and writes nothing but the syncs at a session's start and end. Temporary: ynw-v981 designs the split that lets the scanner read it whole, and this rule goes when that is built."
 
   # --- dev and tech skills ----------------------------------------------------------------
 
