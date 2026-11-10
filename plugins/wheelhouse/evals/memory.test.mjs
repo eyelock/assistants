@@ -58,8 +58,14 @@ if (a[0] === "remember" || a[0] === "supersede") {
 } else if (a[0] === "forget") { db.find((m) => m.memoryId === opt("memory-id")).tombstoned = true; save();
 } else if (a[0] === "recall") {
   const ns = opt("namespace"), tags = opt("tags"), subj = opt("subject");
+  // Like ynm's toIndexed: recall returns content with the memory's string data values (in key order,
+  // joined by a space) appended after a newline, so memory.sh must strip that line.
+  const shown = (m) => {
+    const tail = Object.values(m.data ?? {}).filter((v) => typeof v === "string").join(" ");
+    return tail ? { ...m, content: m.content + "\\n" + tail } : m;
+  };
   console.log(JSON.stringify(db.filter((m) => !m.tombstoned && (!ns || m.namespace === ns) && (!subj || m.subject === subj) &&
-    (!tags || tags.split(",").every((t) => m.tags.includes(t)))).reverse()));
+    (!tags || tags.split(",").every((t) => m.tags.includes(t)))).reverse().map(shown)));
 }
 `;
 
