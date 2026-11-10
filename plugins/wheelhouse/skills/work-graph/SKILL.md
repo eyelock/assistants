@@ -47,7 +47,7 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   letting the lease run out.
 - **What a lapsed lease does on its own:** nothing. The bead stays in progress and assigned to its
   holder, and another seat's `--claim` is still refused. It only looks abandoned in `bd show`
-  ("Lease: expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
+  ("Lease: expires expired"). Nothing reclaims it on a timer: it stays held until the dispatcher acts. A
   seat that sees a lapsed claim, its own or another's, tells the dispatcher (or the desk, where
   there is none) and leaves the bead alone.
 - **A bead with an open pull request is never a dead claim.** (It has a `PR: <url>` note that is
@@ -61,8 +61,14 @@ so a Wheelhouse cannot lengthen it: seats refresh it.
   records on the bead why it did, and re-dispatches it. The bead goes back to ready with no
   assignee, another seat can claim it, and the old holder's `bd heartbeat` is refused. A refused
   heartbeat means you lost the bead: stop, tell the dispatcher, and don't edit it.
+- **A merged bead is closed by reclaiming it first.** `bd close` refuses a bead another seat holds,
+  so for a bead whose pull request merged the dispatcher runs `bd reclaim`, then `bd close` with what
+  happened ([Checking in for lapsed claims](#checking-in-for-lapsed-claims) step 2).
+- **Add to a bead's notes only with `bd update <id> --append-notes "<text>"` (or `bd note <id> "<text>"`), never `--notes`.**
+  `--notes` replaces every note on the bead, wiping lines others rely on, such as the
+  `PR: <url>` line that marks a pull request open.
 - **Never run `bd reclaim` or `bd update --force` on another seat's bead.** Only the dispatcher
-  reclaims, and only for a seat it has confirmed is gone. The one forced close a seat may make of
+  reclaims, and only for a seat it has confirmed is gone, or whose pull request has merged. The one forced close a seat may make of
   a bead it does not hold is the desk's close of a human's inbox bead, only through
   `inbox.sh close`, once the work is verified done, and never by hand with `bd close --force`.
 
@@ -123,6 +129,28 @@ reaching for the same bead. Other seats skip this section.
    parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
    `scripts/model.sh --seat <worker>`.
 
+## Checking in for lapsed claims
+
+The dispatcher looks for lapsed claims at every check-in (each time it wakes, and before it reports
+who is idle), because nothing else prompts it to. Other seats skip this section.
+
+1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show --json <id>`
+   has `lease_expires_at` and `heartbeat_at`: a lease whose `lease_expires_at` is in the past has
+   expired (`bd show` prints it as "Lease: expires expired (heartbeat 28 mins ago)" or "Lease:
+   expires in ...").
+2. Set aside any bead whose lease is live, and any with an open pull request (its `PR: <url>` note
+   is `OPEN` in `gh pr view <url> --json state`): that is waiting on a review or a merge, not dead.
+   A bead whose pull request has merged but which is still in progress is not a dead claim either,
+   but `bd close` from the dispatcher is refused while the worker holds it (`reclaim or use --force
+   to override`), and the dispatcher never uses `--force` on another seat's bead. Close it in two
+   steps: `bd reclaim --id <id> --older-than <grace> --actor <you>` (once its lease has expired and
+   the holder has no live session; if the lease is still live, leave it for the next check-in), then
+   `bd close <id> --reason "<what happened>" --actor <you>`, as in [Closing](#closing).
+3. For a bead whose lease expired well past the grace period (more than ten minutes ago) with no
+   open pull request, confirm the holder is gone: no live session for that seat. Then reclaim it,
+   record why, and re-dispatch it, as in [Keeping your claim](#keeping-your-claim). If the holder
+   may still be working, leave the bead alone and say so in the report.
+
 ## Breaking work down
 
 1. Create the epic: `bd create "<goal>" -t epic -p <0-4> --json`.
@@ -132,9 +160,26 @@ reaching for the same bead. Other seats skip this section.
    `repo:docs`. Split a task that touches two. The one exception is a bead for a human (see
    "Needing a human") whose work touches no repository, such as a decision.
 3. Order them: `bd dep add <later> <earlier>` makes `<later>` wait for `<earlier>`. Add a link only
-   where the order matters; tasks that can run side by side stay unlinked.
+   where the order matters; tasks that can run side by side stay unlinked. A build bead that
+   waits on a design depends on the design bead (`bd dep add <build> <design>`); whoever files the
+   design bead adds the link.
 4. Check the shape: `bd ready --json` should list only the tasks that can start now.
 5. Report the epic, its tasks in order and what is ready first. Don't claim them unless asked.
+
+## Handing a design on
+
+When a design is agreed, it goes one of two ways:
+
+- **Build work already exists:** the build bead depends on the design bead (`bd dep add <build>
+  <design>`). The designer writes the design on the build bead (`bd update <build>
+  --append-notes "<the design>"`) and closes the design bead. Closing it frees the build bead: it
+  appears in `bd ready` and the dispatcher picks it up on its next round, like any ready work. The
+  designer asks the desk for nothing, and the desk is never asked to relay it.
+- **New work, with no build bead yet:** the designer writes the design on its bead and hands it to
+  the desk, which wakes the programme manager (where one is seated): an audit, a spike or a
+  finished design goes to the programme manager first, who places it in the roadmap and files its
+  tracker item, and only then are build beads cut, against that item (see "Linking the tracker").
+  Review fixes stay the reviewer's beads and CI failures the CI watcher's.
 
 ## Linking the tracker
 
@@ -183,8 +228,8 @@ work graph are. Start the body file with your byline (the byline rule needs a bo
 - `--base` defaults to the repository's default branch. Pass it for a gitflow repository whose
   pull requests target `develop`.
 - `--head`, the remote branch to open from, is taken from your branch's upstream when its name
-  differs from the local one. A seat that pushed another seat's branch from its own worktree
-  (`git push origin HEAD:<their-branch>`) needs no workaround; pass `--head` only to name a branch
+  differs from the local one. A seat that pushed to another seat's branch from its own worktree,
+  with that branch set as the upstream, needs no workaround; pass `--head` only to name a branch
   explicitly.
 
 The script:
@@ -219,7 +264,7 @@ labelled `housekeeping`; do not close a tracker item from it.
 
 Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
-(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster:
+(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
 
 1. **Who:** a named person only when you know who: they asked for the work, or they have named
    themselves at the desk this session. Otherwise the default human (`--to default`, the
@@ -257,7 +302,8 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    `--priority <0-4>` sets any inbox bead's priority (0 highest); without it, a bead other than
    a report keeps bd's default, 2.
 4. **Tell them things** that need no action with a note instead of a bead: it waits in their
-   inbox, in ynm (namespace `human/<command>`, tagged `inbox`), until the desk relays it:
+   inbox, in the Wheelhouse's memory (through `memory.sh`: ynm namespace `human/<command>` tagged
+   `inbox`, or Beads keys `human/<command>/note/...`), until the desk relays it:
 
    ```bash
    bash scripts/inbox.sh note --from <your command> --to default --content "<the news>"

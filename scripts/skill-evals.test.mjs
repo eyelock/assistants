@@ -9,6 +9,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { setupFor } from "./skill-evals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_FILE = join(ROOT, "scripts", "skills-without-evals.txt");
@@ -70,6 +71,16 @@ for (const skill of skills.filter(hasEvals)) {
       for (const t of c.tool_calls ?? []) {
         assert.ok((c.tools ?? []).includes(t), `${where}: tool_calls ${t} is granted in tools`);
       }
+      // A case's own control is a script that exists, in its package.
+      if (c.baseline_setup !== undefined) {
+        const control = resolve(ROOT, skill, c.baseline_setup);
+        assert.ok(c.setup, `${where}: baseline_setup is the control for a setup, so it needs one`);
+        assert.ok(existsSync(control), `${where}: baseline_setup ${c.baseline_setup} exists`);
+        assert.ok(
+          control.startsWith(resolve(ROOT, skill, "..", "..")),
+          `${where}: baseline_setup stays inside its package`,
+        );
+      }
       // A skill lives at <package>/skills/<name>; its fixtures stay in its package.
       const packageDir = resolve(ROOT, skill, "..", "..");
       for (const f of c.files ?? []) {
@@ -99,3 +110,21 @@ for (const skill of skills.filter(hasEvals)) {
     );
   });
 }
+
+test("setupFor: the with_skill arm runs the case's setup, with no control to report", () => {
+  const c = { setup: "s.sh", baseline_setup: "b.sh" };
+  assert.deepEqual(setupFor(c, "with_skill"), { script: "s.sh", control: null });
+});
+
+test("setupFor: without_skill runs the case's baseline_setup when it names one", () => {
+  const c = { setup: "s.sh", baseline_setup: "b.sh" };
+  assert.deepEqual(setupFor(c, "without_skill"), { script: "b.sh", control: "baseline_setup" });
+});
+
+test("setupFor: with no baseline_setup, without_skill keeps the setup, plugin hidden", () => {
+  assert.deepEqual(setupFor({ setup: "s.sh" }, "without_skill"), {
+    script: "s.sh",
+    control: "plugin hidden",
+  });
+  assert.deepEqual(setupFor({}, "without_skill"), { script: undefined, control: "plugin hidden" });
+});

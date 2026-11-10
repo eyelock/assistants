@@ -15,7 +15,7 @@ bash scripts/wake.sh --seat <command> --format text
 
 From any other directory, give the script's full path and the Wheelhouse with `--dir`:
 `bash <wheelhouse>/scripts/wake.sh --dir <wheelhouse> --seat <command> --format text`. `<command>`
-is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh <command>`) works
+is your own, the name in your roster entry, or, for a seat on trial (its `harnesses/<command>/AGENTS.md` on the checked-out branch, no roster entry yet), the name of its harness folder: it wakes from that harness as group `trial`, and a command with neither is refused, the message naming the harness path it looked for; the bare name (`bash scripts/wake.sh <command>`) works
 too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
 seats. Without `--format text` it prints the same as JSON.
 
@@ -99,7 +99,7 @@ read, never that nothing is waiting.
    anything else, even your own introduction, naming each pull request or page by its short form
    as a Markdown link. Your reply is how the human sees a note, so putting it there is relaying
    it, and the note's job is done: retire each note you relay in the same turn, before you
-   finish, `bash scripts/memory.sh forget --id <memoryId> --reason relayed`, so it isn't shown twice. Don't
+   finish, with the retire command `inbox.sh show` names in its `relay` (`bash scripts/memory.sh forget --id <memoryId> --reason relayed`), so it isn't shown twice. Don't
    wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. Who the human at the desk
    is, is per session: with no name given, treat them as the default human and show only that
    inbox, and always end that part of your reply by telling them they can name themselves for this session ("it's me, <name>"), even when the inbox is empty; when they say "it's me,

@@ -41,8 +41,18 @@ add() {
     '. + [{name: $n, ok: $ok, level: $l, detail: $d, fix: (if $f == "" then null else $f end)}]' <<<"$checks")
 }
 
+# --- memory ------------------------------------------------------------------
+# ynm or Beads, by wheelhouse.json's "memory" key.
+mc="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/memory-checks.sh"
+if ! backend=$(bash "$mc" backend --dir "$dir"); then
+  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\", or add scripts/memory.sh"
+  backend=""
+fi
+
 # --- ynm ---------------------------------------------------------------------
-if ! command -v ynm >/dev/null 2>&1; then
+if [ "$backend" != ynm ]; then
+  [ -z "$backend" ] || add "memory backend" true info "$backend: ynm is not checked"
+elif ! command -v ynm >/dev/null 2>&1; then
   add "ynm installed" false error "ynm is not on PATH" "brew install eyelock/tap/ynm"
 else
   add "ynm installed" true info "$(command -v ynm)"
@@ -129,6 +139,7 @@ if [ -n "$found" ]; then
 else
   add "no Beads agent setup" true info "none found"
 fi
+[ "$backend" != beads ] || checks=$(jq -c --argjson m "$(bash "$mc" beads --dir "$dir")" '. + $m' <<<"$checks")
 
 # --- seats -------------------------------------------------------------------
 # Every seat in the roster but the desk has a harness of its own whose wake hook
@@ -225,25 +236,20 @@ if [ -f "$roster" ]; then
     fi
   fi
 
-  # A seat is born once its identity is pinned in its own namespace. Until then
-  # its birth is owed: the human's for the desk, crew and standing roles, the
-  # dispatcher's for a worker. It reads only the repository's own mount, which
-  # ynm always names project, so a slow remote mount can't hold it up. Without
-  # that mount (reported above) it doesn't run: ynm returns nothing, not an
-  # error, for a mount that isn't there, and every seat would look unborn.
-  if command -v ynm >/dev/null 2>&1 && [ "${projectmount:-0}" = 1 ]; then
+  # Born: an identity pinned in the seat's namespace. ynm is read only with the project mount.
+  if { [ "$backend" = ynm ] && [ "${projectmount:-0}" = 1 ]; } || [ "$backend" = beads ]; then
     unborn=""
     unread=""
     while IFS=$'\t' read -r cmd by; do
-      if ! found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$cmd" --tags identity --json 2>/dev/null); then
+      if ! born=$(bash "$mc" born --dir "$dir" --seat "$cmd"); then
         unread="$unread $cmd"
-      elif ! jq -e --arg ns "seat/$cmd" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' <<<"$found" >/dev/null 2>&1; then
+      elif [ "$born" = no ]; then
         unborn="$unborn $cmd (birth: $by)"
       fi
     done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
-      add "seats born" false warn "ynm couldn't recall the identities of:$unread, so whether they are born is unknown" \
-        "run ynm recall --mount project --namespace seat/<command> --tags identity from the Wheelhouse root, and see ynm doctor"
+      add "seats born" false warn "memory couldn't recall the identities of:$unread, so birth is unknown" \
+        "run scripts/memory.sh recall --seat <command> --kind identity, and see ynm doctor"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -280,18 +286,19 @@ if [ -f "$roster" ]; then
   fi
 
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
-    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --slurpfile r "$roster" '
-      ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command]) as $known
+    # A seat on trial is not in the roster until the trial ends; its harness, on its branch,
+    # is what makes it known meanwhile.
+    trials=$(for h in "$dir"/harnesses/*/AGENTS.md; do [ -f "$h" ] && basename "$(dirname "$h")"; done | jq -R . | jq -sc .)
+    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --argjson t "${trials:-[]}" --slurpfile r "$roster" '
+      ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command] + $t) as $known
       | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
-    # An assignee outside the roster is a human only if ynm holds a
-    # human/<command> namespace for them.
+    # Outside the roster, a human is one with human/<command> memory.
     stray=""
     while read -r sid sassignee; do
       [ -n "$sid" ] || continue
-      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && command -v ynm >/dev/null 2>&1 &&
-        [ "$(ynm recall --namespace "human/$sassignee" --limit 1 --json 2>/dev/null | jq 'length' 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null; then
+      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && [ "$(bash "$mc" human --dir "$dir" --name "$sassignee")" = yes ]; then
         continue
       fi
       stray="${stray:+$stray }$sid ($sassignee)"
@@ -341,7 +348,7 @@ fi
 # Memory pushes itself too once sync.auto is on (ynm 0.5.0): ynm's stop hook
 # syncs in the background after a turn, at most once an interval. ynm layers
 # its config files, and the last one with a sync block wins.
-if [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/null 2>&1; then
+if [ "$backend" = ynm ] && [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remote get-url origin >/dev/null 2>&1; then
   syncblock=$(for f in "${YNM_HOME:-$HOME/.ynm}/config.json" "$dir/.ynm/config.json" "$dir/.ynm/config.local.json"; do
     [ -f "$f" ] && jq -c 'select(has("sync")) | .sync' "$f" 2>/dev/null
   done | tail -1)

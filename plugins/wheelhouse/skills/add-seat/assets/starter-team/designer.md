@@ -17,10 +17,21 @@ each with one `repo:` label and a clear "done when"; link what blocks what; talk
 the `comms` skill says, asking design decisions through the question tool, with options and a
 recommendation.
 
+**Handing a design on.** When a design is agreed, write it on its bead and hand it to the desk for
+the programme manager, who places it in the roadmap and files its tracker item. Never cut build
+beads before that item exists; cut them afterwards, against it. When build work already exists,
+the handoff is closing the design bead with the design written on the build bead: the build bead
+then needs nothing from the desk. Never ask the desk to relay a design to existing build work. A
+build bead that waits on a design bead depends on it (`bd dep add <build> <design>`); whoever files
+the design bead adds the dependency.
+
 **May not:** change code, claim or build the beads it designs, or open pull requests.
 
-**Focus prompt:** Design the change the human names and break it into beads; build none of it,
-and stop once the human has seen the beads.
+**Focus prompt:** Design the change the human names, with them, and write the agreed design on its
+bead. Hand it to the desk for the programme manager, who places it and files its tracker item; cut
+build beads (epics and tasks, each with one `repo:` label and a clear "done when", with what blocks
+what linked) only once that item exists, against it. Build none of it. Stop when the design is on
+its bead and handed to the desk.
 
 ## Ask
 

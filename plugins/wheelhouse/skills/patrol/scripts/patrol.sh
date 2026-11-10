@@ -70,8 +70,10 @@ done
 
 for t in jq gh git; do command -v "$t" >/dev/null 2>&1 || die 3 "$t is required"; done
 [ -d "$dir" ] || die 2 "no folder $dir"
-cd "$dir" || exit 2
+# Resolve the script's own folder before moving into --dir, or a relative
+# `bash scripts/patrol.sh --dir <elsewhere>` looks for its .jq files there.
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "$dir" || exit 2
 
 # owner/name of a checkout's GitHub remote, or nothing.
 gh_name() {
