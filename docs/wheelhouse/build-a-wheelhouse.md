@@ -170,8 +170,9 @@ Workers leave their changes uncommitted in the working tree for review; a human 
 
 This section is the desk's charter. You act in the work graph as `tower`: pass `--actor tower` on
 every `bd` command that changes it. You seat the standing roles with the `add-seat` skill, and
-ask Anderson to seat workers. The human seats the crew. Asked to set up the team, walk the human
-through the starter team, role by role, with the `add-seat` skill. Answer questions about the
+ask Anderson to seat workers. The human seats the crew. Asked to set up the team, offer the first
+missing role of the starter team with the `add-seat` skill, one seat at a time: each is a trial
+on a branch until the human makes it official (a throwaway sandbox is the one exception). Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
 memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
 question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run `bash scripts/inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.
@@ -462,6 +463,14 @@ depends on who works with it:
 You are there for the birth of every seat you talk to: the crew and the standing roles. The
 workers are Anderson's to wake. Either way, each seat writes who it is in its own words.
 
+**This tutorial skips the trial,** under the `add-seat` skill's throwaway-sandbox exception. In a real Wheelhouse the `add-seat` skill seats one seat at a
+time: it writes the seat on a `seat/<command>` branch with a draft pull request, you try it in the
+shared checkout, and the roster entry and the desk's `delegates_to` come only when you make it
+official. This sandbox is throwaway and has no pull requests, so the prompts below say so: they
+tell the desk to skip the trial, and to write each seat, with its roster entry and the delegate,
+on the current branch, one after another. Seating a real Wheelhouse's team, do it one seat at a
+time instead.
+
 ### The crew, by you
 
 This function writes a seat's harness. Each seat's harness includes:
@@ -605,7 +614,9 @@ commits it, and leaves their births to you:
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
-Seat the standing roles with the add-seat skill, exactly as follows. Every harness includes the
+Seat the standing roles with the add-seat skill, one after another, exactly as follows. This
+sandbox is a throwaway tutorial, so the add-seat skill's throwaway-sandbox exception applies: skip the trial, with no branch or pull request. Write each seat on
+the current branch with its roster entry and your delegates_to entry. Every harness includes the
 wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is in ../widget.
 
 - Anderson, the dispatcher. Mandate: keep the workers busy: assign ready work to idle workers,
@@ -621,7 +632,8 @@ wheelhouse plugin as the JSON in $WHEELHOUSE. The code for a repo:widget bead is
   epic, write changelogs and prepare tags. May not: push a tag, publish a release or merge
   without me. Also includes plugins/gitflow. Focus "plan-release".
 
-Install and commit each, but don't wake them: I'll be there for their births.
+Install (ynh install ./harnesses/<command>) and commit each, but don't wake them: I'll be there
+for their births.
 EOF
 )"
 ```
@@ -746,7 +758,9 @@ the desk for workers; it asks Anderson, who seats each one and wakes it for its 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
 ```bash
 tower --model=sonnet --permission-mode=bypassPermissions -- "$(cat << 'EOF'
-We need three workers: Dalglish, McCoist and Strachan. Ask Anderson to seat them:
+We need three workers: Dalglish, McCoist and Strachan. This sandbox is a throwaway tutorial, so
+tell Anderson to skip the trial, as add-seat's throwaway-sandbox exception allows (no branch or pull request) and to seat them one after another,
+each with its roster entry and your delegates_to entry, on the current branch. Ask Anderson:
 anderson --model=sonnet --permission-mode=bypassPermissions -- "<your request>"
 Each worker builds one bead at a time, first one assigned to it, else one nobody holds. It may
 change code for the bead it holds, leaving it uncommitted for review, and close the bead with
@@ -1415,7 +1429,7 @@ Notes:
 
 Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason "relayed"`.
 
-This is the default human's inbox, and the desk treats the human at the desk as them. A human can name themselves for this session ("it's me, <name>") to see their own inbox instead; nothing is saved.
+This is the default human's inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session ("it's me, <name>") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.
 
 ## Who you are
 
@@ -1537,7 +1551,7 @@ cd /tmp/wheelhouse-tutorial/tower
 ```
 
 Expected: `true`, then `1`. The clone has the work graph and Gahan's identity. On a real second
-machine, also run `ynm client install ynh` once, and `ynh install harnesses/<command>` for each seat
+machine, also run `ynm client install ynh` once, and `ynh install ./harnesses/<command>` for each seat
 you run there.
 
 ## Clean up

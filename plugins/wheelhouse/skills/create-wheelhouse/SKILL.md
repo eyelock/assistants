@@ -57,7 +57,7 @@ at a time**, in this order. Don't create anything until you have the first four.
    be opened through `open-pr.sh` for that tracker. Say so, and offer to write the adapter as a
    bead. If the request doesn't say and you aren't asking, use none, and say so in the report.
 9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
-   walks through with the human role by role.
+   offers the human one role at a time.
 
 ## 2. Check the tools
 
@@ -85,12 +85,25 @@ the files it finds, and would commit the human's.
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
    4. **Hand off, don't stop.** Write your own notes and ask to restart.
-   5. **Never falsify the record.** Close beads with what actually happened.
+   5. **Never falsify the record.** Close beads with what actually happened. The one forced
+      close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
+      only through `inbox.sh close`, once the work is verified done.
    6. **Blame is structural.** Fix it, write down why in ynm, and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
-   8. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
+   8. **Never change a shared checkout.** A repository's checkout under "What it reaches" is
+      shared with the human and the other seats. Never switch branches, check out, detach,
+      commit, reset or stash there. To work on or test a branch, use your own git worktree in
+      your scratchpad, branched from `origin/<the branch your pull request targets>` (a shared checkout is
+      often stale), and name the worktree and any file you keep there with your own command, because
+      subagent seats share the desk's scratchpad. To read a branch, use `git show` or `git diff`.
+      Never use `git stash`, even in your own worktree: every worktree of a repository shares one
+      stash list, so a stash lands in the shared checkout too. To set work aside, commit it to a
+      throwaway branch. If the branch you need is already checked out in another worktree, make a
+      new local branch that tracks the remote branch (`git worktree add -b <new branch> <path> --track
+      origin/<remote branch>`) and push it with `git -c push.default=upstream push`.
+   9. **Name things fully.** In everything you write for people (chat, beads, notes, handoffs,
       pull requests and issues):
       - Name a web resource (a pull request, issue, CI run, review, commit or page) by its short
         form, always as a link: `[<repository> #12](https://github.com/<owner>/<repository>/pull/12)`,
@@ -99,16 +112,16 @@ the files it finds, and would commit the human's.
         a relative one, which hides which checkout or worktree you mean. Code and config keep
         their portable relative paths; this is about what you write for people.
 
-   9. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
+   10. **Ask a human through the inbox.** When work needs a human (a merge, a decision, a
       credential), assign them a bead, the default human unless you know who; tell them things
       with an inbox note; never wait silently.
-   10. **Never name a human** in anything you post or write (pull requests, reviews, comments,
+   11. **Never name a human** in anything you post or write (pull requests, reviews, comments,
        beads, notes, docs, commits): write the next action impersonally ("Decision needed before
        merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you".
        Seats that talk to the humans follow the `comms` skill: decisions asked through the
        question tool, with options; a synopsis beside every bead id; the outcome first.
 
-   Write rule 8 with examples from this Wheelhouse's own reach: one of its repositories on the
+   Write rule 9 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.
 
    A `## What it reaches` section lists the repositories, each with where it is checked out
@@ -122,15 +135,25 @@ the files it finds, and would commit the human's.
    full URL or key of its tracker item; only beads labelled `housekeeping`, or in a repository the tracker config's
    `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
-   with the `work-graph` skill's `scripts/open-pr.sh`."
+   with the `work-graph` skill's `scripts/open-pr.sh`." Also add, where a programme manager is or
+   will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
+   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it on the bead and hands it to the desk, which wakes the programme manager; the programme
+   manager places it in the roadmap and files its tracker item, and only then are build beads cut,
+   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
    `**Mandate:**` line, that it acts in the work graph as `<desk>` (`--actor <desk>`), and that
    it seats the standing roles with the `add-seat` skill and asks the dispatcher to seat workers.
-   The human seats the crew they work with directly. Asked to set up the team, the desk walks the
-   human through the starter team, role by role, with the `add-seat` skill. When a releaser is
+   The human seats the crew they work with directly. Asked to set up the team, the desk offers the
+   starter team's first missing role with the `add-seat` skill, one seat at a time, each a trial
+   until the human makes it official (a throwaway sandbox the human names as one skips the trial,
+   as `add-seat` says). When a releaser is
    seated, the desk routes every release bead and every "can we release?" to the releaser, and
-   never to a worker. It answers questions
+   never to a worker. When a programme manager is seated, the desk hands it a finished design: when
+   the designer hands one over, wake the programme manager for it, and build beads are cut only
+   once it has filed its tracker item. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
@@ -138,7 +161,13 @@ the files it finds, and would commit the human's.
    per session: with no name, its wake shows the default human's inbox; when a person names
    themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
    their own inbox for that session, and seats can assign work to them by their lowercase name.
-   Nothing about them is saved: no roster entry, no email, no username. It starts every seat on the model the roster gives it: the Agent tool's
+   Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub
+   itself to keep the inbox and the work graph current, and never loops over `gh`: when a CI
+   watcher is seated, on a merge signal (the human says they merged, or a seat reports a pull
+   request ready or merged) it signals the CI watcher to reap, then passes the merged pull
+   requests, reported as bead then pull request, to the dispatcher, who closes the work beads, and
+   closes each reported inbox item with `inbox.sh close`, with a reason saying what happened.
+   It starts every seat on the model the roster gives it: the Agent tool's
    `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
    both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
 
@@ -231,6 +260,10 @@ the files it finds, and would commit the human's.
    seat's: it wakes with purpose, and pushes what it wrote when its session ends. Its launch focus
    means it never wakes bare: started by its name, it acts on its wake block straight away.
 
+   The desk includes the whole `plugins/wheelhouse` plugin, with no `pick`, so it gains every skill
+   the plugin gains, `refresh` among them. Every other seat picks the wheelhouse skills and leaves
+   `refresh` out (the `add-seat` skill says how).
+
 5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
    seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
    `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
@@ -300,11 +333,11 @@ edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
 can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install harnesses/<command>`), what the human still has to
+(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (the push hook, a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict. To join from another machine: `git clone` the repository, then
 `bd bootstrap` (the work graph, and its remote), `git config core.hooksPath .beads/hooks` (the
 push hooks), `ynm sync` (the memory), `ynm client install ynh` if this machine hasn't yet, and
-`ynh install harnesses/<command>` for each seat run there. End by offering to set up the starter team
-next, role by role, with the `add-seat` skill.
+`ynh install ./harnesses/<command>` for each seat run there. End by offering the first role of the starter
+team, one seat at a time, with the `add-seat` skill.

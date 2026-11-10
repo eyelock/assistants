@@ -24,9 +24,12 @@
 #
 # Its session-end hook runs it with --end, which only syncs what the session
 # wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
-# remote and given up after 12 seconds. A full sync, not a push alone: when
+# remote and run side by side and given up after 25 seconds, inside the 30-second session-end hook
+# (WHEELHOUSE_END_SYNC_SECS sets the budget, at most 28). A full sync, not a push alone: when
 # another seat has pushed since, a push alone is rejected until it merges. It prints
-# {seat, push {memory, work: pushed|skipped|failed}} and nothing else.
+# {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a sync did not
+# push, errors {memory, work}: its exit code and the first line it printed. With
+# --no-sync it syncs neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, firstWake, identity, mandate,
 # handoff, handoffId, kudos, closeNotes [{bead, note}], record, inProgress, assigned, unassignedReady (titles, most
@@ -45,6 +48,7 @@ Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text]
        wake.sh <name> [--dir <wheelhouse repo>] [--format json|text]
                [--no-sync]
        wake.sh --end [--seat <name> | <name>] [--dir <wheelhouse repo>]
+               [--no-sync]
 
 Syncs memory and work, then prints what a seat should know as it wakes.
 The seat is --seat <name>, or the seat's name given bare; it defaults to
@@ -52,7 +56,8 @@ $BEADS_ACTOR, and without any of them the script stops and lists the roster's
 seats. Run it as bash <wheelhouse>/scripts/wake.sh, and pass --dir <wheelhouse>
 when the current directory is not the Wheelhouse's root. --dir defaults to the
 current directory; --format to json. --no-sync skips the sync. --end, for the
-session-end hook, only syncs memory and work, and prints the result as JSON.
+session-end hook, only syncs memory and work, and prints the result as JSON;
+--end --no-sync syncs neither and reports both as skipped.
 EOF
 }
 
@@ -104,25 +109,70 @@ limited() {
 hasgitremote() { git remote 2>/dev/null | grep -q .; }
 hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; }
 
-# At the end of a session, sync what it wrote and stop.
+# At the end of a session, sync what it wrote and stop (--no-sync skips both).
 if [ "$end" = 1 ]; then
   mempush=skipped
   workpush=skipped
-  if hasgitremote; then
-    if limited 12 ynm sync --quiet >/dev/null 2>&1; then mempush=pushed; else mempush=failed; fi
-  fi
-  if hasdoltremote; then
-    if limited 12 bd sync >/dev/null 2>&1; then workpush=pushed; else workpush=failed; fi
-  fi
-  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" '{seat: $seat, push: {memory: $m, work: $w}}'
+  memerr=""
+  workerr=""
+  # The two syncs run side by side, each given the same budget, so the worst case is the budget
+  # itself, not twice it. The session-end hook gives wake.sh 30 seconds and kills it after that,
+  # before the JSON below prints, so the budget stays under it: 25 seconds by default, never more
+  # than 28 (WHEELHOUSE_END_SYNC_SECS lowers or raises it within that).
+  budget="${WHEELHOUSE_END_SYNC_SECS:-25}"
+  case "$budget" in '' | *[!0-9]*) budget=25 ;; esac
+  [ "$budget" -gt 28 ] && budget=28
+  [ "$budget" -lt 1 ] && budget=1
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/wake-end.XXXXXX")
+  # Runs one sync with the budget and keeps its output in <tmp>/<name>.rc and .err: the exit code
+  # (142 when the alarm killed it) and "exit N: first line".
+  endsync() {
+    local name="$1"; shift
+    local rc first
+    limited "$budget" "$@" >"$tmp/$name.out" 2>&1
+    rc=$?
+    echo "$rc" >"$tmp/$name.rc"
+    if [ "$rc" != 0 ]; then
+      first=$(grep -m1 . "$tmp/$name.out" 2>/dev/null | cut -c1-200)
+      printf '%s' "exit $rc${first:+: $first}" >"$tmp/$name.err"
+    fi
+  }
+  if [ "$sync" = 1 ] && hasgitremote; then endsync mem ynm sync --quiet & fi
+  if [ "$sync" = 1 ] && hasdoltremote; then endsync work bd sync & fi
+  wait
+  # <var> becomes pushed, timeout or failed from the sync's exit code; <errvar> its error text.
+  endresult() {
+    local name="$1" var="$2" errvar="$3" rc
+    [ -f "$tmp/$name.rc" ] || return 0
+    rc=$(cat "$tmp/$name.rc")
+    if [ "$rc" = 0 ]; then printf -v "$var" pushed
+    else
+      if [ "$rc" = 142 ]; then printf -v "$var" timeout; else printf -v "$var" failed; fi
+      printf -v "$errvar" '%s' "$(cat "$tmp/$name.err")"
+    fi
+  }
+  endresult mem mempush memerr
+  endresult work workpush workerr
+  rm -rf "$tmp"
+  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" --arg me "$memerr" --arg we "$workerr" \
+    '{seat: $seat, push: {memory: $m, work: $w}} + (if $me != "" or $we != "" then {errors: ({memory: $me, work: $we} | with_entries(select(.value != "")))} else {} end)'
   exit 0
 fi
 
 # Which seat this is.
 entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' "$roster")
-[ -n "$entry" ] || { echo "$seat is not a seat in the roster" >&2; exit 1; }
+if [ -z "$entry" ]; then
+  # A seat on trial is not in the roster until the trial ends, but its harness is on its
+  # trial branch, checked out here: read it from there.
+  if [ -f "$dir/harnesses/$seat/AGENTS.md" ]; then
+    entry=$(jq -nc --arg s "$seat" '{command: $s, group: "trial", harness: ("harnesses/" + $s), mandate: ""}')
+  else
+    echo "$seat is not a seat in the roster, and there is no harnesses/$seat/AGENTS.md here (a seat on trial has one on its branch)" >&2
+    exit 1
+  fi
+fi
 group=$(jq -r .group <<<"$entry")
-charter="$(jq -r .harness <<<"$entry")/AGENTS.md"
+charter="$dir/$(jq -r .harness <<<"$entry")/AGENTS.md"
 # The Mandate is a paragraph: from its "**Mandate:**" line to the next blank line, joined on one line.
 mandate=$(awk '
   found && /^[[:space:]]*$/ { exit }
@@ -258,7 +308,7 @@ jq -r '
            end)),
         "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `ynm forget --memory-id <its id> --reason \"relayed\"`.\n"
       end),
-     (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. A human can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved.\n" else empty end)
+     (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
    end),
   "## Who you are\n",
   (if .firstWake

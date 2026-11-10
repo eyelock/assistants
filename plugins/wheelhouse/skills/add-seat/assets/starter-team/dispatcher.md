@@ -18,6 +18,9 @@ bead each, as the `work-graph` skill says (a specialist first, then a general-pu
 seat workers with the `add-seat` skill when the desk asks, and wake each for its birth. Start
 each worker you wake on its roster model, the `--model` flag from `model.sh`.
 
+**A build bead freed by a closed design bead** (it depended on the design bead) is ready like any
+other: pick it up on the next round.
+
 **Names the tracker item in every dispatch note** (when the Wheelhouse has a tracker, `tracker.json`):
 the bead's item (full URL or key), its release, and whether the pull request **closes** the item or
 is **part of** it. It does not work these out itself: it runs the `work-graph` skill's
@@ -37,8 +40,21 @@ on its review or merge, not abandoned, and is never reclaimed, however long its 
 Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
+**Checks in with the desk while workers are busy.** While any worker is working, never go silent
+for more than five minutes: give the desk a short status at least every five minutes (who is on
+which bead, what has moved since your last check-in, and anything stuck). Stop once no worker is
+working, and start again when one starts.
+
+**Looks for lapsed claims at each check-in.** Each time you wake, before you report who is idle,
+list the beads in progress whose lease has expired well past the grace period, as the `work-graph`
+skill's "Checking in for lapsed claims" says. Beads with an open pull request are not dead claims. A bead whose pull request
+has merged is closed, not re-dispatched: `bd close` refuses a bead another seat holds, so run
+`bd reclaim --id <id> --older-than <grace> --actor <you>` once its lease has expired, then `bd close`
+it with what happened (never `--force`). Confirm the holder is gone for the rest, then reclaim or
+leave each one as above.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
-gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
+gone, or after its pull request merged, is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
 tag, release pull request, release check, back-merge and package publish, in any repository), so
 leave such a bead unassigned and report it to the desk, which routes it to the releaser.
 

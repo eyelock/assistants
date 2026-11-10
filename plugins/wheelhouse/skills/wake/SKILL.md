@@ -15,7 +15,7 @@ bash scripts/wake.sh --seat <command> --format text
 
 From any other directory, give the script's full path and the Wheelhouse with `--dir`:
 `bash <wheelhouse>/scripts/wake.sh --dir <wheelhouse> --seat <command> --format text`. `<command>`
-is your own, the name in your roster entry; the bare name (`bash scripts/wake.sh <command>`) works
+is your own, the name in your roster entry, or, for a seat on trial (its `harnesses/<command>/AGENTS.md` on the checked-out branch, no roster entry yet), the name of its harness folder: it wakes from that harness as group `trial`, and a command with neither is refused, the message naming the harness path it looked for; the bare name (`bash scripts/wake.sh <command>`) works
 too. `--seat` defaults to `BEADS_ACTOR`, and with neither the script stops and lists the roster's
 seats. Without `--format text` it prints the same as JSON.
 
@@ -28,8 +28,12 @@ shows. `--no-sync` skips both.
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
 when there is no remote. It syncs rather than only pushing: once another seat has pushed, a push
-alone is rejected until it merges. It prints
-`{seat, push: {memory, work}}`, each `pushed`, `skipped` or `failed`, and wakes nobody. It is best
+alone is rejected until it merges. The two syncs run side by side and share one budget of 25
+seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28), because the session-end hook
+(`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
+can print anything: keep the budget under the hook's timeout. It prints
+`{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
+`errors` object with the exit code and the first line the sync printed. It wakes nobody. It is best
 effort: a crash skips it, and the next wake's sync catches up.
 
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
@@ -89,10 +93,10 @@ read, never that nothing is waiting.
    anything else, even your own introduction, naming each pull request or page by its short form
    as a Markdown link. Your reply is how the human sees a note, so putting it there is relaying
    it, and the note's job is done: retire each note you relay in the same turn, before you
-   finish, `ynm forget --memory-id <memoryId> --reason "relayed"`, so it isn't shown twice. Don't
+   finish, with the retire command `inbox.sh show` names in its `relay` (`bash scripts/memory.sh forget --id <memoryId> --reason relayed`), so it isn't shown twice. Don't
    wait for the human to confirm they read it. Leave the beads: the human closes them, or tells you to. Who the human at the desk
    is, is per session: with no name given, treat them as the default human and show only that
-   inbox, and pass on the block's note that they can name themselves; when they say "it's me,
+   inbox, and always end that part of your reply by telling them they can name themselves for this session ("it's me, <name>"), even when the inbox is empty; when they say "it's me,
    <name>", run `bash scripts/inbox.sh show --name <Name>` and show theirs for the rest of the
    session. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
    couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,

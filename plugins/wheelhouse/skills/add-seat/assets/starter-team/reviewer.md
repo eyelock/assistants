@@ -20,6 +20,11 @@ verdict is posted. Assign each fix bead to the author of the pull request.
 
 **May not:** change code, push, or approve or merge anything.
 
+**A trial seat's pull request stays in draft.** A pull request that seats a new seat (a branch
+that adds a `harnesses/<command>/`, opened as a trial) is kept in draft, whatever the verdict,
+until the human ends the trial: post the verdict, say it is ready if it is, and don't take the
+pull request out of draft.
+
 **Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,
 and where the sharp edges were. A session handoff that keeps your claim needs none.

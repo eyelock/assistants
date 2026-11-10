@@ -28,6 +28,7 @@ If anything in them is unclear or seems wrong, say so now. It is easier to fix b
 Read the roster (`skills/roster/assets/roster.json`): who holds which seat, and what each does.
 Work out who you get work from and who you hand it to. For a worker, that is the dispatcher and
 the crew; for the crew, the workers and each other.
+A seat on trial is not in the roster yet; read your own harness and charter on your branch instead.
 
 ## 3. Write who you are
 
@@ -60,7 +61,8 @@ ynm remember --type episodic --level distributed --namespace seat/<command> \
   --content "<Name> took the <command> seat on <date>, running on <model>, seated by <who>."
 ```
 
-`<who>` is your roster seat's `seated-by`. If it has none, it is whoever your first message says
+`<who>` is your roster seat's `seated-by`. A seat on trial has no roster entry yet, and so no
+`seated-by`; the same applies to it. If it has none, it is whoever your first message says
 seated you; if that doesn't say either, the human who started you.
 
 The model is recorded because you will outlive it: when the Wheelhouse moves to a newer model,

@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, Beads installed with a work graph and none of its own agent setup, shared through the repository's remote, and the humans: one default human, and every bead assigned to someone in the roster. Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
+description: Check a Wheelhouse is set up right - ynm installed and healthy, with a distributed mount in the Wheelhouse repository and registered with ynh, Beads installed with a work graph and none of its own agent setup, shared through the repository's remote, and the humans: one default human, and every bead assigned to someone in the roster or to a seat on trial (its harness on the checked-out branch). Use when asked to check, validate or diagnose a Wheelhouse, its memory or its work graph, after creating one, or when a seat finds ynm or bd missing or misbehaving.
 ---
 
 # Doctor
@@ -12,6 +12,8 @@ repository (the one with the desk's `.agents/harness/` and `.beads/`). From the 
 bash path/to/doctor/scripts/check.sh --dir .
 ```
 
+`check.sh` calls `scripts/memory-checks.sh` for the checks that depend on the memory backend.
+
 It prints JSON: `ok`, and one entry per check with `name`, `ok`, `level`, `detail` and `fix`. It
 changes nothing. `ok` is false when any check has level `error`.
 
@@ -19,7 +21,10 @@ changes nothing. `ok` is false when any check has level `error`.
 
 | Check | Why it matters |
 |---|---|
-| ynm installed | seats keep their memory, handoff notes and Kudos in ynm |
+| memory backend | `wheelhouse.json`'s `memory` key (`ynm`, or `beads`; ynm when there is none), read through `memory.sh`. The ynm checks below run for ynm only; a Beads Wheelhouse needs no ynm. A key that is neither, or no `memory.sh` to read it, is an error |
+| beads memory readable (Beads memory) | `bd --readonly memories --json` must parse: seats keep their identity, handoff notes and Kudos there. An error when it doesn't |
+| beads memory shared (Beads memory) | memory shares through the work graph's Dolt remote; a warning without one, as memory then stays on this machine |
+| ynm installed (ynm memory) | seats keep their memory, handoff notes and Kudos in ynm |
 | errors ynm itself reports (`ynm doctor`) | a store ynm can't read loses or hides memories |
 | ynm distributed mount | without `ynm init` here, seats can't share what they learn |
 | ynm syncs on push | Beads owns the git hooks, so `ynm init` can't add its pre-push sync; until it is appended, `git push` doesn't share memory |
@@ -33,10 +38,10 @@ changes nothing. `ok` is false when any check has level `error`.
 | workspace folders (once the roster has seats) | every folder a seat's `workspace` asks for exists; ynh refuses one that doesn't. Granting them stays the human's |
 | seat models (once the roster has seats) | each seat has a model: its own `model` tier, or its group's default in `models.groups`, mapping to a model for the claude vendor. A seat with none starts on whatever the launcher defaults to, which may be the dearest |
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
-| seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run |
+| seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run. With Beads memory it asks `memory.sh` for the seat's identity key |
 | default human (once the roster exists) | the roster's `humans` holds exactly one human, with `"default": true`: the name for work that needs a human but no particular one. Any other human is per session and never in the roster. None is a warning (nothing to assign to, and no inbox at the desk); two or more is an error (the inbox script refuses to guess) |
 | inbox script (once the roster exists) | `scripts/inbox.sh`, copied from the `work-graph` skill, is how seats ask the humans for things and how the desk's wake shows their inbox |
-| assignees known (once the roster exists) | every open bead is unassigned or assigned to a seat, the default human, a human command with a `human/<command>` namespace in ynm, or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes); one assigned to anyone else is in no seat's queue and no inbox |
+| assignees known (once the roster exists) | every open bead is unassigned or assigned to a seat (in the roster, or on trial: `harnesses/<command>/AGENTS.md` on the checked-out branch, no roster entry yet), the default human, a human command with a `human/<command>` namespace in memory (ynm, or Beads' `human/<command>/` keys), or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes); one assigned to anyone else is in no seat's queue and no inbox |
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
 | work graph shared (once there is a remote) | `git push` doesn't carry the work graph: it shares through a Dolt remote on the repository's own origin, and pushes itself after each write once `dolt.auto-push` is on |
 | memory syncs itself (once there is a remote) | ynm's `sync.auto` (ynm 0.5.0) syncs memory in the background after a turn; without it, what a seat remembers mid-session waits for a push, a wake or its session end, and a crash skips the end. An error when ynm is older than 0.5.0, which refuses a config with a `sync` block |
@@ -59,7 +64,7 @@ changes nothing. `ok` is false when any check has level `error`.
 installs software. When the human says
 yes, run the fixes one at a time, then run the check again and report what changed.
 
-**Never repair, purge or rewrite a memory store yourself**, even when ynm reports it corrupt. Say
+**Never repair, purge or rewrite a memory store yourself**, even when ynm reports it corrupt (or Beads' memory won't read). Say
 what ynm reported and where, suggest the human looks at it with `ynm doctor`, and leave the store
 alone. Memories that look broken may be the only copy.
 

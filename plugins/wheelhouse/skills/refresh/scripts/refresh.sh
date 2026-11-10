@@ -28,7 +28,7 @@
 # (the only evidence a --dry-run has, since it installs nothing).
 #
 # Every run also checks that each roster seat is installed (ynh ls) and born (a
-# pinned identity in seat/<command>), and reports any that is not with the
+# pinned identity in seat/<command>, in ynm or Beads by wheelhouse.json's memory key), and reports any that is not with the
 # exact install command. It runs the safe steps, then the doctor, then prints
 # the seats to restart. --dry-run only prints. It prints one JSON object.
 #
@@ -251,6 +251,22 @@ fi
 [ "$(jq length <<<"$copied")" -gt 0 ] && restart_all=1
 
 # --- installed and born -------------------------------------------------------------------
+# Where identities live is wheelhouse.json's "memory" key, read through memory.sh: the
+# Wheelhouse's own copy in scripts/, else the work-graph skill's beside this one.
+memsh=""
+for f in "$dir/scripts/memory.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../work-graph/scripts/memory.sh"; do
+  [ -f "$f" ] && { memsh="$f"; break; }
+done
+backend=ynm
+if [ -n "$memsh" ]; then
+  if ! backend=$(bash "$memsh" backend --dir "$dir" 2>/dev/null); then
+    note "memory.sh could not name the memory backend (see wheelhouse.json): seats' births not checked"
+    backend=""
+  fi
+elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
+  note "wheelhouse.json chooses a memory backend but memory.sh was not found: seats' births not checked"
+  backend=""
+fi
 installed_json="null"
 if [ "$ynh_ok" = 1 ] && l=$(ynh ls --format json 2>/dev/null) && jq -e '.harnesses' >/dev/null 2>&1 <<<"$l"; then
   installed_json=$(jq -c '[.harnesses[].name]' <<<"$l")
@@ -265,7 +281,12 @@ for s in $desk $seats; do
   inst="null"
   [ "$installed_json" != "null" ] && inst=$(jq -c --arg s "$s" 'index($s) != null' <<<"$installed_json")
   born="null"
-  if command -v ynm >/dev/null 2>&1 && found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$s" --tags identity --json 2>/dev/null); then
+  if [ "$backend" = beads ]; then
+    # Beads memory: the seat's identity key, through memory.sh.
+    if command -v bd >/dev/null 2>&1 && found=$(bash "$memsh" recall --dir "$dir" --seat "$s" --kind identity --limit 1 2>/dev/null); then
+      born=$(jq -c 'length > 0' <<<"$found" 2>/dev/null || echo null)
+    fi
+  elif [ "$backend" = ynm ] && command -v ynm >/dev/null 2>&1 && found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$s" --tags identity --json 2>/dev/null); then
     born=$(jq -c --arg ns "seat/$s" '[.[]? | select(.namespace == $ns and .pinned == true)] | length > 0' <<<"$found" 2>/dev/null || echo null)
   fi
   if [ "$inst" = "false" ] || [ "$born" = "false" ]; then

@@ -46,6 +46,13 @@ report to the humans through the desk, as report items in the default human's in
 (`bash scripts/inbox.sh assign --kind report`): a weekly roadmap report, and a short one whenever
 a milestone moves.
 
+**Gaps found by audits, spikes and finished designs come to it first.** An audit, spike or
+finished design that finds a gap in what a tool does reaches it through the desk (the auditor or
+designer writes it on the bead and hands it to the desk, which wakes it), not straight into the
+work graph: it places it in the plan and the matrix, files its tracker item, and only then are
+build beads cut. Item first, then beads. A fix asked for in a review stays the reviewer's bead,
+and a CI failure or stuck pull request stays the CI watcher's.
+
 **Watches for, and reports:** an issue carrying many beads or pull requests where it should have
 closed in one; a build bead with no tracker item in its `external_ref` (only beads labelled
 `housekeeping`, or in a repository the config's `exempt_repos` names, may go without); a tracker item still open after its work merged, or closed while
