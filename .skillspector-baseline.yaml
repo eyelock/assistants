@@ -45,6 +45,13 @@ rules:
     message: "*credentials.json*"
     reason: "Advises adding secret files such as credentials.json to .gitignore."
 
+  # --- Autonomy granted on purpose --------------------------------------------------------
+
+  - id: "EA2"
+    path: "plugins/wheelhouse/skills/add-seat/assets/starter-team/programme-manager.md"
+    message: "*without asking*"
+    reason: "The programme manager places each open bug on a milestone by its priority without asking the humans, by design (the same rule as ynw's Page); it tells them only when a placement would change a release's theme. A human accepted this on 2026-11-10 (ynw decision ynw-0sbw, option A)."
+
   # --- Eval cases -------------------------------------------------------------------------
   # Eval prompts and assertions describe the behaviour under test, including the risky
   # requests a skill must handle ("go ahead without asking", "git push --force"). Agents
