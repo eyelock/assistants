@@ -24,9 +24,9 @@ follows `wheelhouse.json`'s `memory` key: ynm (the default) or Beads. It syncs f
 to what other machines and seats wrote. With ynm that is memory (`ynm sync`) when the repository
 has a git remote, and the work graph (`bd sync`, which pulls and then pushes) when it has a Dolt
 remote. With Beads, memory and work are one database, so one `bd sync` (needing a Dolt remote)
-gives one result for both. On either backend the block shows the shared facts
-(at most ten) as **What the Wheelhouse knows**, and with Beads the command to retire your handoff note is
-`bd forget -- <key>` rather than `ynm forget`. A sync never stops the wake. If one fails, the block opens with
+gives one result for both. On either backend the block shows the shared facts (never the events, which record bead outcomes)
+(at most ten) as **What the Wheelhouse knows**. The command to retire your handoff note is the same on
+either backend, `bash scripts/memory.sh forget --id <id> --reason "picked up"`. A sync never stops the wake. If one fails, the block opens with
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
@@ -43,23 +43,19 @@ effort: a crash skips it, and the next wake's sync catches up.
 
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
 rather than starting blind. First your memory: identity, handoff notes and Kudos, one recall for
-each, since `--tags` matches only memories carrying every tag it is given:
+each, by its `--kind`:
 
 ```bash
-ynm recall --namespace seat/<command> --subject seat:<command> --tags identity --json
-ynm recall --namespace seat/<command> --subject seat:<command> --tags handoff --json
-ynm recall --namespace seat/<command> --subject seat:<command> --tags kudos --json
+bash scripts/memory.sh recall --seat <command> --kind identity --limit 1
+bash scripts/memory.sh recall --seat <command> --kind handoff --limit 1
+bash scripts/memory.sh recall --seat <command> --kind kudos --limit 5
 ```
 
-(older notes may be outside the namespace: if nothing comes back, try without `--namespace`).
-
-Your close notes are filed under their bead (`--subject <bead id>`), not under `seat:<command>`, so
-the recalls above never find them. Recall by tag alone, without `--subject`, and keep the newest
-three, as `wake.sh` does:
+Each prints a JSON array, newest first, of `{id, kind, text, at, by, bead}`. Your close notes
+are the newest three:
 
 ```bash
-ynm recall --namespace seat/<command> --tags close-note --limit 20 --json |
-  jq -c 'sort_by(.updatedAt) | reverse | .[:3] | map({bead: .subject, note: .content})'
+bash scripts/memory.sh recall --seat <command> --kind close-note --limit 3
 ```
 
 Your record is the five beads you closed most recently, from the work graph (run it in the
@@ -110,12 +106,14 @@ read, never that nothing is waiting.
    relay what could be read, and check the Wheelhouse with the `doctor` skill.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
-   **and pinned** (`ynm pin <memoryId>`), so it is in front of you every time you wake.
-2. **Who you are** is yours. If it no longer fits, change it (`ynm supersede` the identity
-   memory, then pin the new one). Nobody else changes it.
+   and kept in front of you (`memory.sh` pins it), so you see it every time you wake.
+2. **Who you are** is yours. If it no longer fits, change it (write it again with
+   `bash scripts/memory.sh remember --actor <command> --seat <command> --kind identity --text "<who you are>"`,
+   which replaces the old one). Nobody else changes it.
 3. **Where you left off:** pick up from the exact next step in your handoff notes; don't redo
    what they say is done. Once you have picked up, retire the notes so they aren't read twice:
-   `ynm forget --memory-id <memoryId> --reason "picked up"`. If the bead you are picking up is
+   `bash scripts/memory.sh forget --id <id> --reason "picked up"` (the `id` is in the block).
+   If the bead you are picking up is
    assigned to you but not yet claimed, claim it first (`bd update <id> --claim`): that is not a
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.

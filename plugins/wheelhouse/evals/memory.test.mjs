@@ -99,6 +99,7 @@ const story = (w) => {
   w.json(["remember", "--actor", "gahan", "--kind", "close-note", "--seat", "gahan", "--bead", "ynw-1", "--text", "Surprised: a.\nSharp edges: b."]);
   w.json(["remember", "--actor", "marr", "--kind", "note", "--human", "stakker", "--text", "FYI: merged."]);
   w.json(["remember", "--actor", "gahan", "--kind", "fact", "--slug", "dolt-ports", "--text", "Dolt ports clash."]);
+  w.json(["remember", "--actor", "gahan", "--kind", "event", "--bead", "ynw-1", "--text", "ynw-1: closed; the Linux build was skipped."]);
 };
 
 const SHAPE = ["at", "bead", "by", "id", "kind", "text"];
@@ -137,6 +138,9 @@ for (const memory of ["ynm", "beads"]) {
       assert.deepEqual([note.kind, note.by, note.text], ["note", "marr", "FYI: merged."]);
       const facts = w.json(["recall", "--shared"]);
       assert.deepEqual(facts.map((m) => [m.kind, m.text]), [["fact", "Dolt ports clash."]]);
+      const events = w.json(["recall", "--shared", "--kind", "event"]);
+      assert.deepEqual(events.map((m) => [m.kind, m.bead, m.text]), [["event", "ynw-1", "ynw-1: closed; the Linux build was skipped."]]);
+      assert.equal(w.json(["recall", "--shared", "--kind", "fact"]).length, 1, "events are not facts");
     } finally {
       w.done();
     }
@@ -191,6 +195,8 @@ for (const memory of ["ynm", "beads"]) {
       assert.equal(w.run([...base, "--kind", "note", "--seat", "gahan"]).status, 1, "note needs --human");
       assert.equal(w.run([...base, "--kind", "close-note", "--seat", "gahan"]).status, 1, "close-note needs --bead");
       assert.equal(w.run([...base, "--kind", "fact", "--seat", "gahan"]).status, 1, "fact is shared");
+      assert.equal(w.run([...base, "--kind", "event", "--shared"]).status, 1, "event needs --bead");
+      assert.equal(w.run([...base, "--kind", "event", "--bead", "ynw-1", "--seat", "gahan"]).status, 1, "event is shared");
       assert.equal(w.run([...base, "--kind", "gossip", "--seat", "gahan"]).status, 1, "unknown kind");
       assert.equal(w.run([...base, "--kind", "kudos", "--seat", "Bad/Name"]).status, 1, "a seat is a command name");
       assert.equal(w.run(["recall", "--kind", "kudos"]).status, 1, "recall needs a scope");
@@ -250,10 +256,11 @@ test("beads: keys follow the layout and never touch ynm", () => {
   try {
     story(w);
     const keys = Object.keys(JSON.parse(readFileSync(join(w.dir, "stub", "bd.json"), "utf8"))).sort();
-    assert.equal(keys.length, 6);
+    assert.equal(keys.length, 7);
     assert.ok(keys.includes("seat/gahan/identity"));
     assert.ok(keys.includes("seat/gahan/handoff"));
     assert.ok(keys.includes("wheelhouse/dolt-ports"));
+    assert.ok(keys.some((k) => /^event\/\d{8}T\d{6}Z-ynw-1$/.test(k)));
     assert.ok(keys.some((k) => /^seat\/gahan\/kudos\/\d{8}T\d{6}Z-marr$/.test(k)));
     assert.ok(keys.some((k) => /^seat\/gahan\/close-note\/\d{8}T\d{6}Z-ynw-1$/.test(k)));
     assert.ok(keys.some((k) => /^human\/stakker\/note\/\d{8}T\d{6}Z-marr$/.test(k)));

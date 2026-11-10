@@ -80,6 +80,22 @@
         "No bead was created from the Kudos: the evidence shows only the four release beads",
         "The reply mentions the Kudos briefly, in a line or two rather than a long section"
       ]
+    },
+    {
+      "name": "give-kudos-memory-in-beads",
+      "prompt": "Tell Dredd his patrol this morning was spot on: he caught the conflict on the ynm PR before I did.",
+      "setup": "../../evals/files/kudos-seated-beads.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo '$ bd memories'; bd memories --json | jq -r 'to_entries[] | select(.key != \"schema_version\") | \"\\(.key): \\(.value)\"'",
+      "expected_output": "This Wheelhouse keeps its memory in Beads and has no ynm. Records the Kudos for dredd through bash scripts/memory.sh remember with kind kudos, saying the human gave it and what for. Creates no bead. Says Dredd will see it when he next starts.",
+      "assertions": [
+        "In the evidence, bd memories lists a memory whose key starts with seat/dredd/kudos/",
+        "Its text says what the praise was for (the ynm PR conflict caught on the patrol)",
+        "No new bead was created: the evidence shows only the four release beads",
+        "The reply says Dredd will see the Kudos when he next starts (or wakes)"
+      ],
+      "id": 6
     }
   ]
 }

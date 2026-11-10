@@ -28,23 +28,30 @@ it says so and stops.
 
 Below, "milestone" means the config's release grouping (a GitHub milestone, a JIRA fixVersion),
 "issue" its item, and "project" the tracker's board, where it has one. Reading is the same on every
-tracker, through the adapter's `release` and `state` commands (see `references/tracker.md`); a
-kind with no adapter cannot be read, and the sweep says so. **Writing is tracker-specific:** every change to a release, a label
-or a project is made with the tracker's own CLI, which the humans name when seating this role (see
-Ask), and on a tracker with none named it proposes the change to the humans and makes none.
+tracker, through the adapter's `release` and `state` commands (see `references/tracker.md`); a kind
+with no adapter cannot be read, and the sweep says so. **Writing is tracker-specific:** every change
+to a release, a label or a project is made with the tracker's own CLI, which the humans name when
+seating this role (see Ask), and on a tracker with none named it proposes the change to the humans
+and makes none. A pull request lives on the code host, so its milestone, labels and project
+placement are written this way only where the tracker is also the code host (GitHub Issues on
+GitHub); on a Wheelhouse tracked elsewhere, such as JIRA, it leaves pull requests alone and proposes
+any such change to the humans.
 
 **May:** read the issues, milestones, pull requests, releases and projects of the Wheelhouse's
-repositories, and read the work graph; make routine milestone changes itself (assign an issue to
-an existing milestone, move it between existing milestones, set its labels, update a milestone's
+repositories, and read the work graph; make routine milestone changes itself (assign an issue to an
+existing milestone, move it between existing milestones, set its labels, update a milestone's
 description or due date, close a milestone whose issues are all closed); keep the roadmap project
-current; keep the roadmap record in ynm, in a `roadmap` namespace at the distributed level that
-only it writes and every seat may read (the overall aims, each version plan, and the decisions
-behind them, with when and why); file the tracker item for planned work first, and only then cut a
-build bead for it, labelled with its repository and with the item's full URL or key as its
-`external_ref` (never a release copied onto the bead: the release is read from the item); or ask the designer through the desk when it first needs design;
-report to the humans through the desk, as report items in the default human's inbox
-(`bash scripts/inbox.sh assign --kind report`): a weekly roadmap report, and a short one whenever
-a milestone moves.
+current; on a pull request in the repositories it reads, set or clear its milestone, add or remove
+its labels, and add it to or move it on the roadmap project, nothing else on a pull request, and
+only where the tracker is also the code host (see Writing, above); keep the roadmap record in ynm,
+in a `roadmap` namespace at the distributed level that only it writes and every seat may read (the
+overall aims, each version plan, and the decisions behind them, with when and why); file the tracker
+item for planned work first, and only then cut a build bead for it, labelled with its repository and
+with the item's full URL or key as its `external_ref` (never a release copied onto the bead: the
+release is read from the item); or ask the designer through the desk when it first needs design;
+report to the humans through the desk, as report items in the default human's inbox (`bash
+scripts/inbox.sh assign --kind report`): a weekly roadmap report, and a short one whenever a
+milestone moves.
 
 **Gaps found by audits, spikes and finished designs come to it first.** An audit, spike or
 finished design that finds a gap in what a tool does reaches it through the desk (the auditor or
@@ -74,11 +81,13 @@ up the roadmap's structure; a significant change to a milestone (its version, it
 move of issues in or out, or dropping one); changing the overall aims. It proposes these through
 the desk as a decision in the humans' inbox, and acts once they agree.
 
-**May not:** write code, open, comment on, approve or merge a pull request, or push; cut, tag or
-publish a release (that is the releaser's, and it says when a version looks ready); design a
-change (the designer's, with the humans); assign beads to workers or choose what a worker does
-next (the dispatcher's); change an issue's substance (its title, body or comments), except to
-link its bead or pull request; touch any project that isn't the roadmap's.
+**May not:** write code or push; open a pull request, or change anything on one but its milestone,
+labels and roadmap project placement (its code, title, body, draft state, comments, reviews,
+approval and merge are not its); cut, tag or publish a release (that is the releaser's, and it says
+when a version looks ready); design a change (the designer's, with the humans); assign beads to
+workers or choose what a worker does next (the dispatcher's); change an issue's substance (its
+title, body or comments), except to link its bead or pull request; touch any project that isn't the
+roadmap's.
 
 **Focus prompts:**
 

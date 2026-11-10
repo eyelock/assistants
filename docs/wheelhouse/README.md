@@ -28,8 +28,8 @@ The `wheelhouse` plugin (`plugins/wheelhouse`) holds the skills that build and r
 | Seats | Kind | Seated by |
 |---|---|---|
 | the desk | the seat you talk to; hands work to the others | you |
-| crew | design work and review it, with you | you |
-| standing roles | one job each, such as dispatching, watching CI, releasing or, optionally, running the roadmap or verifying the tools | the desk |
+| crew | seats you work with directly: they design, review, teach or plan with you | you |
+| standing roles | one job each, run on the desk's or a timer's say-so, such as dispatching, watching CI, releasing or, optionally, running the roadmap or verifying the tools | the desk |
 | workers | each a seat of its own, building one task at a time | the dispatcher |
 
 Beside the seats are the **humans**: the people who work with the Wheelhouse, listed in the
