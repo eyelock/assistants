@@ -276,6 +276,8 @@ rules. In short:
   and the desk is the only harness that includes the whole plugin (no `pick`). A skill the plugin
   gains later reaches a seat only when its `pick` names it, so add it to the picks when the plugin
   gains one.
+  Always keep `skills/work-graph` in a seat's `pick`: it carries `wheelhouse-lib.sh`, which every
+  wheelhouse script sources, so a seat without it has scripts that exit 3 (the doctor warns).
 - `labels` is an object of key to value, and stamps every run record of the seat with
   `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
   `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out

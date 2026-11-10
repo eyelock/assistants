@@ -87,6 +87,7 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [] } =
   const bash = spawnSync("sh", ["-c", "command -v bash"], { encoding: "utf8" }).stdout.trim();
   return {
     dir,
+    wh,
     check(extra = {}) {
       const out = spawnSync(bash, [checkSh, "--dir", wh], { encoding: "utf8", env: env(extra) });
       assert.equal(out.status, 0, out.stderr);
@@ -226,6 +227,28 @@ test("refresh reads ynm for the ynm backend", () => {
   try {
     assert.deepEqual(w.refresh().seatsNotReady, []);
     assert.deepEqual(w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat), ["eno"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat that picks skills but not work-graph is warned, the desk and a seat that picks it are not", () => {
+  const w = wheelhouse({ memory: "beads" });
+  try {
+    const harness = (cmd, includes) => {
+      const dir = join(w.wh, cmd === "hq" ? "." : `harnesses/${cmd}`, ".agents/harness");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0", includes }));
+    };
+    harness("hq", [{ git: "../..", path: "plugins/wheelhouse" }]);
+    harness("eno", [{ git: "../..", pick: ["skills/wake", "skills/work-graph"] }]);
+    harness("wick", [{ git: "../..", pick: ["skills/wake", "skills/doctor"] }]);
+    const bad = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.detail, /: wick$/);
+    harness("wick", [{ git: "../..", pick: ["skills/wake", "skills/work-graph"] }]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
   } finally {
     w.done();
   }
