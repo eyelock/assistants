@@ -275,6 +275,22 @@
         "The reply gives the fix: a labels object with wheelhouse set to hq in each harness's plugin.json",
         "Nothing was changed: the evidence shows strachan still without labels and dalglish still labelled wheelhouse:other"
       ]
+    },
+    {
+      "id": 18,
+      "name": "seat-wrong-label",
+      "prompt": "Give the Wheelhouse a once-over before I start the seats.",
+      "setup": "../../evals/files/doctor-wrong-label.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short --untracked-files=all | grep -v \"^?? .beads/\" ; echo; for m in .agents/harness/plugin.json harnesses/*/.agents/harness/plugin.json; do echo \"$ jq -c .labels $m\"; jq -c .labels \"$m\"; done",
+      "expected_output": "Runs the check. The Wheelhouse is set up right and shared, but dalglish's harness carries wheelhouse:other, another Wheelhouse's label. Reports it once, as a warning about the wrong label (not also as a missing one), with the fix (labels: {\"wheelhouse\": \"hq\"}, replacing the other value), and asks before changing it.",
+      "assertions": [
+        "The reply says dalglish's harness carries another Wheelhouse's label (wheelhouse:other)",
+        "The reply does not also list dalglish as missing the label",
+        "The reply gives the fix: a labels object with wheelhouse set to hq in dalglish's plugin.json",
+        "Nothing was changed: the evidence shows dalglish still labelled wheelhouse:other"
+      ]
     }
   ]
 }

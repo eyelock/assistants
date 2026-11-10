@@ -72,7 +72,8 @@ test("the doctor warns about a harness carrying another Wheelhouse's label", () 
       const c = labelled(dir);
       assert.equal(c.ok, false);
       assert.match(c.detail, /another Wheelhouse's label: okafor/);
-      assert.match(c.detail, /without the label wheelhouse:hq: okafor/);
+      assert.doesNotMatch(c.detail, /without the label/, "a wrong label is not also a missing one");
+      assert.equal(c.detail.match(/okafor/g).length, 1, "the harness is listed once");
     },
   );
 });

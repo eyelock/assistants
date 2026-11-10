@@ -212,8 +212,13 @@ if [ -f "$roster" ]; then
     wronglabel=""
     while IFS=$'\t' read -r cmd harness; do
       manifest="$dir/$harness/.agents/harness/plugin.json"
-      jq -e --arg n "$wname" '(.labels | type == "object") and .labels.wheelhouse == $n' "$manifest" >/dev/null 2>&1 || nolabel="$nolabel $cmd"
-      jq -e --arg n "$wname" '(.labels | type == "object") and (.labels.wheelhouse != null) and .labels.wheelhouse != $n' "$manifest" >/dev/null 2>&1 && wronglabel="$wronglabel $cmd"
+      # missing, wrong and right are three separate states, so a harness is reported once
+      state=$(jq -r --arg n "$wname" 'if ((.labels | type == "object") and (.labels.wheelhouse != null)) then (if .labels.wheelhouse == $n then "ok" else "wrong" end) else "missing" end' "$manifest" 2>/dev/null)
+      case "$state" in
+        ok) ;;
+        wrong) wronglabel="$wronglabel $cmd" ;;
+        *) nolabel="$nolabel $cmd" ;;
+      esac
     done < <({ printf 'desk\t.\n'; jq -r '.seats[] | select(.harness != ".") | [.command, .harness] | @tsv' "$roster" 2>/dev/null; })
     if [ -n "$nolabel" ] || [ -n "$wronglabel" ]; then
       detail=""
