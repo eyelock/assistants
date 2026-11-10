@@ -417,9 +417,17 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
   const w = wheelhouse();
   try {
     writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    // The plugin once shipped the Wheelhouse's wake.sh (v1), then v2: the Wheelhouse is only behind.
     const pluginDir = join(w.dir, "plugin");
+    mkdirSync(pluginDir, { recursive: true });
+    git(pluginDir, "init", "-q");
+    write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v1\n");
+    git(pluginDir, "add", "-A");
+    git(pluginDir, "commit", "-qm", "v1");
     write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v2\n");
     write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# not carried here\n");
+    git(pluginDir, "add", "-A");
+    git(pluginDir, "commit", "-qm", "v2");
 
     const offer = w.run(["HEAD..HEAD", "--plugin", pluginDir]);
     assert.equal(offer.status, 0, offer.stderr);
@@ -436,6 +444,54 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v2/);
     assert.equal(existsSync(join(w.wh, "scripts", "patrol.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("--update never overwrites a script that carries changes the plugin never shipped: it keeps it and shows the diff", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    const pluginDir = join(w.dir, "plugin");
+    mkdirSync(pluginDir, { recursive: true });
+    git(pluginDir, "init", "-q");
+    write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# upstream v1\n");
+    write(pluginDir, "skills/work-graph/scripts/inbox.sh", "#!/bin/sh\n# inbox v1\n");
+    git(pluginDir, "add", "-A");
+    git(pluginDir, "commit", "-qm", "v1");
+    write(pluginDir, "skills/work-graph/scripts/inbox.sh", "#!/bin/sh\n# inbox v2\n");
+    git(pluginDir, "add", "-A");
+    git(pluginDir, "commit", "-qm", "inbox v2");
+    // The Wheelhouse's wake.sh (v1 in its own history) was never shipped by the plugin; its inbox.sh is the plugin's v1.
+    write(w.wh, "scripts/inbox.sh", "#!/bin/sh\n# inbox v1\n");
+    git(w.wh, "add", "-A");
+    git(w.wh, "commit", "-qm", "inbox");
+
+    const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
+    assert.equal(done.status, 0, done.stderr);
+    assert.deepEqual([...done.json.upstream.pluginScriptsDiffer].sort(), ["scripts/inbox.sh", "scripts/wake.sh"]);
+    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/inbox.sh"]);
+    assert.deepEqual(done.json.upstream.pluginScriptsKept.map((k) => k.script), ["scripts/wake.sh"]);
+    assert.match(done.json.upstream.pluginScriptsKept[0].diff, /-# v1\n\+# upstream v1/);
+    assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /# v1/);
+    assert.match(readFileSync(join(w.wh, "scripts", "inbox.sh"), "utf8"), /inbox v2/);
+    assert.ok(done.json.notes.some((n) => /left alone.*scripts\/wake\.sh/.test(n)), JSON.stringify(done.json.notes));
+  } finally {
+    w.done();
+  }
+});
+
+test("a plugin with no git history to check against leaves a differing script alone", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    const pluginDir = join(w.dir, "plugin");
+    write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v2\n");
+    const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
+    assert.deepEqual(done.json.upstream.pluginScriptsCopied, []);
+    assert.deepEqual(done.json.upstream.pluginScriptsKept.map((k) => k.script), ["scripts/wake.sh"]);
+    assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v1/);
   } finally {
     w.done();
   }
