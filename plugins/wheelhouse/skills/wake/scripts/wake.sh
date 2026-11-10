@@ -312,7 +312,7 @@ if [ "$format" = json ]; then
 fi
 
 jq -r '
-  def retire(id; why): if .backend == "beads" then "bd forget -- \(id)" else "ynm forget --memory-id \(id) --reason \"\(why)\"" end;
+  def retire(id; why): "bash scripts/memory.sh forget --id \(id) --reason \"\(why)\"";
   def list(xs; empty_text): if (xs | length) == 0 then empty_text else (xs | map("- " + .) | join("\n")) end;
   "# Waking: \(.seat)\n",
   ([if .sync.memory == "failed" then (if .backend == "beads" then "memory and the work graph (bd sync)" else "memory (ynm sync)" end) else empty end,

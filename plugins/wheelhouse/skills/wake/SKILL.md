@@ -25,8 +25,8 @@ to what other machines and seats wrote. With ynm that is memory (`ynm sync`) whe
 has a git remote, and the work graph (`bd sync`, which pulls and then pushes) when it has a Dolt
 remote. With Beads, memory and work are one database, so one `bd sync` (needing a Dolt remote)
 gives one result for both. On either backend the block shows the shared facts (never the events, which record bead outcomes)
-(at most ten) as **What the Wheelhouse knows**, and with Beads the command to retire your handoff note is
-`bd forget -- <key>` rather than `ynm forget`. A sync never stops the wake. If one fails, the block opens with
+(at most ten) as **What the Wheelhouse knows**. The command to retire your handoff note is the same on
+either backend, `bash scripts/memory.sh forget --id <id> --reason "picked up"`. A sync never stops the wake. If one fails, the block opens with
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
@@ -43,7 +43,7 @@ effort: a crash skips it, and the next wake's sync catches up.
 
 **If there is no wake script** (no `scripts/wake.sh`, or it fails), gather the same yourself
 rather than starting blind. First your memory: identity, handoff notes and Kudos, one recall for
-each, since `--tags` matches only memories carrying every tag it is given:
+each, by its `--kind`:
 
 ```bash
 bash scripts/memory.sh recall --seat <command> --kind identity --limit 1
