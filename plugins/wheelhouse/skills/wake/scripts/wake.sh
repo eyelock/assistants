@@ -52,8 +52,9 @@
 # --no-sync it syncs neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, backend, firstWake, identity, mandate,
-# handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned, unassignedReady (titles, most
-# urgent first), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, inbox (the desk's
+# handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned,
+# retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
+# unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
 # null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
@@ -338,11 +339,23 @@ while IFS=$'\t' read -r title prurl; do
     esac
   fi
   inprogress=$(jq -c --arg t "$title" '. + [$t]' <<<"$inprogress")
-done < <(jq -r '.[] | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' <<<"$wipbeads" 2>/dev/null)
+done < <(jq -r --arg own "retro:$seat" '.[] | select(((.labels // []) | index($own)) | not) | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' <<<"$wipbeads" 2>/dev/null)
+# The seat's own retro bead (labelled retro:<seat>) is its retro cycle, not its work: it is shown
+# apart, and never comes before the bead the seat was woken or asked for. Other beads labelled retro
+# (a review bead, a bead handed to the coach between rounds) are ordinary work for whoever holds
+# them. Nobody picks up an unassigned retro bead.
+own="retro:$seat"
+notown='select(((.labels // []) | index($own)) | not)'
+isown='select(((.labels // []) | index($own)))'
+notretro='select(((.labels // []) | index("retro")) | not)'
 fetch readybeads ready --assignee "$seat"
-assigned=$(jq -c 'map(select(.issue_type != "epic") | .title)' <<<"$readybeads" 2>/dev/null || echo '[]')
+assigned=$(jq -c --arg own "$own" "map(select(.issue_type != \"epic\") | $notown | .title)" <<<"$readybeads" 2>/dev/null || echo '[]')
 fetch openbeads ready --unassigned
-unassigned=$(jq -c 'map(select(.issue_type != "epic")) | sort_by(.priority) | map(.title)' <<<"$openbeads" 2>/dev/null || echo '[]')
+unassigned=$(jq -c "map(select(.issue_type != \"epic\") | $notretro) | sort_by(.priority) | map(.title)" <<<"$openbeads" 2>/dev/null || echo '[]')
+# When bd was busy these reads are empty, not absent: workRead says so, and the block names it.
+retro=$( { echo "$wipbeads"; echo "$readybeads"; } |
+  jq -sc --arg own "$own" "[.[][] | $isown | {id, title}] | unique_by(.id) | map(.title)" 2>/dev/null)
+[ -n "$retro" ] || retro='[]'
 workread=true; [ "$workfail" = 0 ] || workread=false
 
 # The desk's wake opens with the humans' inbox. inbox.sh sits beside this
@@ -375,12 +388,12 @@ fi
 
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
-  --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" \
+  --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
   --argjson inbox "$inbox" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
-    inProgress: $inprogress, assigned: $assigned, unassignedReady: $unassigned, workRead: $workread,
+    inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
     sync: {memory: $memsync, work: $worksync}, inbox: $inbox
   }')
 
@@ -454,5 +467,9 @@ jq -r '
   ((if (.inProgress | length) > 0 then "In progress, yours: " + (.inProgress | join("; ")) + "\n" else "" end)
     + list(.assigned; "Nothing assigned to you.") + "\n"),
   (if (.unassignedReady | length) == 0 then "Ready and unassigned: none."
-    else "Ready and unassigned:\n" + (.unassignedReady | map("- " + .) | join("\n")) end) end)
+    else "Ready and unassigned:\n" + (.unassignedReady | map("- " + .) | join("\n")) end) end),
+  (if (.retro | length) == 0 then empty
+    else "\n## Your retro\n", (.retro | map("- " + .) | join("\n")),
+      "\nA retro bead never comes before the bead you were woken or asked for: finish that first. In a Wheelhouse that runs a retro cycle, your retro is opened for you (by the coach, or by the human with --focus retro): then do only the round your bead shows, and report back. Never release one with bd unclaim: if you must stop, reassign it to the coach. If you have a retro skill, it says what to do; if you have none, do not guess at the rounds: leave the bead as it is and tell the desk or the human that your seat has a retro bead but no retro skill.\n"
+    end)
 ' <<<"$json"
