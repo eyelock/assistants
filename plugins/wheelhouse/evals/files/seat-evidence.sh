@@ -25,5 +25,7 @@ for h in harnesses/*/; do
   echo; echo "\$ cat ${h}.agents/harness/plugin.json"; cat "${h}.agents/harness/plugin.json" 2>/dev/null || echo "(missing)"
   echo; echo "\$ cat ${h}AGENTS.md"; cat "${h}AGENTS.md" 2>/dev/null || echo "(missing)"
 done
+echo; echo '$ desk manifest'; jq -c '{name, labels}' .agents/harness/plugin.json
 echo; echo '$ desk delegates_to'; jq -c '.delegates_to' .agents/harness/plugin.json
 echo; echo '$ roster seats'; jq -c '.seats[]' skills/roster/assets/roster.json
+echo; echo '$ roster excluded'; jq -c '.excluded' skills/roster/assets/roster.json

@@ -303,7 +303,7 @@
     {
       "id": 18,
       "name": "trial-over-crew",
-      "prompt": "The trial of Gore is over: we are keeping the seat. I am back on the default branch.",
+      "prompt": "The trial of Gore, the reviewer I had you seat from the starter-team reviewer template, is over: we are keeping the seat. I am back on the default branch.",
       "setup": "../../evals/files/seat-trial-gore.sh",
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],

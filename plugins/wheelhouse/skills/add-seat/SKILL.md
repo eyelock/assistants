@@ -115,6 +115,10 @@ official, so nothing about it is official when it is written.
      reused;
    - leave its ynm namespace `seat/<command>` as it is: it is the record.
 
+   Make the roster change (the `excluded` entry) on a branch of your own from
+   `origin/<default branch>`, in a worktree of your own, never in the shared checkout. In your
+   report, name the seat each bead went to.
+
 **Who winds a dropped seat down** is the seat the roster's `winds_down` names, the command of a
 seat, such as `"winds_down": "<command>"`, beside `excluded`. Where it is not set, the desk does
 it. Set it when the Wheelhouse has a seat for it (a coach, say); never assume one exists.
