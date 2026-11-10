@@ -365,9 +365,12 @@ with; a standing role or a worker hands it back to the desk.
    `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
    the trial.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, the command of the seat seating it (or `human` when you aren't in
-   a seat, or the human wrote every word; the desk's own command is valid even when it is the
-   Wheelhouse's name, such as `hq`, but a Wheelhouse's label that is no seat's command is not); `role` when it was seated from a starter-team template;
+   path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, recorded as the template's own `seated-by` says when the seat came from a
+   starter-team template (the reviewer template says `human`, so the human births that seat; the
+   template wins over the command of the seat doing the seating). When no template sets it, it is
+   the command of the seat seating it (or `human` when you aren't in a seat, or the human wrote
+   every word; the desk's own command is valid even when it is the Wheelhouse's name, such as
+   `hq`, but a Wheelhouse's label that is no seat's command is not); `role` when it was seated from a starter-team template;
    and `specialities` for a specialist worker. On a trial, the same applies: it waits for the
    end of the trial.
 4. Check the Wheelhouse with the `doctor` skill.

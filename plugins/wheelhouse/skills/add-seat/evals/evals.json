@@ -308,9 +308,9 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
-      "expected_output": "Makes the trial official: adds the roster entry for Gore (group crew, role reviewer, seated-by the desk's command, hq, or human) and the desk's delegates_to entry to the branch seat/gore, in a worktree of its own that it removes again, so they arrive with the merge. Tells the human the pull request leaves draft, is reviewed and merged, then the seat is reinstalled with ynh install ./harnesses/gore and the Wheelhouse is checked with the doctor. Changes nothing in the shared checkout.",
+      "expected_output": "Makes the trial official: adds the roster entry for Gore (group crew, role reviewer, seated-by human, as the reviewer template says) and the desk's delegates_to entry to the branch seat/gore, in a worktree of its own that it removes again, so they arrive with the merge. Tells the human the pull request leaves draft, is reviewed and merged, then the seat is reinstalled with ynh install ./harnesses/gore and the Wheelhouse is checked with the doctor. Changes nothing in the shared checkout.",
       "assertions": [
-        "On the branch seat/gore, the roster's seats include Gore with group crew and role reviewer, recording seated-by as the command of the seat doing the seating (the desk, hq) or human",
+        "On the branch seat/gore, the roster's seats include Gore with group crew and role reviewer, recording seated-by human, as the reviewer template says",
         "On the branch seat/gore, the desk's delegates_to includes harnesses/gore",
         "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed",
         "The reply says the pull request is reviewed and merged by a human, and that the seat is reinstalled from the same path (ynh install ./harnesses/gore)",
