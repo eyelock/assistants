@@ -27,7 +27,7 @@ Work from the Wheelhouse repository root, the folder holding `.agents/harness/pl
 Most Wheelhouses need the same first seats. Each is a template, one Markdown file per role, in
 this skill's `assets/starter-team/`: `designer`, `reviewer`, `dispatcher`, `ci-watcher`,
 `releaser`, `programme-manager` (optional), `verifier` (optional), `worker` and `specialist-worker` (optional). A file's
-frontmatter gives its `order`, `group`, `focus`, `model` (its tier) and who seats it (`seated-by`); its body gives the
+frontmatter gives its `order`, `group`, `focus`, `model` (its tier) and the role that seats it (`seated-by`: `human`, `desk` or `dispatcher`); its body gives the
 mandate, what the seat may and may not do, the focus prompt, and under `## Ask`, the questions to
 ask before seating it. A role with more than one standing order lists its focuses
 (`focus: [sweep, report]`), each with its prompt under `**Focus prompts:**`: the seat gets one
@@ -365,9 +365,7 @@ with; a standing role or a worker hands it back to the desk.
    `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
    the trial.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
-   path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, recorded as the template's own `seated-by` says when the seat came from a
-   starter-team template (the reviewer template says `human`, so the human births that seat; the
-   template wins over the command of the seat doing the seating). When no template sets it, it is
+   path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, which a starter-team template names as a role, not a command: `human` is recorded as it stands (the reviewer template says `human`, so the human births that seat); `desk` or `dispatcher` is recorded as the command of the seat holding that role (the desk's own command, such as `hq`, or the dispatcher's, such as `anderson`). The template wins over the command of the seat doing the seating. With no template, it is
    the command of the seat seating it (or `human` when you aren't in a seat, or the human wrote
    every word; the desk's own command is valid even when it is the Wheelhouse's name, such as
    `hq`, but a Wheelhouse's label that is no seat's command is not); `role` when it was seated from a starter-team template;
