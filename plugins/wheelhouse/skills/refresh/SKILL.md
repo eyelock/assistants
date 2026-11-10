@@ -58,7 +58,10 @@ is run again.
 When the diff is empty, or with `--upstream`, it also compares each seat's cached `wheelhouse`
 include with upstream (`ynh ls --check-updates`) and lists the `ynh update local/<seat>` each one
 needs. `--update` runs them, then re-copies the plugin scripts the Wheelhouse already carries in
-`scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's.
+`scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's, and
+copies in `wake.sh`, `inbox.sh` and `memory.sh` when the Wheelhouse has none: a Wheelhouse built before
+`memory.sh` existed gets it, and can wake. (`patrol.sh` and the like are optional, so one the Wheelhouse
+doesn't carry is left alone.)
 It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
 when it can't find it. Ask before `--update`: it changes files in the repository.
 
