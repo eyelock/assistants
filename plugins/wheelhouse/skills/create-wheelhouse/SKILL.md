@@ -26,7 +26,9 @@ at a time**, in this order. Don't create anything until you have the first four.
 3. **What it reaches:** the repositories and platforms the work touches, and where each
    repository is checked out on this machine. Suggest a sibling of the Wheelhouse
    (`../<repository>`) if it isn't said.
-4. **The naming pools,** one theme per group: crew, workers and standing roles. The human picks
+4. **The naming pools,** one theme per group: crew (seats the human works with directly, such as
+   a designer, a reviewer, a tutor or a programme architect), workers, and standing roles (seats
+   that run on the desk's or a timer's say-so, such as a dispatcher, a CI watcher or a releaser). The human picks
    the themes; you may suggest names within a theme, which the human confirms. Never pick a theme
    yourself.
 5. **The default human:** the name for work that needs a human but no particular one (a merge, a
@@ -57,7 +59,9 @@ at a time**, in this order. Don't create anything until you have the first four.
    be opened through `open-pr.sh` for that tracker. Say so, and offer to write the adapter as a
    bead. If the request doesn't say and you aren't asking, use none, and say so in the report.
 9. **The first seats,** if any. Usually leave them for the starter team (step 5), which the desk
-   offers the human one role at a time.
+   offers the human one role at a time. When the human names a role of their own, put it in a
+   group by asking whether they will work with that seat directly (crew) or whether it runs on the
+   desk's or a timer's say-so (standing).
 
 ## 2. Check the tools
 
@@ -84,7 +88,9 @@ the files it finds, and would commit the human's.
       tracked in Markdown files.
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
-   4. **Hand off, don't stop.** Write your own notes and ask to restart.
+   4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
+      subagent has no session of its own to restart: it ends by returning its report, and the seat
+      that woke it waits for it before handing off or exiting.
    5. **Never falsify the record.** Close beads with what actually happened. The one forced
       close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
       only through `inbox.sh close`, once the work is verified done.
@@ -182,7 +188,8 @@ the files it finds, and would commit the human's.
    - **A private home.** Each seat's memory is its own, in its namespace `seat/<name>`.
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
-3. `skills/roster/SKILL.md`, the naming rules (pools by group; never reuse a name in `seats`,
+3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
+   with directly, standing roles run on the desk's or a timer's say-so; never reuse a name in `seats`,
    even a retired one; never use one in `excluded`; the command is the name in lowercase ASCII;
    ask for more names when a pool runs out; humans are people, never seats, and their names are
    theirs, not the pools'), and `skills/roster/assets/roster.json`:

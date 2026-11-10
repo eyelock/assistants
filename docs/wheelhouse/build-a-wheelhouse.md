@@ -151,7 +151,7 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 1. A human decides. Seats propose; they never merge, release or publish without being told to.
 2. Work lives in Beads, memory in ynm. Never `bd remember`, and no work tracked in Markdown.
 3. Claim before you start, as yourself (`--actor <your command>`). A refused claim is someone else's work.
-4. Hand off, don't stop. Write your own notes and ask to restart.
+4. Hand off, don't stop. Write your own notes and ask to restart. A seat woken as a subagent has no session of its own to restart: it ends by returning its report, and the seat that woke it waits for it before handing off or exiting.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
 7. Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests and issues):
@@ -610,10 +610,10 @@ Expected: no output.
 
 ### The standing roles, by the desk
 
-Standing roles each run one job, mostly unattended. **Anderson** is the dispatcher: it hands
+Standing roles each run one job, on the desk's or a timer's say-so rather than as seats you work with directly. **Anderson** is the dispatcher: it hands
 ready work to idle workers, so two workers never reach for the same bead, and it seats the workers
 themselves. **Dredd** watches CI. **Tharg** cuts releases, and gets the gitflow skills for it.
-You talk to them too, to dispatch, to read CI and to plan a release. Tell the desk what each may
+You still speak to them, through the desk, to dispatch, to read CI and to plan a release. Tell the desk what each may
 and may not do; it writes each harness and charter with the `add-seat` skill, installs and
 commits it, and leaves their births to you:
 

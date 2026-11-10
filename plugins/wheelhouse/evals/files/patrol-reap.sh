@@ -3,7 +3,7 @@
 # watcher, Reni, holds the starter-team template's charter (harnesses/reni/AGENTS.md: the template
 # without its front matter, so its Reaping section is there to read), its dispatcher, Marr, is
 # seated, and the work graph holds the bead that widget #12 closes, with a PR: note naming its
-# pull request. REAP_CONTROL=1 removes the Reaping section from that charter. The pull request names the bead in its title too, so no second look at GitHub is needed.
+# pull request. REAP_CONTROL=1 removes the Reaping section from that charter. The pull request's title cites a different bead (an investigation that stays open), so only the PR: note matches it.
 set -euo pipefail
 . "$EVAL_FIXTURES/patrol-lib.sh"
 patrol_wheelhouse
@@ -26,8 +26,11 @@ git add harnesses && git commit -qm "chore: Seat Reni, the CI watcher"
 
 bead=$(new_bead "Fix the widget handle leak" -p 2 -l repo:widget)
 bd update "$bead" --append-notes "PR: https://github.com/example/widget/pull/12" >/dev/null
-# The merged pull request names its bead in its title, as a worker's pull request does.
-pr12() { pr 12 "$@" | jq -c --arg b "$bead" '.title = "fix: the widget handle leak (\($b))"'; }
+# The merged pull request's title names a different bead, the investigation the fix followed from,
+# as a pull request that cites its origin does. Only the PR: note on the fix bead says which bead
+# the pull request closes, and the charter's Reaping section says to match by that note first.
+spike=$(new_bead "Investigate the widget handle leak" -p 2 -l repo:widget)
+pr12() { pr 12 "$@" | jq -c --arg b "$spike" '.title = "fix: the widget handle leak (follows \($b))"'; }
 
 gh_state "[$(pr12 OPEN SUCCESS), $(pr 13 OPEN SUCCESS)]" '[]'
 patrol_baseline

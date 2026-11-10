@@ -79,15 +79,15 @@ test("beads: identity, handoff, kudos, close notes and shared facts come from Be
   assert.doesNotMatch(calls, /^ynm /m);
 });
 
-test("beads: the text block shows the facts and the bd forget retire command", () => {
+test("beads: the text block shows the facts and the memory.sh retire command", () => {
   const { r } = wake("beads", { args: ["hynde", "--format", "text", "--no-sync"] });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /## What the Wheelhouse knows\n\n?- Pull requests target develop\./);
-  assert.match(r.stdout, /`bd forget -- seat\/hynde\/handoff`/);
-  assert.doesNotMatch(r.stdout, /ynm forget/);
+  assert.match(r.stdout, /`bash scripts\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
+  assert.doesNotMatch(r.stdout, /ynm forget|bd forget/);
 });
 
-test("ynm: the retire command is ynm's and there are no shared facts to show", () => {
+test("ynm: there are no shared facts to show", () => {
   const { r } = wake("ynm", { args: ["hynde", "--format", "text", "--no-sync"] });
   assert.equal(r.status, 0, r.stderr);
   assert.doesNotMatch(r.stdout, /What the Wheelhouse knows/);
