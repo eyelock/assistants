@@ -15,7 +15,8 @@
 # "## What it reaches" as a backticked relative path, such as `../api`.
 #
 # The snapshot: --snapshot <file>, else .wheelhouse/patrol.json in the
-# Wheelhouse repository (the folder ignores itself in git). --dry-run compares
+# Wheelhouse repository (the folder ignores itself in git, as it does for any
+# snapshot named under .wheelhouse/). --dry-run compares
 # and prints without saving it, so a timer can ask whether there's news and
 # leave the patrol itself to the seat it wakes.
 #
@@ -99,10 +100,14 @@ for r in "${repos[@]}"; do
   [[ "$r" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die 1 "$r is not owner/name"
 done
 
-if [ -z "$snapshot" ]; then
+[ -n "$snapshot" ] || snapshot=.wheelhouse/patrol.json
+# A snapshot inside the Wheelhouse's .wheelhouse/ folder is local state: the
+# folder ignores itself in git, whether the snapshot is the default or named.
+snap_dir=$(dirname "$snapshot")
+snap_parent=$(cd -P "$(dirname "$snap_dir")" 2>/dev/null && pwd -P)
+if [ "$(basename "$snap_dir")" = .wheelhouse ] && [ "$snap_parent" = "$(pwd -P)" ]; then
   mkdir -p .wheelhouse || die 3 "could not make .wheelhouse"
   [ -f .wheelhouse/.gitignore ] || printf '*\n' > .wheelhouse/.gitignore
-  snapshot=.wheelhouse/patrol.json
 fi
 old='null'
 if [ -f "$snapshot" ]; then
