@@ -317,7 +317,7 @@ fi
 missing="[]"
 for s in $desk $seats; do
   [ -n "$s" ] || continue
-  if [ "$s" = "$desk" ]; then cmd="ynh install ."; birth="the human"; else cmd="ynh install harnesses/$s"; birth="the human"; fi
+  if [ "$s" = "$desk" ]; then cmd="ynh install ."; else cmd="ynh install harnesses/$s"; fi
   birth=$(wl_born_by "$roster" "$s"); birth=${birth:-the human}
   inst="null"
   [ "$installed_json" != "null" ] && inst=$(jq -c --arg s "$s" 'index($s) != null' <<<"$installed_json")
