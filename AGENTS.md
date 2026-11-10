@@ -87,10 +87,21 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 `develop` and `main` are meant to be protected by a merge queue: a pull request merges only after All
 Clear passes on the branch as it will be with the queued pull requests ahead of it merged, so two pull
 requests that are each green cannot combine red. `develop` queues as squash; `main` queues as a merge
-commit. **This is not on yet.** It starts when the rulesets exist (see the pull request that added this
-section), and GitHub offers merge queues to organization-owned repositories, so a personal-account
-repository like this one may be refused; the fallback is strict required status checks. Until the
-rulesets exist, protection is the classic rule requiring `Check`.
+commit. GitHub offers merge queues to organization-owned repositories, so a personal-account repository
+like this one may be refused; the fallback is strict required status checks.
+
+What protects each branch depends on how far the admin step got (it has three stages):
+
+- Before stage 2 finishes for a branch: the classic rule, requiring `Check`, with admins enforced.
+- After stage 2, with stage 3 not run or refused: the branch's ruleset (All Clear, a pull request,
+  no deletion, no force push), and no queue. Pull requests merge one at a time, as before.
+- After stage 3: the ruleset and the merge queue.
+
+The rulesets' bypass list holds the repository admin role in `"bypass_mode": "pull_request"`, not
+`"always"`. Every seat pushes under the admin account, and classic protection refuses even an admin's
+direct push (`enforce_admins`); `"always"` would let a seat's direct push to `develop` or `main` land.
+`pull_request` lets the admin bypass the rules only on a pull request, which is all the release
+back-merge below needs, and a direct push is still refused.
 `ci.yml` triggers on `merge_group` and every job in it runs there. Any new required check must also
 trigger on `merge_group`, and must never be skipped by a path filter or by a missing head ref in the queue.
 
