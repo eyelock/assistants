@@ -84,7 +84,7 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
   says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is the human's when it is crew, standing
   or the desk, and the dispatcher's when it is a worker; the entry's `reminder` says which.
   Install it for the human to run, don't birth it.
-- `upstream`: `updates`, `pluginScriptsDiffer`, `pluginScriptsCopied` and `pluginScriptsKept` (each `{script, diff}`).
+- `upstream`: `updates`, `pluginScriptsDiffer`, `pluginScriptsCopied` and `pluginScriptsKept` (each `{script, reason, diff, diffCutLines}`: `reason` is `local-changes` when the script carries changes the plugin never shipped, or `cannot-tell` when the plugin's history can't say; `diff` is cut at 60 lines and `diffCutLines` counts the lines cut, 0 when none).
 - `doctor`: the `doctor` skill's `ok` and its failing checks, run after the installs.
 - `notes`: what it couldn't do, such as no `ynh` on `PATH`.
 
