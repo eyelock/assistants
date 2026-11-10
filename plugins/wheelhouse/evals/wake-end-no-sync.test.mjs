@@ -11,12 +11,14 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
+const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 function run(args) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-end-no-sync-"));
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));
@@ -65,6 +67,7 @@ function runStub(ynmBody, env = {}, bdBody = "exit 0") {
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));
