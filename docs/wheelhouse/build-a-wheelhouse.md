@@ -151,7 +151,7 @@ The tower Wheelhouse: the seats that build and release the widget tools.
 1. A human decides. Seats propose; they never merge, release or publish without being told to.
 2. Work lives in Beads, memory in ynm. Never `bd remember`, and no work tracked in Markdown.
 3. Claim before you start, as yourself (`--actor <your command>`). A refused claim is someone else's work.
-4. Hand off, don't stop. Write your own notes and ask to restart.
+4. Hand off, don't stop. Write your own notes and ask to restart. A seat woken as a subagent has no session of its own to restart: it ends by returning its report, and the seat that woke it waits for it before handing off or exiting.
 5. Never falsify the record. Close beads with what actually happened.
 6. You may refuse a task that is unclear or outside your charter, and hand it back to the desk.
 7. Name things fully. In everything you write for people (chat, beads, notes, handoffs, pull requests and issues):

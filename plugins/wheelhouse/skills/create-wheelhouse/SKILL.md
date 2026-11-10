@@ -84,7 +84,9 @@ the files it finds, and would commit the human's.
       tracked in Markdown files.
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
-   4. **Hand off, don't stop.** Write your own notes and ask to restart.
+   4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
+      subagent has no session of its own to restart: it ends by returning its report, and the seat
+      that woke it waits for it before handing off or exiting.
    5. **Never falsify the record.** Close beads with what actually happened. The one forced
       close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
       only through `inbox.sh close`, once the work is verified done.

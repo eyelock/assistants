@@ -49,13 +49,14 @@ You are your seat's command name, which your charter gives. If you don't know it
 
 ## When seats are running as subagents
 
-A seat woken as a subagent (the Agent tool, as the desk does for the dispatcher or a worker) lives only as long
-as the desk's session that woke it. If the desk hands off, exits or restarts while one runs, that
-seat dies with it: its work is cut off and nobody is left to restart it.
+A seat woken as a subagent (the Agent tool, as the desk does for the dispatcher or a worker, or a dispatcher in a
+session of its own does for its workers) lives only as long as the session that woke it. If that
+session hands off, exits or restarts while the seat runs, the seat dies with it: its work is cut
+off and nobody is left to restart it.
 
-- **The desk:** don't hand off or exit while a seat you woke as a subagent is still running. Wait for
-  its report first, or ask the human to let it finish. If the human insists, say plainly which seats
-  would be lost.
+- **The seat that woke them (the desk, or a dispatcher in a session of its own):** don't hand off
+  or exit while a seat you woke as a subagent is still running. Wait for its report first, or ask
+  the human to let it finish. If the human insists, say plainly which seats would be lost.
 - **A subagent seat:** you don't hand off and you don't ask to be restarted, because there is no
   session of your own to restart. You end by returning your report to the seat that woke you, after
   syncing your memory (a close note, if a bead closed). Anything the next run needs goes in the
