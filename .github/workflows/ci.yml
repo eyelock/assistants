@@ -120,8 +120,11 @@ jobs:
 
       - name: Tools the scripts and their tests need
         run: |
-          command -v shellcheck >/dev/null 2>&1 || { [ "$RUNNER_OS" = macOS ] && brew install shellcheck || sudo apt-get install -y shellcheck; }
-          command -v jq >/dev/null 2>&1 || { [ "$RUNNER_OS" = macOS ] && brew install jq || sudo apt-get install -y jq; }
+          for tool in shellcheck jq; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              if [ "$RUNNER_OS" = macOS ]; then brew install "$tool"; else sudo apt-get install -y "$tool"; fi
+            fi
+          done
           shellcheck --version
           jq --version
 
