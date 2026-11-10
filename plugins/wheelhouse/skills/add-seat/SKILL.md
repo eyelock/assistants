@@ -56,9 +56,12 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
      `excluded` doesn't list, in the pool's order. The human can change the name in the answer;
    - the second sentence is what the role is for, in the template's own words (its opening line,
      such as "runs the roadmap on the issue tracker, so real issues close against versioned
-     milestones");
+     milestones"); give the whole sentence, including what it goes on to report to the humans;
    - the third says it is the only role offered, and that further seats follow once this one is
      official or dropped.
+
+   Write the whole offer (all three sentences and the question) in your final message: the human
+   reads that one, not what you said while checking the roster.
 
    A template with `optional: true` is offered, not assumed (say it is optional). Never seat a role
    the human hasn't agreed to. Then stop and wait for the answer: one question per message.
@@ -363,7 +366,7 @@ with; a standing role or a worker hands it back to the desk.
    the trial.
 3. Add the seat to `seats` in `skills/roster/assets/roster.json`: name, group, command, harness
    path and mandate; `model` (and `models`, for a per-vendor override); `seated-by`, the command of the seat seating it (or `human` when you aren't in
-   a seat, or the human wrote every word); `role` when it was seated from a starter-team template;
+   a seat, or the human wrote every word; never the Wheelhouse's own name or label, such as `hq`); `role` when it was seated from a starter-team template;
    and `specialities` for a specialist worker. On a trial, the same applies: it waits for the
    end of the trial.
 4. Check the Wheelhouse with the `doctor` skill.
