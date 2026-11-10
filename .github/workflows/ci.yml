@@ -101,12 +101,42 @@ jobs:
             */evals/files/*
             e2e-fixtures/*
 
+  # Every wheelhouse plugin script is linted (shellcheck, warnings and up) and its tests are run, on
+  # Linux and on macOS: the scripts run on both, and the Check job above runs on Linux alone. It sits
+  # in a job of its own so it is independent of the Check job's steps.
+  scripts:
+    name: Plugin scripts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Tools the scripts and their tests need
+        run: |
+          command -v shellcheck >/dev/null 2>&1 || { [ "$RUNNER_OS" = macOS ] && brew install shellcheck || sudo apt-get install -y shellcheck; }
+          command -v jq >/dev/null 2>&1 || { [ "$RUNNER_OS" = macOS ] && brew install jq || sudo apt-get install -y jq; }
+          shellcheck --version
+          jq --version
+
+      - name: shellcheck every plugin script
+        run: find plugins/wheelhouse/skills -path '*/scripts/*.sh' -print0 | xargs -0 shellcheck -S warning
+
+      - name: Plugin script tests
+        run: node --test plugins/wheelhouse/evals/*.test.mjs
+
   # The one required check. It fails when any job it needs failed, was cancelled or
   # was skipped, so a green All Clear means every gate actually ran and passed.
   all-clear:
     name: All Clear
     if: always()
-    needs: [check, skillspector]
+    needs: [check, skillspector, scripts]
     runs-on: ubuntu-latest
     steps:
       - name: Every gate passed
