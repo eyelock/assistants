@@ -68,7 +68,8 @@ with open issues blocked, held or with no one on them.
 
 **Places each open bug by its priority, without asking.** A bug's priority is its bead's, P0 to
 P4; for a bug with an item but no bead, it judges the priority on that scale and files the bead at it
-first. A P0 or P1 bug goes to the tool's next patch milestone (the latest release with its patch
+first; a bug that first needs design goes to the designer through the desk with that priority. A bug
+can take any milestone, as long as it is fixed in the order its priority sets. A P0 or P1 bug goes to the tool's next patch milestone (the latest release with its patch
 number raised), which it creates, as a patch release, if it is missing. A P2 bug or lower goes to
 the tool's next open minor milestone, or to its next patch milestone when there is none. It tells the
 humans only when placing a bug would change a release's theme (a bug that pulls a feature in, or holds
