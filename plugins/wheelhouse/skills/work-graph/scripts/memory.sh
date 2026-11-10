@@ -12,7 +12,9 @@
 #   backend   print ynm or beads
 #
 # Kinds: identity, birth, handoff, kudos, close-note (all of a seat: --seat),
-#        note (an FYI for a human: --human), fact (shared by the Wheelhouse).
+#        note (an FYI for a human: --human), fact (shared by the Wheelhouse),
+#        event (what happened to a bead, shared; --bead; recall --shared leaves it
+#        out unless asked for with --kind event, so it never tops a wake).
 #
 # Beads keys (a memory's id is its key):
 #   seat/<c>/identity | birth | handoff      one key each, rewritten in place
@@ -20,6 +22,7 @@
 #   seat/<c>/close-note/<UTC stamp>-<bead id>
 #   human/<c>/note/<UTC stamp>-<actor>
 #   wheelhouse/<slug>                        shared facts
+#   event/<UTC stamp>-<bead id>              shared events (bead outcomes)
 #
 # Run it from the Wheelhouse repository's root, or pass --dir.
 # Output: JSON on stdout (remember, forget and sync print one object, recall an
@@ -37,9 +40,10 @@ Usage: memory.sh remember --actor <seat> --kind <kind> (--seat <c> | --human <c>
        memory.sh forget   --id <id> --reason <why>
        memory.sh sync     [--end]
        memory.sh backend
-Kinds: identity, birth, handoff, kudos, close-note, note, fact.
+Kinds: identity, birth, handoff, kudos, close-note, note, fact, event.
 Common: --dir <wheelhouse root>   (default: the current directory)
-        --text - reads the text from stdin. close-note needs --bead; fact takes neither --seat nor --human.
+        --text - reads the text from stdin. close-note and event need --bead; fact and event take neither --seat nor --human.
+        recall --shared gives facts; ask for events with --kind event.
 EOF2
 }
 die() { local c=$1; shift; echo "memory.sh: $*" >&2; exit "$c"; }
@@ -89,7 +93,7 @@ if [ "$cmd" = backend ]; then echo "$backend"; exit 0; fi
 
 # A name that goes into a namespace or a key: lowercase letters, digits, dot, dash, underscore.
 valid_name() { [[ "$1" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; }
-valid_kind() { case "$1" in identity | birth | handoff | kudos | close-note | note | fact) return 0 ;; *) return 1 ;; esac; }
+valid_kind() { case "$1" in identity | birth | handoff | kudos | close-note | note | fact | event) return 0 ;; *) return 1 ;; esac; }
 seat_kind() { case "$1" in identity | birth | handoff | kudos | close-note) return 0 ;; *) return 1 ;; esac; }
 
 limited() {
@@ -127,7 +131,7 @@ fi
 # ---------------------------------------------------------------- scope checks
 scope_args() { # validates --seat/--human/--shared against the kind; sets scope
   if [ -n "$kind" ]; then
-    valid_kind "$kind" || die 1 "unknown kind: $kind (identity, birth, handoff, kudos, close-note, note, fact)"
+    valid_kind "$kind" || die 1 "unknown kind: $kind (identity, birth, handoff, kudos, close-note, note, fact, event)"
   fi
   [ -z "$seat" ] || valid_name "$seat" || die 1 "--seat must be a command name (lowercase letters, digits, . _ -)"
   [ -z "$human" ] || valid_name "$human" || die 1 "--human must be a command name (lowercase letters, digits, . _ -)"
@@ -142,7 +146,7 @@ scope_args() { # validates --seat/--human/--shared against the kind; sets scope
       [ -n "$human" ] || die 1 "note needs --human <command>"
       [ -z "$seat" ] && [ "$shared" = 0 ] || die 1 "note is a human's: use --human"
     else
-      [ -z "$seat" ] && [ -z "$human" ] || die 1 "fact is shared: give neither --seat nor --human"
+      [ -z "$seat" ] && [ -z "$human" ] || die 1 "$kind is shared: give neither --seat nor --human"
     fi
   fi
 }
@@ -189,6 +193,7 @@ if [ "$cmd" = remember ]; then
   [ -n "$text" ] || die 1 "remember needs non-empty text"
   scope_args
   [ "$kind" != close-note ] || [ -n "$bead" ] || die 1 "close-note needs --bead <id>"
+  [ "$kind" != event ] || [ -n "$bead" ] || die 1 "event needs --bead <id>"
   if [ "$kind" = fact ]; then
     [ -n "$slug" ] || slug=$(printf '%s' "$text" | head -1 | tr 'A-Z' 'a-z' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g; s/^-//; s/-$//' | cut -c1-40 | sed 's/-$//')
     [ -n "$slug" ] || die 1 "fact needs --slug"
@@ -204,6 +209,7 @@ if [ "$cmd" = remember ]; then
       close-note) ns="seat/$seat" subj="$bead" type=reflective ;;
       note) ns="human/$human" subj="human:$human" tag=inbox; text="From $actor: $text" ;;
       fact) type=semantic; subj="${slug}" ;;
+      event) subj="$bead" ;;
     esac
     data=$(jq -nc --arg k "$kind" --arg by "$actor" --arg bead "$bead" '{kind: $k, by: $by} + (if $bead == "" then {} else {bead: $bead} end)')
     args=(--type "$type" --level "$level" --subject "$subj" --tags "$tag" --data "$data" --json)
@@ -234,6 +240,7 @@ if [ "$cmd" = remember ]; then
       close-note) key=$(free_key "seat/$seat/close-note/" "$(safe "$bead")") ;;
       note) key=$(free_key "human/$human/note/" "$(safe "$actor")") ;;
       fact) key="wheelhouse/$slug" ;;
+      event) key=$(free_key "event/" "$(safe "$bead")") ;;
     esac
     BEADS_ACTOR="$actor" bd remember --actor "$actor" --key "$key" -- "$text" >/dev/null 2>"$errfile" ||
       die 3 "bd remember failed: $(head -c 300 "$errfile")"
@@ -248,7 +255,7 @@ scope_args
 [ "$shared" = 1 ] || [ -n "$seat$human" ] || die 1 "recall needs --seat, --human or --shared"
 [[ "$limit" =~ ^[0-9]+$ ]] || die 1 "--limit must be a number"
 if [ -n "$kind" ]; then
-  if [ "$shared" = 1 ] && [ "$kind" != fact ]; then die 1 "--shared reads facts only"; fi
+  if [ "$shared" = 1 ] && [ "$kind" != fact ] && [ "$kind" != event ]; then die 1 "--shared reads facts and events only"; fi
   if [ -n "$seat" ] && ! seat_kind "$kind"; then die 1 "$kind is not a seat's: use --human or --shared"; fi
   if [ -n "$human" ] && [ "$kind" != note ]; then die 1 "$kind is not a human's: use --seat or --shared"; fi
 fi
@@ -256,14 +263,14 @@ fi
 # jq: ynm hits to the common shape.
 ynm_shape='[ .[] | (.tags // []) as $t
   | (if ($t | index("inbox")) then "note"
-     else ([$t[] | select(. == "identity" or . == "birth" or . == "handoff" or . == "kudos" or . == "close-note" or . == "fact")][0] // null) end) as $k
+     else ([$t[] | select(. == "identity" or . == "birth" or . == "handoff" or . == "kudos" or . == "close-note" or . == "fact" or . == "event")][0] // null) end) as $k
   | (.content // "") as $c
   | (if $k == "note" then ($c | capture("^From (?<by>[^:]+): (?<rest>.*)$"; "s") // null) else null end) as $n
   | {id: .memoryId, kind: $k,
      text: (if $n then $n.rest else $c end),
      at: .updatedAt,
      by: (.data.by // (if $n then $n.by else null end)),
-     bead: (.data.bead // (if $k == "close-note" then ([.subject] + $t | map(select(. != null and . != "close-note" and test("^[a-z][a-z0-9]*-[a-z0-9]+(\\.[0-9]+)*$")))[0]) else null end))} ]'
+     bead: (.data.bead // (if $k == "close-note" or $k == "event" then ([.subject] + $t | map(select(. != null and . != "close-note" and test("^[a-z][a-z0-9]*-[a-z0-9]+(\\.[0-9]+)*$")))[0]) else null end))} ]'
 
 if [ "$backend" = ynm ]; then
   need ynm
@@ -278,14 +285,16 @@ if [ "$backend" = ynm ]; then
   else [ -n "$kind" ] || args+=(--tags fact); args+=(--level distributed); fi
   out=$(ynm recall "${args[@]}" 2>"$errfile") || die 3 "ynm recall failed: $(head -c 300 "$errfile")"
   jq -e 'type == "array"' <<<"$out" >/dev/null 2>&1 || die 3 "ynm recall printed no readable list: $(head -c 300 <<<"$out")"
-  # Each hit is kept only if its kind fits the scope (a shared fact search must not return seat memories).
-  jq -c --argjson n "$limit" --arg scope "$([ "$shared" = 1 ] && echo shared || echo own)" \
-    "$ynm_shape | map(select(.kind != null and (\$scope != \"shared\" or .kind == \"fact\"))) | sort_by(.at // \"\") | reverse | .[:\$n]" <<<"$out" ||
+  # Each hit is kept only if its kind fits the scope (a shared search must not return seat memories,
+  # and without --kind it gives facts alone: events are asked for).
+  jq -c --argjson n "$limit" --arg scope "$([ "$shared" = 1 ] && echo shared || echo own)" --arg want "${kind:-fact}" \
+    "$ynm_shape | map(select(.kind != null and (\$scope != \"shared\" or .kind == \$want))) | sort_by(.at // \"\") | reverse | .[:\$n]" <<<"$out" ||
     die 3 "ynm recall output could not be read"
 else
   need bd
   out=$(bd --readonly memories --json 2>"$errfile") || die 3 "bd memories failed: $(head -c 300 "$errfile")"
-  if [ -n "$seat" ]; then prefix="seat/$seat/"; elif [ -n "$human" ]; then prefix="human/$human/"; else prefix="wheelhouse/"; fi
+  if [ -n "$seat" ]; then prefix="seat/$seat/"; elif [ -n "$human" ]; then prefix="human/$human/"
+  elif [ "$kind" = event ]; then prefix="event/"; else prefix="wheelhouse/"; fi
   jq -c --arg prefix "$prefix" --arg kind "$kind" --argjson n "$limit" '
     def stampiso: "\(.[0:4])-\(.[4:6])-\(.[6:8])T\(.[9:11]):\(.[11:13]):\(.[13:15])Z";
     if type != "object" then error("bd memories printed no memory map") else . end
@@ -294,14 +303,15 @@ else
     | map(
         (.key | ltrimstr($prefix)) as $rest
         | (if $prefix | startswith("wheelhouse/") then {kind: "fact", tail: ""}
+           elif $prefix == "event/" then {kind: "event", tail: $rest}
            else ($rest | split("/")) as $p | {kind: $p[0], tail: ($p[1:] | join("/"))} end) as $k
         | ($k.tail | capture("^(?<st>[0-9]{8}T[0-9]{6}Z)-(?<who>.*)$")? // null) as $m
         | {id: .key, kind: $k.kind, text: .value,
            at: ($m | if . then .st | stampiso else null end),
            by: (if $k.kind == "kudos" or $k.kind == "note" then ($m.who // null)
-                elif $k.kind == "fact" then null
+                elif $k.kind == "fact" or $k.kind == "event" then null
                 else ($prefix | ltrimstr("seat/") | rtrimstr("/")) end),
-           bead: (if $k.kind == "close-note" then ($m.who // null) else null end)})
+           bead: (if $k.kind == "close-note" or $k.kind == "event" then ($m.who // null) else null end)})
     | map(select($kind == "" or .kind == $kind))
     | sort_by(.at // "") | reverse | .[:$n]' <<<"$out" || die 3 "bd memories output could not be read"
 fi
