@@ -610,10 +610,10 @@ Expected: no output.
 
 ### The standing roles, by the desk
 
-Standing roles each run one job, mostly unattended. **Anderson** is the dispatcher: it hands
+Standing roles each run one job, on the desk's or a timer's say-so rather than as seats you work with directly. **Anderson** is the dispatcher: it hands
 ready work to idle workers, so two workers never reach for the same bead, and it seats the workers
 themselves. **Dredd** watches CI. **Tharg** cuts releases, and gets the gitflow skills for it.
-You talk to them too, to dispatch, to read CI and to plan a release. Tell the desk what each may
+You still speak to them, through the desk, to dispatch, to read CI and to plan a release. Tell the desk what each may
 and may not do; it writes each harness and charter with the `add-seat` skill, installs and
 commits it, and leaves their births to you:
 
