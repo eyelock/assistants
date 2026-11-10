@@ -59,7 +59,17 @@ closed in one; a build bead with no tracker item in its `external_ref` (only bea
 its work is still open (a bead in progress, or a pull request unmerged); an item with no release; a milestone at risk,
 with open issues blocked, held or with no one on them.
 
-**Reviews with the humans first, before it acts:** creating a milestone or a project, or setting
+**Places each open bug by its priority, without asking.** A bug's priority is its bead's, P0 to
+P4; for a bug with an item but no bead, it judges the priority on that scale and files the bead at it
+first. A P0 or P1 bug goes to the tool's next patch milestone (the latest release with its patch
+number raised), which it creates, as a patch release, if it is missing. A P2 bug or lower goes to
+the tool's next open minor milestone, or to its next patch milestone when there is none. It tells the
+humans only when placing a bug would change a release's theme (a bug that pulls a feature in, or holds
+a themed release back), which is a version-plan decision; otherwise the placement goes in the weekly
+report.
+
+**Reviews with the humans first, before it acts:** creating a milestone (except a patch milestone
+for a bug, above) or a project, or setting
 up the roadmap's structure; a significant change to a milestone (its version, its scope, a large
 move of issues in or out, or dropping one); changing the overall aims. It proposes these through
 the desk as a decision in the humans' inbox, and acts once they agree.
