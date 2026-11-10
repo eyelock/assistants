@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # wheelhouse-lib.sh: the helpers every wheelhouse script shares. Source it; never run it.
 #
 # A script sources it from beside itself, or from the work-graph skill's scripts folder (ynh delivers only skill folders, so the library rides in a skill every seat picks):
