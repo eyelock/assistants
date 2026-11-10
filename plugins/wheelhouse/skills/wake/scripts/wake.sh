@@ -171,12 +171,12 @@ if [ "$end" = 1 ]; then
   [ "$budget" -gt 28 ] && budget=28
   [ "$budget" -lt 1 ] && budget=1
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/wake-end.XXXXXX")
-  # Runs one sync with the budget and keeps its output in <tmp>/<name>.rc and .err: the exit code
-  # (142 when the alarm killed it) and "exit N: first line".
+  # Runs one sync for <secs> seconds and keeps its output in <tmp>/<name>.rc and .err: the exit
+  # code (142 when the alarm killed it) and "exit N: first line".
   endsync() {
-    local name="$1"; shift
+    local secs="$1" name="$2"; shift 2
     local rc first
-    limited "$budget" "$@" >"$tmp/$name.out" 2>&1
+    limited "$secs" "$@" >"$tmp/$name.out" 2>&1
     rc=$?
     echo "$rc" >"$tmp/$name.rc"
     if [ "$rc" != 0 ]; then
@@ -184,22 +184,25 @@ if [ "$end" = 1 ]; then
       printf '%s' "exit $rc${first:+: $first}" >"$tmp/$name.err"
     fi
   }
-  # The work sync, with its Dolt-remote check in the same budget (a third for the check, the rest
-  # for the sync), run in the background beside the memory sync. A check that gave up or failed
-  # is a failed sync, not "no remote".
+  # The work sync, with its Dolt-remote check in the same budget (at most a third for the check,
+  # the sync gets what is left of it), run in the background beside the memory sync. A check that
+  # gave up or failed is a failed sync, not "no remote".
   endwork() {
-    local check=$(( budget / 3 ))
+    local check=$(( budget / 3 )) began=$SECONDS rest
     [ "$check" -ge 1 ] || check=1
     doltremote "$check"
+    # SECONDS counts whole seconds, so one more is held back for the rounding.
+    rest=$(( budget - (SECONDS - began) - 1 ))
+    [ "$rest" -ge 1 ] || rest=1
     if [ "$remote" = busy ]; then
       echo 142 >"$tmp/work.rc"; printf '%s' "exit 142: the Dolt-remote check gave up or failed (bd busy)" >"$tmp/work.err"
     elif [ "$remote" = yes ]; then
-      endsync work bd sync
+      endsync "$rest" work bd sync
     fi
   }
   # With Beads, memory and work are one database: one bd sync, and its result is both.
   if [ "$backend" = ynm ]; then
-    if [ "$sync" = 1 ] && hasgitremote; then endsync mem ynm sync --quiet & fi
+    if [ "$sync" = 1 ] && hasgitremote; then endsync "$budget" mem ynm sync --quiet & fi
     if [ "$sync" = 1 ]; then endwork & fi
   else
     if [ "$sync" = 1 ]; then endwork & fi

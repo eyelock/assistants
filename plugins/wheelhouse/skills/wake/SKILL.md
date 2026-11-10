@@ -30,11 +30,20 @@ gives one result for both. On either backend the block shows the shared facts
 **Not synced**: say so in your reply, and run that sync yourself before relying on what the block
 shows. `--no-sync` skips both.
 
+Every call the script makes is bounded, so a wake never hangs when other seats hold bd's lock. A
+call that hangs is killed (with anything it started) after its limit: the syncs and the Dolt-remote
+check after `WAKE_SYNC_SECS` (default 45), each bd read after `WAKE_BD_SECS` (20), the memory
+recalls and each `gh pr view` after `WAKE_YNM_SECS` (10), and the desk's inbox after
+`WAKE_INBOX_SECS` (30). The first bd read that gives up ends the rest, so a busy bd costs one
+wait, not one per read. A Dolt-remote check that gives up counts as a failed sync (**Not synced**),
+never as "no remote". When bd is busy the block says so, as below.
+
 When the session ends, the seat's session-end hook runs the script again with `--end`. It only
 syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`), each skipped
 when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
-seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28), because the session-end hook
+seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28; the Dolt-remote check takes at most a
+third of it and the work sync gets what is left, so the whole stays inside it), because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
 can print anything: keep the budget under the hook's timeout. It prints
 `{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
@@ -87,7 +96,7 @@ read, never that nothing is waiting.
 | What you have been thanked for | your Kudos |
 | Your record | the beads you closed most recently |
 | Your close notes | the two-line notes you wrote on your last three closes |
-| Waiting for you | beads in progress or assigned to you, and how many are ready and unassigned |
+| Waiting for you | beads in progress or assigned to you, and how many are ready and unassigned; or, when bd was busy, **The work graph couldn't be read (bd busy)** in their place |
 
 ## Then
 
@@ -118,7 +127,11 @@ read, never that nothing is waiting.
    assigned to you but not yet claimed, claim it first (`bd update <id> --claim`): that is not a
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
-5. **Waiting for you:** carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
+5. **Waiting for you:** if the block says **The work graph couldn't be read (bd busy)**, your
+   record, work in progress and ready beads are missing, not empty: say so in your reply, and
+   run the bd commands the block names yourself (`bd list --status in_progress --assignee <command>`,
+   `bd ready --assignee <command>`, `bd ready --unassigned`) before deciding there is nothing to do;
+   the JSON has `workRead: false`. Otherwise carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
    (if you are a worker) an unassigned ready bead, as the `work-graph` skill says.
 6. Open your reply (after the humans' inbox, at the desk) in this shape: "I'm <name>: <a phrase from your identity>. Picking up from my
    notes: <what they say is done>. Next: <the step you are taking>." Then the rest.

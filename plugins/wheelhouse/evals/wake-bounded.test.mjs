@@ -26,10 +26,12 @@ function run(args, { mode, env = {}, remote = false } = {}) {
     mkdirSync(join(dir, "bin"));
     const log = join(dir, "calls.log");
     const stubs = {
-      // slow: every call sleeps 60s (a held lock); ok: answers at once. A Dolt remote exists only when asked.
+      // slow: every call sleeps 60s (a held lock); slowsync: the remote check is slow, the sync hangs; ok: answers at once. A Dolt remote exists only when asked.
       bd: `#!/bin/bash
 echo "bd $*" >> "${log}"
 [ "$BD_MODE" = slow ] && sleep 60
+# slowsync: the Dolt-remote check answers after 2s, then every other call hangs.
+if [ "$BD_MODE" = slowsync ]; then case "$*" in *"dolt remote"*) sleep 2 ;; *) sleep 60 ;; esac; fi
 case "$*" in
   *"dolt remote"*) echo '${remote ? '[{"name":"origin"}]' : "[]"}' ;;
   *"--status in_progress"*) echo '[{"title":"Mine","notes":""}]' ;;
@@ -102,5 +104,14 @@ test("--end with a locked bd is bounded by the end budget and still prints its J
   const { r, secs } = run(["--end", "tess"], { mode: "slow", remote: true, env: { WAKE_SYNC_SECS: "30", WHEELHOUSE_END_SYNC_SECS: "3" } });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(secs < 12, `took ${secs}s`);
+  assert.equal(JSON.parse(r.stdout).push.work, "timeout");
+});
+
+test("--end: a slow Dolt-remote check leaves the sync only the rest of the budget", () => {
+  // Budget 9: the check may take 3s and takes 2, so the sync gets about 6s, 8s in all. A sync
+  // given the whole budget again would end near 11s, past the 9s the budget promises.
+  const { r, secs } = run(["--end", "tess"], { mode: "slowsync", remote: true, env: { WAKE_SYNC_SECS: "30", WHEELHOUSE_END_SYNC_SECS: "9" } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(secs < 9.5, `took ${secs}s, over the 9s budget`);
   assert.equal(JSON.parse(r.stdout).push.work, "timeout");
 });
