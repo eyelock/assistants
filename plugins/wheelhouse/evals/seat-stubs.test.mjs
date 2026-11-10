@@ -1,7 +1,8 @@
 // The seat evals' stubs for gh, git and bd (files/seat-stub.sh) and the test-Wheelhouse fixture
 // (files/seat-fixture.sh): each stub logs every call as one "<command> <arguments>" line, the
 // format the runner's plain checks read, and refuses what the case forbids; git refuses stash
-// anywhere and checkout, switch, reset and commit in a shared checkout. Each case runs the real
+// anywhere and checkout, switch, reset, commit, merge, pull and rebase in a shared checkout,
+// found through -C, --git-dir, --work-tree, GIT_DIR and GIT_WORK_TREE as well as the directory. Each case runs the real
 // scripts in a scratch directory; the fixture cases are skipped when bd is not installed.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -181,6 +182,111 @@ test("git refuses checkout, switch, reset and commit in a shared checkout, and a
     assert.equal(run("git", ["rev-list", "--count", "HEAD"], { cwd: shared }).stdout, "1\n");
     assert.equal(refused().length, 15);
     assert.ok(calls().some((l) => l === "git checkout --detach"));
+  });
+});
+
+// A shared checkout with one commit and a dirty file, a scratch "hq" beside it, and the policy.
+function sharedWorld({ dir, run, policy }) {
+  const shared = join(dir, "ynh");
+  const hq = join(dir, "hq");
+  mkdirSync(shared);
+  mkdirSync(hq);
+  run("git", ["init", "-q", "-b", "main", shared]);
+  run("git", ["-C", shared, "commit", "-q", "--allow-empty", "-m", "start"]);
+  writeFileSync(join(shared, "file"), "one\n");
+  run("git", ["-C", shared, "add", "file"]);
+  run("git", ["-C", shared, "commit", "-q", "-m", "second"]);
+  writeFileSync(join(shared, "file"), "dirty\n");
+  policy("shared-paths", `${shared}\n`);
+  const intact = () =>
+    readFileSync(join(shared, "file"), "utf8") === "dirty\n" &&
+    run("git", ["-C", shared, "rev-list", "--count", "HEAD"]).stdout === "2\n";
+  return { shared, hq, intact };
+}
+
+test("the shared-checkout guard follows --git-dir and --work-tree, in both forms, and the environment", () => {
+  withRun((ctx) => {
+    const { dir, run, refused } = ctx;
+    const { shared, hq, intact } = sharedWorld(ctx);
+    const gd = join(shared, ".git");
+    const cases = [
+      ["--git-dir=, --work-tree=", [`--git-dir=${gd}`, `--work-tree=${shared}`], {}],
+      ["--git-dir, --work-tree", ["--git-dir", gd, "--work-tree", shared], {}],
+      ["--work-tree= alone", [`--work-tree=${shared}`], {}],
+      ["--git-dir= alone", [`--git-dir=${gd}`], {}],
+      ["--git-dir alone", ["--git-dir", gd], {}],
+      ["GIT_DIR and GIT_WORK_TREE", [], { GIT_DIR: gd, GIT_WORK_TREE: shared }],
+      ["GIT_DIR alone", [], { GIT_DIR: gd }],
+      ["GIT_WORK_TREE alone", [], { GIT_WORK_TREE: shared }],
+      ["a relative --git-dir and --work-tree", ["--git-dir=../ynh/.git", "--work-tree=../ynh"], {}],
+      ["-C then a relative --work-tree", ["-C", hq, "--work-tree=../ynh"], {}],
+      ["a work tree through a symbolic link", [`--work-tree=${join(dir, "link")}`], {}],
+    ];
+    spawnSync("ln", ["-s", shared, join(dir, "link")]);
+    let count = 0;
+    for (const [what, opts, env] of cases) {
+      for (const sub of [
+        ["reset", "--hard", "HEAD~1"],
+        ["checkout", "--detach", "HEAD~1"],
+        ["commit", "--allow-empty", "-m", "x"],
+      ]) {
+        const res = run("git", [...opts, ...sub], { cwd: hq, env });
+        assert.equal(res.status, 1, `${what}: ${sub.join(" ")}`);
+        assert.match(res.stderr, /shared checkout/, what);
+        count++;
+      }
+    }
+    assert.ok(intact(), "the shared checkout was not touched");
+    assert.equal(refused().length, count);
+  });
+});
+
+test("an option names the checkout over the environment, and a named git directory is no excuse", () => {
+  withRun((ctx) => {
+    const { dir, run, refused } = ctx;
+    const { shared, hq, intact } = sharedWorld(ctx);
+    // hq's own repository: its own work tree is fine, whatever the environment says is shared.
+    run("git", ["init", "-q", "-b", "main", hq]);
+    const own = run("git", [`--work-tree=${hq}`, "commit", "-q", "--allow-empty", "-m", "own"], {
+      cwd: hq,
+      env: { GIT_WORK_TREE: shared },
+    });
+    assert.equal(own.status, 0, own.stderr);
+    // The shared git directory with an own work tree still moves the shared checkout's HEAD.
+    const mixed = run("git", [`--git-dir=${join(shared, ".git")}`, `--work-tree=${hq}`, "reset", "--soft", "HEAD~1"], {
+      cwd: hq,
+    });
+    assert.equal(mixed.status, 1);
+    assert.equal(refused().length, 1);
+    assert.ok(intact());
+    assert.ok(dir);
+  });
+});
+
+test("a linked worktree is not a shared checkout when named by its git directory", () => {
+  withRun((ctx) => {
+    const { dir, run } = ctx;
+    const { shared } = sharedWorld(ctx);
+    const work = join(dir, "work");
+    assert.equal(run("git", ["-C", shared, "worktree", "add", "-q", "-b", "bead", work]).status, 0);
+    const res = run("git", [`--git-dir=${join(shared, ".git", "worktrees", "work")}`, `--work-tree=${work}`, "commit", "-q", "--allow-empty", "-m", "w"]);
+    assert.equal(res.status, 0, res.stderr);
+    assert.equal(run("git", ["--work-tree", work, "-C", work, "reset", "-q", "--hard"]).status, 0);
+  });
+});
+
+test("merge, pull and rebase in a shared checkout are refused, in every form of naming it", () => {
+  withRun((ctx) => {
+    const { run, refused } = ctx;
+    const { shared, hq, intact } = sharedWorld(ctx);
+    run("git", ["-C", shared, "branch", "other", "HEAD~1"]);
+    for (const sub of [["merge", "other"], ["pull", "--ff-only"], ["rebase", "other"]]) {
+      assert.equal(run("git", sub, { cwd: shared }).status, 1, sub[0]);
+      assert.equal(run("git", ["-C", shared, ...sub]).status, 1, `-C ${sub[0]}`);
+      assert.equal(run("git", [`--git-dir=${join(shared, ".git")}`, `--work-tree=${shared}`, ...sub], { cwd: hq }).status, 1, `--git-dir ${sub[0]}`);
+    }
+    assert.equal(refused().length, 9);
+    assert.ok(intact());
   });
 });
 

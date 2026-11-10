@@ -6,8 +6,10 @@
 # Every call is logged first, as one line "<command> <arguments>" in $EVAL_STUB_LOG (newlines in
 # an argument become spaces), the format the runner's plain checks read. Then:
 #   - a call whose line matches a forbidden pattern is refused;
-#   - git refuses "stash" anywhere, and checkout, switch, reset and commit in a checkout listed in
-#     the shared paths (a worktree of the same repository elsewhere is not one);
+#   - git refuses "stash" anywhere, and checkout, switch, reset, commit, merge, pull and rebase in a
+#     checkout listed in the shared paths (a worktree of the same repository elsewhere is not one).
+#     The checkout is the one named by -C, --work-tree and --git-dir (both "=" and space forms) and
+#     GIT_WORK_TREE and GIT_DIR, else the directory the call runs in;
 #   - anything else goes through: git and bd run the real tool (the first on PATH that is not
 #     this script), gh prints a canned answer and touches nothing.
 # A refused call prints the reason on stderr, exits 1, and is noted in "$EVAL_STUB_LOG.refused"
@@ -76,40 +78,84 @@ while IFS= read -r pattern; do
   fi
 done <<<"$patterns"
 
+# A directory as an absolute path with symbolic links resolved: $2 relative to $1 when it is not
+# absolute, left as it is when it does not exist.
+canon() {
+  local path=$2
+  case "$path" in /*) ;; *) path=$1/$path ;; esac
+  (cd "$path" 2>/dev/null && pwd -P) || printf '%s\n' "$path"
+}
+
+# The shared path that contains $1, if any.
+shared_hit() {
+  local path shared
+  shared=$(
+    [ -f "$policy/shared-paths" ] && cat "$policy/shared-paths"
+    printf '%s\n' "${EVAL_SHARED_PATHS:-}" | tr ':' '\n'
+  )
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    path=$(canon "$PWD" "$path")
+    case "$1" in "$path" | "$path"/*)
+      printf '%s\n' "$path"
+      return 0
+      ;;
+    esac
+  done <<<"$shared"
+  return 1
+}
+
 if [ "$name" = git ]; then
-  # The subcommand, and the directory the call runs in, after git's global options.
+  # The subcommand, and where the call runs, after git's global options: the directory (-C), the
+  # git directory (--git-dir, GIT_DIR) and the work tree (--work-tree, GIT_WORK_TREE), the last
+  # two given as "--opt=X" or "--opt X". An option beats the environment, as in git.
   dir=$PWD
+  gitdir=${GIT_DIR:-}
+  worktree=${GIT_WORK_TREE:-}
   sub=""
   args=("$@")
   i=0
   while [ $i -lt ${#args[@]} ]; do
     case "${args[$i]}" in
-      -C) dir=$(cd "$dir" 2>/dev/null && cd "${args[$((i + 1))]}" 2>/dev/null && pwd -P || echo "$dir"); i=$((i + 2)) ;;
-      -c | --namespace | --exec-path | --git-dir | --work-tree | --super-prefix | --config-env) i=$((i + 2)) ;;
+      -C) dir=$(canon "$dir" "${args[$((i + 1))]:-.}"); i=$((i + 2)) ;;
+      --git-dir=*) gitdir=${args[$i]#--git-dir=}; i=$((i + 1)) ;;
+      --git-dir) gitdir=${args[$((i + 1))]:-}; i=$((i + 2)) ;;
+      --work-tree=*) worktree=${args[$i]#--work-tree=}; i=$((i + 1)) ;;
+      --work-tree) worktree=${args[$((i + 1))]:-}; i=$((i + 2)) ;;
+      -c | --namespace | --exec-path | --super-prefix | --config-env) i=$((i + 2)) ;;
       -*) i=$((i + 1)) ;;
       *) sub=${args[$i]}; break ;;
     esac
   done
   [ "$sub" = stash ] && refuse "git stash is never used: commit to a throwaway branch instead"
-  case "$sub" in checkout | switch | reset | commit)
+  case "$sub" in checkout | switch | reset | commit | merge | pull | rebase)
     tool=$(real_tool) || {
       echo "git: the real git is not on PATH" >&2
       exit 127
     }
-    top=$(cd "$dir" 2>/dev/null && "$tool" rev-parse --show-toplevel 2>/dev/null) || top=$dir
-    top=$(cd "$top" 2>/dev/null && pwd -P || echo "$top")
-    shared=$(
-      [ -f "$policy/shared-paths" ] && cat "$policy/shared-paths"
-      printf '%s\n' "${EVAL_SHARED_PATHS:-}" | tr ':' '\n'
-    )
-    while IFS= read -r path; do
-      [ -n "$path" ] || continue
-      path=$(cd "$path" 2>/dev/null && pwd -P || echo "$path")
-      case "$top" in "$path" | "$path"/*)
-        refuse "git $sub in the shared checkout $path: use your own worktree"
-        ;;
+    # Every checkout the call can change: the work tree when one is named, else where it runs; and
+    # the checkout owning a named git directory (a linked worktree's own directory, under
+    # .git/worktrees, is not its owner's checkout).
+    candidates=()
+    if [ -n "$worktree" ]; then
+      candidates+=("$(canon "$dir" "$worktree")")
+    else
+      top=$(cd "$dir" 2>/dev/null && "$tool" rev-parse --show-toplevel 2>/dev/null) || top=$dir
+      candidates+=("$(canon "$dir" "$top")")
+    fi
+    if [ -n "$gitdir" ]; then
+      gitdir=$(canon "$dir" "$gitdir")
+      case "$gitdir" in
+        */.git/worktrees/*) ;;
+        */.git) candidates+=("${gitdir%/.git}") ;;
+        *) candidates+=("$gitdir") ;;
       esac
-    done <<<"$shared"
+    fi
+    for candidate in "${candidates[@]}"; do
+      if hit=$(shared_hit "$candidate"); then
+        refuse "git $sub in the shared checkout $hit: use your own worktree"
+      fi
+    done
     ;;
   esac
   pass_through "$@"

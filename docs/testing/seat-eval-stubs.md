@@ -21,16 +21,31 @@ Then, in this order:
 |---|---|
 | A line matching a forbidden pattern | refuses it |
 | `git stash`, in any directory | refuses it |
-| `git checkout`, `switch`, `reset` or `commit` in a shared checkout | refuses it |
+| `git checkout`, `switch`, `reset`, `commit`, `merge`, `pull` or `rebase` in a shared checkout | refuses it |
 | any other `git` or `bd` call | runs the real tool, the first on `PATH` that is not the stub |
 | any other `gh` call | prints a canned answer and touches nothing; no call reaches GitHub |
 
 A refusal prints its reason on stderr, exits 1, and adds `<call> :: <reason>` to
 `$EVAL_STUB_LOG.refused`.
 
-A shared checkout is a directory listed in `shared-paths`, and anything under it. A worktree of the
+A shared checkout is a directory listed in `shared-paths`, and anything under it. The stub decides
+which checkout a call changes from every way git can be pointed at one: the directory it runs in,
+`-C`, `--work-tree` and `--git-dir` (as `--opt=X` or `--opt X`), and `GIT_WORK_TREE` and `GIT_DIR`
+in the environment. An option beats the environment. A named work tree is the checkout; otherwise
+it is where the call runs. A named git directory counts too, because its repository's `HEAD` and
+branches move even when the work tree is elsewhere, so the shared git directory is refused with any
+work tree. A linked worktree's own git directory (under `.git/worktrees`) is not its owner's
+checkout. A worktree of the
 same repository somewhere else is not one, so a seat that works in its own worktree is not
-refused. Paths are compared after symbolic links are resolved. Calls that `ynh` itself makes to
+refused. Paths are compared after symbolic links are resolved.
+
+What the stub does not guard: `git branch -f` and `-D`, `cherry-pick`, `revert`, `clean`, `restore`,
+`tag`, `fetch` and `worktree` in a shared checkout; `git config core.worktree` and `core.hooksPath`
+set by an earlier call; a symbolic link or a script that runs the real `git` by its own path; and
+anything that is not `git` (a plain `rm` or `cp`). The guarded set is the operations the
+constitution's rule 9 names (`checkout`, `switch`, `reset`, `commit`, `stash`) and the three that
+move `HEAD` and the work tree the same way (`merge`, `pull`, `rebase`). A case that needs more
+forbids it by pattern. Calls that `ynh` itself makes to
 `git` are logged too.
 
 ### Policy
