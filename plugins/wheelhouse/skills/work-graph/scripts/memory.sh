@@ -46,8 +46,13 @@ Common: --dir <wheelhouse root>   (default: the current directory)
         recall --shared gives facts; ask for events with --kind event.
 EOF2
 }
-die() { local c=$1; shift; echo "memory.sh: $*" >&2; exit "$c"; }
-need() { command -v "$1" >/dev/null 2>&1 || die 3 "$1 is not installed"; }
+WL_PREFIX="memory.sh: "
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
+  # shellcheck source=../../../lib/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
 
 cmd="${1:-}"
 case "$cmd" in
@@ -85,23 +90,17 @@ need jq
 backend=ynm
 if [ -f wheelhouse.json ]; then
   jq -e 'type == "object"' wheelhouse.json >/dev/null 2>&1 || die 2 "wheelhouse.json is not a JSON object"
-  backend=$(jq -r '.memory // "ynm"' wheelhouse.json)
-  case "$backend" in ynm | beads) ;; *) die 2 "wheelhouse.json: memory must be \"ynm\" or \"beads\", not \"$backend\"" ;; esac
+  backend=$(wl_backend .) || die 2 "wheelhouse.json: memory must be \"ynm\" or \"beads\", not \"$backend\""
 fi
 
 if [ "$cmd" = backend ]; then echo "$backend"; exit 0; fi
 
-# A name that goes into a namespace or a key: lowercase letters, digits, dot, dash, underscore.
-valid_name() { [[ "$1" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; }
+# A slug that goes into a key: lowercase letters, digits, dot, dash, underscore. (A seat, human
+# or actor is a command name: wl_valid_command.)
+valid_slug() { [[ "$1" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; }
 valid_kind() { case "$1" in identity | birth | handoff | kudos | close-note | note | fact | event) return 0 ;; *) return 1 ;; esac; }
 seat_kind() { case "$1" in identity | birth | handoff | kudos | close-note) return 0 ;; *) return 1 ;; esac; }
 
-limited() {
-  local secs="$1"; shift
-  if command -v perl >/dev/null 2>&1; then perl -e 'alarm shift; exec @ARGV' -- "$secs" "$@"; else "$@"; fi
-}
-hasgitremote() { git remote 2>/dev/null | grep -q .; }
-hasdoltremote() { bd dolt remote list --json 2>/dev/null | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; }
 
 errfile=$(mktemp "${TMPDIR:-/tmp}/memory.XXXXXX") || die 3 "cannot make a temp file"
 trap 'rm -f "$errfile"' EXIT
@@ -113,13 +112,13 @@ if [ "$cmd" = sync ]; then
   if [ "$end" = 1 ]; then done_word=pushed; secs=12; fi
   if [ "$backend" = ynm ]; then
     need ynm
-    if hasgitremote; then
+    if wl_has_git_remote; then
       if limited "$secs" ynm sync --quiet >/dev/null 2>&1; then mem=$done_word; else mem=failed; fi
     fi
   else
     need bd
     # Memory and work share one Dolt database: one sync, one result for both.
-    if hasdoltremote; then
+    if [ "$(wl_dolt_remote "$WL_BD_SECS")" = yes ]; then
       if limited "$secs" bd sync >/dev/null 2>&1; then mem=$done_word; else mem=failed; fi
       work=$mem
     fi
@@ -133,8 +132,8 @@ scope_args() { # validates --seat/--human/--shared against the kind; sets scope
   if [ -n "$kind" ]; then
     valid_kind "$kind" || die 1 "unknown kind: $kind (identity, birth, handoff, kudos, close-note, note, fact, event)"
   fi
-  [ -z "$seat" ] || valid_name "$seat" || die 1 "--seat must be a command name (lowercase letters, digits, . _ -)"
-  [ -z "$human" ] || valid_name "$human" || die 1 "--human must be a command name (lowercase letters, digits, . _ -)"
+  [ -z "$seat" ] || wl_valid_command "$seat" || die 1 "--seat must be a command name (lowercase letters, digits, -)"
+  [ -z "$human" ] || wl_valid_command "$human" || die 1 "--human must be a command name (lowercase letters, digits, -)"
   local n=0
   [ -z "$seat" ] || n=$((n + 1)); [ -z "$human" ] || n=$((n + 1)); [ "$shared" = 0 ] || n=$((n + 1))
   [ "$n" -le 1 ] || die 1 "give one of --seat, --human, --shared"
@@ -159,7 +158,7 @@ stamp() {
 # A stamped key that is free: two memories in the same second would otherwise overwrite one another.
 free_key() { # free_key <prefix> <suffix>
   local existing i k
-  existing=$(bd --readonly memories --json 2>/dev/null | jq -r 'keys[]' 2>/dev/null) || existing=""
+  existing=$(limited "$WL_BD_SECS" bd --readonly memories --json 2>/dev/null | jq -r 'keys[]' 2>/dev/null) || existing=""
   for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19; do
     k="$1$(stamp "$i")-$2"
     grep -qxF -- "$k" <<<"$existing" || { printf '%s' "$k"; return; }
@@ -174,10 +173,10 @@ if [ "$cmd" = forget ]; then
   [ -n "$reason" ] || die 1 "forget needs --reason"
   if [ "$backend" = ynm ]; then
     need ynm
-    ynm forget --memory-id "$id" --reason "$reason" >/dev/null 2>"$errfile" || die 3 "ynm forget failed: $(head -c 300 "$errfile")"
+    limited "$WL_YNM_SECS" ynm forget --memory-id "$id" --reason "$reason" >/dev/null 2>"$errfile" || die 3 "ynm forget failed: $(head -c 300 "$errfile")"
   else
     need bd
-    bd forget -- "$id" >/dev/null 2>"$errfile" || die 3 "bd forget failed: $(head -c 300 "$errfile")"
+    limited "$WL_BD_SECS" bd forget -- "$id" >/dev/null 2>"$errfile" || die 3 "bd forget failed: $(head -c 300 "$errfile")"
   fi
   jq -nc --arg id "$id" --arg b "$backend" '{forgotten: $id, backend: $b}'
   exit 0
@@ -187,7 +186,7 @@ fi
 if [ "$cmd" = remember ]; then
   [ -n "$actor" ] || die 1 "remember needs --actor"
   [ -n "$kind" ] || die 1 "remember needs --kind"
-  valid_name "$actor" || die 1 "--actor must be a command name (lowercase letters, digits, . _ -)"
+  wl_valid_command "$actor" || die 1 "--actor must be a command name (lowercase letters, digits, -)"
   [ "$havetext" = 1 ] || die 1 "remember needs --text"
   [ "$text" != - ] || text=$(cat)
   [ -n "$text" ] || die 1 "remember needs non-empty text"
@@ -197,7 +196,7 @@ if [ "$cmd" = remember ]; then
   if [ "$kind" = fact ]; then
     [ -n "$slug" ] || slug=$(printf '%s' "$text" | head -1 | tr 'A-Z' 'a-z' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g; s/^-//; s/-$//' | cut -c1-40 | sed 's/-$//')
     [ -n "$slug" ] || die 1 "fact needs --slug"
-    valid_name "$slug" || die 1 "--slug must be lowercase letters, digits, . _ -"
+    valid_slug "$slug" || die 1 "--slug must be lowercase letters, digits, . _ -"
   fi
 
   if [ "$backend" = ynm ]; then
@@ -217,20 +216,20 @@ if [ "$cmd" = remember ]; then
     out=""
     if [ "$kind" = identity ]; then
       # Rewritten by superseding the identity already there, then pinned so it is always in front of the seat.
-      old=$(ynm recall --namespace "$ns" --subject "$subj" --tags identity --limit 1 --json 2>/dev/null | jq -r '.[0].memoryId // empty' 2>/dev/null)
+      old=$(limited "$WL_YNM_SECS" ynm recall --namespace "$ns" --subject "$subj" --tags identity --limit 1 --json 2>/dev/null | jq -r '.[0].memoryId // empty' 2>/dev/null)
       if [ -n "$old" ]; then
-        out=$(ynm supersede --memory-id "$old" --content "$text" --subject "$subj" --tags identity --data "$data" --json 2>"$errfile") ||
+        out=$(limited "$WL_YNM_SECS" ynm supersede --memory-id "$old" --content "$text" --subject "$subj" --tags identity --data "$data" --json 2>"$errfile") ||
           die 3 "ynm supersede failed: $(head -c 300 "$errfile")"
       fi
     fi
     if [ -z "$out" ]; then
-      out=$(ynm remember "${args[@]}" --content "$text" 2>"$errfile") || die 3 "ynm remember failed: $(head -c 300 "$errfile")"
+      out=$(limited "$WL_YNM_SECS" ynm remember "${args[@]}" --content "$text" 2>"$errfile") || die 3 "ynm remember failed: $(head -c 300 "$errfile")"
     fi
     memid=$(jq -r '.memoryId // .id // empty' <<<"$out" 2>/dev/null)
     [ -n "$memid" ] || memid=$(grep -oE '[0-9A-Z]{26}' <<<"$out" | head -1)
     [ -n "$memid" ] || die 3 "ynm remember printed no memory id: $(head -c 300 <<<"$out")"
     if [ "$kind" = identity ]; then
-      ynm pin "$memid" >/dev/null 2>"$errfile" || die 3 "ynm pin failed: $(head -c 300 "$errfile")"
+      limited "$WL_YNM_SECS" ynm pin "$memid" >/dev/null 2>"$errfile" || die 3 "ynm pin failed: $(head -c 300 "$errfile")"
     fi
   else
     need bd
@@ -242,7 +241,7 @@ if [ "$cmd" = remember ]; then
       fact) key="wheelhouse/$slug" ;;
       event) key=$(free_key "event/" "$(safe "$bead")") ;;
     esac
-    BEADS_ACTOR="$actor" bd remember --actor "$actor" --key "$key" -- "$text" >/dev/null 2>"$errfile" ||
+    limited "$WL_BD_SECS" env BEADS_ACTOR="$actor" bd remember --actor "$actor" --key "$key" -- "$text" >/dev/null 2>"$errfile" ||
       die 3 "bd remember failed: $(head -c 300 "$errfile")"
     memid="$key"
   fi
@@ -285,7 +284,7 @@ if [ "$backend" = ynm ]; then
   if [ -n "$seat" ]; then args+=(--namespace "seat/$seat")
   elif [ -n "$human" ]; then args+=(--namespace "human/$human")
   else [ -n "$kind" ] || args+=(--tags fact); args+=(--level distributed); fi
-  out=$(ynm recall "${args[@]}" 2>"$errfile") || die 3 "ynm recall failed: $(head -c 300 "$errfile")"
+  out=$(limited "$WL_YNM_SECS" ynm recall "${args[@]}" 2>"$errfile") || die 3 "ynm recall failed: $(head -c 300 "$errfile")"
   jq -e 'type == "array"' <<<"$out" >/dev/null 2>&1 || die 3 "ynm recall printed no readable list: $(head -c 300 <<<"$out")"
   # Each hit is kept only if its kind fits the scope (a shared search must not return seat memories,
   # and without --kind it gives facts alone: events are asked for).
@@ -294,7 +293,7 @@ if [ "$backend" = ynm ]; then
     die 3 "ynm recall output could not be read"
 else
   need bd
-  out=$(bd --readonly memories --json 2>"$errfile") || die 3 "bd memories failed: $(head -c 300 "$errfile")"
+  out=$(limited "$WL_BD_SECS" bd --readonly memories --json 2>"$errfile") || die 3 "bd memories failed: $(head -c 300 "$errfile")"
   if [ -n "$seat" ]; then prefix="seat/$seat/"; elif [ -n "$human" ]; then prefix="human/$human/"
   elif [ "$kind" = event ]; then prefix="event/"; else prefix="wheelhouse/"; fi
   jq -c --arg prefix "$prefix" --arg kind "$kind" --argjson n "$limit" '

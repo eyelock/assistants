@@ -19,6 +19,7 @@ function run(args) {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "lib", "wheelhouse-lib.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));
@@ -68,6 +69,7 @@ function runStub(ynmBody, env = {}, bdBody = "exit 0") {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "lib", "wheelhouse-lib.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
     mkdirSync(join(dir, "bin"));

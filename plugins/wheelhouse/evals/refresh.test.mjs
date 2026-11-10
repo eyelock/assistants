@@ -426,13 +426,14 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     git(pluginDir, "commit", "-qm", "v1");
     write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v2\n");
     write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# not carried here\n");
+    write(pluginDir, "lib/wheelhouse-lib.sh", "# lib v2\n");
     git(pluginDir, "add", "-A");
     git(pluginDir, "commit", "-qm", "v2");
 
     const offer = w.run(["HEAD..HEAD", "--plugin", pluginDir]);
     assert.equal(offer.status, 0, offer.stderr);
     assert.deepEqual(offer.json.upstream.updates.map((u) => u.command).sort(), ["ynh update local/dree", "ynh update local/eno", "ynh update local/hq", "ynh update local/wick"]);
-    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer, ["scripts/wake.sh"]);
+    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer.sort(), ["scripts/wake.sh", "scripts/wheelhouse-lib.sh"]);
     assert.deepEqual(offer.json.upstream.pluginScriptsCopied, []);
     assert.doesNotMatch(w.log(), /ynh update/);
     assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v1/);
@@ -440,7 +441,8 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
     assert.equal(done.status, 0, done.stderr);
     assert.match(w.log(), /^ynh update local\/hq$/m);
-    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/wake.sh"]);
+    assert.deepEqual(done.json.upstream.pluginScriptsCopied.sort(), ["scripts/wake.sh", "scripts/wheelhouse-lib.sh"]);
+    assert.match(readFileSync(join(w.wh, "scripts", "wheelhouse-lib.sh"), "utf8"), /lib v2/);
     assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v2/);
     assert.equal(existsSync(join(w.wh, "scripts", "patrol.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);

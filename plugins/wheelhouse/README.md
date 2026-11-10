@@ -14,6 +14,7 @@ from parts that work on any vendor:
 | Models: what each seat starts on | the roster, by vendor-agnostic tier (`fast`, `balanced`, `deep`) with per-vendor overrides, applied at launch with `--model` or the Agent tool's `model` |
 | Who's who | a `roster` skill in the Wheelhouse repository: its naming pools, the seats, and the humans who work with it, one of them the default human |
 | The humans' inbox | beads assigned to a human and notes left for them in ynm, through `scripts/inbox.sh`, shown at the desk's wake |
+| Shared helpers | `lib/wheelhouse-lib.sh`: the one place the scripts' common helpers live (`limited`, `die`, `need`, the `bd` envelope, the roster path, backend detection, the seat tests, the model tiers), sourced by every script from beside itself or from the plugin's `lib/` folder |
 
 ## Skills
 

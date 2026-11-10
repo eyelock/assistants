@@ -59,9 +59,15 @@ note asks this for the same answer the PR will give.
 EOF2
 }
 
-die() { echo "$2" >&2; exit "$1"; }
 refuse() { echo "open-pr: refused: $1" >&2; jq -n --arg r "$1" '{refused: $r}'; exit 1; }
 
+WL_PREFIX="open-pr: "
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
+  # shellcheck source=../../../lib/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
 bead=""; title=""; body_file=""; base=""; head=""; repo=""; dir="."; dry=false
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -78,17 +84,17 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$bead" ] || { usage >&2; exit 1; }
-[ -z "$body_file" ] || [ -f "$body_file" ] || die 2 "open-pr: no such body file: $body_file"
-command -v jq >/dev/null || die 3 "open-pr: jq is not installed"
-command -v bd >/dev/null || die 3 "open-pr: bd (Beads) is not installed"
-command -v gh >/dev/null || die 3 "open-pr: gh is not installed"
-[ -d "$dir/.beads" ] || die 2 "open-pr: $dir is not a Wheelhouse (no .beads)"
-here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+[ -z "$body_file" ] || [ -f "$body_file" ] || die 2 "no such body file: $body_file"
+need jq
+need bd
+need gh
+[ -d "$dir/.beads" ] || die 2 "$dir is not a Wheelhouse (no .beads)"
 
 # The bead.
-shown=$(cd "$dir" && bd show "$bead" --json 2>/dev/null) || die 2 "open-pr: no bead $bead"
-ref=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | .external_ref // ""' <<<"$shown")
-housekeeping=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | [(.labels // [])[] | select(. == "housekeeping")] | length' <<<"$shown")
+shown=$(cd "$dir" && limited "$WL_BD_SECS" bd show "$bead" --json 2>/dev/null) || die 2 "no bead $bead"
+shown=$(bd_first <<<"$shown")
+ref=$(jq -r '.external_ref // ""' <<<"$shown")
+housekeeping=$(jq -r '[(.labels // [])[] | select(. == "housekeeping")] | length' <<<"$shown")
 
 # A review fix: its external_ref is the URL of the pull request it fixes, not a tracker item. It
 # pushes to that PR and opens none, so there is nothing to link: a dry run reports it, and a real
@@ -104,9 +110,9 @@ fi
 # The tracker config.
 kind=none
 if [ -f "$dir/tracker.json" ]; then
-  kind=$(jq -er '.kind' "$dir/tracker.json" 2>/dev/null) || die 3 "open-pr: $dir/tracker.json is not valid, or has no kind"
+  kind=$(jq -er '.kind' "$dir/tracker.json" 2>/dev/null) || die 3 "$dir/tracker.json is not valid, or has no kind"
   # kind names an adapter file, so it must be a plain word, never a path.
-  printf '%s\n' "$kind" | grep -Eq '^[a-z0-9_-]+$' || die 3 "open-pr: tracker.json kind must be lower-case letters, digits, - or _"
+  printf '%s\n' "$kind" | grep -Eq '^[a-z0-9_-]+$' || die 3 "tracker.json kind must be lower-case letters, digits, - or _"
 fi
 
 # Exempt by repository: the bead's repo: label is in the config's exempt_repos. A list that is not
@@ -114,12 +120,12 @@ fi
 exempt=false
 if [ "$kind" != none ]; then
   jq -e '(.exempt_repos // []) | type == "array" and all(type == "string")' "$dir/tracker.json" >/dev/null 2>&1 ||
-    die 3 "open-pr: tracker.json exempt_repos must be a list of repository names"
+    die 3 "tracker.json exempt_repos must be a list of repository names"
   hit=$(jq -r --argjson b "$shown" '
     (.exempt_repos // []) as $ex
-    | ($b | (.data? // .) | (if type == "array" then .[0] else . end) | [(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:")]) as $repos
+    | ($b | [(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:")]) as $repos
     | [$repos[] | select(. as $r | $ex | index($r))] | length' "$dir/tracker.json") ||
-    die 3 "open-pr: could not read exempt_repos"
+    die 3 "could not read exempt_repos"
   [ "$hit" -gt 0 ] && exempt=true
 fi
 
@@ -131,46 +137,46 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
   # The pattern is required, and checked before the adapter is called. The adapter checks the
   # reference again against its own strict form, and passes it to the tracker's CLI as one argument.
   pattern=$(jq -r '.item.pattern // empty' "$dir/tracker.json")
-  [ -n "$pattern" ] || die 3 "open-pr: tracker.json has no item.pattern; refusing to run its commands"
+  [ -n "$pattern" ] || die 3 "tracker.json has no item.pattern; refusing to run its commands"
   printf '%s\n' "$ref" | grep -Eq -- "$pattern" ||
     refuse "bead $bead's external_ref does not look like a tracker $name (expected to match $pattern)"
   case "$ref" in *$'\n'*) refuse "bead $bead's external_ref spans several lines" ;; esac
   item="$ref"
   adapter="$here/tracker-$kind.sh"; [ -f "$adapter" ] || adapter="$here/tracker-generic.sh"
-  release=$(bash "$adapter" release "$item") || die 3 "open-pr: the $kind adapter could not read the release of $item"
+  release=$(bash "$adapter" release "$item") || die 3 "the $kind adapter could not read the release of $item"
   [ -n "$release" ] || refuse "the tracker $name $item has no $rname: set it in the tracker, then open the PR"
 
   # Is this the last open bead on the item? Both sides go through the adapter to a canonical item
   # id first, so a sibling written in another case or short form (owner/repo#N) still counts.
-  mine=$(bash "$adapter" canon "$item") || die 3 "open-pr: the $kind adapter failed to canonicalise $item"
+  mine=$(bash "$adapter" canon "$item") || die 3 "the $kind adapter failed to canonicalise $item"
   # Capture each step on its own, so a failing bd or jq is a fault (exit 3), never a count of 0
   # that would write "Closes" while other beads are open on the item.
-  listing=$(cd "$dir" && bd list --all --json 2>/dev/null) || die 3 "open-pr: bd list failed"
+  listing=$(cd "$dir" && limited "$WL_BD_SECS" bd list --all --json 2>/dev/null) || die 3 "bd list failed"
   # A bead in an exempt repository is no sibling: its PR carries no closing link, so it never holds
   # the item open. (Its external_ref may name the same item as this bead's.)
-  exlist=$(jq -c '(.exempt_repos // [])' "$dir/tracker.json") || die 3 "open-pr: could not read exempt_repos"
-  refs=$(jq -r --arg id "$bead" --argjson ex "$exlist" \
-    '(.data? // .)[] | select(.id != $id and .status != "closed")
+  exlist=$(jq -c '(.exempt_repos // [])' "$dir/tracker.json") || die 3 "could not read exempt_repos"
+  refs=$(bd_data <<<"$listing" | jq -r --arg id "$bead" --argjson ex "$exlist" \
+    '.[] | select(.id != $id and .status != "closed")
      | select(([(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:") | select(. as $r | $ex | index($r))] | length) == 0)
-     | .external_ref // empty' <<<"$listing") ||
-    die 3 "open-pr: could not read bd list's output"
+     | .external_ref // empty') ||
+    die 3 "could not read bd list's output"
   others=0
   while IFS= read -r sib; do
     [ -n "$sib" ] || continue
-    c=$(bash "$adapter" canon "$sib") || die 3 "open-pr: the $kind adapter failed to canonicalise $sib"
+    c=$(bash "$adapter" canon "$sib") || die 3 "the $kind adapter failed to canonicalise $sib"
     if [ "$c" = "$mine" ]; then others=$((others + 1)); fi
   done <<<"$refs"
   last="more"; [ "$others" -eq 0 ] && last=last
 
-  [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
+  [ -z "$repo" ] && repo=$(limited "$WL_GH_SECS" gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
   relation=part-of; [ "$last" = last ] && relation=closes
-  closing=$(bash "$adapter" closing "$item" "$last" "$repo") || die 3 "open-pr: the $kind adapter failed to write the closing link"
+  closing=$(bash "$adapter" closing "$item" "$last" "$repo") || die 3 "the $kind adapter failed to write the closing link"
   while IFS= read -r f; do [ -n "$f" ] && flags+=("$f"); done < <(bash "$adapter" pr-flags "$release")
 fi
 
 # The title defaults to the bead's own.
 if [ -z "$title" ]; then
-  title=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | .title // ""' <<<"$shown")
+  title=$(jq -r '.title // ""' <<<"$shown")
   $dry || [ -n "$title" ] || { usage >&2; exit 1; }
 fi
 # The head: when the local branch's upstream has another name (a seat pushed another seat's branch
@@ -202,10 +208,10 @@ if $dry; then
     '{dry_run: true, exempt: $exempt, item: $item, item_name: $iname, release: $release, release_name: $rname, relation: $relation, closing: $closing, gh: $gh}'
   exit 0
 fi
-url=$(gh "${args[@]}") || die 3 "open-pr: gh pr create failed"
+url=$(limited "$WL_GH_SECS" gh "${args[@]}") || die 3 "gh pr create failed"
 # Note the PR on the bead, so the dispatcher, the wake and the dead-claim check all find an open
 # pull request the same way: a note line "PR: <url>". A failed note does not undo the PR.
-(cd "$dir" && bd note "$bead" "PR: $url" >/dev/null) ||
+(cd "$dir" && limited "$WL_BD_SECS" bd note "$bead" "PR: $url" >/dev/null) ||
   echo "open-pr: opened $url but could not note it on $bead; run: bd note $bead \"PR: $url\"" >&2
 jq -n --arg url "$url" --arg item "$item" --arg release "$release" --arg closing "$closing" \
   --arg iname "$name" --arg rname "$rname" --arg relation "$relation" --argjson exempt "$exempt" \

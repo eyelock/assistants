@@ -19,14 +19,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
+  # shellcheck source=../../../lib/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
 memsh=""
 for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memsh="$f"; break; }
 done
-backend=ynm
-if [ -n "$memsh" ]; then
-  backend=$(bash "$memsh" backend --dir "$dir" 2>&1) || { printf '%s\n' "$backend" | head -c 200; exit 1; }
-elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
+if ! backend=$(wl_backend "$dir"); then
+  echo "wheelhouse.json: memory must be \"ynm\" or \"beads\", not \"$backend\""; exit 1
+elif [ "$backend" = beads ] && [ -z "$memsh" ]; then
   echo "wheelhouse.json names a memory backend but there is no memory.sh"; exit 1
 fi
 yesno() { if [ "$(jq 'length' 2>/dev/null)" -gt 0 ] 2>/dev/null; then echo yes; else echo no; fi; }
@@ -36,28 +40,22 @@ case "$cmd" in
   beads)
     out="[]"
     command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ] || { echo "$out"; exit 0; }
-    mem=$(cd "$dir" && bd --readonly memories --json 2>/dev/null)
+    mem=$(cd "$dir" && limited "$WL_BD_SECS" bd --readonly memories --json 2>/dev/null)
     if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$mem"; then
       out=$(jq -nc --argjson m "$mem" '[{name: "beads memory readable", ok: true, level: "info", detail: "\([$m | keys[] | select(. != "schema_version")] | length) memories", fix: null}]')
     else
       out=$(jq -nc --arg f "cd $dir && bd memories, and read the error" '[{name: "beads memory readable", ok: false, level: "error", detail: "bd --readonly memories --json gave no memory map", fix: $f}]')
     fi
-    if (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
+    if [ "$(cd "$dir" && wl_dolt_remote "$WL_BD_SECS")" = yes ]; then
       jq -c '. + [{name: "beads memory shared", ok: true, level: "info", detail: "the work graph has a Dolt remote", fix: null}]' <<<"$out"
     else
       jq -c '. + [{name: "beads memory shared", ok: false, level: "warn", detail: "no Dolt remote, so memory stays on this machine", fix: "bd dolt remote add origin <git URL> --allow-git-origin, then bd dolt push"}]' <<<"$out"
     fi ;;
   born)
     # ynm: read from the project mount only, so a slow remote can't hold it up.
-    if [ "$backend" = beads ]; then
-      found=$(bash "$memsh" recall --dir "$dir" --seat "$seat" --kind identity --limit 1 2>/dev/null) || exit 1
-      yesno <<<"$found"
-    else
-      found=$(cd "$dir" && ynm recall --mount project --namespace "seat/$seat" --tags identity --json 2>/dev/null) || exit 1
-      jq -c --arg ns "seat/$seat" '[.[]? | select(.namespace == $ns and .pinned == true)]' <<<"$found" | yesno
-    fi ;;
+    wl_identity_pinned "$backend" "$dir" "$seat" "$memsh" || exit 1 ;;
   human)
     if [ "$backend" = beads ]; then bash "$memsh" recall --dir "$dir" --human "$name" --limit 1 2>/dev/null | yesno
-    else ynm recall --namespace "human/$name" --limit 1 --json 2>/dev/null | yesno; fi ;;
+    else limited "$WL_YNM_SECS" ynm recall --namespace "human/$name" --limit 1 --json 2>/dev/null | yesno; fi ;;
   *) echo "usage: memory-checks.sh backend|beads|born|human [--dir D] [--seat C|--name C]" >&2; exit 1 ;;
 esac

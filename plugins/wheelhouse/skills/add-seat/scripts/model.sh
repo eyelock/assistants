@@ -18,6 +18,12 @@ usage() {
   echo "Usage: model.sh --seat <command> [--dir <wheelhouse repo>] [--vendor <vendor>] [--format value|flag|json]"
 }
 
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../../lib/wheelhouse-lib.sh"; do
+  # shellcheck source=../../../lib/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the plugin's lib folder" >&2; exit 3; }
 dir="."
 seat=""
 vendor="claude"
@@ -34,17 +40,11 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$seat" ] || { usage >&2; exit 1; }
 case "$format" in value | flag | json) ;; *) usage >&2; exit 1 ;; esac
-command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 3; }
-roster="$dir/skills/roster/assets/roster.json"
+need jq
+roster="$dir/$WL_ROSTER_REL"
 [ -f "$roster" ] || { echo "no roster at $roster" >&2; exit 2; }
 
-out=$(jq -c --arg seat "$seat" --arg vendor "$vendor" '
-  ({fast: {claude: "sonnet"}, balanced: {claude: "sonnet"}, deep: {claude: "opus"}} * (.models.tiers // {})) as $tiers
-  | (.seats[] | select(.command == $seat)) as $s
-  | ($s.model // (.models.groups // {})[$s.group]) as $tier
-  | {seat: $seat, vendor: $vendor, tier: $tier,
-     model: ($s.models[$vendor] // (if $tier then $tiers[$tier][$vendor] else null end))}
-' "$roster" 2>/dev/null)
+out=$(jq -c --arg seat "$seat" --arg vendor "$vendor" "$WL_JQ_MODELS"'wl_model($vendor) | select(.seat == $seat)' "$roster" 2>/dev/null)
 model=$(jq -r '.model // empty' <<<"$out" 2>/dev/null)
 if [ -z "$out" ] || [ -z "$model" ]; then
   echo "no model for seat '$seat' on vendor '$vendor': give the seat a model tier, or its group a default in the roster's models.groups" >&2
