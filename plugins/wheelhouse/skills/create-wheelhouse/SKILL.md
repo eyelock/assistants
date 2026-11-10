@@ -43,8 +43,8 @@ at a time**, in this order. Don't create anything until you have the first four.
    ships. If the request doesn't say and you aren't asking, use uncommitted, and say so
    in the report.
 7. **Where it shares** code, memory and work. By default it is the Wheelhouse's own repository,
-   through its git remote: code on its branches, memory in ynm's notes, and the work graph in
-   Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
+   through its git remote: code on its branches, memory in ynm's notes (or, with Beads memory, in the
+   same Dolt refs as the work graph), and the work graph in Beads' Dolt refs, all side by side. Ask only if the request hints at something else, such as a
    separate Dolt remote, or a Wheelhouse that never leaves this machine.
 8. **The tracker:** where the humans see the project, apart from the work graph: GitHub Issues,
    JIRA, another, or none. For one, gather what `tracker.json` needs (the `work-graph` skill's
@@ -201,7 +201,10 @@ the files it finds, and would commit the human's.
    - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
      to seats waiting on them.
    - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
-   - **A private home.** Each seat's memory is its own, in its namespace `seat/<name>`.
+   - **A private home.** With ynm memory: each seat's memory is its own, in its namespace
+     `seat/<name>`. With Beads memory, which has no private home, write: "**A home of its own.**
+     Each seat's memory is its own to write, under its keys `seat/<name>/`; everyone who syncs the
+     work graph can read it."
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
@@ -242,7 +245,7 @@ the files it finds, and would commit the human's.
    (question 5). There is always exactly one. No other human is written to the roster, and no
    email or username is stored anywhere: a person is at the desk for a session by naming
    themselves, and their command is their name in lowercase. Every open bead is unassigned or assigned to
-   a seat, the default human, a human command with a `human/<command>` namespace in ynm, or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
+   a seat, the default human, a human command with a `human/<command>` namespace in ynm (with Beads memory, `human/<command>/` keys), or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes).
 
    Check every name with `command -v`; put any that clash in `excluded`, with the reason.
 
@@ -369,7 +372,7 @@ can name themselves at the desk, "it's me, <name>", to get an inbox of their own
 (`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (with ynm memory, the push hook; a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
-and the doctor's verdict. To join from another machine: `git clone` the repository, then
+and the doctor's verdict, saying whether any fix was needed to reach it (none, when the layout passed as written). To join from another machine: `git clone` the repository, then
 `bd bootstrap` (the work graph, and its remote, which carries Beads memory too), `git config
 core.hooksPath .beads/hooks` (the push hooks), and, with ynm memory, `ynm sync` (the memory) and
 `ynm client install ynh` if this machine hasn't yet, and
