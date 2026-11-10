@@ -34,7 +34,7 @@ echo "bd $*" >> "${log}"
 if [ "$BD_MODE" = slowsync ]; then case "$*" in *"dolt remote"*) sleep 2 ;; *) sleep 60 ;; esac; fi
 case "$*" in
   *"dolt remote"*) echo '${remote ? '[{"name":"origin"}]' : "[]"}' ;;
-  *"--status in_progress"*) echo '[{"title":"Mine","notes":""}]' ;;
+  *"--status in_progress"*) if [ "$BD_MODE" = retro ]; then echo '[{"id":"r1","title":"Tess retro","notes":"","labels":["retro","retro:tess"]}]'; else echo '[{"title":"Mine","notes":""}]'; fi ;;
   *"ready --unassigned"*) echo '[{"title":"Spare","priority":1,"issue_type":"task"}]' ;;
   *) echo '[]' ;;
 esac
@@ -79,6 +79,17 @@ test("a locked bd: the wake finishes in bounded time and says the work graph cou
   assert.match(r.stdout, /## Who you are/);
   const reads = calls.split("\n").filter((l) => /^bd (list|ready)/.test(l));
   assert.ok(reads.length <= 1, `one wait, not one per read: ${reads.length} read calls`);
+});
+
+test("a locked bd: the block names the retro bead as missing, not absent", () => {
+  // The seat has a retro bead (the stub answers it in a free bd), but with bd locked nothing is read.
+  const { r } = run(["tess", "--format", "text"], { mode: "slow" });
+  assert.match(r.stdout, /your retro bead \(if you have one\)/);
+  assert.doesNotMatch(r.stdout, /## Your retro/);
+  // The same seat with a free bd and a retro bead shows it, so the line above is not hiding it.
+  const free = run(["tess", "--format", "text"], { mode: "retro" });
+  assert.match(free.r.stdout, /## Your retro/);
+  assert.doesNotMatch(free.r.stdout, /couldn't be read/);
 });
 
 test("a locked bd: JSON workRead is false", () => {

@@ -127,7 +127,7 @@
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
       "expected_output": "Dalglish is a worker, not the desk: its wake has no humans' inbox, and its reply is about its own work, not relaying the humans' inbox.",
       "assertions": [
-        "The reply does not relay the humans' inbox (no list of what is waiting for Pat or Rook)",
+        "The reply does not relay the humans' inbox: it does not list what is waiting for Pat or Rook (the changelog merge, the Go 1.24 decision, McCoist's note), whatever requests dalglish files for its own work",
         "The stubbed calls include no ynm forget of the note 01JINBOXNOTE00000000000001",
         "The reply is about dalglish's own work: what is waiting for it, or what it picks up"
       ]

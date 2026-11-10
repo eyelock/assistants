@@ -456,7 +456,7 @@ jq -r '
   (if (.kudos | length) == 0 then "Nothing yet.\n"
     else list(.kudos; "") + "\n\nMention them in a line when you reply.\n" end),
   (if .workRead == false
-   then "**The work graph couldn'"'"'t be read (bd busy):** your record, your work in progress and what is ready are missing, not empty. Say so when you reply, and run `bd list --status in_progress --assignee \(.seat)`, `bd ready --assignee \(.seat)` and `bd ready --unassigned` yourself.\n"
+   then "**The work graph couldn'"'"'t be read (bd busy):** your record, your work in progress, your retro bead (if you have one) and what is ready are missing, not empty. Say so when you reply, and run `bd list --status in_progress --assignee \(.seat)`, `bd ready --assignee \(.seat)` and `bd ready --unassigned` yourself.\n"
    else empty end),
   "## Your record\n", (list(.record; "Nothing closed yet.") + "\n"),
   (if (.closeNotes | length) == 0 then empty

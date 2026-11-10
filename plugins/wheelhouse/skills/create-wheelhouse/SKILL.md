@@ -163,8 +163,10 @@ the files it finds, and would commit the human's.
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
    what it checks then, with the `doctor` skill, `bd` and `ynm`, not from memory. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
-   with options, never as a list in prose. Who is at the desk is
-   per session: with no name, its wake shows the default human's inbox; when a person names
+   with options, never as a list in prose. The desk starts every session
+   with its wake (`bash scripts/wake.sh --seat <desk> --format text`, which its session-start hook
+   runs; run it yourself if the hook didn't), whose block opens with the humans' inbox. Who is at
+   the desk is per session: with no name, the wake shows the default human's inbox; when a person names
    themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
    their own inbox for that session, and seats can assign work to them by their lowercase name.
    Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub

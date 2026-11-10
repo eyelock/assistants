@@ -1,6 +1,6 @@
 ---
 name: wake
-description: Start a Wheelhouse seat's session with purpose, not amnesia - who you are, what you are for, where you left off, what you have been thanked for, your record and what is waiting for you, in one block from scripts/wake.sh. Use at the start of every session of a named seat or worker, or when a seat asks where it is or what to do now.
+description: Start a Wheelhouse seat's session with purpose, not amnesia - who you are, what you are for, where you left off, what you have been thanked for, your record and what is waiting for you, in one block from scripts/wake.sh. Use at the start of every session of the desk or any named seat or worker (the desk's block opens with the humans' inbox), or when a seat asks where it is or what to do now.
 ---
 
 # Wake
@@ -127,7 +127,7 @@ read, never that nothing is waiting.
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
 5. **Waiting for you:** if the block says **The work graph couldn't be read (bd busy)**, your
-   record, work in progress and ready beads are missing, not empty: say so in your reply, and
+   record, work in progress, retro bead and ready beads are missing, not empty: say so in your reply, and
    run the bd commands the block names yourself (`bd list --status in_progress --assignee <command>`,
    `bd ready --assignee <command>`, `bd ready --unassigned`) before deciding there is nothing to do;
    the JSON has `workRead: false`. Otherwise carry on with what is in progress, except a bead marked "(waiting on PR <url>)" (its pull request is open: it waits on a review or a merge, so there is nothing to carry on; "state unknown" means check the pull request first), then what is assigned to you, then
