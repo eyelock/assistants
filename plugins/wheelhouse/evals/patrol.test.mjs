@@ -294,8 +294,9 @@ test("--snapshot under .wheelhouse/ still makes the folder ignore itself", () =>
   const h = harness();
   try {
     h.set(before);
-    for (const name of [".wheelhouse/reni-patrol.json", join(h.wh, ".wheelhouse", "abs-patrol.json")]) {
+    for (const name of [".wheelhouse/reni-patrol.json", join(h.wh, ".wheelhouse", "abs-patrol.json"), ".wheelhouse/sub/nested.json"]) {
       rmSync(join(h.wh, ".wheelhouse"), { recursive: true, force: true });
+      mkdirSync(dirname(resolve(h.wh, name)), { recursive: true });
       const out = h.patrol(["--repo", R, "--snapshot", name]);
       assert.equal(out.status, 0, out.stderr);
       assert.ok(existsSync(resolve(h.wh, name)));
