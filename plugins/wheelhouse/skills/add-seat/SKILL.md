@@ -44,14 +44,24 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
 1. Skip a role that is already seated: a seat in the roster with that `role`, or, for a seat with
    no `role`, one whose mandate is clearly the same job. A seat on trial (a branch with an open
    draft pull request) counts as seated.
-2. Say in a line what the role is for, in the template's own words (its opening line, such as
-   "runs the roadmap on the issue tracker, so real issues close against versioned milestones"), and
-   ask one question: whether to seat it, under the first
-   name in the group's pool that no seat holds and `excluded` doesn't list, in the pool's order
-   ("Seat a designer, as Gahan?"). The human can change the name in the answer. A template with
-   `optional: true` is offered, not assumed. Never seat a role the human hasn't agreed to. Say
-   that you offer only this one, and that further seats come one at a time, after this one is made
-   official or dropped. Then stop and wait for the answer: one question per message.
+2. Make the offer in one message of this shape, whatever else you say and even when you ask the
+   question through a question tool with options (the options carry only the answers; the
+   sentences below go in the message text, never left out for brevity):
+
+   > Seat a designer, as Gahan? A designer designs changes with you and breaks them into beads.
+   > This is the only role I'm offering: further seats come one at a time, after this one is made
+   > official or dropped.
+
+   - the question is the role and the name: the first in the group's pool that no seat holds and
+     `excluded` doesn't list, in the pool's order. The human can change the name in the answer;
+   - the second sentence is what the role is for, in the template's own words (its opening line,
+     such as "runs the roadmap on the issue tracker, so real issues close against versioned
+     milestones");
+   - the third says it is the only role offered, and that further seats follow once this one is
+     official or dropped.
+
+   A template with `optional: true` is offered, not assumed (say it is optional). Never seat a role
+   the human hasn't agreed to. Then stop and wait for the answer: one question per message.
 3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
    request, the constitution or the roster already answers.
 4. Don't change anything else while you seat it, such as the constitution or the scripts; mention
