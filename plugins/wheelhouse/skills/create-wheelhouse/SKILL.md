@@ -274,7 +274,33 @@ the files it finds, and would commit the human's.
 6. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
    `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
    "Handing over work" section says that a build bead's `external_ref` holds its tracker item.
-7. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
+7. **The bare-session guard.** A vendor session opened in this repository without ynh (plain
+   `claude`, `codex` or Cursor) would otherwise read the constitution and act as the desk, claim
+   beads or write seat memory. Copy this skill's `scripts/bare-guard.sh` into the Wheelhouse as
+   `scripts/bare-guard.sh`, and add a session-start hook that runs it, for each vendor the desk
+   and seats run on (their `default_vendor`; `claude` when none is set). Merge into a file that
+   already exists; never overwrite it.
+
+   | Vendor | File | Hook |
+   |---|---|---|
+   | Claude Code | `.claude/settings.json` | `{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/bare-guard.sh\" --vendor claude"}]}]}}` |
+   | Codex | `.codex/hooks.json` | the same shape, with `"command": "bash \"$(git rev-parse --show-toplevel)/scripts/bare-guard.sh\" --vendor codex"` |
+   | Cursor | `.cursor/hooks.json` | `{"version": 1, "hooks": {"sessionStart": [{"command": "bash scripts/bare-guard.sh --vendor cursor"}]}}` |
+
+   The guard tells a seat apart by its run labels: `ynh run` exports them as `YNH_LABELS` to the
+   vendor it starts, and every seat's harness carries `wheelhouse:<name>` (the label `add-seat`
+   writes, ynh 0.17.0 or later). A session with that label is a seat and the guard prints
+   nothing; any other session is told it is not one. ynh sets no other variable that marks a
+   launch, so a harness without the label would be treated as a plain session: label every
+   harness. Codex runs a project hook only for a trusted project and a trusted hook, so the human
+   reviews it in Codex's `/hooks` the first time; say so in the report.
+
+   Copilot CLI and OpenCode are not guarded, and the report says so rather than faking it: ynh
+   has no verified project-level session-start file for plain Copilot that adds context, and
+   OpenCode has no configuration hook at all (ynh runs its session-start hooks itself, so there
+   is nothing to run in a plain OpenCode session). The doctor names these vendors and does not
+   count them as missing.
+8. Commit: `git add -A && git commit -m "feat: the <name> Wheelhouse"`. The tree must be clean
    before Beads starts.
 
 ## 4. Work and memory
