@@ -529,9 +529,16 @@ async function runCase(c, arm, runNo, ctx) {
     };
     writeJson(join(dirname(outDir), "timing.json"), timing);
     if ((!result && !plain) || res.code !== 0) {
-      log(`${caseSlug(c)}/${arm}: ${launch.cmd} exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`);
+      log(
+        `${caseSlug(c)}/${arm}: ${launch.cmd} exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`,
+      );
     }
-    return { answer, evidence, timing, ok: plain ? res.code === 0 : Boolean(result) && !result.is_error };
+    return {
+      answer,
+      evidence,
+      timing,
+      ok: plain ? res.code === 0 : Boolean(result) && !result.is_error,
+    };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -853,10 +860,22 @@ async function main() {
     };
   }
   if (summary.with_skill && summary.without_skill) {
+    // A seat case runs only with the skill, so the delta compares the cases both arms ran.
+    const both = new Set(runs.filter((r) => r.arm === "without_skill").map((r) => r.case));
+    const paired = (arm) => {
+      const mine = runs.filter((r) => r.arm === arm && both.has(r.case));
+      return {
+        pass_rate: stats(mine.map((r) => r.pass_rate)),
+        time_seconds: stats(mine.map((r) => r.duration_ms / 1000)),
+        tokens: stats(mine.map((r) => r.total_tokens)),
+      };
+    };
+    const w = paired("with_skill");
+    const wo = paired("without_skill");
     const d = (k) =>
-      summary.with_skill[k].mean === null || summary.without_skill[k].mean === null
+      w[k].mean === null || wo[k].mean === null
         ? null
-        : Math.round((summary.with_skill[k].mean - summary.without_skill[k].mean) * 1000) / 1000;
+        : Math.round((w[k].mean - wo[k].mean) * 1000) / 1000;
     summary.delta = {
       pass_rate: d("pass_rate"),
       time_seconds: d("time_seconds"),

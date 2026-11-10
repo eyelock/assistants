@@ -7,7 +7,6 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
-  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -150,12 +149,13 @@ test("seatLaunch: ynh run in a scratch home, the run's directory the only worksp
   const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
   try {
     const root = realpathSync(work);
-    const launch = seatLaunch({ seat: "harnesses/worker", prompt: "hi" }, "claude", work, { A: "1" }, [
-      "-p",
-      "hi",
-      "--max-turns",
-      "3",
-    ]);
+    const launch = seatLaunch(
+      { seat: "harnesses/worker", prompt: "hi" },
+      "claude",
+      work,
+      { A: "1" },
+      ["-p", "hi", "--max-turns", "3"],
+    );
     assert.match(launch.cmd, /ynh$/);
     assert.deepEqual(launch.args, [
       "run",
@@ -180,7 +180,9 @@ test("seatLaunch: ynh run in a scratch home, the run's directory the only worksp
 test("seatLaunch: another vendor gets only the prompt, and an absolute seat path is kept", () => {
   const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
   try {
-    const launch = seatLaunch({ seat: "/abs/seat", prompt: "hi" }, "codex", work, {}, ["--claude-only"]);
+    const launch = seatLaunch({ seat: "/abs/seat", prompt: "hi" }, "codex", work, {}, [
+      "--claude-only",
+    ]);
     assert.deepEqual(launch.args, ["run", "/abs/seat", "-v", "codex", "--", "-p", "hi"]);
   } finally {
     rmSync(work, { recursive: true, force: true });
