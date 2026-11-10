@@ -216,6 +216,7 @@ rules. In short:
   "version": "0.1.0",
   "description": "<Name>, <group> seat of the <wheelhouse> Wheelhouse: <mandate>",
   "default_vendor": "claude",
+  "labels": { "wheelhouse": "<wheelhouse>" },
   "includes": [
     {
       "git": "https://github.com/eyelock/assistants",
@@ -246,6 +247,12 @@ rules. In short:
   and the desk is the only harness that includes the whole plugin (no `pick`). A skill the plugin
   gains later reaches a seat only when its `pick` names it, so add it to the picks when the plugin
   gains one.
+- `labels` is an object of key to value, and stamps every run record of the seat with
+  `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
+  `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out
+  this Wheelhouse's records when several share the laptop spool. It needs ynh 0.17.0 or later: an
+  older ynh refuses the field, so a seat written with it won't start there. The value is always
+  the desk's own name, never another Wheelhouse's or a person's.
 - Add only what the mandate needs: other includes (such as `plugins/gitflow` for releases),
   MCP servers, and the environment variables they need in `env_passthrough`. Don't pass
   `BEADS_ACTOR` through: the seat names itself, so a variable left over in the human's shell
