@@ -211,7 +211,7 @@ the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` wo
 
 On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
 session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
-`-n`; the session's file under `~/.claude/sessions/` carries it too). A seat messages another by that name. Other vendors differ, and a seat never relies on
+`-n`). A seat messages another by that name. Other vendors differ, and a seat never relies on
 messaging a live session: asks go through the work graph (the bead and the check-in rule), and the
 name is only a fast path.
 
