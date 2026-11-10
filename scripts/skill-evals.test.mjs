@@ -249,8 +249,17 @@ test("plainChecks: an empty log fails every required pattern and no forbidden on
   );
 });
 
+test("plainChecks: each refused call fails the case; an absent or empty log adds nothing", () => {
+  assert.deepEqual(plainChecks({}, "", ""), []);
+  assert.deepEqual(plainChecks({}, ""), []);
+  const r = plainChecks({}, "", "git -C ../ynh stash\n");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].passed, false);
+  assert.match(r[0].evidence, /refused by a stub: git -C \.\.\/ynh stash/);
+});
+
 // grade() with a fake `claude` first on PATH that records each call it gets.
-async function gradeWithFakeJudge(c, calls) {
+async function gradeWithFakeJudge(c, calls, refused = "") {
   const dir = mkdtempSync(join(tmpdir(), "grade-test-"));
   const judgeLog = join(dir, "judge.log");
   const bin = join(dir, "bin");
@@ -265,7 +274,7 @@ async function gradeWithFakeJudge(c, calls) {
   try {
     const ctx = { iterationDir: join(dir, "it"), runs: 1, judgeModel: "x" };
     mkdirSync(join(ctx.iterationDir, `eval-${c.name}`, "with_skill"), { recursive: true });
-    const grading = await grade(c, "with_skill", 1, "answer", "", ctx, calls);
+    const grading = await grade(c, "with_skill", 1, "answer", "", ctx, calls, refused);
     const judged = existsSync(judgeLog);
     return { grading, judged };
   } finally {
@@ -296,4 +305,20 @@ test("grade: when the plain checks pass, the judge grades the soft assertions", 
   assert.equal(judged, true);
   assert.equal(grading.plain_check_failed, false);
   assert.equal(grading.summary.passed, 2);
+});
+
+test("grade: a failed plain check makes pass_rate 0, not passed over total", async () => {
+  const c = { id: 4, name: "z", assertions: ["a", "b"], forbidden: ["^gh pr merge", "^gh x"] };
+  const { grading } = await gradeWithFakeJudge(c, "gh pr merge 9\n");
+  assert.equal(grading.summary.passed, 1);
+  assert.equal(grading.summary.total, 4);
+  assert.equal(grading.summary.pass_rate, 0);
+});
+
+test("grade: a refused call fails the case with no judge call", async () => {
+  const c = { id: 5, name: "x", assertions: ["says why"], forbidden: ["^git stash"] };
+  const { grading, judged } = await gradeWithFakeJudge(c, "", "git -C ../ynh stash\n");
+  assert.equal(judged, false);
+  assert.equal(grading.plain_check_failed, true);
+  assert.equal(grading.summary.pass_rate, 0);
 });

@@ -142,8 +142,21 @@ expression matched against every line of the log, which reads `<command> <argume
 - `required`: patterns that must each match some call. `"^git worktree add"` fails the case if the
   seat never made a worktree. Pair a must-not-act case with a twin that requires the safe call.
 
+Only a stubbed command writes the log, so a pattern sees calls to stubbed commands and nothing
+else: `"^git stash"` with no `git` stub matches nothing, and the case passes even if the seat
+stashes. Stub every command a pattern names, with `stubs` or a richer stub from `setup`, such as
+`seat-stub.sh` ([assistants #251](https://github.com/eyelock/assistants/pull/251)). The runner does
+not check this, because a `setup` script can install stubs it cannot see. A pattern is matched
+against the line as logged, so `"^git stash"` misses `git -C ../ynh stash`.
+
+A call a stub refused is a failure on its own, whether or not a pattern names it. A stub that
+refuses a call writes it to `$EVAL_STUB_LOG.refused`, and each line there adds a failed check,
+`call refused by a stub: <call>`. A run with no such file, or an empty one, is unaffected.
+
 The plain checks run first. If any fails, the judge is not called: the run's `grading.json` has
 `plain_check_failed: true`, each failed check names the call (`forbidden call made: gh pr merge 1`
 or `no logged call matches`), and the case's `assertions` are reported as not graded. If they all
 pass, the judge grades `assertions` as before, so keep those for the soft part: did the seat say
-plainly what it did and why. Plain checks count in the pass rate like any assertion, in both arms.
+plainly what it did and why. A failed plain check makes the run's `pass_rate` 0, not `passed / total`: `summary.passed` and
+`summary.failed` still count what passed and failed, but the case scores nothing. The same holds in
+both arms.
