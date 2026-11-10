@@ -61,8 +61,11 @@ needs. `--update` runs them, then re-copies the plugin scripts the Wheelhouse al
 `scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's, but
 only a copy that is a version the plugin once shipped (so it is merely behind). A script that carries
 changes the plugin never had (Wheelhouse-local work not yet ported upstream) is never overwritten:
-it is listed in `upstream.pluginScriptsKept` with its diff and named in the notes, and when the
-plugin's history can't say (no git checkout, a shallow clone) it is kept too. Port the local change
+it is listed in `upstream.pluginScriptsKept` with its diff (cut at 60 lines, and saying so when cut) and named in the notes. Without `--update` the note says "would be left alone". When the plugin's history can't say
+(no git checkout, or a shallow clone: ynh's cache clones every include with `--depth 1`, so
+against the default plugin refresh usually can't tell) the script is kept too, with `reason:
+"cannot-tell"` and a note saying so. To have a merely-behind script updated, give refresh a full clone
+of the plugin's repository: `--plugin <clone>/plugins/wheelhouse`. Otherwise port the local change
 into the plugin, then take the plugin's copy, or merge by hand.
 It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
 when it can't find it. Ask before `--update`: it changes files in the repository.

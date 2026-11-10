@@ -211,16 +211,18 @@ updates="[]"
 scripts_stale="[]"
 copied="[]"
 kept="[]" # [{script, diff}]
-# plugin_had <plugin script path> <Wheelhouse script path>: success when the Wheelhouse's copy is
-# byte-for-byte a version the plugin once shipped (so it is only behind), failure when it carries
-# changes the plugin never had, or when the plugin's history can't say (no git, a shallow clone):
-# then refresh must not overwrite it.
+# plugin_had <plugin script path> <Wheelhouse script path>: 0 when the Wheelhouse's copy is
+# byte-for-byte a version the plugin once shipped (so it is only behind); 1 when the plugin's history
+# is there and never had it (Wheelhouse-local changes); 2 when the history can't say (no git, or a
+# shallow clone such as ynh's depth-1 cache, which holds only the current commit). Either failure
+# means refresh must not overwrite it.
 plugin_had() {
   local src="$1" mine="$2" root rel want c
-  root=$(git -C "$(dirname "$src")" rev-parse --show-toplevel 2>/dev/null) || return 1
-  rel=$(git -C "$(dirname "$src")" ls-files --full-name -- "$(basename "$src")" 2>/dev/null) || return 1
-  [ -n "$rel" ] || return 1
-  want=$(git hash-object "$mine") || return 1
+  root=$(git -C "$(dirname "$src")" rev-parse --show-toplevel 2>/dev/null) || return 2
+  [ "$(git -C "$root" rev-parse --is-shallow-repository 2>/dev/null)" = false ] || return 2
+  rel=$(git -C "$(dirname "$src")" ls-files --full-name -- "$(basename "$src")" 2>/dev/null) || return 2
+  [ -n "$rel" ] || return 2
+  want=$(git hash-object "$mine") || return 2
   for c in $(git -C "$root" log --format=%H -- "$rel" 2>/dev/null); do
     [ "$(git -C "$root" rev-parse "$c:$rel" 2>/dev/null)" = "$want" ] && return 0
   done
@@ -256,9 +258,14 @@ if [ "$upstream" = 1 ]; then
         # A script the Wheelhouse lacks is new to it. One it carries is overwritten only when it is
         # a version the plugin once shipped; otherwise it holds Wheelhouse-local changes the plugin
         # lacks (not yet ported upstream), and overwriting would regress them: keep it and show the diff.
-        if [ -f "$dir/scripts/$b" ] && ! plugin_had "$plugin/skills/$f" "$dir/scripts/$b"; then
-          d=$(diff -u "$dir/scripts/$b" "$plugin/skills/$f" 2>/dev/null | head -60 || true)
-          kept=$(jq -c --arg b "scripts/$b" --arg d "$d" '. + [{script: $b, diff: $d}]' <<<"$kept")
+        plugin_had "$plugin/skills/$f" "$dir/scripts/$b"; had=$?
+        if [ "$had" != 0 ]; then
+          full=$(diff -u "$dir/scripts/$b" "$plugin/skills/$f" 2>/dev/null || true)
+          d=$(printf '%s\n' "$full" | head -60)
+          cut=$(( $(printf '%s\n' "$full" | wc -l) - 60 )); [ "$cut" -gt 0 ] || cut=0
+          [ "$cut" -gt 0 ] && d="$d"$'\n'"... diff cut: $cut more lines (run: diff -u $dir/scripts/$b $plugin/skills/$f)"
+          kept=$(jq -c --arg b "scripts/$b" --arg d "$d" --argjson cut "$cut" --arg why "$([ "$had" = 2 ] && echo cannot-tell || echo local-changes)" \
+            '. + [{script: $b, reason: $why, diff: $d, diffCutLines: $cut}]' <<<"$kept")
           continue
         fi
         if [ "$update" = 1 ] && [ "$dry" = 0 ]; then
@@ -273,7 +280,13 @@ if [ "$upstream" = 1 ]; then
   fi
 fi
 [ "$(jq length <<<"$copied")" -gt 0 ] && restart_all=1
-[ "$(jq length <<<"$kept")" -gt 0 ] && note "left alone, not overwritten: $(jq -r 'map(.script) | join(", ")' <<<"$kept") carry changes the plugin has never shipped (Wheelhouse-local, perhaps not yet ported upstream). upstream.pluginScriptsKept has each diff (Wheelhouse's copy to the plugin's): port the local changes into the plugin, then take the plugin's, or merge by hand"
+if [ "$(jq length <<<"$kept")" -gt 0 ]; then
+  verb="would be left alone"; [ "$update" = 1 ] && [ "$dry" = 0 ] && verb="left alone, not overwritten"
+  l=$(jq -r 'map(select(.reason == "local-changes") | .script) | join(", ")' <<<"$kept")
+  t=$(jq -r 'map(select(.reason == "cannot-tell") | .script) | join(", ")' <<<"$kept")
+  [ -n "$l" ] && note "$verb: $l carry changes the plugin has never shipped (Wheelhouse-local, perhaps not yet ported upstream). upstream.pluginScriptsKept has each diff (Wheelhouse's copy to the plugin's): port the local changes into the plugin, then take the plugin's, or merge by hand"
+  [ -n "$t" ] && note "$verb: $t differ from the plugin's, and the plugin checkout has no history to say whether the Wheelhouse's copy is only behind (ynh's cache is a depth-1 clone). Give refresh a full clone of the plugin's repository with --plugin <clone>/plugins/wheelhouse (git clone <url> then re-run), or take the plugin's copy by hand after reading the diff in upstream.pluginScriptsKept"
+fi
 
 # --- installed and born -------------------------------------------------------------------
 # Where identities live is wheelhouse.json's "memory" key, read through memory.sh: the

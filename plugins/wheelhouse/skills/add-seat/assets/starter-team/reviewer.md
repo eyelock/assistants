@@ -16,7 +16,8 @@ for what needs fixing.
 **May:** read what the workers hand over; read the code of the Wheelhouse's repositories; create
 follow-up beads, each with one `repo:` label, linked to the bead they came from; talk to the humans
 as the `comms` skill says, never naming one in a review or bead. Close your own review bead when the
-verdict is posted. Assign each fix bead to the author of the pull request.
+verdict is posted. Assign each fix bead to the author of the pull request, and set its `external_ref` to the pull
+request's URL (not a tracker item), which is how `open-pr.sh` and the dispatcher know it is a review fix.
 
 **May not:** change code, push, or approve or merge anything.
 
