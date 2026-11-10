@@ -206,10 +206,9 @@ applied. The `doctor` warns about a seat with no model.
 just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find it by name. `scripts/session-name.sh --seat <command> [--format value|flag]` (in
 this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`.
 **Launch with it:** pass it with the other launch flags, `<command> --name=hq-okafor`. Write it with
-the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` or `--name hq-okafor`
-launches with `hq-okafor` as the prompt. ynh's `plugin.json` has no field for launch flags, so the
-launcher is where the name is set, as with the model, and `ynh run --session-name` is a different
-thing, and sets no display name.
+the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` would send
+`hq-okafor` as the prompt. The launcher sets the name, as with the model; `ynh run --session-name`
+is a different option and sets no display name.
 
 On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
 session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
