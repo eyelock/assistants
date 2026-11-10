@@ -108,9 +108,9 @@ while [ $# -gt 0 ]; do
 done
 
 command -v jq >/dev/null 2>&1 || die 3 "jq is required"
-command -v bd >/dev/null 2>&1 || die 3 "bd is required"
 roster="$dir/skills/roster/assets/roster.json"
 [ -f "$roster" ] || die 2 "not a Wheelhouse (no $roster)"
+command -v bd >/dev/null 2>&1 || die 3 "bd is required"
 cd "$dir" || exit 2
 roster=skills/roster/assets/roster.json
 
