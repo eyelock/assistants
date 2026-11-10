@@ -15,7 +15,8 @@
 # "## What it reaches" as a backticked relative path, such as `../api`.
 #
 # The snapshot: --snapshot <file>, else .wheelhouse/patrol.json in the
-# Wheelhouse repository (the folder ignores itself in git). --dry-run compares
+# Wheelhouse repository (the folder ignores itself in git, as it does for any
+# snapshot named under .wheelhouse/, even in a sub-folder). --dry-run compares
 # and prints without saving it, so a timer can ask whether there's news and
 # leave the patrol itself to the seat it wakes.
 #
@@ -99,11 +100,25 @@ for r in "${repos[@]}"; do
   [[ "$r" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die 1 "$r is not owner/name"
 done
 
-if [ -z "$snapshot" ]; then
-  mkdir -p .wheelhouse || die 3 "could not make .wheelhouse"
-  [ -f .wheelhouse/.gitignore ] || printf '*\n' > .wheelhouse/.gitignore
-  snapshot=.wheelhouse/patrol.json
-fi
+[ -n "$snapshot" ] || snapshot=.wheelhouse/patrol.json
+# A snapshot inside the Wheelhouse's .wheelhouse/ folder (directly, or in a
+# sub-folder made by hand) is local state: the folder ignores itself in git,
+# whether the snapshot is the default or named.
+# Resolve the snapshot's folder from its nearest existing ancestor, since
+# .wheelhouse/ may not exist yet.
+snap_dir=$(dirname "$snapshot")
+snap_tail=
+while [ ! -d "$snap_dir" ] && [ "$snap_dir" != / ] && [ "$snap_dir" != . ]; do
+  snap_tail="/$(basename "$snap_dir")$snap_tail"
+  snap_dir=$(dirname "$snap_dir")
+done
+snap_dir=$(cd -P "$snap_dir" 2>/dev/null && pwd -P)$snap_tail
+case "$snap_dir/" in
+  "$(pwd -P)/.wheelhouse/"*)
+    mkdir -p .wheelhouse || die 3 "could not make .wheelhouse"
+    [ -f .wheelhouse/.gitignore ] || printf '*\n' > .wheelhouse/.gitignore
+    ;;
+esac
 old='null'
 if [ -f "$snapshot" ]; then
   old=$(jq -c . "$snapshot" 2>/dev/null) || die 3 "the snapshot $snapshot isn't JSON: move it aside to start again"
