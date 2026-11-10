@@ -207,8 +207,7 @@ just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find 
 this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`.
 **Launch with it:** pass it with the other launch flags, `<command> --name=hq-okafor`. Write it with
 the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` would send
-`hq-okafor` as the prompt. The launcher sets the name, as with the model; `ynh run --session-name`
-is a different option and sets no display name.
+`hq-okafor` as the prompt. The launcher sets the name, as with the model.
 
 On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
 session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
