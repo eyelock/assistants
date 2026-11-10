@@ -5,11 +5,22 @@
 // that list only shrinks.
 
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { setupFor } from "./skill-evals.mjs";
+import { armsFor, findOnPath, seatLaunch, setupFor } from "./skill-evals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_FILE = join(ROOT, "scripts", "skills-without-evals.txt");
@@ -127,4 +138,66 @@ test("setupFor: with no baseline_setup, without_skill keeps the setup, plugin hi
     control: "plugin hidden",
   });
   assert.deepEqual(setupFor({}, "without_skill"), { script: undefined, control: "plugin hidden" });
+});
+
+test("armsFor: a seat case has one arm, because the seat is under test and no skill is taken away", () => {
+  assert.deepEqual(armsFor({ seat: "harnesses/worker" }, true), ["with_skill"]);
+  assert.deepEqual(armsFor({}, true), ["with_skill", "without_skill"]);
+  assert.deepEqual(armsFor({}, false), ["with_skill"]);
+});
+
+test("seatLaunch: ynh run in a scratch home, the run's directory the only workspace root", () => {
+  const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
+  try {
+    const root = realpathSync(work);
+    const launch = seatLaunch({ seat: "harnesses/worker", prompt: "hi" }, "claude", work, { A: "1" }, [
+      "-p",
+      "hi",
+      "--max-turns",
+      "3",
+    ]);
+    assert.match(launch.cmd, /ynh$/);
+    assert.deepEqual(launch.args, [
+      "run",
+      join(root, "harnesses/worker"),
+      "-v",
+      "claude",
+      "--",
+      "-p",
+      "hi",
+      "--max-turns",
+      "3",
+    ]);
+    assert.equal(launch.env.YNH_HOME, join(root, ".eval", "ynh-home"));
+    assert.equal(launch.env.YNH_WORKSPACE_ROOTS, root);
+    assert.equal(launch.env.A, "1");
+    assert.ok(!launch.args.includes("trust"), "never runs ynh trust accept");
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("seatLaunch: another vendor gets only the prompt, and an absolute seat path is kept", () => {
+  const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
+  try {
+    const launch = seatLaunch({ seat: "/abs/seat", prompt: "hi" }, "codex", work, {}, ["--claude-only"]);
+    assert.deepEqual(launch.args, ["run", "/abs/seat", "-v", "codex", "--", "-p", "hi"]);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("findOnPath: finds an executable on the given PATH, in order, and null when absent", () => {
+  const a = mkdtempSync(join(tmpdir(), "path-a-"));
+  const b = mkdtempSync(join(tmpdir(), "path-b-"));
+  try {
+    writeFileSync(join(b, "tool"), "#!/bin/sh\n", { mode: 0o755 });
+    writeFileSync(join(a, "plain"), "x", { mode: 0o644 });
+    assert.equal(findOnPath("tool", `${a}:${b}`), join(b, "tool"));
+    assert.equal(findOnPath("plain", `${a}:${b}`), null);
+    assert.equal(findOnPath("missing", `${a}:${b}`), null);
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
 });
