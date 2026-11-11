@@ -160,7 +160,7 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
     c=$(bash "$adapter" canon "$sib") || die 3 "open-pr: the $kind adapter failed to canonicalise $sib"
     if [ "$c" = "$mine" ]; then others=$((others + 1)); fi
   done <<<"$refs"
-  last=more; [ "$others" -eq 0 ] && last=last
+  last="more"; [ "$others" -eq 0 ] && last=last
 
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
   relation=part-of; [ "$last" = last ] && relation=closes

@@ -191,7 +191,7 @@ if [ -f "$roster" ]; then
       [ -n "$want" ] || continue
       case "$want" in
         /*) path="$want" ;;
-        "~/"*) path="$HOME/${want#\~/}" ;;
+        \~/*) path="$HOME/${want#\~/}" ;;
         *) path="$dir/$harness/$want" ;;
       esac
       [ -d "$path" ] || missing="$missing $cmd:$want"

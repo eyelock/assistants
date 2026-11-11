@@ -60,6 +60,7 @@
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
+# shellcheck disable=SC2154  # fetch() assigns closedbeads, wipbeads, readybeads and openbeads by name (printf -v)
 set -uo pipefail
 
 usage() {
