@@ -260,11 +260,13 @@ if [ -n "$kind" ]; then
   if [ -n "$human" ] && [ "$kind" != note ]; then die 1 "$kind is not a human's: use --seat or --shared"; fi
 fi
 
-# jq: ynm hits to the common shape.
+# jq: ynm hits to the common shape. ynm recall appends a memory's string data values to its content
+# as a last line ("<kind> <by> [<bead>]", the --data remember writes), so that line is stripped.
 ynm_shape='[ .[] | (.tags // []) as $t
   | (if ($t | index("inbox")) then "note"
      else ([$t[] | select(. == "identity" or . == "birth" or . == "handoff" or . == "kudos" or . == "close-note" or . == "fact" or . == "event")][0] // null) end) as $k
-  | (.content // "") as $c
+  | ((.data // {}) | [to_entries[] | .value | select(type == "string")] | join(" ")) as $tail
+  | ((.content // "") | if $tail != "" and endswith("\n" + $tail) then .[0:(length - ($tail | length) - 1)] else . end) as $c
   | (if $k == "note" then ($c | capture("^From (?<by>[^:]+): (?<rest>.*)$"; "s") // null) else null end) as $n
   | {id: .memoryId, kind: $k,
      text: (if $n then $n.rest else $c end),
