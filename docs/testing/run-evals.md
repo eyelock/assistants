@@ -50,6 +50,31 @@ can't find a copy of the skill, installed or in the source, and follow it.
 
 To write the evals this runs, see [Write a skill with evals](../library/write-a-skill-with-evals.md).
 
+## Wake a seat through ynh
+
+A case with `"seat": "<harness path>"` wakes a seat instead of a bare Claude session. The runner
+launches `ynh run <seat> -v <vendor> -- -p ...` with a scratch `YNH_HOME` inside the run's
+directory and `YNH_WORKSPACE_ROOTS` set to that directory. The seat's workspace folders are
+granted with no `ynh trust accept`, and nothing reads or writes your real `~/.ynh`. The path is
+relative to the run's directory (the case's `setup` lays the harness out there) or absolute.
+It needs `ynh` installed.
+
+```bash
+make eval P=plugins/wheelhouse/skills/wake VENDOR=claude
+node scripts/skill-evals.mjs plugins/wheelhouse/skills/wake --case seat-launch --no-baseline
+```
+
+The seat is what is under test, not a skill, so a seat case has one run, with no
+without-skill control. `VENDOR=` (or `--vendor`) is passed to `ynh run -v` and defaults to `claude`.
+Plain cases always run on Claude.
+
+In a suite that mixes seat and plain cases, `run_summary.with_skill` and `without_skill` still average over every run of their arm, so they can cover different cases. `summary.delta` is computed only over the cases both arms ran, so a seat case never skews it.
+
+The judge's view of the seat's tool calls is Claude-only. Only Claude's stream-json output is
+parsed today. On another vendor the seat gets just the prompt, the judge sees the reply as plain
+text, and `tool_calls` shows nothing, so a pass there rests on the stub log and the reply alone.
+Each vendor's output is parsed in a later change.
+
 ## Run tutorials as tests
 
 A tutorial can be a test too. One that opts in, with `<!-- tutorial: test sandbox=<path> -->` on
