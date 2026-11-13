@@ -10,6 +10,7 @@ jq -n '{name: "gore", version: "0.1.0", description: "Gore, crew: reviews what t
     hooks: {on_session_start: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat gore --format text || true"}],
       on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat gore --end || true", timeout: 30}]},
     launch_focus: "wake", focuses: {wake: {prompt: "Gore: begin: act on your wake block."}}}' > harnesses/gore/.agents/harness/plugin.json
+seat_include_plugin harnesses/gore/.agents/harness/plugin.json
 printf '# Gore\n\nYou are Gore, the `gore` seat: crew.\n\n**Mandate:** Review draft pull requests against the bead each one closes, and file a bead for what needs fixing.\n\n**You may not:** change code, push, approve or merge.\n' > harnesses/gore/AGENTS.md
 git add -A && git commit -qm "feat: seat Gore"
 git checkout -q main

@@ -10,6 +10,7 @@ mkdir -p harnesses/anderson/.agents/harness
 jq -n '{name: "anderson", version: "0.1.0", description: "anderson", hooks: {on_session_start: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat anderson --format text || true"}],
     on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat anderson --end || true", timeout: 30}]},
     launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' > harnesses/anderson/.agents/harness/plugin.json
+seat_include_plugin harnesses/anderson/.agents/harness/plugin.json
 printf '# Anderson\n\nYou are the `anderson` seat, the dispatcher.\n' > harnesses/anderson/AGENTS.md
 jq '.delegates_to += [{git: ".", path: "harnesses/anderson"}]' .agents/harness/plugin.json > .p && mv .p .agents/harness/plugin.json
 if [ "${SEAT_DRAFT_PRS:-}" = 1 ]; then

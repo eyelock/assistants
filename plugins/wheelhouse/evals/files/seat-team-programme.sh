@@ -18,6 +18,7 @@ for c in $(jq -r '.seats[].command' "$r"); do
   jq -n --arg c "$c" '{name: $c, version: "0.1.0", description: $c, hooks: {on_session_start: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat \($c) --format text || true"}],
       on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
       launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' > "harnesses/$c/.agents/harness/plugin.json"
+  seat_include_plugin "harnesses/$c/.agents/harness/plugin.json"
   printf '# %s\n\nYou are the `%s` seat.\n' "$c" "$c" > "harnesses/$c/AGENTS.md"
   jq --arg c "$c" '.delegates_to += [{git: ".", path: "harnesses/\($c)"}]' .agents/harness/plugin.json > .p && mv .p .agents/harness/plugin.json
 done

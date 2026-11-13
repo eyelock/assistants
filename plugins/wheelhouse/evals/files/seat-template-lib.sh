@@ -24,6 +24,8 @@
 # charter into the constitution, and the coach is a seat of the Wheelhouse's own. Those cases
 # take their charter from tpl_charter and tpl_desk instead.
 # Needs what seat-fixture.sh needs. Exit codes: 0 success, 3 tool error.
+
+. "$EVAL_FIXTURES/seat-include.sh"
 set -euo pipefail
 
 . "$EVAL_FIXTURES/seat-fixture.sh"
@@ -64,6 +66,7 @@ tpl_harness() {
     env_passthrough: ["EVAL_STUB_LOG"],
     workspace: ["../../../ynh"]
   }' >"$dir/.agents/harness/plugin.json"
+  seat_include_plugin "$dir/.agents/harness/plugin.json"
 }
 
 tpl_seat() {
@@ -78,6 +81,7 @@ tpl_desk() {
     name: "hq", version: "0.1.0", description: "The desk of the hq Wheelhouse.", default_vendor: "claude",
     hooks: {on_session_start: [{command: "printf \"seat-woke: hq\\n\" >> \"$EVAL_STUB_LOG\""}]},
     env_passthrough: ["EVAL_STUB_LOG"]}' >.agents/harness/plugin.json
+  seat_include_plugin .agents/harness/plugin.json
 }
 
 tpl_pr_view() { seat_gh_answer pr view "$1"; }

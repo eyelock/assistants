@@ -3,6 +3,8 @@
 # current directory with a real Beads graph (embedded Dolt, no server, no
 # remote). Source it, then call the functions a case needs.
 # Exit codes: 0 success, 3 tool error.
+
+. "$EVAL_FIXTURES/seat-include.sh"
 set -euo pipefail
 
 command -v bd >/dev/null || { echo "bd (Beads) is not installed" >&2; exit 3; }
@@ -235,6 +237,7 @@ specialist_wheelhouse() {
       on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
       launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' \
       > "harnesses/$cmd/.agents/harness/plugin.json"
+    seat_include_plugin "harnesses/$cmd/.agents/harness/plugin.json"
     if [ "$name" = Anderson ]; then
       charter='the dispatcher.\n\n**Mandate:** Keep the workers busy: assign ready work to idle workers.'
       seats=$(jq -c --arg c "$cmd" '. + [{name: "Anderson", group: "standing", command: $c, harness: "harnesses/\($c)", mandate: "Dispatches ready work to idle workers."}]' <<<"$seats")
