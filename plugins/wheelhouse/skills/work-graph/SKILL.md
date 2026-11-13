@@ -249,7 +249,11 @@ The script:
 3. **refuses**, opening nothing and saying why, a bead with no `external_ref` that isn't labelled
    `housekeeping` and isn't in an exempt repository, a reference that doesn't match `item.pattern`, and an item with no release.
    Fix the cause (file the item, ask the desk to set its release) and run it again;
-4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release.
+4. with no tracker (`kind: "none"`), still opens the PR, with no item and no release;
+5. **refuses a review fix bead**: one whose `external_ref` is the URL of the pull request it fixes
+   (the reviewer sets it when filing the bead), not a tracker item. Its worker pushes to that pull
+   request and never opens another. `--dry-run` exits 0 with `review_fix: true`, the pull request in
+   `pr`, and `item`, `release`, `closing` and `relation` empty; a real run exits 1.
 
 Everything GitHub-specific is in `scripts/tracker-github.sh`; another tracker gets a
 `tracker-<kind>.sh` with the same two commands (`closing`, `pr-flags`), and until it does,

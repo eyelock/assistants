@@ -85,12 +85,15 @@ show      Prints {you, humans: [{name, command,
 EOF
 }
 
-die() { echo "$2" >&2; exit "$1"; }
-
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
 # memory.sh sits beside this script (the plugin's scripts/, and a Wheelhouse's scripts/).
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 case "$cmd" in
   assign | note | show | close | done) ;;
   --help | -h) usage; exit 0 ;;
@@ -115,35 +118,30 @@ while [ $# -gt 0 ]; do
     -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
     *)
       # close takes the bead bare: inbox.sh close <bead> --reason <text>
-      if { [ "$cmd" = close ] || [ "$cmd" = done ]; } && [ -z "$id" ]; then id="$1"; shift
+      if { [ "$cmd" = close ] || [ "$cmd" = "done" ]; } && [ -z "$id" ]; then id="$1"; shift
       else echo "unknown argument: $1" >&2; usage >&2; exit 1; fi ;;
   esac
 done
 
-command -v jq >/dev/null 2>&1 || die 3 "jq is required"
-roster="$dir/skills/roster/assets/roster.json"
+need jq
+roster="$dir/$WL_ROSTER_REL"
 [ -f "$roster" ] || die 2 "not a Wheelhouse (no $roster)"
 cd "$dir" || exit 2
-roster=skills/roster/assets/roster.json
+roster=$WL_ROSTER_REL
 memory="$here/memory.sh"
 [ -f "$memory" ] || die 3 "memory.sh is missing: it belongs beside inbox.sh ($memory)"
 wroot=$PWD
 
-# Beads' --json output is an array or object, or {"data": ...} with
-# BD_JSON_ENVELOPE=1; (.data? // .) reads either.
-need() { command -v "$1" >/dev/null 2>&1 || die 3 "$1 is required"; }
-
 # The default human's command; there must be exactly one.
 default_human() {
   local n
-  n=$(jq '[(.humans // [])[] | select(.default == true)] | length' "$roster")
+  n=$(wl_default_humans "$roster")
   [ "$n" = 1 ] || die 1 "the roster must have exactly one default human (\"default\": true in humans); it has $n"
   jq -r '[.humans[] | select(.default == true)][0].command' "$roster"
 }
 
-# A human's command: lowercase ASCII, starting with a letter or digit. It names
-# an ynm namespace (human/<command>), so nothing else gets in.
-valid_command() { [[ "$1" =~ ^[a-z0-9][a-z0-9-]*$ ]]; }
+# A human's command is wl_valid_command: it names an ynm namespace (human/<command>), so
+# nothing else gets in.
 
 # A name's command: the name in lowercase ASCII, spaces and other characters dropped.
 command_of() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-'; }
@@ -152,7 +150,7 @@ command_of() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-';
 # roster entry, but is never a seat.
 resolve_to() {
   if [ "$1" = default ]; then default_human; return; fi
-  valid_command "$1" || die 1 "$1 is not a human's command: use --to default, or a name in lowercase ASCII letters, digits and '-', starting with a letter or digit"
+  wl_valid_command "$1" || die 1 "$1 is not a human's command: use --to default, or a name in lowercase ASCII letters, digits and '-', starting with a letter or digit"
   if jq -e --arg c "$1" '.seats | any(.command == $c)' "$roster" >/dev/null; then
     die 1 "$1 is a seat, not a human: use --to default, or a human's command"
   fi
@@ -164,8 +162,7 @@ resolve_to() {
 # roster entry until the trial ends. wake.sh and the doctor recognise it the same way.
 check_from() {
   [ -n "$from" ] || die 1 "say which seat is asking: --from <seat>, or set BEADS_ACTOR"
-  jq -e --arg c "$from" '.seats | any(.command == $c)' "$roster" >/dev/null && return 0
-  if valid_command "$from" && [ -f "harnesses/$from/AGENTS.md" ]; then return 0; fi
+  wl_valid_command "$from" && wl_is_seat "$roster" . "$from" && return 0
   die 1 "$from is not a seat in the roster, and there is no harnesses/$from/AGENTS.md here (a seat on trial has one on its branch)"
 }
 
@@ -193,7 +190,7 @@ case "$cmd" in
     if [ "$kind" = merge ]; then
       if ! command -v gh >/dev/null 2>&1; then
         echo "warning: gh is not installed, so I can't check $url is out of draft" >&2
-      elif draft=$(gh pr view "$url" --json isDraft --jq .isDraft 2>/dev/null) && [ "$draft" = true ]; then
+      elif draft=$(limited "$WL_GH_SECS" gh pr view "$url" --json isDraft --jq .isDraft 2>/dev/null) && [ "$draft" = true ]; then
         die 1 "$url is still a draft: ask a human to merge it only once it has left draft (the review seat takes it out of draft when satisfied)"
       elif [ "$draft" != false ]; then
         echo "warning: couldn't ask gh whether $url is a draft; carrying on" >&2
@@ -207,9 +204,8 @@ case "$cmd" in
       die 1 "$repo is not a repository name: one name, of letters, digits, '.', '_' and '-'"
     fi
     if [ -n "$blocks" ]; then
-      out=$(bd show "$blocks" --json 2>/dev/null) || die 1 "no bead $blocks to block"
-      [ -n "$repo" ] || repo=$(jq -r '(.data? // .) | if type == "array" then .[0] else . end
-        | [(.labels // [])[] | select(startswith("repo:"))][0] // "" | ltrimstr("repo:")' <<<"$out" 2>/dev/null)
+      out=$(limited "$WL_BD_SECS" bd show "$blocks" --json 2>/dev/null) || die 1 "no bead $blocks to block"
+      [ -n "$repo" ] || repo=$(bd_first <<<"$out" 2>/dev/null | jq -r '[(.labels // [])[] | select(startswith("repo:"))][0] // "" | ltrimstr("repo:")' 2>/dev/null)
     fi
     if [ -z "$repo" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --repo: the repository its pull request is in (or --blocks a bead with a repo: label)"
@@ -222,8 +218,8 @@ case "$cmd" in
     [ -n "$priority" ] && args+=(--priority "$priority")
     [ -n "$url" ] && args+=(--external-ref "$url")
     [ -n "$blocks" ] && args+=(--deps "blocks:$blocks")
-    out=$(bd "${args[@]}" --json 2>&1) || die 3 "bd create failed: $out"
-    id=$(jq -r '(.data? // .) | if type == "array" then .[0] else . end | .id' <<<"$out")
+    out=$(limited "$WL_BD_SECS" bd "${args[@]}" --json 2>&1) || die 3 "bd create failed: $out"
+    id=$(bd_first <<<"$out" | jq -r '.id')
     jq -n --arg id "$id" --arg to "$human" --arg from "$from" --arg url "$url" --arg blocks "$blocks" --arg kind "$kind" --arg repo "$repo" --arg priority "$priority" \
       '{id: $id, to: $to, askedBy: $from, kind: (if $kind == "" then null else $kind end),
         priority: (if $priority == "" then null else ($priority | tonumber) end),
@@ -250,8 +246,8 @@ case "$cmd" in
     check_from
     jq -e --arg c "$from" '.seats | any(.command == $c and .group == "desk")' "$roster" >/dev/null ||
       die 1 "$from is not the desk: only the desk closes a human's bead (hand it to the desk)"
-    out=$(bd show "$id" --json 2>/dev/null) || die 1 "no bead $id"
-    bead=$(jq -c '(.data? // .) | if type == "array" then .[0] else . end' <<<"$out" 2>/dev/null)
+    out=$(limited "$WL_BD_SECS" bd show "$id" --json 2>/dev/null) || die 1 "no bead $id"
+    bead=$(bd_first <<<"$out" 2>/dev/null)
     [ -n "$bead" ] && [ "$bead" != null ] || die 1 "no bead $id"
     jq -e '(.labels // []) | index("inbox")' <<<"$bead" >/dev/null ||
       die 1 "$id is not an inbox bead (no inbox label): close it with bd close, not through the inbox"
@@ -261,7 +257,7 @@ case "$cmd" in
     fi
     status=$(jq -r '.status // ""' <<<"$bead")
     [ "$status" != closed ] || die 1 "$id is already closed"
-    res=$(bd close "$id" --reason "$note" --force --actor "$from" 2>&1) || die 3 "bd close failed: $res"
+    res=$(limited "$WL_BD_SECS" bd close "$id" --reason "$note" --force --actor "$from" 2>&1) || die 3 "bd close failed: $res"
     jq -n --arg id "$id" --arg from "$from" --arg note "$note" '{id: $id, closedBy: $from, note: $note}'
     ;;
 
@@ -271,7 +267,7 @@ case "$cmd" in
     you=""
     if [ -n "$name" ]; then
       you=$(command_of "$name")
-      valid_command "$you" || die 1 "can't make a command from $name: it needs a letter or digit in it"
+      wl_valid_command "$you" || die 1 "can't make a command from $name: it needs a letter or digit in it"
       if jq -e --arg c "$you" '.seats | any(.command == $c)' "$roster" >/dev/null; then
         die 1 "$you is a seat, not a human: name yourself with your own name"
       fi
@@ -296,14 +292,14 @@ case "$cmd" in
     failed() { errors=$(jq -c --arg e "$1" 'if index($e) then . else . + [$e] end' <<<"$errors"); }
     inbox_of() {
       local c="$1" role="$2" n="$3" out beads notes msg
-      if out=$(bd ready --assignee "$c" --json 2>/dev/null) && beads=$(jq -c "$short"'
-        (.data? // .) | map(select(.issue_type != "epic"))
+      if out=$(limited "$WL_BD_SECS" bd ready --assignee "$c" --json 2>/dev/null) && beads=$(bd_data <<<"$out" | jq -c "$short"'
+        map(select(.issue_type != "epic"))
         | map(. + {kind: ([(.labels // [])[] | select(startswith("inbox:")) | ltrimstr("inbox:")][0] // null)})
         | sort_by([(.kind == "report"), .priority])
         | map({id, title, kind, askedBy: (.created_by // null), priority,
                ref: (if (.external_ref // "") == "" then null else {short: (.external_ref | short), url: .external_ref} end),
-               unblocks: (.dependent_count // 0)})' <<<"$out" 2>/dev/null) && [ -n "$beads" ]; then :; else
-        msg=$(bd ready --assignee "$c" --json 2>&1 | head -1)
+               unblocks: (.dependent_count // 0)})' 2>/dev/null) && [ -n "$beads" ]; then :; else
+        msg=$(limited "$WL_BD_SECS" bd ready --assignee "$c" --json 2>&1 | head -1)
         failed "bd ready failed: ${msg:-no readable output}"
         beads=null
       fi

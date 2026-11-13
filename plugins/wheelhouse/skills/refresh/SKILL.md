@@ -58,7 +58,18 @@ is run again.
 When the diff is empty, or with `--upstream`, it also compares each seat's cached `wheelhouse`
 include with upstream (`ynh ls --check-updates`) and lists the `ynh update local/<seat>` each one
 needs. `--update` runs them, then re-copies the plugin scripts the Wheelhouse already carries in
-`scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's.
+`scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's, but
+only a copy that is a version the plugin once shipped (so it is merely behind). A script that carries
+changes the plugin never had (Wheelhouse-local work not yet ported upstream) is never overwritten:
+it is listed in `upstream.pluginScriptsKept` with its diff (cut at 60 lines, and saying so when cut) and named in the notes. Without `--update` the note says "would be left alone". When the plugin's history can't say
+(no git checkout, or a shallow clone: ynh's cache clones every include with `--depth 1`, so
+against the default plugin refresh usually can't tell) the script is kept too, with `reason:
+"cannot-tell"` and a note saying so. To have a merely-behind script updated, give refresh a full clone
+of the plugin's repository: `--plugin <clone>/plugins/wheelhouse`. Otherwise port the local change
+into the plugin, then take the plugin's copy, or merge by hand.
+A script every Wheelhouse needs (`wake.sh`, `inbox.sh`, `memory.sh` and the shared library `wheelhouse-lib.sh`, copied from the `work-graph` skill's `scripts/` folder) that the Wheelhouse lacks is copied in
+whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake.
+It is reported in `pluginScriptsCopied`. `patrol.sh` and the like are optional, so one the Wheelhouse doesn't carry is left alone.
 It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
 when it can't find it. Ask before `--update`: it changes files in the repository.
 
@@ -73,10 +84,11 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
 - `restart`: the seats to restart, so the new install and scripts take effect.
 - `seatsNotReady`: any roster seat not installed (with the exact `install` command) or not born
   (a pinned identity in `seat/<command>`, read from ynm or, when `wheelhouse.json`
-  says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is the human's when it is crew, standing
-  or the desk, and the dispatcher's when it is a worker; the entry's `reminder` says which.
+  says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is its roster entry's `seated-by`
+  first; a seat with none falls back to the dispatcher when it is a worker, else the human. The entry's
+  `reminder` says which.
   Install it for the human to run, don't birth it.
-- `upstream`: `updates`, `pluginScriptsDiffer` and `pluginScriptsCopied`.
+- `upstream`: `updates`, `pluginScriptsDiffer`, `pluginScriptsCopied` and `pluginScriptsKept` (each `{script, reason, diff, diffCutLines}`: `reason` is `local-changes` when the script carries changes the plugin never shipped, or `cannot-tell` when the plugin's history can't say; `diff` is cut at 60 lines and `diffCutLines` counts the lines cut, 0 when none).
 - `doctor`: the `doctor` skill's `ok` and its failing checks, run after the installs.
 - `notes`: what it couldn't do, such as no `ynh` on `PATH`.
 

@@ -60,6 +60,7 @@
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
+# shellcheck disable=SC2154  # fetch() assigns closedbeads, wipbeads, readybeads and openbeads by name (printf -v)
 set -uo pipefail
 
 usage() {
@@ -82,6 +83,12 @@ session-end hook, only syncs memory and work, and prints the result as JSON;
 EOF
 }
 
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 seat="${BEADS_ACTOR:-}"
 positional=""
 seat_flag=0
@@ -109,10 +116,8 @@ if [ -n "$positional" ]; then
   seat="$positional"
 fi
 case "$format" in json | text) ;; *) echo "--format must be json or text" >&2; exit 1 ;; esac
-for tool in jq bd; do
-  command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required" >&2; exit 3; }
-done
-roster="$dir/skills/roster/assets/roster.json"
+for tool in jq bd; do need "$tool"; done
+roster="$dir/$WL_ROSTER_REL"
 [ -f "$roster" ] || { echo "not a Wheelhouse (no $roster)" >&2; exit 2; }
 if [ -z "$seat" ]; then
   echo "no seat: pass --seat <name> (or the name bare), or set BEADS_ACTOR. The seats here: $(jq -r '[.seats[].command] | join(", ")' "$roster")" >&2
@@ -122,40 +127,14 @@ fi
 cd "$dir" || exit 2
 
 # Where memory lives: wheelhouse.json's "memory", ynm when there is no file or no key.
-backend=ynm
-if [ -f wheelhouse.json ]; then
-  backend=$(jq -r '.memory // "ynm"' wheelhouse.json 2>/dev/null) || backend=""
-  case "$backend" in ynm | beads) ;; *) echo "wheelhouse.json: memory must be \"ynm\" or \"beads\"" >&2; exit 2 ;; esac
-fi
-if [ "$backend" = ynm ]; then
-  command -v ynm >/dev/null 2>&1 || { echo "ynm is required" >&2; exit 3; }
-fi
+backend=$(wl_backend .) || { echo "wheelhouse.json: memory must be \"ynm\" or \"beads\"" >&2; exit 2; }
+if [ "$backend" = ynm ]; then need ynm; fi
 
-# A command that hangs gives up after this many seconds (perl's alarm: macOS has
-# no timeout).
-limited() {
-  local secs="$1"; shift
-  # The command runs in its own process group, and the whole group is killed on the alarm: a bd
-  # that has spawned a child would otherwise hold the output pipe open past the limit. Exit 142.
-  if command -v perl >/dev/null 2>&1; then
-    perl -e 'my $s = shift; setpgrp(0, 0); my $p = fork; if (!$p) { exec @ARGV; exit 127 }
-      $SIG{ALRM} = sub { $SIG{TERM} = "IGNORE"; kill "TERM", -$$; exit 142 };
-      alarm $s; waitpid($p, 0); exit(($? & 127) ? 128 + ($? & 127) : $? >> 8)' -- "$secs" "$@"
-  else "$@"; fi
-}
-hasgitremote() { git remote 2>/dev/null | grep -q .; }
 bd_secs="${WAKE_BD_SECS:-20}"; sync_secs="${WAKE_SYNC_SECS:-45}"
 inbox_secs="${WAKE_INBOX_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
-# doltremote [secs] sets remote to yes, no, or busy: a check that gave up (exit 142) or failed is
-# not "no remote", it is a bd that cannot be reached, which the callers report as a failed sync.
+# remote is yes, no or busy (wl_dolt_remote): a check that gave up (exit 142) or failed is not "no
+# remote", it is a bd that cannot be reached, which the callers report as a failed sync.
 remote=no
-doltremote() {
-  local secs="${1:-$sync_secs}" out rc
-  out=$(limited "$secs" bd dolt remote list --json 2>/dev/null); rc=$?
-  if [ "$rc" != 0 ]; then remote=busy
-  elif jq -e '(.data? // .) | length > 0' >/dev/null 2>&1 <<<"$out"; then remote=yes
-  else remote=no; fi
-}
 
 # At the end of a session, sync what it wrote and stop (--no-sync skips both).
 if [ "$end" = 1 ]; then
@@ -191,7 +170,7 @@ if [ "$end" = 1 ]; then
   endwork() {
     local check=$(( budget / 3 )) began=$SECONDS rest
     [ "$check" -ge 1 ] || check=1
-    doltremote "$check"
+    remote=$(wl_dolt_remote "$check")
     # SECONDS counts whole seconds, so one more is held back for the rounding.
     rest=$(( budget - (SECONDS - began) - 1 ))
     [ "$rest" -ge 1 ] || rest=1
@@ -203,7 +182,7 @@ if [ "$end" = 1 ]; then
   }
   # With Beads, memory and work are one database: one bd sync, and its result is both.
   if [ "$backend" = ynm ]; then
-    if [ "$sync" = 1 ] && hasgitremote; then endsync "$budget" mem ynm sync --quiet & fi
+    if [ "$sync" = 1 ] && wl_has_git_remote; then endsync "$budget" mem ynm sync --quiet & fi
     if [ "$sync" = 1 ]; then endwork & fi
   else
     if [ "$sync" = 1 ]; then endwork & fi
@@ -236,7 +215,7 @@ entry=$(jq -c --arg s "$seat" '[.seats[] | select(.command == $s)][0] // empty' 
 if [ -z "$entry" ]; then
   # A seat on trial is not in the roster until the trial ends, but its harness is on its
   # trial branch, checked out here: read it from there.
-  if [ -f "$dir/harnesses/$seat/AGENTS.md" ]; then
+  if wl_is_trial_seat "$dir" "$seat"; then
     entry=$(jq -nc --arg s "$seat" '{command: $s, group: "trial", harness: ("harnesses/" + $s), mandate: ""}')
   else
     echo "$seat is not a seat in the roster, and there is no harnesses/$seat/AGENTS.md here (a seat on trial has one on its branch)" >&2
@@ -258,17 +237,17 @@ memsync=skipped
 worksync=skipped
 if [ "$sync" = 1 ]; then
   if [ "$backend" = ynm ]; then
-    if hasgitremote; then
+    if wl_has_git_remote; then
       if limited "$sync_secs" ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
     fi
-    doltremote
+    remote=$(wl_dolt_remote "$sync_secs")
     if [ "$remote" = busy ]; then worksync=failed
     elif [ "$remote" = yes ]; then
       if limited "$sync_secs" bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
     fi
   else
     # Memory and work are one database: one sync, one result for both.
-    doltremote
+    remote=$(wl_dolt_remote "$sync_secs")
     if [ "$remote" = busy ]; then memsync=failed
     elif [ "$remote" = yes ]; then
       if limited "$sync_secs" bd sync >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
@@ -278,7 +257,6 @@ if [ "$sync" = 1 ]; then
 fi
 
 # The seat's own memory, read through memory.sh: ynm namespace seat/<name>, or Beads keys seat/<name>/....
-here=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 memorysh=""
 for f in "$here/memory.sh" "scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memorysh="$f"; break; }
@@ -305,8 +283,6 @@ closenotes=$(of close-note | jq -c '.[:3] | map({bead: .bead, note: .text})')
 facts=$(recall --shared --limit 10 | jq -c '[.[] | .text]')
 
 # Its record and its work, from the graph.
-# Beads' --json output is an array, or {"data": [...]} with BD_JSON_ENVELOPE=1 (the
-# Beads 2.0 default); (.data? // .) reads either.
 # fetch <var> <bd args>: reads into <var>, bounded. The first read that fails or gives up sets
 # workfail and skips the rest, so a busy bd costs one wait, not one per read.
 workfail=0
@@ -315,7 +291,7 @@ workfail=0
 fetch() {
   local name="$1" out; shift
   if [ "$workfail" = 0 ] && out=$(limited "$bd_secs" bd "$@" --json 2>/dev/null) &&
-    out=$(jq -c '.data? // .' <<<"$out" 2>/dev/null) && [ -n "$out" ]; then
+    out=$(bd_data <<<"$out" 2>/dev/null) && [ -n "$out" ]; then
     printf -v "$name" '%s' "$out"
   else
     workfail=1; printf -v "$name" '[]'
@@ -362,7 +338,6 @@ workread=true; [ "$workfail" = 0 ] || workread=false
 # script in a Wheelhouse's scripts/, and in the work-graph skill otherwise.
 inbox='null'
 if [ "$group" = desk ]; then
-  here=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
   inboxsh=""
   for f in "$here/inbox.sh" "scripts/inbox.sh" "$here/../../work-graph/scripts/inbox.sh"; do
     [ -f "$f" ] && { inboxsh="$f"; break; }

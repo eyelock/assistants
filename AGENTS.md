@@ -32,8 +32,10 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 - `setup`: a script, relative to the skill, that builds the case's world in the run's directory. Examples: a git repo whose `origin` is a local bare repository, or real audio files made with ffmpeg. It gets `$EVAL_FIXTURES` (the package's `evals/files/`), and `$EVAL_BIN` for realistic stub commands, which log to `$EVAL_STUB_LOG`.
 - `tools`: extra tools, such as `"Edit(./**)"`. Any `Bash` entry means shell access, and both arms get the same unrestricted shell: the OS sandbox below is the boundary, since a command allow-list breaks as soon as a model phrases a command differently.
 - `baseline_setup`: the case's own control, a script run in place of `setup` in the run without the skill. A case that grades text its `setup` installs (a seat's charter, say) needs one that installs the same fixtures without that text, or both runs read it. `benchmark.json` reports each run's `control`: `null` with the skill, `"plugin hidden"` or `"baseline_setup"` without it. See `docs/testing/run-evals.md`.
+- `seat`: a harness path; the runner wakes that seat through `ynh run` instead of a bare Claude session. A seat case runs once, with no baseline arm, so `summary.delta` compares only the cases both arms ran. Choose the vendor with `VENDOR=` (below). See `docs/testing/run-evals.md`.
 - `stubs`: commands replaced by recorders, such as `gh` (the default once any shell access is granted). Nothing reaches a real service.
 - `evidence`: a command run afterwards, for example `git log --all` or `find . -type f`. Its output and the stub calls go to the judge, so assertions can check what was actually done.
+- `forbidden` and `required`: call patterns (regular expressions) matched against the stub log before the judge runs. A match on a forbidden one, a required one that matches nothing, or a call a stub refused fails the case with `pass_rate` 0 and no judge call. A pattern sees only calls to stubbed commands, so stub every command a pattern names. See `docs/testing/run-evals.md`.
 - `tool_calls`: tools whose calls the judge sees, with their input, which must be granted in `tools` too. Not every tool loads in an eval session: `AskUserQuestion` does not (see [assistants #133](https://github.com/eyelock/assistants/issues/133)), so a case about how the agent asks checks the plain-text fallback instead.
 
 Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read most files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads.
@@ -46,7 +48,7 @@ Run them with make:
 
 - `make evals`: every skill's evals.
 - `make eval P=<path>`: the evals of one skill, or of every skill in a package or plugin (`make eval P=plugins/gitflow`).
-- Options for both: `MODE=output|triggers` (default: both), `RUNS=N` to repeat each output case, `MODEL=<model>` (default `sonnet`: scores stay comparable and runs stay cheap), `J=N` for concurrency, and `DRY_RUN=1` to list what would run.
+- Options for both: `MODE=output|triggers` (default: both), `RUNS=N` to repeat each output case, `MODEL=<model>` (default `sonnet`: scores stay comparable and runs stay cheap), `J=N` for concurrency, `VENDOR=<vendor>` for the vendor a seat case launches through, and `DRY_RUN=1` to list what would run.
 
 Output evals run each case with and without the skill, graded by an LLM judge; trigger evals check the skill fires for the right requests. Results go to `.evals/<skill>-workspace/iteration-<N>/`, which is gitignored. For one suite with every option, use `node scripts/skill-evals.mjs <skill-dir> --help`. Runs use your own Claude Code login and cost money, so CI does not run them.
 

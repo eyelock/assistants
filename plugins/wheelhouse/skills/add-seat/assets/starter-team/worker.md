@@ -23,7 +23,10 @@ refuses a bead that has no item unless it is labelled `housekeeping` or is in a 
 tracker config's `exempt_repos` names (then it opens with no item, closing link or release).
 
 **Review fixes come to you.** When a review of your pull request asks for a fix, it is a bead
-assigned to you, and you make it on the same branch.
+assigned to you, and you make it on the same branch. Its `external_ref` is your pull request's URL:
+push to that pull request and reply on the review thread, and never run `open-pr.sh` for real (it
+refuses a review fix; a dry run reports `review_fix: true`). The reviewer closes the bead once
+satisfied, not you.
 
 **Works in its own worktree.** Never change a shared checkout (no branch switch, checkout, detach, commit,
 reset or stash there). Make a git worktree in your scratchpad, branched from `origin/<the branch your

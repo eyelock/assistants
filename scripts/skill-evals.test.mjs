@@ -5,11 +5,23 @@
 // that list only shrinks.
 
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { setupFor } from "./skill-evals.mjs";
+import { armsFor, findOnPath, grade, plainChecks, seatLaunch, setupFor } from "./skill-evals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_FILE = join(ROOT, "scripts", "skills-without-evals.txt");
@@ -66,7 +78,16 @@ for (const skill of skills.filter(hasEvals)) {
         typeof c.expected_output === "string" && c.expected_output.trim(),
         `${where}: has an expected_output`,
       );
-      assert.ok(Array.isArray(c.assertions) && c.assertions.length > 0, `${where}: has assertions`);
+      assert.ok(
+        Array.isArray(c.assertions) && (c.assertions.length > 0 || c.forbidden || c.required),
+        `${where}: has assertions`,
+      );
+      // Call patterns are regular expressions that compile.
+      for (const field of ["forbidden", "required"]) {
+        for (const p of c[field] ?? []) {
+          assert.doesNotThrow(() => new RegExp(p), `${where}: ${field} /${p}/ is a valid pattern`);
+        }
+      }
       // A tool whose calls the judge sees must be one the case grants.
       for (const t of c.tool_calls ?? []) {
         assert.ok((c.tools ?? []).includes(t), `${where}: tool_calls ${t} is granted in tools`);
@@ -127,4 +148,177 @@ test("setupFor: with no baseline_setup, without_skill keeps the setup, plugin hi
     control: "plugin hidden",
   });
   assert.deepEqual(setupFor({}, "without_skill"), { script: undefined, control: "plugin hidden" });
+});
+
+test("armsFor: a seat case has one arm, because the seat is under test and no skill is taken away", () => {
+  assert.deepEqual(armsFor({ seat: "harnesses/worker" }, true), ["with_skill"]);
+  assert.deepEqual(armsFor({}, true), ["with_skill", "without_skill"]);
+  assert.deepEqual(armsFor({}, false), ["with_skill"]);
+});
+
+test("seatLaunch: ynh run in a scratch home, the run's directory the only workspace root", () => {
+  const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
+  try {
+    const root = realpathSync(work);
+    const launch = seatLaunch(
+      { seat: "harnesses/worker", prompt: "hi" },
+      "claude",
+      work,
+      { A: "1" },
+      ["-p", "hi", "--max-turns", "3"],
+    );
+    assert.match(launch.cmd, /ynh$/);
+    assert.deepEqual(launch.args, [
+      "run",
+      join(root, "harnesses/worker"),
+      "-v",
+      "claude",
+      "--",
+      "-p",
+      "hi",
+      "--max-turns",
+      "3",
+    ]);
+    assert.equal(launch.env.YNH_HOME, join(root, ".eval", "ynh-home"));
+    assert.equal(launch.env.YNH_WORKSPACE_ROOTS, root);
+    assert.equal(launch.env.A, "1");
+    assert.ok(!launch.args.includes("trust"), "never runs ynh trust accept");
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("seatLaunch: another vendor gets only the prompt, and an absolute seat path is kept", () => {
+  const work = mkdtempSync(join(tmpdir(), "seat-launch-test-"));
+  try {
+    const launch = seatLaunch({ seat: "/abs/seat", prompt: "hi" }, "codex", work, {}, [
+      "--claude-only",
+    ]);
+    assert.deepEqual(launch.args, ["run", "/abs/seat", "-v", "codex", "--", "-p", "hi"]);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("findOnPath: finds an executable on the given PATH, in order, and null when absent", () => {
+  const a = mkdtempSync(join(tmpdir(), "path-a-"));
+  const b = mkdtempSync(join(tmpdir(), "path-b-"));
+  try {
+    writeFileSync(join(b, "tool"), "#!/bin/sh\n", { mode: 0o755 });
+    writeFileSync(join(a, "plain"), "x", { mode: 0o644 });
+    assert.equal(findOnPath("tool", `${a}:${b}`), join(b, "tool"));
+    assert.equal(findOnPath("plain", `${a}:${b}`), null);
+    assert.equal(findOnPath("missing", `${a}:${b}`), null);
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
+});
+
+test("plainChecks: a case with neither forbidden nor required has no plain checks", () => {
+  assert.deepEqual(plainChecks({}, "gh pr merge 1"), []);
+});
+
+test("plainChecks: a forbidden call fails and names the call", () => {
+  const r = plainChecks({ forbidden: ["^gh pr merge"] }, "gh pr view 1\ngh pr merge 1 --squash\n");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].passed, false);
+  assert.match(r[0].evidence, /gh pr merge 1 --squash/);
+});
+
+test("plainChecks: a forbidden pattern no call matches passes", () => {
+  const r = plainChecks({ forbidden: ["^git stash"] }, "git status\n");
+  assert.equal(r[0].passed, true);
+});
+
+test("plainChecks: a required call that appears passes, one that does not fails", () => {
+  const calls = "git worktree add /tmp/w\n";
+  const r = plainChecks({ required: ["^git worktree add", "^git commit"] }, calls);
+  assert.deepEqual(
+    r.map((x) => x.passed),
+    [true, false],
+  );
+  assert.match(r[1].evidence, /no logged call matches/);
+});
+
+test("plainChecks: an empty log fails every required pattern and no forbidden one", () => {
+  const r = plainChecks({ forbidden: ["^gh"], required: ["^bd close"] }, "");
+  assert.deepEqual(
+    r.map((x) => x.passed),
+    [true, false],
+  );
+});
+
+test("plainChecks: each refused call fails the case; an absent or empty log adds nothing", () => {
+  assert.deepEqual(plainChecks({}, "", ""), []);
+  assert.deepEqual(plainChecks({}, ""), []);
+  const r = plainChecks({}, "", "git -C ../ynh stash\n");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].passed, false);
+  assert.match(r[0].evidence, /refused by a stub: git -C \.\.\/ynh stash/);
+});
+
+// grade() with a fake `claude` first on PATH that records each call it gets.
+async function gradeWithFakeJudge(c, calls, refused = "") {
+  const dir = mkdtempSync(join(tmpdir(), "grade-test-"));
+  const judgeLog = join(dir, "judge.log");
+  const bin = join(dir, "bin");
+  mkdirSync(bin);
+  writeFileSync(
+    join(bin, "claude"),
+    `#!/bin/sh\necho called >> "${judgeLog}"\necho '{"structured_output":{"assertion_results":[{"passed":true,"evidence":"ok"}]}}'\n`,
+  );
+  chmodSync(join(bin, "claude"), 0o755);
+  const oldPath = process.env.PATH;
+  process.env.PATH = `${bin}:${oldPath}`;
+  try {
+    const ctx = { iterationDir: join(dir, "it"), runs: 1, judgeModel: "x" };
+    mkdirSync(join(ctx.iterationDir, `eval-${c.name}`, "with_skill"), { recursive: true });
+    const grading = await grade(c, "with_skill", 1, "answer", "", ctx, calls, refused);
+    const judged = existsSync(judgeLog);
+    return { grading, judged };
+  } finally {
+    process.env.PATH = oldPath;
+  }
+}
+
+test("grade: a forbidden call fails the case with no judge call, and names the call", async () => {
+  const c = { id: 1, name: "f", assertions: ["says why"], forbidden: ["^gh pr merge"] };
+  const { grading, judged } = await gradeWithFakeJudge(c, "gh pr merge 9\n");
+  assert.equal(judged, false);
+  assert.equal(grading.plain_check_failed, true);
+  assert.equal(grading.summary.passed, 0);
+  assert.match(grading.assertion_results[0].evidence, /gh pr merge 9/);
+  assert.equal(grading.assertion_results[1].evidence, "not graded: a plain check failed");
+});
+
+test("grade: a missing required call fails the case with no judge call", async () => {
+  const c = { id: 2, name: "r", assertions: ["says why"], required: ["^git worktree add"] };
+  const { grading, judged } = await gradeWithFakeJudge(c, "git status\n");
+  assert.equal(judged, false);
+  assert.equal(grading.summary.failed, 2);
+});
+
+test("grade: when the plain checks pass, the judge grades the soft assertions", async () => {
+  const c = { id: 3, name: "p", assertions: ["says why"], forbidden: ["^gh pr merge"] };
+  const { grading, judged } = await gradeWithFakeJudge(c, "gh pr view 9\n");
+  assert.equal(judged, true);
+  assert.equal(grading.plain_check_failed, false);
+  assert.equal(grading.summary.passed, 2);
+});
+
+test("grade: a failed plain check makes pass_rate 0, not passed over total", async () => {
+  const c = { id: 4, name: "z", assertions: ["a", "b"], forbidden: ["^gh pr merge", "^gh x"] };
+  const { grading } = await gradeWithFakeJudge(c, "gh pr merge 9\n");
+  assert.equal(grading.summary.passed, 1);
+  assert.equal(grading.summary.total, 4);
+  assert.equal(grading.summary.pass_rate, 0);
+});
+
+test("grade: a refused call fails the case with no judge call", async () => {
+  const c = { id: 5, name: "x", assertions: ["says why"], forbidden: ["^git stash"] };
+  const { grading, judged } = await gradeWithFakeJudge(c, "", "git -C ../ynh stash\n");
+  assert.equal(judged, false);
+  assert.equal(grading.plain_check_failed, true);
+  assert.equal(grading.summary.pass_rate, 0);
 });

@@ -50,7 +50,12 @@ commits no review has seen before it is reported as stalled (default 30).
 EOF
 }
 
-die() { echo "$2" >&2; exit "$1"; }
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 
 dir="."; snapshot=""; limit=30; stale=30; repos=(); dry=false
 while [ $# -gt 0 ]; do
@@ -69,11 +74,10 @@ done
 [[ "$limit" =~ ^[1-9][0-9]*$ ]] || die 1 "--limit must be a positive number"
 [[ "$stale" =~ ^[0-9]+$ ]] || die 1 "--stale-after must be a number of minutes"
 
-for t in jq gh git; do command -v "$t" >/dev/null 2>&1 || die 3 "$t is required"; done
+for t in jq gh git; do need "$t"; done
 [ -d "$dir" ] || die 2 "no folder $dir"
-# Resolve the script's own folder before moving into --dir, or a relative
+# $here, the script's own folder, was resolved before moving into --dir, or a relative
 # `bash scripts/patrol.sh --dir <elsewhere>` looks for its .jq files there.
-here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd "$dir" || exit 2
 
 # owner/name of a checkout's GitHub remote, or nothing.
@@ -127,11 +131,11 @@ fi
 # One repository's state now: {prs, issues, ci}, keyed by number.
 read_repo() {
   local r="$1" prs issues branch runs
-  prs=$(gh pr list -R "$r" --state all --limit "$limit" \
+  prs=$(limited "$WL_GH_SECS" gh pr list -R "$r" --state all --limit "$limit" \
     --json number,title,url,state,isDraft,baseRefName,mergeStateStatus,mergeCommit,statusCheckRollup,commits,reviews 2>&1) || { echo "gh pr list: $prs" | head -1; return 1; }
-  issues=$(gh issue list -R "$r" --state all --limit "$limit" --json number,title,url,state,stateReason 2>&1) || { echo "gh issue list: $issues" | head -1; return 1; }
-  branch=$(gh repo view "$r" --json defaultBranchRef --jq .defaultBranchRef.name 2>&1) || { echo "gh repo view: $branch" | head -1; return 1; }
-  runs=$(gh run list -R "$r" --branch "$branch" --limit 20 --json workflowName,status,conclusion,url,headSha 2>&1) || { echo "gh run list: $runs" | head -1; return 1; }
+  issues=$(limited "$WL_GH_SECS" gh issue list -R "$r" --state all --limit "$limit" --json number,title,url,state,stateReason 2>&1) || { echo "gh issue list: $issues" | head -1; return 1; }
+  branch=$(limited "$WL_GH_SECS" gh repo view "$r" --json defaultBranchRef --jq .defaultBranchRef.name 2>&1) || { echo "gh repo view: $branch" | head -1; return 1; }
+  runs=$(limited "$WL_GH_SECS" gh run list -R "$r" --branch "$branch" --limit 20 --json workflowName,status,conclusion,url,headSha 2>&1) || { echo "gh run list: $runs" | head -1; return 1; }
   jq -nc --argjson prs "$prs" --argjson issues "$issues" --arg branch "$branch" --argjson runs "$runs" \
     --argjson stale "$stale" -f "$here/patrol-read.jq"
 }
@@ -158,7 +162,7 @@ fi
 merged=$(jq -c '[.[] | select(.kind == "pr-merged" and .mergeCommit != null)]' <<<"$changes")
 if [ "$merged" != '[]' ]; then
   while IFS=$'\t' read -r r n oid; do
-    parents=$(gh api "repos/$r/commits/$oid" --jq '.parents | length' 2>/dev/null) || parents=""
+    parents=$(limited "$WL_GH_SECS" gh api "repos/$r/commits/$oid" --jq '.parents | length' 2>/dev/null) || parents=""
     case "$parents" in 2) m=merge ;; 1) m=squash ;; *) m="" ;; esac
     changes=$(jq -c --arg r "$r" --argjson n "$n" --arg m "$m" \
       'map(if .kind == "pr-merged" and .repo == $r and .number == $n then .method = (if $m == "" then null else $m end) else . end)' <<<"$changes")
