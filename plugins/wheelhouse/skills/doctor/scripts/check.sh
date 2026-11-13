@@ -49,6 +49,15 @@ if ! backend=$(bash "$mc" backend --dir "$dir"); then
   backend=""
 fi
 
+# memory.sh is how the wake, the inbox and the skills read and write memory, over either backend:
+# without it every seat's wake stops, so it is an error, not a warning.
+if [ -f "$dir/scripts/memory.sh" ]; then
+  add "memory script" true info "scripts/memory.sh"
+else
+  add "memory script" false error "no scripts/memory.sh, so wake.sh stops (exit 3) and no seat can wake or read its memory" \
+    "copy the work-graph skill's scripts/memory.sh into scripts/ beside wake.sh and commit it, or run the refresh skill's refresh.sh --update"
+fi
+
 # --- ynm ---------------------------------------------------------------------
 if [ "$backend" != ynm ]; then
   [ -z "$backend" ] || add "memory backend" true info "$backend: ynm is not checked"
