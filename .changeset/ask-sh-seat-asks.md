@@ -1,5 +1,0 @@
----
-"@eyelock-assistants/wheelhouse": minor
----
-
-The `work-graph` skill gains `scripts/ask.sh`, the way one seat asks another for something, recorded in the work graph and beside `inbox.sh`, which stays about humans. `open` creates a bead labelled `ask` and `ask:question`, `ask:request` or `ask:report`, assigned to the seat that answers it and created as the asker; `--blocks` sets the dependency and the repository label comes from the blocked bead, and it prints the answering seat's session address (`<wheelhouse>-<command>`, the desk just `<wheelhouse>`) for the asker to nudge. `answer` comments the answer and re-assigns the ask to its asker. `return` comments why, releases the seat's claim and re-assigns the same bead to the desk as `ask:return`, making no new bead. `show` prints the open asks for a seat, or every seat with `--all`, with each one's age, kind, asker and the bead it blocks, and `--older-than` keeps the old ones. Every bd call is bounded, and the exit codes follow `inbox.sh`'s.
