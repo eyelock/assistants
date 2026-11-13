@@ -12,6 +12,9 @@
 #     GIT_WORK_TREE and GIT_DIR, else the directory the call runs in;
 #   - anything else goes through: git and bd run the real tool (the first on PATH that is not
 #     this script), gh prints a canned answer and touches nothing.
+# A gh call that posts a body (--body or -b, --body-file or -F, or a body= field) also logs the body
+# as a second line, "gh-body <text>" (newlines become spaces, a file or "-" for stdin is read), so a
+# case can check what was posted, such as the byline a review must start with.
 # A refused call prints the reason on stderr, exits 1, and is noted in "$EVAL_STUB_LOG.refused"
 # (the reason after "::"). It is still in the main log, so a forbidden pattern fails the case.
 #
@@ -165,7 +168,25 @@ if [ "$name" = bd ]; then
   pass_through "$@"
 fi
 
-# gh: nothing reaches GitHub.
+# gh: nothing reaches GitHub. A posted body is logged, as one "gh-body <text>" line.
+log_body() {
+  local text=$1
+  text=${text//$'\n'/ }
+  printf 'gh-body %s\n' "$text" >>"$log"
+}
+body_file() {
+  if [ "$1" = "-" ]; then cat; else cat -- "$1" 2>/dev/null; fi
+}
+args=("$@")
+for ((i = 0; i < ${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    --body | -b) log_body "${args[$((i + 1))]:-}" ;;
+    --body=*) log_body "${args[$i]#--body=}" ;;
+    --body-file | -F) log_body "$(body_file "${args[$((i + 1))]:-}")" ;;
+    --body-file=*) log_body "$(body_file "${args[$i]#--body-file=}")" ;;
+    body=*) log_body "${args[$i]#body=}" ;;
+  esac
+done
 words=()
 for a in "$@"; do
   case "$a" in -*) ;; *) words+=("$a") ;; esac
