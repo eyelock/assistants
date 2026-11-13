@@ -175,3 +175,5 @@ Affaan
 Daniele
 Procida
 Licence
+opencode
+gsub

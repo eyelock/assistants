@@ -83,7 +83,7 @@ Pick one; the human chooses, since each runs on their machine or account:
   */5 * * * * cd <the Wheelhouse root> && [ "$(bash <skills>/patrol/scripts/patrol.sh --dry-run 2>/dev/null)" != "[]" ] && <command> --focus patrol
   ```
 
-  Write `<skills>` in that line as the absolute path of the CI watcher's skills folder (under ynh on Claude Code,
+  In that line, `<skills>` stands for the absolute path of the CI watcher's skills folder (under ynh on Claude Code,
   `~/.ynh/run/<harness>/.claude/skills`), since a timer has no session to name it.
   On a Mac, a launchd agent with `StartInterval` 300 runs the same command line.
 - **A scheduled routine** in the vendor's cloud, where one exists, running the seat's patrol

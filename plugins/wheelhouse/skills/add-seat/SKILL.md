@@ -278,7 +278,7 @@ rules. In short:
   gains one.
   Always keep `skills/work-graph` in a seat's `pick`: it carries `wheelhouse-lib.sh`, which every
   wheelhouse script sources, and `memory.sh` and `inbox.sh`, so a seat without it has scripts that exit 3 (the doctor warns).
-  The seat runs the plugin's scripts where ynh installed them, so write nothing of them into the Wheelhouse.
+  The seat runs the plugin's scripts where ynh installed them, so the Wheelhouse holds no copy of them.
 - `labels` is an object of key to value, and stamps every run record of the seat with
   `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
   `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out
