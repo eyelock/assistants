@@ -85,34 +85,26 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 - No interactive prompts — all input via arguments
 - macOS compatible — no bash 4+ features, no GNU-only flags
 
-## Merge queue
+## Branch protection
 
-`develop` and `main` are meant to be protected by a merge queue: a pull request merges only after All
-Clear passes on the branch as it will be with the queued pull requests ahead of it merged, so two pull
-requests that are each green cannot combine red. `develop` queues as squash; `main` queues as a merge
-commit. GitHub offers merge queues to organization-owned repositories, so a personal-account repository
-like this one may be refused; the fallback is strict required status checks.
-
-What protects each branch depends on how far the admin step got (it has three stages):
-
-- Before stage 2 finishes for a branch: the classic rule, requiring `Check`, with admins enforced.
-- After stage 2, with stage 3 not run or refused: the branch's ruleset (All Clear, a pull request,
-  no deletion, no force push), and no queue. Pull requests merge one at a time, as before.
-- After stage 3: the ruleset and the merge queue.
+There is no merge queue: the repository is on a personal account, which GitHub does not offer one.
+There is no classic branch protection either. `develop` and `main` each have a ruleset (read it with
+`gh api repos/eyelock/assistants/rulesets`) that forbids deleting the branch and force-pushing to
+it, requires a pull request (no approving review is required) and requires the All Clear check. The
+check does not have to be up to date with the base (not strict). The rulesets allow merge, squash
+and rebase, so the method is a convention, not a setting: a maintainer squashes into `develop` and
+merges into `main` with a merge commit, as the pull request's `merge:` label says.
 
 The rulesets' bypass list holds the repository admin role in `"bypass_mode": "pull_request"`, not
-`"always"`. Every seat pushes under the admin account, and classic protection refuses even an admin's
-direct push (`enforce_admins`); `"always"` would let a seat's direct push to `develop` or `main` land.
-`pull_request` lets the admin bypass the rules only on a pull request, which is all the release
-back-merge below needs, and a direct push is still refused.
-`ci.yml` triggers on `merge_group` and every job in it runs there. Any new required check must also
-trigger on `merge_group`, and must never be skipped by a path filter or by a missing head ref in the queue.
+`"always"`. `pull_request` lets an admin bypass the rules only through a pull request, for example to
+merge one whose All Clear is still outstanding; a direct push is still refused. `"always"` would let
+a seat's direct push to `develop` or `main` land, and every seat pushes under the admin account.
 
 Cutting a release: the `release/YYYY-MM-DD` pull request into `main` and the `changeset-release/main`
-Version Packages pull request go through the queue. The back-merge of `main` into `develop` after a
-release is the exception: it must land as a merge commit, which the `develop` queue (squash) cannot do,
-so an admin merges that pull request directly with a merge commit, around the queue:
-`gh pr merge <number> --repo eyelock/assistants --merge --admin`.
+Version Packages pull request merge like any other. The back-merge of `main` into `develop` after a
+release must land as a merge commit, which the `develop` ruleset allows, so it merges like any pull
+request with that method chosen; the admin bypass is needed only when All Clear is outstanding:
+`gh pr merge <number> --repo eyelock/assistants --merge` (with `--admin` for that case).
 
 ## Working with this repo
 
