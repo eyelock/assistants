@@ -4,6 +4,7 @@
 # on the default branch.
 set -euo pipefail
 SEAT_DRAFT_PRS=1 bash "$EVAL_FIXTURES/seat-dispatcher.sh"
+. "$EVAL_FIXTURES/seat-include.sh"
 git checkout -q -b seat/gore
 mkdir -p harnesses/gore/.agents/harness
 jq -n '{name: "gore", version: "0.1.0", description: "Gore, crew: reviews what the workers hand over.", labels: {wheelhouse: "hq"},

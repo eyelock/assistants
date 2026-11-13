@@ -4,6 +4,7 @@
 # the default branch.
 set -euo pipefail
 SEAT_DRAFT_PRS=1 bash "$EVAL_FIXTURES/seat-dispatcher.sh"
+. "$EVAL_FIXTURES/seat-include.sh"
 git checkout -q -b seat/dalglish
 mkdir -p harnesses/dalglish/.agents/harness
 jq -n '{name: "dalglish", version: "0.1.0", description: "Dalglish, worker for the ynr repository.", labels: {wheelhouse: "hq"},
