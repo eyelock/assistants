@@ -386,3 +386,125 @@ test("a green draft with commits no review has seen is stalled, once, after --st
     h.done();
   }
 });
+
+// Overdue asks: patrol.sh reads the open asks through ask.sh show --all (the real one, with a stand-in
+// bd that answers from $BD_ASKS) and reports each ask once, as an ask-overdue change, when its age passes
+// the threshold. ASK_NOW pins the clock, so ages are exact.
+const NOW = 1_800_000_000;
+const iso = (secsAgo) => new Date((NOW - secsAgo) * 1000).toISOString();
+const ask = (id, secsAgo, kind = "question", over = {}) => ({
+  id,
+  title: `Ask ${id}`,
+  status: "open",
+  assignee: "marr",
+  created_by: "albarn",
+  labels: ["ask", `ask:${kind}`],
+  created_at: iso(secsAgo),
+  priority: 2,
+  ...over,
+});
+const H = 3600;
+const bdStub = `#!/bin/sh
+case "$*" in
+  *"list --label ask"*) [ -n "$BD_FAIL" ] && { echo "dolt is down" >&2; exit 1; }; cat "$BD_ASKS" ;;
+  *"dep list"*) echo '[]' ;;
+  *) echo '[]' ;;
+esac
+`;
+
+function askHarness() {
+  const h = harness();
+  writeFileSync(join(h.dir, "bin", "bd"), bdStub);
+  chmodSync(join(h.dir, "bin", "bd"), 0o755);
+  mkdirSync(join(h.wh, ".beads"));
+  mkdirSync(join(h.wh, "skills", "roster", "assets"), { recursive: true });
+  writeFileSync(join(h.wh, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Ynw", group: "desk", command: "ynw", harness: "." }, { name: "Marr", group: "workers", command: "marr", harness: "." }], humans: [] }));
+  h.set({ repos: { [R]: { branch: "develop", prs: [pr(1)], issues: [], runs: run("success") } } });
+  const asks = join(h.dir, "asks.json");
+  const setAsks = (list) => writeFileSync(asks, JSON.stringify(list));
+  const patrol = (args = ["--repo", R], extra = {}) => h.patrol(args, { ASK_NOW: String(NOW), BD_ASKS: asks, BD_FAIL: "", ...extra });
+  return { ...h, setAsks, patrol };
+}
+
+test("an ask crossing the threshold is reported once, not again on the next patrol", () => {
+  const h = askHarness();
+  try {
+    h.setAsks([ask("x-1", 20 * H)]);
+    assert.deepEqual(h.patrol().json, [], "the first run is a baseline");
+    assert.deepEqual(h.patrol().json, [], "20h old: under the 24h default");
+    h.setAsks([ask("x-1", 25 * H)]);
+    const crossed = h.patrol();
+    assert.equal(crossed.status, 0, crossed.stderr);
+    assert.equal(crossed.json.length, 1);
+    assert.deepEqual(
+      { kind: crossed.json[0].kind, id: crossed.json[0].id, ask: crossed.json[0].ask, askedBy: crossed.json[0].askedBy, assignee: crossed.json[0].assignee, age: crossed.json[0].age },
+      { kind: "ask-overdue", id: "x-1", ask: "question", askedBy: "albarn", assignee: "marr", age: "25h" },
+    );
+    assert.deepEqual(h.patrol().json, [], "reported once: not again while it stays open");
+    h.setAsks([ask("x-1", 30 * H), ask("x-2", 26 * H, "request")]);
+    assert.deepEqual(h.patrol().json.map((c) => c.id), ["x-2"], "a second ask is reported on its own, the first stays quiet");
+  } finally {
+    h.done();
+  }
+});
+
+test("an ask:report is never overdue", () => {
+  const h = askHarness();
+  try {
+    h.setAsks([]);
+    h.patrol();
+    h.setAsks([ask("x-r", 90 * H, "report"), ask("x-q", 90 * H)]);
+    assert.deepEqual(h.patrol().json.map((c) => c.id), ["x-q"]);
+  } finally {
+    h.done();
+  }
+});
+
+test("the threshold is set by the environment, and by --ask-overdue-after", () => {
+  const h = askHarness();
+  try {
+    h.setAsks([ask("x-1", 2 * H)]);
+    h.patrol();
+    assert.deepEqual(h.patrol().json, [], "2h is under the 24h default");
+    const env = h.patrol(["--repo", R, "--dry-run"], { WHEELHOUSE_ASK_OVERDUE_AFTER: "1h" });
+    assert.deepEqual(env.json.map((c) => c.id), ["x-1"], "1h from the environment");
+    const flag = h.patrol(["--repo", R, "--dry-run", "--ask-overdue-after", "90m"], { WHEELHOUSE_ASK_OVERDUE_AFTER: "10d" });
+    assert.deepEqual(flag.json.map((c) => c.id), ["x-1"], "the flag beats the environment");
+    const bad = h.patrol(["--repo", R, "--ask-overdue-after", "soon"]);
+    assert.equal(bad.status, 1);
+  } finally {
+    h.done();
+  }
+});
+
+test("ask.sh failing is an error, the last asks are kept, and the ask is reported once when it reads again", () => {
+  const h = askHarness();
+  try {
+    h.setAsks([ask("x-1", 20 * H)]);
+    h.patrol();
+    h.setAsks([ask("x-1", 25 * H)]);
+    const failed = h.patrol(["--repo", R], { BD_FAIL: "1" });
+    assert.equal(failed.status, 3);
+    assert.equal(failed.json.length, 1);
+    assert.equal(failed.json[0].kind, "error");
+    assert.equal(failed.json[0].source, "asks");
+    assert.match(failed.json[0].detail, /dolt is down/);
+    assert.deepEqual(h.patrol().json.map((c) => c.id), ["x-1"], "reported once it reads again, not lost");
+    assert.deepEqual(h.patrol().json, []);
+  } finally {
+    h.done();
+  }
+});
+
+test("a Wheelhouse with no work graph reads no asks and patrols as before", () => {
+  const h = harness();
+  try {
+    h.set({ repos: { [R]: { branch: "develop", prs: [pr(1)], issues: [], runs: run("success") } } });
+    h.patrol();
+    const again = h.patrol();
+    assert.equal(again.status, 0, again.stderr);
+    assert.deepEqual(again.json, []);
+  } finally {
+    h.done();
+  }
+});
