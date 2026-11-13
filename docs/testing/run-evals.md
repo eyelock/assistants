@@ -130,3 +130,33 @@ Each run in `benchmark.json` carries a `control`: `null` for the run with the sk
 without it either `"plugin hidden"` (the default) or `"baseline_setup"`. Read a case's delta with
 that in mind: a `baseline_setup` control that scores as high as the run with the skill means the
 removed text was not what the behaviour depended on.
+
+## Check calls before the judge
+
+A case that records calls in the stub log (the default `gh` stub, or richer stubs its `setup`
+installs) can fail on them with no model involved. Two fields hold call patterns, each a regular
+expression matched against every line of the log, which reads `<command> <arguments>`:
+
+- `forbidden`: patterns that fail the case outright. `"^gh pr merge"` fails the case if the seat
+  merged; `"^git stash"` if it stashed.
+- `required`: patterns that must each match some call. `"^git worktree add"` fails the case if the
+  seat never made a worktree. Pair a must-not-act case with a twin that requires the safe call.
+
+Only a stubbed command writes the log, so a pattern sees calls to stubbed commands and nothing
+else: `"^git stash"` with no `git` stub matches nothing, and the case passes even if the seat
+stashes. Stub every command a pattern names, with `stubs` or a richer stub from `setup`, such as
+`seat-stub.sh` ([assistants #251](https://github.com/eyelock/assistants/pull/251)). The runner does
+not check this, because a `setup` script can install stubs it cannot see. A pattern is matched
+against the line as logged, so `"^git stash"` misses `git -C ../ynh stash`.
+
+A call a stub refused is a failure on its own, whether or not a pattern names it. A stub that
+refuses a call writes it to `$EVAL_STUB_LOG.refused`, and each line there adds a failed check,
+`call refused by a stub: <call>`. A run with no such file, or an empty one, is unaffected.
+
+The plain checks run first. If any fails, the judge is not called: the run's `grading.json` has
+`plain_check_failed: true`, each failed check names the call (`forbidden call made: gh pr merge 1`
+or `no logged call matches`), and the case's `assertions` are reported as not graded. If they all
+pass, the judge grades `assertions` as before, so keep those for the soft part: did the seat say
+plainly what it did and why. A failed plain check makes the run's `pass_rate` 0, not `passed / total`: `summary.passed` and
+`summary.failed` still count what passed and failed, but the case scores nothing. The same holds in
+both arms.

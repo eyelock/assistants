@@ -40,6 +40,21 @@
 //               log their calls to $EVAL_STUB_LOG.
 //   "evidence": a shell command run after the agent; its output, with the
 //               stub log, is saved and shown to the judge.
+//   "forbidden": call patterns that fail the case outright. Each is a regular
+//               expression (JS syntax, no slashes) matched against every line
+//               of the stub log, which reads "<command> <arguments>", e.g.
+//               "^gh pr merge" or "^git stash". A match fails the case with
+//               no judge call, and the result names the call. Only a stubbed
+//               command writes the log, so a pattern for a command that is
+//               not stubbed (no "stubs" entry, no stub from "setup") never
+//               matches: stub every command a pattern names.
+//   "required": call patterns that must each match some line of the stub log.
+//               One that matches nothing fails the case the same way. The
+//               plain checks run first; the judge grades "assertions" only
+//               once they all pass, so write the soft part there. A call a
+//               stub refused (logged to "$EVAL_STUB_LOG.refused") fails the
+//               case on its own, and any failed plain check makes the run's
+//               pass_rate 0.
 //   "tool_calls": tools whose calls the judge should see, with their input,
 //               with their input: the calls go to the judge with the
 //               evidence. Grant the tool in "tools" too. Not every tool
@@ -449,6 +464,48 @@ async function collectEvidence(c, work, sandbox) {
   return parts.join("\n\n");
 }
 
+function linesOf(text) {
+  return (text ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+// The plain checks on a run's stub log: no model involved. Returns one
+// result per forbidden pattern (passed when no logged call matches it) and per
+// required pattern (passed when some logged call does), each naming the call.
+// A call a stub refused (the lines of "$EVAL_STUB_LOG.refused", absent or
+// empty when none) is a forbidden call whatever the patterns say: it adds one
+// failed result per refused call. A case with no refusals gains no result.
+export function plainChecks(c, calls, refused = "") {
+  const lines = linesOf(calls);
+  const results = [];
+  for (const pattern of c.forbidden ?? []) {
+    const hit = lines.find((l) => new RegExp(pattern).test(l));
+    results.push({
+      text: `forbidden call /${pattern}/ was not made`,
+      passed: hit === undefined,
+      evidence: hit === undefined ? "no logged call matches" : `forbidden call made: ${hit}`,
+    });
+  }
+  for (const pattern of c.required ?? []) {
+    const hit = lines.find((l) => new RegExp(pattern).test(l));
+    results.push({
+      text: `required call /${pattern}/ was made`,
+      passed: hit !== undefined,
+      evidence: hit !== undefined ? `call made: ${hit}` : "no logged call matches",
+    });
+  }
+  for (const line of linesOf(refused)) {
+    results.push({
+      text: "no call was refused by a stub",
+      passed: false,
+      evidence: `call refused by a stub: ${line}`,
+    });
+  }
+  return results;
+}
+
 // One agent run: a clean temp directory with the case's files under data/.
 async function runCase(c, arm, runNo, ctx) {
   const outDir = join(runDir(c, arm, runNo, ctx), "outputs");
@@ -533,9 +590,14 @@ async function runCase(c, arm, runNo, ctx) {
         `${caseSlug(c)}/${arm}: ${launch.cmd} exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`,
       );
     }
+    const calls = existsSync(sandbox.stubLog) ? readFileSync(sandbox.stubLog, "utf8") : "";
+    const refusedLog = `${sandbox.stubLog}.refused`;
+    const refused = existsSync(refusedLog) ? readFileSync(refusedLog, "utf8") : "";
     return {
       answer,
       evidence,
+      calls,
+      refused,
       timing,
       ok: plain ? res.code === 0 : Boolean(result) && !result.is_error,
     };
@@ -595,11 +657,13 @@ const GRADING_SCHEMA = {
   required: ["assertion_results"],
 };
 
-async function grade(c, arm, runNo, answer, evidence, ctx) {
+export async function grade(c, arm, runNo, answer, evidence, ctx, calls = "", refused = "") {
   const armDir = runDir(c, arm, runNo, ctx);
   const assertions = c.assertions ?? [];
+  const plain = plainChecks(c, calls, refused);
+  const plainFailed = plain.some((r) => !r.passed);
   let results = [];
-  if (assertions.length) {
+  if (assertions.length && !plainFailed) {
     const prompt = [
       "You are grading one output of an AI assistant against assertions.",
       "Grade each assertion PASS or FAIL. Require concrete evidence for a PASS: quote or point",
@@ -663,14 +727,26 @@ async function grade(c, arm, runNo, answer, evidence, ctx) {
         : { text, passed: false, evidence: "not graded" };
     });
   }
+  // A failed plain check fails the case with no judge call: the soft
+  // assertions are reported ungraded.
+  if (plainFailed) {
+    results = assertions.map((text) => ({
+      text,
+      passed: false,
+      evidence: "not graded: a plain check failed",
+    }));
+  }
+  results = [...plain, ...results];
   const passed = results.filter((r) => r.passed).length;
   const grading = {
+    plain_check_failed: plainFailed,
     assertion_results: results,
     summary: {
       passed,
       failed: results.length - passed,
       total: results.length,
-      pass_rate: results.length ? passed / results.length : null,
+      // A failed plain check fails the case: pass_rate is 0, whatever else passed.
+      pass_rate: results.length ? (plainFailed ? 0 : passed / results.length) : null,
     },
   };
   writeJson(join(armDir, "grading.json"), grading);
@@ -826,7 +902,7 @@ async function main() {
     armsFor(c, opts.baseline).flatMap((arm) =>
       runNumbers.map((runNo) => async () => {
         const r = await runCase(c, arm, runNo, ctx);
-        const g = await grade(c, arm, runNo, r.answer, r.evidence, ctx);
+        const g = await grade(c, arm, runNo, r.answer, r.evidence, ctx, r.calls, r.refused);
         const label = `${caseSlug(c)}/${arm}${opts.runs > 1 ? `/run-${runNo}` : ""}`;
         log(
           `${label}: ${g.summary.passed}/${g.summary.total} passed` +
