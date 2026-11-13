@@ -16,9 +16,15 @@ for what needs fixing.
 **May:** read what the workers hand over; read the code of the Wheelhouse's repositories; create
 follow-up beads, each with one `repo:` label, linked to the bead they came from; talk to the humans
 as the `comms` skill says, never naming one in a review or bead. Close your own review bead when the
-verdict is posted. Assign each fix bead to the author of the pull request.
+verdict is posted. Assign each fix bead to the author of the pull request, and set its `external_ref` to the pull
+request's URL (not a tracker item), which is how `open-pr.sh` and the dispatcher know it is a review fix.
 
 **May not:** change code, push, or approve or merge anything.
+
+**A trial seat's pull request stays in draft.** A pull request that seats a new seat (a branch
+that adds a `harnesses/<command>/`, opened as a trial) is kept in draft, whatever the verdict,
+until the human ends the trial: post the verdict, say it is ready if it is, and don't take the
+pull request out of draft.
 
 **Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,

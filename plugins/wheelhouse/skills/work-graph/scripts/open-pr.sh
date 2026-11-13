@@ -31,6 +31,9 @@
 # Nothing in tracker.json is run. The release is read by the adapter's own code (release <item>),
 # after the reference has matched item.pattern (required) and again the adapter's strict form.
 #
+# A bead whose external_ref is a pull request URL is a review fix: --dry-run reports it ("review_fix":
+# true, exit 0) and a real run refuses (exit 1), since the fix goes to the existing pull request.
+#
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse or the bead not found,
 # 3 a tool (jq, bd, gh) is missing or failed.
 set -uo pipefail
@@ -38,7 +41,7 @@ set -uo pipefail
 usage() {
   cat <<'EOF2'
 Usage: open-pr.sh --bead <id> [--title <title>] [--body-file <file>] [--base <branch>]
-                  [--repo <owner/name>] [--dir <wheelhouse repo>] [--dry-run]
+                  [--head <branch>] [--repo <owner/name>] [--dir <wheelhouse repo>] [--dry-run]
 
 Opens a draft pull request for the bead, from the current directory's repository, with the
 bead's tracker item linked and its release set. Prints a JSON object: {"url", "item",
@@ -46,7 +49,11 @@ bead's tracker item linked and its release set. Prints a JSON object: {"url", "i
 repo: label is in tracker.json's exempt_repos (then it opens with no item, release or closing link,
 and the JSON has "exempt": true).
 --dir is the Wheelhouse (default: the current directory); --dry-run prints what it would run, and
-needs no --title. The JSON also names "item_name", "release_name" and "relation" ("closes" when the
+needs no --title. --title defaults to the bead's title.
+--head is the remote branch to open the PR from: by default the current branch's upstream branch
+when its name differs from the local one (a seat that pushed another seat's branch from its own
+worktree), else gh's own choice. --base defaults to the repository's default branch (gh's choice);
+pass it for a gitflow repository whose PRs target develop. The JSON also names "item_name", "release_name" and "relation" ("closes" when the
 bead is the last open bead on the item, "part-of" otherwise, "" with no tracker item): a dispatch
 note asks this for the same answer the PR will give.
 EOF2
@@ -55,23 +62,22 @@ EOF2
 die() { echo "$2" >&2; exit "$1"; }
 refuse() { echo "open-pr: refused: $1" >&2; jq -n --arg r "$1" '{refused: $r}'; exit 1; }
 
-bead=""; title=""; body_file=""; base=""; repo=""; dir="."; dry=false
+bead=""; title=""; body_file=""; base=""; head=""; repo=""; dir="."; dry=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
     --dry-run) dry=true; shift ;;
-    --bead | --title | --body-file | --base | --repo | --dir)
+    --bead | --title | --body-file | --base | --head | --repo | --dir)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       case "$1" in
         --bead) bead="$2" ;; --title) title="$2" ;; --body-file) body_file="$2" ;;
-        --base) base="$2" ;; --repo) repo="$2" ;; --dir) dir="$2" ;;
+        --base) base="$2" ;; --head) head="$2" ;; --repo) repo="$2" ;; --dir) dir="$2" ;;
       esac
       shift 2 ;;
     *) usage >&2; exit 1 ;;
   esac
 done
 [ -n "$bead" ] || { usage >&2; exit 1; }
-$dry || [ -n "$title" ] || { usage >&2; exit 1; }
 [ -z "$body_file" ] || [ -f "$body_file" ] || die 2 "open-pr: no such body file: $body_file"
 command -v jq >/dev/null || die 3 "open-pr: jq is not installed"
 command -v bd >/dev/null || die 3 "open-pr: bd (Beads) is not installed"
@@ -83,6 +89,17 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 shown=$(cd "$dir" && bd show "$bead" --json 2>/dev/null) || die 2 "open-pr: no bead $bead"
 ref=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | .external_ref // ""' <<<"$shown")
 housekeeping=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | [(.labels // [])[] | select(. == "housekeeping")] | length' <<<"$shown")
+
+# A review fix: its external_ref is the URL of the pull request it fixes, not a tracker item. It
+# pushes to that PR and opens none, so there is nothing to link: a dry run reports it, and a real
+# run refuses (push to the existing pull request instead).
+if printf '%s\n' "$ref" | grep -Eq '^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+$'; then
+  if $dry; then
+    jq -n --arg pr "$ref" '{dry_run: true, review_fix: true, pr: $pr, exempt: true, item: "", release: "", closing: "", relation: "", gh: []}'
+    exit 0
+  fi
+  refuse "bead $bead is a review fix: its external_ref is the pull request $ref, which it pushes to; open no new one"
+fi
 
 # The tracker config.
 kind=none
@@ -129,8 +146,13 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
   # Capture each step on its own, so a failing bd or jq is a fault (exit 3), never a count of 0
   # that would write "Closes" while other beads are open on the item.
   listing=$(cd "$dir" && bd list --all --json 2>/dev/null) || die 3 "open-pr: bd list failed"
-  refs=$(jq -r --arg id "$bead" \
-    '(.data? // .)[] | select(.id != $id and .status != "closed") | .external_ref // empty' <<<"$listing") ||
+  # A bead in an exempt repository is no sibling: its PR carries no closing link, so it never holds
+  # the item open. (Its external_ref may name the same item as this bead's.)
+  exlist=$(jq -c '(.exempt_repos // [])' "$dir/tracker.json") || die 3 "open-pr: could not read exempt_repos"
+  refs=$(jq -r --arg id "$bead" --argjson ex "$exlist" \
+    '(.data? // .)[] | select(.id != $id and .status != "closed")
+     | select(([(.labels // [])[] | select(startswith("repo:")) | ltrimstr("repo:") | select(. as $r | $ex | index($r))] | length) == 0)
+     | .external_ref // empty' <<<"$listing") ||
     die 3 "open-pr: could not read bd list's output"
   others=0
   while IFS= read -r sib; do
@@ -138,7 +160,7 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
     c=$(bash "$adapter" canon "$sib") || die 3 "open-pr: the $kind adapter failed to canonicalise $sib"
     if [ "$c" = "$mine" ]; then others=$((others + 1)); fi
   done <<<"$refs"
-  last=more; [ "$others" -eq 0 ] && last=last
+  last="more"; [ "$others" -eq 0 ] && last=last
 
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
   relation=part-of; [ "$last" = last ] && relation=closes
@@ -146,11 +168,29 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
   while IFS= read -r f; do [ -n "$f" ] && flags+=("$f"); done < <(bash "$adapter" pr-flags "$release")
 fi
 
+# The title defaults to the bead's own.
+if [ -z "$title" ]; then
+  title=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | .title // ""' <<<"$shown")
+  $dry || [ -n "$title" ] || { usage >&2; exit 1; }
+fi
+# The head: when the local branch's upstream has another name (a seat pushed another seat's branch
+# from its own worktree), gh would look for the local name on the remote and fail. Name the
+# upstream's branch instead.
+if [ -z "$head" ]; then
+  up=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || up=""
+  cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) || cur=""
+  if [ -n "$up" ] && [ -n "$cur" ]; then
+    remote_branch="${up#*/}"
+    [ "$remote_branch" = "$cur" ] || head="$remote_branch"
+  fi
+fi
+
 body=""; [ -z "$body_file" ] || body=$(cat "$body_file")
 [ -z "$closing" ] || body="$body"$'\n\n'"$closing"
 
 args=(pr create --draft --title "$title" --body "$body")
 [ -z "$base" ] || args+=(--base "$base")
+[ -z "$head" ] || args+=(--head "$head")
 [ -z "$repo" ] || args+=(--repo "$repo")
 [ ${#flags[@]} -eq 0 ] || args+=("${flags[@]}")
 

@@ -12,25 +12,31 @@
 #             assigned to them, created as the seat that asked, optionally
 #             blocking the bead it holds up, labelled with the repository it
 #             touches. A merge or review needs --url and a repository.
-#   note      an FYI for a human: a memory in ynm, namespace human/<command>,
-#             tagged inbox, shown at the desk's wake until it is relayed.
+#   note      an FYI for a human: a memory of kind note for that human, written
+#             through memory.sh (ynm namespace human/<command> tagged inbox, or a
+#             Beads memory human/<command>/note/...), shown at the desk's wake
+#             until it is relayed.
+#   close     closes a human's inbox bead with a reason, once the human has done
+#             it and the work is verified (alias: done). Only the desk runs it,
+#             and only on an inbox bead assigned to a human.
 #   show      the ready beads and notes for the default human and, when
 #             --name says who is at the desk for this session, for them too.
 #
 # Run it from the Wheelhouse repository's root, or pass --dir.
 # Output: JSON on stdout; diagnostics on stderr.
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse, 3 a tool it
-# needs (jq, bd, ynm, git) is missing or failed. show exits 3 when bd or ynm
+# needs (jq, bd, memory.sh and its backend, git) is missing or failed. show exits 3 when bd or ynm
 # failed, and still prints what it could read, with what failed in errors.
 set -uo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: inbox.sh assign --title <title> --from <seat> [--to default|<command>]
+Usage: inbox.sh assign --title <title> --from <seat or seat on trial> [--to default|<command>]
                        [--url <url>] [--blocks <bead>] [--repo <repo>]
                        [--description <text>] [--priority 0-4]
                        [--kind merge|review|decision|credential|report|other]
        inbox.sh note --content <text> --from <seat> [--to default|<command>]
+       inbox.sh close <bead> --reason <text> --from <desk seat>
        inbox.sh show [--name <Name>]
 
 Common: --dir <wheelhouse repo> (default: the current directory).
@@ -39,7 +45,9 @@ assign    Creates a bead assigned to a human (--to: default, the default human,
           or any human's command, their name in lowercase),
           as the seat that asked (--from, default: $BEADS_ACTOR). --url is kept
           as the bead's external_ref; a merge or review is refused without
-          one. --kind says which it is; without --kind, a title with the word
+          one. A merge whose pull request is still a draft is refused when gh
+          can tell (with gh missing or failing, it warns and carries on).
+          --kind says which it is; without --kind, a title with the word
           "merge" or "review" in it (any case, anywhere) is taken as one.
           --blocks makes the given bead wait on this one. --repo labels the
           bead repo:<repo>, the one repository it touches; without --repo it
@@ -50,17 +58,28 @@ assign    Creates a bead assigned to a human (--to: default, the default human,
           --priority says otherwise, and show lists it after the rest.
           Every kind is labelled inbox:<kind>. --priority sets any bead's
           priority (0 highest, 4 lowest; bd's default, 2, unless given).
-note      Leaves an FYI in ynm, namespace human/<command>, tagged inbox.
+note      Leaves an FYI for the human through memory.sh (kind note, --human <command>),
+          in whichever memory the Wheelhouse keeps (wheelhouse.json: ynm or Beads).
+close     (alias: done) Closes a human's bead (<bead>, or --id) with a reason
+          (--reason, or --note), as the seat recording it (--from, default:
+          $BEADS_ACTOR), once the human has done it or told you it is done and
+          the work is verified. Only the desk runs it: --from must be a seat in
+          the desk group. The bead must be an inbox bead (labelled inbox)
+          assigned to a human, never a seat's work. bd refuses a plain close of
+          a bead like this, so close forces it: the one forced close a seat
+          makes of a bead it does not hold, which is why it is limited to inbox
+          beads. Prints {id, closedBy, note}.
 show      Prints {you, humans: [{name, command,
           role: you|anyone, beads: [{id, title, kind, askedBy, priority,
           ref: {short, url}, unblocks}] (reports last, then by priority), notes: [{memoryId, content}]}],
           errors, empty, relay (what to do with it)}. --name is the human at
           the desk for this session ("it's me, <name>"): their inbox is the
           beads assigned to their command (the name in lowercase ASCII, [a-z0-9][a-z0-9-]*)
-          and the ynm notes in human/<command>, with no roster entry. you is
+          and the notes memory.sh recalls for human <command>, with no roster entry. you is
           {name, command}, or null with no --name, when the desk treats the
           human as the default human. Nothing is stored or written.
-          If bd or ynm fails, that human's beads or notes are null, errors
+          Each note is {memoryId (the id memory.sh gave), content, by, at}.
+          If bd or memory.sh fails, that human's beads or notes are null, errors
           says what failed, empty is null (never true) and show exits 3,
           still printing what the other tool returned.
 EOF
@@ -70,28 +89,34 @@ die() { echo "$2" >&2; exit "$1"; }
 
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
+# memory.sh sits beside this script (the plugin's scripts/, and a Wheelhouse's scripts/).
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 case "$cmd" in
-  assign | note | show) ;;
+  assign | note | show | close | done) ;;
   --help | -h) usage; exit 0 ;;
   *) echo "unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac
 
 dir="."
 title=""; from="${BEADS_ACTOR:-}"; to="default"; url=""; blocks=""; repo=""; description=""; kind=""; priority=""
-content=""; name=""
+content=""; name=""; id=""; note=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
-    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name)
+    --dir | --title | --from | --to | --url | --blocks | --repo | --priority | --description | --kind | --content | --name | --id | --note | --reason)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       v="$2"
       case "$1" in
         --dir) dir="$v" ;; --title) title="$v" ;; --from) from="$v" ;; --to) to="$v" ;;
         --url) url="$v" ;; --blocks) blocks="$v" ;; --repo) repo="$v" ;; --priority) priority="$v" ;; --description) description="$v" ;;
-        --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;;
+        --kind) kind="$v" ;; --content) content="$v" ;; --name) name="$v" ;; --id) id="$v" ;; --note | --reason) note="$v" ;;
       esac
       shift 2 ;;
-    *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    *)
+      # close takes the bead bare: inbox.sh close <bead> --reason <text>
+      if { [ "$cmd" = close ] || [ "$cmd" = "done" ]; } && [ -z "$id" ]; then id="$1"; shift
+      else echo "unknown argument: $1" >&2; usage >&2; exit 1; fi ;;
   esac
 done
 
@@ -100,6 +125,9 @@ roster="$dir/skills/roster/assets/roster.json"
 [ -f "$roster" ] || die 2 "not a Wheelhouse (no $roster)"
 cd "$dir" || exit 2
 roster=skills/roster/assets/roster.json
+memory="$here/memory.sh"
+[ -f "$memory" ] || die 3 "memory.sh is missing: it belongs beside inbox.sh ($memory)"
+wroot=$PWD
 
 # Beads' --json output is an array or object, or {"data": ...} with
 # BD_JSON_ENVELOPE=1; (.data? // .) reads either.
@@ -131,11 +159,14 @@ resolve_to() {
   printf '%s\n' "$1"
 }
 
-# The seat that asked must be a seat in the roster.
+# The seat that asked must be a seat in the roster, or a seat on trial: one whose
+# harness (harnesses/<command>/AGENTS.md) is on the checked-out branch and which has no
+# roster entry until the trial ends. wake.sh and the doctor recognise it the same way.
 check_from() {
   [ -n "$from" ] || die 1 "say which seat is asking: --from <seat>, or set BEADS_ACTOR"
-  jq -e --arg c "$from" '.seats | any(.command == $c)' "$roster" >/dev/null ||
-    die 1 "$from is not a seat in the roster"
+  jq -e --arg c "$from" '.seats | any(.command == $c)' "$roster" >/dev/null && return 0
+  if valid_command "$from" && [ -f "harnesses/$from/AGENTS.md" ]; then return 0; fi
+  die 1 "$from is not a seat in the roster, and there is no harnesses/$from/AGENTS.md here (a seat on trial has one on its branch)"
 }
 
 case "$cmd" in
@@ -156,6 +187,17 @@ case "$cmd" in
     fi
     if [ -z "$url" ] && { [ "$kind" = merge ] || [ "$kind" = review ]; }; then
       die 1 "a $kind needs --url: the pull request it is about, so the human can open it"
+    fi
+    # A merge is asked of a human only once its pull request has left draft.
+    # With gh, a draft is refused; without gh, or if gh can't tell, warn and go on.
+    if [ "$kind" = merge ]; then
+      if ! command -v gh >/dev/null 2>&1; then
+        echo "warning: gh is not installed, so I can't check $url is out of draft" >&2
+      elif draft=$(gh pr view "$url" --json isDraft --jq .isDraft 2>/dev/null) && [ "$draft" = true ]; then
+        die 1 "$url is still a draft: ask a human to merge it only once it has left draft (the review seat takes it out of draft when satisfied)"
+      elif [ "$draft" != false ]; then
+        echo "warning: couldn't ask gh whether $url is a draft; carrying on" >&2
+      fi
     fi
     # The repository: --repo (with or without its repo: prefix), else the
     # repo: label of the bead this one blocks. One name, never a list: bd
@@ -190,21 +232,41 @@ case "$cmd" in
     ;;
 
   note)
-    need ynm
     [ -n "$content" ] || die 1 "note needs --content"
     check_from
     human=$(resolve_to "$to") || exit $?
-    out=$(ynm remember --type episodic --level distributed --namespace "human/$human" \
-      --subject "human:$human" --tags inbox --content "From $from: $content" --json 2>&1) ||
-      die 3 "ynm remember failed: $out"
-    memid=$(jq -r '.memoryId // .id // empty' <<<"$out" 2>/dev/null)
-    [ -n "$memid" ] || memid=$(grep -oE '[0-9A-Z]{26}' <<<"$out" | head -1)
-    jq -n --arg to "$human" --arg from "$from" --arg id "$memid" \
-      '{to: $to, from: $from, namespace: "human/\($to)", memoryId: (if $id == "" then null else $id end)}'
+    out=$(bash "$memory" remember --dir "$wroot" --actor "$from" --kind note --human "$human" --text "$content" 2>&1) ||
+      die 3 "memory.sh remember failed: $out"
+    memid=$(jq -r '.id // empty' <<<"$out" 2>/dev/null)
+    [ -n "$memid" ] || die 3 "memory.sh remember printed no id: $out"
+    jq -n --arg to "$human" --arg from "$from" --arg id "$memid" --arg b "$(jq -r '.backend // empty' <<<"$out")" \
+      '{to: $to, from: $from, namespace: "human/\($to)", backend: (if $b == "" then null else $b end), memoryId: $id}'
+    ;;
+
+  close | done)
+    need bd
+    [ -n "$id" ] || die 1 "close needs the bead to close: inbox.sh close <bead> --reason <text>"
+    [ -n "$note" ] || die 1 "close needs --reason: what the human did, for the close reason"
+    check_from
+    jq -e --arg c "$from" '.seats | any(.command == $c and .group == "desk")' "$roster" >/dev/null ||
+      die 1 "$from is not the desk: only the desk closes a human's bead (hand it to the desk)"
+    out=$(bd show "$id" --json 2>/dev/null) || die 1 "no bead $id"
+    bead=$(jq -c '(.data? // .) | if type == "array" then .[0] else . end' <<<"$out" 2>/dev/null)
+    [ -n "$bead" ] && [ "$bead" != null ] || die 1 "no bead $id"
+    jq -e '(.labels // []) | index("inbox")' <<<"$bead" >/dev/null ||
+      die 1 "$id is not an inbox bead (no inbox label): close it with bd close, not through the inbox"
+    owner=$(jq -r '.assignee // ""' <<<"$bead")
+    if [ -z "$owner" ] || jq -e --arg c "$owner" '.seats | any(.command == $c)' "$roster" >/dev/null; then
+      die 1 "$id is not assigned to a human (assignee: ${owner:-none}): close it with bd close"
+    fi
+    status=$(jq -r '.status // ""' <<<"$bead")
+    [ "$status" != closed ] || die 1 "$id is already closed"
+    res=$(bd close "$id" --reason "$note" --force --actor "$from" 2>&1) || die 3 "bd close failed: $res"
+    jq -n --arg id "$id" --arg from "$from" --arg note "$note" '{id: $id, closedBy: $from, note: $note}'
     ;;
 
   show)
-    need bd; need ynm
+    need bd
     dflt=$(default_human) || exit $?
     you=""
     if [ -n "$name" ]; then
@@ -245,16 +307,19 @@ case "$cmd" in
         failed "bd ready failed: ${msg:-no readable output}"
         beads=null
       fi
-      if out=$(ynm recall --namespace "human/$c" --subject "human:$c" --tags inbox --limit 20 --json 2>/dev/null) &&
-        notes=$(jq -c --arg ns "human/$c" 'map(select((.namespace // $ns) == $ns and ((.tags // ["inbox"]) | index("inbox")))) | map({memoryId, content})' <<<"$out" 2>/dev/null) &&
+      if out=$(bash "$memory" recall --dir "$wroot" --human "$c" --kind note --limit 20 2>/dev/null) &&
+        notes=$(jq -c 'map({memoryId: .id, content: (if .by then "From \(.by): \(.text)" else .text end), by, at})' <<<"$out" 2>/dev/null) &&
         [ -n "$notes" ]; then :; else
-        msg=$(ynm recall --namespace "human/$c" --subject "human:$c" --tags inbox --limit 20 --json 2>&1 | head -1)
-        failed "ynm recall failed: ${msg:-no readable output}"
+        msg=$(bash "$memory" recall --dir "$wroot" --human "$c" --kind note --limit 20 2>&1 >/dev/null | head -1)
+        msg="${msg#memory.sh: }"
+        failed "${msg:-memory recall failed: no readable output}"
         notes=null
       fi
       humans=$(jq -nc --arg n "$n" --arg c "$c" --arg role "$role" --argjson beads "$beads" --argjson notes "$notes" --argjson hs "$humans" \
         '$hs + [{name: $n, command: $c, role: $role, beads: $beads, notes: $notes}]')
     }
+    # One retire command for both backends: memory.sh knows which one holds the note.
+    retire='bash scripts/memory.sh forget --id <its memoryId> --reason relayed'
     humans='[]'
     [ -n "$you" ] && inbox_of "$you" you "$name"
     inbox_of "$dflt" anyone "$(jq -r --arg c "$dflt" '[.humans[] | select(.command == $c)][0].name // $c' "$roster")"
@@ -263,12 +328,13 @@ case "$cmd" in
     # One line, so a reader that keeps only the head of the output keeps it all.
     # empty is true only when everything was read and nothing waits; with
     # errors it is null, never "nothing waiting".
-    jq -nc --argjson you "$yours" --argjson humans "$humans" --argjson errors "$errors" \
+    jq -nc --argjson you "$yours" --argjson humans "$humans" --argjson errors "$errors" --arg retire "$retire" \
       '{you: $you, humans: $humans,
         errors: $errors,
         empty: (if ($errors | length) > 0 then null
                 else ($humans | all((.beads | length) == 0 and (.notes | length) == 0)) end),
-        relay: "Relay this to the human first. Retire each note you relay, in the same turn: ynm forget --memory-id <its memoryId> --reason relayed. Leave the beads to the human."}'
+        relay: ("Relay this to the human first. Retire each note you relay, in the same turn: \($retire). Leave the beads to the human."
+                + (if $you == null then " With no name given, this is the default human\u0027s inbox: always end by telling the human they can name themselves for this session (\"it\u0027s me, <name>\") to see their own; nothing is saved." else "" end))}'
     if [ "$errors" != '[]' ]; then
       jq -r '.[]' <<<"$errors" >&2
       exit 3

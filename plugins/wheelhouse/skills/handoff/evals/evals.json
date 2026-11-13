@@ -68,6 +68,23 @@
         "The evidence shows CHANGELOG.md still holds the half-written Fixes entry: nothing was discarded or reset",
         "The reply is short: a few lines at most, with no lecture about why exiting is bad"
       ]
+    },
+    {
+      "name": "take-a-beat-memory-in-beads",
+      "prompt": "You are the gahan seat. You have been writing the ynh 0.13 changelog in CHANGELOG.md: the Features section is done and committed, and the Fixes and Breaking changes sections are still to write. Great work. Take a beat, then hand off.",
+      "setup": "../../evals/files/handoff-committed-beads.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh"],
+      "evidence": "git status --short; echo; git log --oneline -4; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo '$ bd memories'; bd memories --json | jq -r 'to_entries[] | select(.key != \"schema_version\") | \"\\(.key): \\(.value)\"'",
+      "expected_output": "This Wheelhouse keeps its memory in Beads (wheelhouse.json), and there is no ynm. Writes its handoff notes through bash scripts/memory.sh remember with kind handoff for the gahan seat, never bd remember or ynm directly, covering what is done (Features), where the work is and the exact next step (write Fixes, then Breaking changes). The changelog bead stays claimed by gahan. It asks to be restarted and does no further work.",
+      "assertions": [
+        "In the evidence, bd memories lists a memory whose key starts with seat/gahan/handoff",
+        "That memory's text says Features is done and names the next step (the Fixes section, or Fixes then Breaking changes)",
+        "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",
+        "The seat reached memory through scripts/memory.sh: it did not run ynm, and the reply does not say memory failed",
+        "The reply asks to be restarted (or says it will pick up from the notes when restarted)"
+      ],
+      "id": 5
     }
   ]
 }

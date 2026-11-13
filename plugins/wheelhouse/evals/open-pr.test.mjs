@@ -117,6 +117,28 @@ test("an issue in another repository is named in full", () => {
   h.done();
 });
 
+test("a bead whose external_ref is a pull request URL is a review fix: a dry run reports it, a real run opens no PR", () => {
+  const PR = "https://github.com/eyelock/ynh/pull/700";
+  const h = harness({ beads: [bead("hq-1", { external_ref: PR })] });
+  const dry = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.equal(dry.json.review_fix, true);
+  assert.equal(dry.json.pr, PR);
+  const real = h.run();
+  assert.equal(real.status, 1);
+  assert.match(real.json.refused, /review fix/);
+  assert.doesNotMatch(h.log(), /pr create/);
+  h.done();
+});
+
+test("an issue URL is not a review fix", () => {
+  const h = harness();
+  const r = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.notEqual(r.json.review_fix, true);
+  h.done();
+});
+
 test("refuses a build bead with no tracker item, and says why", () => {
   const h = harness({ beads: [bead("hq-1", { external_ref: null })] });
   const r = h.run();
@@ -325,6 +347,24 @@ test("a bead in an exempt repository opens with no item, no Closes line and no m
   h.done();
 });
 
+test("an open bead in an exempt repository on the same item is no sibling: Closes stays Closes", () => {
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("a-1"), bead("hq-2", { status: "open", labels: ["repo:hq"] })],
+  });
+  const r = h.run(["--bead", "a-1"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.relation, "closes");
+  assert.equal(r.json.closing, "Closes #680");
+  h.done();
+});
+
+test("an open bead in a non-exempt repository on the same item still means Part of", () => {
+  const h = harness({ tracker: exemptGithub, beads: [bead("a-1"), bead("b-2", { status: "open" })] });
+  assert.equal(h.run(["--bead", "a-1"]).json.closing, "Part of #680");
+  h.done();
+});
+
 test("an exempt bead's external_ref is ignored: no closing link, and the tracker is not asked", () => {
   const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"] })] });
   const r = h.run();
@@ -412,5 +452,58 @@ test("an exempt bead's PR is noted too, and a failed note warns but keeps the PR
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.url, "https://github.com/eyelock/ynh/pull/7");
   assert.match(r.stderr, /could not note it on hq-1/);
+  h.done();
+});
+
+// A repository whose local branch tracks a remote branch of another name, as when a seat pushes
+// another seat's branch from its own worktree.
+function repoTracking(dir, local, remoteBranch) {
+  const sh = (cwd, ...a) => spawnSync("git", a, { cwd, encoding: "utf8" });
+  const origin = join(dir, "origin.git");
+  const work = join(dir, "work");
+  mkdirSync(work);
+  sh(dir, "init", "-q", "--bare", origin);
+  sh(work, "init", "-q", "-b", "main");
+  sh(work, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "x");
+  sh(work, "remote", "add", "origin", origin);
+  sh(work, "checkout", "-q", "-b", local);
+  sh(work, "push", "-q", "origin", `${local}:${remoteBranch}`);
+  sh(work, "branch", `--set-upstream-to=origin/${remoteBranch}`);
+  return work;
+}
+
+function runIn(h, cwd, args) {
+  return spawnSync("bash", [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, BD_STATE: join(h.dir, "beads.json"), GH_LOG: join(h.dir, "gh.log"), GH_REPO: "eyelock/ynh", GH_MILESTONE: "v0.17.0", GH_STATE: "OPEN", BD_NOTE_LOG: join(h.dir, "notes.log") },
+  });
+}
+
+test("a local branch tracking a differently named remote branch opens from the remote's name", () => {
+  const h = harness();
+  const work = repoTracking(h.dir, "local-name", "page/their-branch");
+  const r = runIn(h, work, ["--bead", "hq-1", "--title", "feat: x"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(h.log(), /--head page\/their-branch/);
+  h.done();
+});
+
+test("matching branch names and an explicit --head", () => {
+  const h = harness();
+  const work = repoTracking(h.dir, "same", "same");
+  assert.equal(runIn(h, work, ["--bead", "hq-1", "--title", "feat: x"]).status, 0);
+  assert.doesNotMatch(h.log(), /--head/);
+  assert.equal(runIn(h, work, ["--bead", "hq-1", "--title", "feat: x", "--head", "other"]).status, 0);
+  assert.match(h.log(), /--head other/);
+  h.done();
+});
+
+test("outside a repository there is no --head, and the title defaults to the bead's", () => {
+  const h = harness({ beads: [bead("hq-1", { title: "the bead title" })] });
+  const r = runIn(h, h.dir, ["--bead", "hq-1"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(h.log(), /--head/);
+  assert.match(h.log(), /--title the bead title/);
   h.done();
 });

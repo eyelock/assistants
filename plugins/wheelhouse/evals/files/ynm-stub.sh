@@ -4,7 +4,7 @@
 # .eval/ynm-store.jsonl with an id of its own, so a seat can recall what it
 # just wrote. recall returns the case's .eval/ynm-recall-<tag>.json for a recall
 # tagged identity, handoff, kudos or birth (.eval/ynm-recall.json for any
-# other), when the case set one up, plus what this run remembered with that
+# other; with no tag at all, every one of them), when the case set one up, plus what this run remembered with that
 # tag, keeping only the asked namespace's and tag's memories, as ynm does. init
 # writes .ynm/config.json; pin and forget succeed. Nothing reaches a real memory store.
 printf '%s\n' "ynm $*" >> "$EVAL_STUB_LOG"
@@ -49,6 +49,8 @@ case "$1" in
       esac
     done
     [ -n "$files" ] || { [ -f .eval/ynm-recall.json ] && files=.eval/ynm-recall.json; }
+    # A recall with no tag (memory.sh reads a seat's memory in one) gets every file the case set up.
+    [ -n "$want" ] || files=$(ls .eval/ynm-recall*.json 2>/dev/null | tr '\n' ' ')
     ns=$(flag namespace "$@")
     base='[]'
     # shellcheck disable=SC2086

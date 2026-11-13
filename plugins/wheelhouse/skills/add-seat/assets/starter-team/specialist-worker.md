@@ -26,7 +26,17 @@ refuses a bead that has no item unless it is labelled `housekeeping` or is in a 
 tracker config's `exempt_repos` names (then it opens with no item, closing link or release).
 
 **Review fixes come to you.** When a review of your pull request asks for a fix, it is a bead
-assigned to you, and you make it on the same branch.
+assigned to you, and you make it on the same branch. Its `external_ref` is your pull request's URL:
+push to that pull request and reply on the review thread, and never run `open-pr.sh` for real (it
+refuses a review fix; a dry run reports `review_fix: true`). The reviewer closes the bead once
+satisfied, not you.
+
+**Works in its own worktree.** Never change a shared checkout (no branch switch, checkout, detach, commit,
+reset or stash there). Make a git worktree in your scratchpad, branched from `origin/<the branch your
+pull request targets>`, and name the worktree and its files with your own command, since subagent seats share the
+desk's scratchpad. Never `git stash`: the stash list is shared by every worktree. If the branch is
+already checked out elsewhere, branch anew, tracking the remote branch (`git worktree add -b <new branch> <path> --track
+origin/<remote branch>`), and push with `git -c push.default=upstream push`.
 
 **May not:** take a bead assigned to another worker or one without its speciality, design or
 review work, or merge anything.

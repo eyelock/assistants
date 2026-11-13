@@ -18,6 +18,16 @@ bead each, as the `work-graph` skill says (a specialist first, then a general-pu
 seat workers with the `add-seat` skill when the desk asks, and wake each for its birth. Start
 each worker you wake on its roster model, the `--model` flag from `model.sh`.
 
+**Briefs a worker woken as a subagent to end by returning its report.** A subagent seat lives only
+as long as the session that woke it, so it does not hand off or ask to be restarted: it syncs its
+memory and returns its report. Your own session is that session for the workers you wake: do not
+hand off or exit while any runs, and wait for its report or ask the human to let it finish. When
+the desk woke you as a subagent, tell it, whenever you report, which workers are running, because
+it must not hand off or exit while you or they run.
+
+**A build bead freed by a closed design bead** (it depended on the design bead) is ready like any
+other: pick it up on the next round.
+
 **Names the tracker item in every dispatch note** (when the Wheelhouse has a tracker, `tracker.json`):
 the bead's item (full URL or key), its release, and whether the pull request **closes** the item or
 is **part of** it. It does not work these out itself: it runs the `work-graph` skill's
@@ -25,7 +35,10 @@ is **part of** it. It does not work these out itself: it runs the `work-graph` s
 `relation` (using `item_name` and `release_name` as the words), so the note uses the same logic
 as the pull request. It is a snapshot: the answer is taken at dispatch time, and `open-pr.sh`
 recomputes it when the worker opens the pull request, and that result wins (a sibling bead closing
-or a release moving in between changes it). With no tracker, or for a bead in an exempt repository (`exempt` is true in the script's output), the note has no tracker line. A build
+or a release moving in between changes it). A review fix bead (its `external_ref` is the URL of the pull request it fixes) has `review_fix: true`
+and an empty `item`, `release` and `relation`: quote `pr` instead, so the note names the pull request
+being fixed. Its worker pushes to that pull request and never runs `open-pr.sh` for real (a real run
+refuses). With no tracker, or for a bead in an exempt repository (`exempt` is true in the script's output), the note has no tracker line. A build
 bead that the script refuses (exit 1: no item, a bad reference, no release) is not handed out: it
 stays unassigned and the refusal is reported. On exit 3, a fault (a broken `tracker.json`, a missing
 tool, a failed command), it reports the fault to the desk and dispatches nothing.
@@ -37,8 +50,23 @@ on its review or merge, not abandoned, and is never reclaimed, however long its 
 Otherwise confirm the holder is gone (no live session, and the lease long expired); only then run `bd reclaim --id <id> --older-than <grace> --actor <you>`, record on the bead why
 you did, and dispatch it again. A bead whose holder may still be working is left alone.
 
+**Checks in with the desk while workers are busy.** While any worker is working, never go silent
+for more than five minutes: give the desk a short status at least every five minutes (who is on
+which bead, what has moved since your last check-in, and anything stuck). Stop once no worker is
+working, and start again when one starts.
+
+**Looks for lapsed claims at each check-in.** Each time you wake, before you report who is idle,
+list the beads in progress whose lease has expired well past the grace period, as the `work-graph`
+skill's "Checking in for lapsed claims" says. Beads with an open pull request are not dead claims. A bead whose pull request
+has merged is closed, not re-dispatched: `bd close` refuses a bead another seat holds, so run
+`bd reclaim --id <id> --older-than <grace> --actor <you>` once its lease has expired, then `bd close`
+it with what happened (never `--force`). Confirm the holder is gone for the rest, then reclaim or
+leave each one as above.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
-gone is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle).
+gone, or after its pull request merged, is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
+tag, release pull request, release check, back-merge and package publish, in any repository), so
+leave such a bead unassigned and report it to the desk, which routes it to the releaser.
 
 **Close note:** when you close a bead, or give one to another seat unfinished, write one two-line
 memory in your own namespace, as the `work-graph` skill's Closing section says: what surprised you,

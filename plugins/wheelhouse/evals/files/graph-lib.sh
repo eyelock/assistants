@@ -51,6 +51,21 @@ install_ynm_stub() {
   mkdir -p .eval
   cp "$EVAL_FIXTURES/ynm-stub.sh" "$EVAL_BIN/ynm"
   chmod +x "$EVAL_BIN/ynm"
+  # Memory goes through scripts/memory.sh, which runs this stub (no wheelhouse.json means ynm).
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  chmod +x scripts/memory.sh
+}
+
+# install_beads_memory: make this Wheelhouse keep its memory in Beads, as create-wheelhouse would:
+# wheelhouse.json says so, and scripts/memory.sh is copied in beside the other scripts. Bd is the
+# case's real bd, so memory lands in its work graph; the ynm stub is left out on purpose, so a seat
+# that reaches for ynm finds nothing.
+install_beads_memory() {
+  printf '{"tasks": "beads", "memory": "beads"}\n' > wheelhouse.json
+  mkdir -p scripts
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  chmod +x scripts/memory.sh
 }
 
 # changelog_in_progress: a CHANGELOG.md for ynh 0.13 with Features written
@@ -110,6 +125,7 @@ roster_wheelhouse() {
   "version": "0.1.0",
   "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
+  "labels": {"wheelhouse": "hq"},
   "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
   "delegates_to": []
 }
@@ -131,7 +147,7 @@ MD
   case "$1" in
     dredd) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."}]'
            mkdir -p harnesses/dredd/.agents/harness
-           echo '{"name":"dredd","version":"0.1.0","description":"Dredd, standing seat: PR and CI watcher."}' > harnesses/dredd/.agents/harness/plugin.json ;;
+           echo '{"name":"dredd","version":"0.1.0","description":"Dredd, standing seat: PR and CI watcher.","labels":{"wheelhouse":"hq"}}' > harnesses/dredd/.agents/harness/plugin.json ;;
     seated) seats='[{"name":"Dredd","group":"standing","command":"dredd","harness":"harnesses/dredd","mandate":"Watches PRs and CI across the YN repositories and files a bead for each one that needs work."},{"name":"Tharg","group":"standing","command":"tharg","harness":"harnesses/tharg","mandate":"Cuts releases of the YN tools when asked."}]' ;;
     empty-standing) standing='[]' ;;
   esac
@@ -166,6 +182,7 @@ team_wheelhouse() {
   stub_ynh_ynd
   mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/dalglish harnesses/mccoist harnesses/anderson
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   cat >> AGENTS.md <<'MD'
 
 ## Rules
@@ -215,13 +232,14 @@ specialist_wheelhouse() {
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
   cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  printf '{"name":"hq","version":"0.1.0","description":"The desk.","delegates_to":[]}\n' > .agents/harness/plugin.json
+  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
+  printf '{"name":"hq","version":"0.1.0","description":"The desk.","labels":{"wheelhouse":"hq"},"delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
     name=${w%%=*}; label=; [ "$w" != "$name" ] && label=${w#*=}
     cmd=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     mkdir -p "harnesses/$cmd/.agents/harness"
-    jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c,
+    jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c, labels: {wheelhouse: "hq"},
       hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
       on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
       launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' \
@@ -292,8 +310,10 @@ and issues):
 
 ## The desk
 
-The desk is hq. Who is at the desk is per session: with no name, it shows the default human's
-inbox; when a person names themselves ("it's me, <name>"), it shows theirs with
+The desk is hq. It starts every session with its wake (`bash scripts/wake.sh --seat hq --format text`,
+which its session-start hook runs; run it yourself if the hook didn't), whose block opens with the
+humans' inbox. Who is at the desk is per session: with no name, the wake shows the default human's
+inbox; when a person names themselves ("it's me, <name>"), it shows theirs as well, with
 `bash scripts/inbox.sh show --name <Name>`. Nothing about them is saved.
 MD
   jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \

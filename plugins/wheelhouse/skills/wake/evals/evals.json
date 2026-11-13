@@ -93,10 +93,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Nothing waits for the humans: the desk's wake says \"Nothing waiting for the humans.\", and the reply says so briefly (or nothing waiting) before going on, without inventing anything for the inbox.",
+      "expected_output": "Nothing waits for the humans: the desk's wake says \"Nothing waiting for the humans.\", and the reply says so briefly before going on, without inventing anything for the inbox. It still says they can name themselves (\"it's me, <name>\") for this session.",
       "assertions": [
         "The reply says nothing is waiting for the humans, or makes no claim that anything is",
         "The reply invents no inbox item: it names no merge, decision or note for the humans",
+        "The reply says the person at the desk can name themselves, such as \"it's me, <name>\", to see their own inbox for the session, even though nothing is waiting",
         "In the evidence, no bead is assigned to rook or pat"
       ]
     },
@@ -126,9 +127,24 @@
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
       "expected_output": "Dalglish is a worker, not the desk: its wake has no humans' inbox, and its reply is about its own work, not relaying the humans' inbox.",
       "assertions": [
-        "The reply does not relay the humans' inbox (no list of what is waiting for Pat or Rook)",
+        "The reply does not relay the humans' inbox: it does not list what is waiting for Pat or Rook (the changelog merge, the Go 1.24 decision, McCoist's note), whatever requests dalglish files for its own work",
         "The stubbed calls include no ynm forget of the note 01JINBOXNOTE00000000000001",
         "The reply is about dalglish's own work: what is waiting for it, or what it picks up"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "seat-launch",
+      "seat": "harnesses/worker",
+      "prompt": "Reply with the single word ready, and run no commands.",
+      "setup": "../../evals/files/seat-launch.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh"],
+      "max_turns": 3,
+      "expected_output": "The worker seat, woken through ynh run from the plugin's worker template, replies ready. Its session-start hook ran, so the stub log holds a seat-woke line.",
+      "assertions": [
+        "The stubbed calls include the line seat-woke: worker, written by the seat's session-start hook, so ynh woke the seat",
+        "The reply is the word ready (or says it is ready), and the seat ran no commands"
       ]
     }
   ]

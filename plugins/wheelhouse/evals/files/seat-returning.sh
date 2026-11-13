@@ -10,7 +10,12 @@ BEADS_ACTOR=mccoist bd update "$changelog" --claim --json >/dev/null
 BEADS_ACTOR=mccoist bd close "$changelog" --reason "Changelog written" --json >/dev/null
 BEADS_ACTOR=anderson bd update "$tap" --assignee mccoist --json >/dev/null
 mkdir -p homebrew-tap/Formula dist
-printf 'ynh 0.13.0 release archive\n' > dist/ynh-0.13.0.tar.gz
+# A real (small) release tarball, not a stub: the sha256 to set is the archive's own.
+mkdir -p dist/ynh-0.13.0/bin
+printf '#!/bin/sh\necho "ynh 0.13.0"\n' > dist/ynh-0.13.0/bin/ynh
+printf 'ynh 0.13.0\n' > dist/ynh-0.13.0/README
+tar -czf dist/ynh-0.13.0.tar.gz -C dist ynh-0.13.0
+rm -rf dist/ynh-0.13.0
 cat > homebrew-tap/Formula/ynh.rb <<'RB'
 class Ynh < Formula
   desc "Your named harness"

@@ -76,11 +76,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Leaves an episodic ynm memory of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
+      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Records an event (through scripts/memory.sh, kind event, not a fact) of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
       "assertions": [
         "In the evidence, \"Bump the ynh formula in homebrew-tap\" is closed",
         "Its close_reason says the Linux bottle (or Linux build) was skipped",
-        "The stubbed calls include a ynm remember call of type episodic that mentions the Linux skip",
+        "The stubbed calls include a ynm remember call (made by scripts/memory.sh) that mentions the Linux skip",
         "The bead was not closed with --force (the stubbed and shown commands, or the reply, give no sign of forcing)",
         "The reply does not describe the release as complete for every platform"
       ]
@@ -355,6 +355,38 @@
         "In the evidence, \"Write the ynh 0.13 changelog\" and \"Bump the ynh formula in homebrew-tap\" are each assigned, one to dalglish and one to mccoist, and still open",
         "No bead in the evidence is assigned to anderson",
         "The reply says McCoist is free (or idle) because the pull request on its bead is open"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "add-note-appends",
+      "prompt": "You are the gahan seat in this Wheelhouse. You hold the changelog bead. Set its notes to \"Draft done, waiting on the tag\".",
+      "setup": "../../evals/files/graph-add-note.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-notes-evidence.sh\"",
+      "expected_output": "Adds the note with --append-notes (or bd note), so the bead keeps its earlier PR: line and gains the new one. It does not use --notes, which would replace the existing note.",
+      "assertions": [
+        "In the evidence, the notes of \"Write the ynh 0.13 changelog\" still contain \"PR: https://github.com/eyelock/ynh/pull/700\"",
+        "In the evidence, the notes of \"Write the ynh 0.13 changelog\" also contain \"Draft done, waiting on the tag\"",
+        "The bead is still in progress with assignee gahan"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "design-held-build-bead",
+      "prompt": "You are eno, the designer seat of this Wheelhouse. The human has just agreed the design of the focus flag for ynh run: a --focus flag that takes a focus name, and runs the harness's focus of that name, failing with the list of names when it is unknown. Hand the design on.",
+      "setup": "../../evals/files/graph-design-held.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo '$ the build bead, in full'; bd list --all --json | jq -r '(.data? // .)[] | select(.title | startswith(\"Build\")) | .id' | while read -r id; do bd show \"$id\" --json | jq -c '(.data? // .)[0] | {id, description, notes}'; done",
+      "expected_output": "Because a build bead already waits on the design bead, hands the design on by writing it on the build bead and closing the design bead. The build bead is then ready. Asks the desk for nothing: no inbox bead, no note to the desk, no request to relay the design.",
+      "assertions": [
+        "In the evidence, the design bead is closed",
+        "In the evidence, the build bead carries the design (a note or its description names the --focus flag, a focus name and the list of names for an unknown one) and is still open",
+        "In the evidence, the build bead is in bd ready",
+        "The reply does not ask the desk or a human to pass the design on, and no inbox bead or note was made for it",
+        "The reply says the build bead is freed for the dispatcher to pick up"
       ]
     }
   ]

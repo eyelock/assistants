@@ -15,14 +15,17 @@
 # "## What it reaches" as a backticked relative path, such as `../api`.
 #
 # The snapshot: --snapshot <file>, else .wheelhouse/patrol.json in the
-# Wheelhouse repository (the folder ignores itself in git). --dry-run compares
+# Wheelhouse repository (the folder ignores itself in git, as it does for any
+# snapshot named under .wheelhouse/, even in a sub-folder). --dry-run compares
 # and prints without saving it, so a timer can ask whether there's news and
 # leave the patrol itself to the seat it wakes.
 #
 # A change: {kind, repo, number, title, url, ...}. kind is one of
 #   pr-opened, pr-merged (method: merge|squash), pr-closed, pr-reopened,
 #   pr-draft, pr-ready, pr-retargeted (from, to), pr-dirty, pr-ci-red,
-#   pr-ci-green (red before, green again), issue-opened, issue-closed
+#   pr-ci-green (red before, green again), pr-stalled (a draft, green on CI,
+#   whose last commit is older than --stale-after minutes and newer than its
+#   last review, or that has no review: it wants sending to review), issue-opened, issue-closed
 #   (reason), issue-reopened, ci-red and ci-green (the default branch's CI;
 #   branch instead of number), and error (detail), when gh couldn't read a
 #   repository: its last snapshot is kept, so nothing is lost or reported twice.
@@ -35,38 +38,43 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: patrol.sh [--dir <wheelhouse repo>] [--repo <owner/name>]... [--snapshot <file>]
-                 [--limit <n>] [--dry-run]
+                 [--limit <n>] [--stale-after <minutes>] [--dry-run]
 
 Prints a JSON list of what changed in the repositories' pull requests, issues
 and CI since the last run, and saves a new snapshot. [] means nothing changed.
 --limit is how many of the most recent pull requests and issues it reads per
 repository (default 30). --dry-run prints the changes without saving the
 snapshot.
+--stale-after is how many minutes a green draft pull request may sit with
+commits no review has seen before it is reported as stalled (default 30).
 EOF
 }
 
 die() { echo "$2" >&2; exit "$1"; }
 
-dir="."; snapshot=""; limit=30; repos=(); dry=false
+dir="."; snapshot=""; limit=30; stale=30; repos=(); dry=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
     --dry-run) dry=true; shift ;;
-    --dir | --repo | --snapshot | --limit)
+    --dir | --repo | --snapshot | --limit | --stale-after)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       case "$1" in
-        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;;
+        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;; --stale-after) stale="$2" ;;
       esac
       shift 2 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
 [[ "$limit" =~ ^[1-9][0-9]*$ ]] || die 1 "--limit must be a positive number"
+[[ "$stale" =~ ^[0-9]+$ ]] || die 1 "--stale-after must be a number of minutes"
 
 for t in jq gh git; do command -v "$t" >/dev/null 2>&1 || die 3 "$t is required"; done
 [ -d "$dir" ] || die 2 "no folder $dir"
-cd "$dir" || exit 2
+# Resolve the script's own folder before moving into --dir, or a relative
+# `bash scripts/patrol.sh --dir <elsewhere>` looks for its .jq files there.
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "$dir" || exit 2
 
 # owner/name of a checkout's GitHub remote, or nothing.
 gh_name() {
@@ -92,11 +100,25 @@ for r in "${repos[@]}"; do
   [[ "$r" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die 1 "$r is not owner/name"
 done
 
-if [ -z "$snapshot" ]; then
-  mkdir -p .wheelhouse || die 3 "could not make .wheelhouse"
-  [ -f .wheelhouse/.gitignore ] || printf '*\n' > .wheelhouse/.gitignore
-  snapshot=.wheelhouse/patrol.json
-fi
+[ -n "$snapshot" ] || snapshot=.wheelhouse/patrol.json
+# A snapshot inside the Wheelhouse's .wheelhouse/ folder (directly, or in a
+# sub-folder made by hand) is local state: the folder ignores itself in git,
+# whether the snapshot is the default or named.
+# Resolve the snapshot's folder from its nearest existing ancestor, since
+# .wheelhouse/ may not exist yet.
+snap_dir=$(dirname "$snapshot")
+snap_tail=
+while [ ! -d "$snap_dir" ] && [ "$snap_dir" != / ] && [ "$snap_dir" != . ]; do
+  snap_tail="/$(basename "$snap_dir")$snap_tail"
+  snap_dir=$(dirname "$snap_dir")
+done
+snap_dir=$(cd -P "$snap_dir" 2>/dev/null && pwd -P)$snap_tail
+case "$snap_dir/" in
+  "$(pwd -P)/.wheelhouse/"*)
+    mkdir -p .wheelhouse || die 3 "could not make .wheelhouse"
+    [ -f .wheelhouse/.gitignore ] || printf '*\n' > .wheelhouse/.gitignore
+    ;;
+esac
 old='null'
 if [ -f "$snapshot" ]; then
   old=$(jq -c . "$snapshot" 2>/dev/null) || die 3 "the snapshot $snapshot isn't JSON: move it aside to start again"
@@ -106,12 +128,12 @@ fi
 read_repo() {
   local r="$1" prs issues branch runs
   prs=$(gh pr list -R "$r" --state all --limit "$limit" \
-    --json number,title,url,state,isDraft,baseRefName,mergeStateStatus,mergeCommit,statusCheckRollup 2>&1) || { echo "gh pr list: $prs" | head -1; return 1; }
+    --json number,title,url,state,isDraft,baseRefName,mergeStateStatus,mergeCommit,statusCheckRollup,commits,reviews 2>&1) || { echo "gh pr list: $prs" | head -1; return 1; }
   issues=$(gh issue list -R "$r" --state all --limit "$limit" --json number,title,url,state,stateReason 2>&1) || { echo "gh issue list: $issues" | head -1; return 1; }
   branch=$(gh repo view "$r" --json defaultBranchRef --jq .defaultBranchRef.name 2>&1) || { echo "gh repo view: $branch" | head -1; return 1; }
   runs=$(gh run list -R "$r" --branch "$branch" --limit 20 --json workflowName,status,conclusion,url,headSha 2>&1) || { echo "gh run list: $runs" | head -1; return 1; }
   jq -nc --argjson prs "$prs" --argjson issues "$issues" --arg branch "$branch" --argjson runs "$runs" \
-    -f "$here/patrol-read.jq"
+    --argjson stale "$stale" -f "$here/patrol-read.jq"
 }
 
 now='{}'; errors='[]'; status=0

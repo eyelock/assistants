@@ -36,7 +36,10 @@ An include pins a **full commit SHA** (40 characters) as its `ref`, never a bran
 both of which move. Check the layout resolves before writing the pull request: ynh includes only
 artifacts under `skills/`, `agents/`, `rules/` and `commands/`, so a repository that keeps each
 skill at its top level resolves but yields nothing. Compose a probe harness with `ynd compose`
-and look for `[resolved]` with the ref.
+and check two things. The include resolved with the ref: its line ends `[resolved]` with
+`--format text`, and in the JSON that ynd prints by default its entry in `includes` has
+`"resolved": true`. And its skills are among the artifacts (`Artifacts` in text, `artifacts.skills`
+in JSON) with that include as their source: an include that resolves but adds none yields nothing.
 
 A new commit is a new skill. Moving the pin means vetting again from scratch, and any exception
 (section 4) lapses.

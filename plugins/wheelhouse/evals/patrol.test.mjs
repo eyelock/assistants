@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -154,6 +154,30 @@ test("first run: saves the snapshot, ignored by git, and prints []", () => {
   }
 });
 
+test("a relative script path with --dir elsewhere still finds its .jq files", () => {
+  const h = harness();
+  try {
+    h.set(before);
+    const out = spawnSync("bash", ["scripts/patrol.sh", "--dir", h.wh, "--repo", R], {
+      cwd: join(plugin, "skills", "patrol"),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(h.dir, "bin")}:${process.env.PATH}`,
+        GH_STATE: join(h.dir, "state.json"),
+        GH_LOG: join(h.dir, "gh.log"),
+        GH_FAIL: "",
+        WHEELHOUSE_REPOS: "",
+      },
+    });
+    assert.equal(out.status, 0, out.stderr);
+    assert.deepEqual(JSON.parse(out.stdout), []);
+    assert.ok(existsSync(join(h.wh, ".wheelhouse", "patrol.json")));
+  } finally {
+    h.done();
+  }
+});
+
 test("nothing changed: [] and exit 0", () => {
   const h = harness();
   try {
@@ -266,6 +290,23 @@ test("--snapshot keeps the snapshot where it's told, and a new repository starts
   }
 });
 
+test("--snapshot under .wheelhouse/ still makes the folder ignore itself", () => {
+  const h = harness();
+  try {
+    h.set(before);
+    for (const name of [".wheelhouse/reni-patrol.json", join(h.wh, ".wheelhouse", "abs-patrol.json"), ".wheelhouse/sub/nested.json"]) {
+      rmSync(join(h.wh, ".wheelhouse"), { recursive: true, force: true });
+      mkdirSync(dirname(resolve(h.wh, name)), { recursive: true });
+      const out = h.patrol(["--repo", R, "--snapshot", name]);
+      assert.equal(out.status, 0, out.stderr);
+      assert.ok(existsSync(resolve(h.wh, name)));
+      assert.equal(readFileSync(join(h.wh, ".wheelhouse", ".gitignore"), "utf8"), "*\n", name);
+    }
+  } finally {
+    h.done();
+  }
+});
+
 test("without --repo, the repositories are the Wheelhouse's own and those under What it reaches", () => {
   const h = harness();
   try {
@@ -300,6 +341,47 @@ test("bad arguments are refused", () => {
     assert.equal(h.patrol(["--repo", "not a repo"]).status, 1);
     assert.equal(h.patrol(["--repo", R, "--limit", "0"]).status, 1);
     assert.equal(h.patrol(["--bogus"]).status, 1);
+  } finally {
+    h.done();
+  }
+});
+
+test("a green draft with commits no review has seen is stalled, once, after --stale-after minutes", () => {
+  const h = harness();
+  try {
+    const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+    const commit = (min) => [{ committedDate: ago(min) }];
+    const draft = (n, over) => pr(n, { isDraft: true, ...over });
+    const state = (prs) => ({ repos: { [R]: { branch: "develop", prs, issues: [], runs: run("success") } } });
+    const start = [draft(1, { commits: commit(5) }), draft(2), draft(3), draft(4), draft(5), draft(6), pr(7)];
+    h.set(state(start));
+    h.patrol();
+    h.set(
+      state([
+        draft(1, { commits: commit(5) }), // pushed 5 minutes ago: too recent
+        draft(2, { commits: commit(60) }), // no review at all
+        draft(3, { commits: commit(60), reviews: [{ submittedAt: ago(90) }] }), // reviewed before the push
+        draft(4, { commits: commit(60), reviews: [{ submittedAt: ago(30) }] }), // reviewed after the push
+        draft(5, { commits: commit(60), statusCheckRollup: red }), // CI red: the red report covers it
+        draft(6, { commits: commit(60) }),
+        pr(7, { commits: commit(60) }), // not a draft
+      ]),
+    );
+    const out = h.patrol();
+    assert.equal(out.status, 0, out.stderr);
+    assert.deepEqual(
+      out.json.filter((c) => c.kind === "pr-stalled").map((c) => c.number),
+      [2, 3, 6],
+    );
+    assert.deepEqual(
+      out.json.map((c) => c.kind).filter((k) => k === "pr-ci-red"),
+      ["pr-ci-red"],
+    );
+    assert.deepEqual(
+      h.patrol().json.filter((c) => c.kind === "pr-stalled"),
+      [],
+      "reported once",
+    );
   } finally {
     h.done();
   }

@@ -31,9 +31,12 @@ A skill that runs commands gets a **sandboxed case**, an extension to the spec's
 
 - `setup`: a script, relative to the skill, that builds the case's world in the run's directory. Examples: a git repo whose `origin` is a local bare repository, or real audio files made with ffmpeg. It gets `$EVAL_FIXTURES` (the package's `evals/files/`), and `$EVAL_BIN` for realistic stub commands, which log to `$EVAL_STUB_LOG`.
 - `tools`: extra tools, such as `"Edit(./**)"`. Any `Bash` entry means shell access, and both arms get the same unrestricted shell: the OS sandbox below is the boundary, since a command allow-list breaks as soon as a model phrases a command differently.
+- `baseline_setup`: the case's own control, a script run in place of `setup` in the run without the skill. A case that grades text its `setup` installs (a seat's charter, say) needs one that installs the same fixtures without that text, or both runs read it. `benchmark.json` reports each run's `control`: `null` with the skill, `"plugin hidden"` or `"baseline_setup"` without it. See `docs/testing/run-evals.md`.
+- `seat`: a harness path; the runner wakes that seat through `ynh run` instead of a bare Claude session. A seat case runs once, with no baseline arm, so `summary.delta` compares only the cases both arms ran. Choose the vendor with `VENDOR=` (below). See `docs/testing/run-evals.md`.
 - `stubs`: commands replaced by recorders, such as `gh` (the default once any shell access is granted). Nothing reaches a real service.
 - `evidence`: a command run afterwards, for example `git log --all` or `find . -type f`. Its output and the stub calls go to the judge, so assertions can check what was actually done.
-- `tool_calls`: tools whose calls the judge sees, with their input, such as `["AskUserQuestion"]` for a case about how the agent asks. Grant the tool in `tools` too.
+- `forbidden` and `required`: call patterns (regular expressions) matched against the stub log before the judge runs. A match on a forbidden one, a required one that matches nothing, or a call a stub refused fails the case with `pass_rate` 0 and no judge call. A pattern sees only calls to stubbed commands, so stub every command a pattern names. See `docs/testing/run-evals.md`.
+- `tool_calls`: tools whose calls the judge sees, with their input, which must be granted in `tools` too. Not every tool loads in an eval session: `AskUserQuestion` does not (see [assistants #133](https://github.com/eyelock/assistants/issues/133)), so a case about how the agent asks checks the plain-text fallback instead.
 
 Every case that grants shell access runs under Claude Code's OS sandbox. Its commands can write only inside the run's directory and reach no network (they can still read most files elsewhere, but cannot send them anywhere). Build caches live there too, so fixtures must need no downloads.
 
@@ -45,7 +48,7 @@ Run them with make:
 
 - `make evals`: every skill's evals.
 - `make eval P=<path>`: the evals of one skill, or of every skill in a package or plugin (`make eval P=plugins/gitflow`).
-- Options for both: `MODE=output|triggers` (default: both), `RUNS=N` to repeat each output case, `MODEL=<model>` (default `sonnet`: scores stay comparable and runs stay cheap), `J=N` for concurrency, and `DRY_RUN=1` to list what would run.
+- Options for both: `MODE=output|triggers` (default: both), `RUNS=N` to repeat each output case, `MODEL=<model>` (default `sonnet`: scores stay comparable and runs stay cheap), `J=N` for concurrency, `VENDOR=<vendor>` for the vendor a seat case launches through, and `DRY_RUN=1` to list what would run.
 
 Output evals run each case with and without the skill, graded by an LLM judge; trigger evals check the skill fires for the right requests. Results go to `.evals/<skill>-workspace/iteration-<N>/`, which is gitignored. For one suite with every option, use `node scripts/skill-evals.mjs <skill-dir> --help`. Runs use your own Claude Code login and cost money, so CI does not run them.
 
@@ -81,6 +84,35 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 - Scripts are idempotent and safe to re-run
 - No interactive prompts — all input via arguments
 - macOS compatible — no bash 4+ features, no GNU-only flags
+
+## Merge queue
+
+`develop` and `main` are meant to be protected by a merge queue: a pull request merges only after All
+Clear passes on the branch as it will be with the queued pull requests ahead of it merged, so two pull
+requests that are each green cannot combine red. `develop` queues as squash; `main` queues as a merge
+commit. GitHub offers merge queues to organization-owned repositories, so a personal-account repository
+like this one may be refused; the fallback is strict required status checks.
+
+What protects each branch depends on how far the admin step got (it has three stages):
+
+- Before stage 2 finishes for a branch: the classic rule, requiring `Check`, with admins enforced.
+- After stage 2, with stage 3 not run or refused: the branch's ruleset (All Clear, a pull request,
+  no deletion, no force push), and no queue. Pull requests merge one at a time, as before.
+- After stage 3: the ruleset and the merge queue.
+
+The rulesets' bypass list holds the repository admin role in `"bypass_mode": "pull_request"`, not
+`"always"`. Every seat pushes under the admin account, and classic protection refuses even an admin's
+direct push (`enforce_admins`); `"always"` would let a seat's direct push to `develop` or `main` land.
+`pull_request` lets the admin bypass the rules only on a pull request, which is all the release
+back-merge below needs, and a direct push is still refused.
+`ci.yml` triggers on `merge_group` and every job in it runs there. Any new required check must also
+trigger on `merge_group`, and must never be skipped by a path filter or by a missing head ref in the queue.
+
+Cutting a release: the `release/YYYY-MM-DD` pull request into `main` and the `changeset-release/main`
+Version Packages pull request go through the queue. The back-merge of `main` into `develop` after a
+release is the exception: it must land as a merge commit, which the `develop` queue (squash) cannot do,
+so an admin merges that pull request directly with a merge commit, around the queue:
+`gh pr merge <number> --repo eyelock/assistants --merge --admin`.
 
 ## Working with this repo
 
