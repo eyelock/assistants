@@ -2,6 +2,13 @@
 
 ## 0.3.0
 
+### Upgrading and known limits
+
+- Upgrading a Wheelhouse from before 0.3.0: run `refresh --update --plugin <full clone of eyelock/assistants>/plugins/wheelhouse` to get the new scripts. `memory.sh` is copied when missing; a script that is only behind is updated; a script with local changes is kept and listed.
+- `scripts/ask.sh` is included, but nothing uses it until 0.4.0.
+- The eval machinery is in, but its paired seat eval cases come in 0.4.0.
+- Known issue: [assistants #257](https://github.com/eyelock/assistants/issues/257), a kept script's diff is cut at 60 lines, so the local change that caused the keep is often not shown. Planned for 0.4.0.
+
 ### Minor Changes
 
 - [#226](https://github.com/eyelock/assistants/pull/226) [`2f11d14`](https://github.com/eyelock/assistants/commit/2f11d145f33354676ef415cda215b74673b3478b) Thanks [@eyelock](https://github.com/eyelock)! - The `work-graph` skill gains `scripts/ask.sh`, the way one seat asks another for something, recorded in the work graph and beside `inbox.sh`, which stays about humans. `open` creates a bead labelled `ask` and `ask:question`, `ask:request` or `ask:report`, assigned to the seat that answers it and created as the asker; `--blocks` sets the dependency and the repository label comes from the blocked bead, and it prints the answering seat's session address (`<wheelhouse>-<command>`, the desk just `<wheelhouse>`) for the asker to nudge. `answer` comments the answer and re-assigns the ask to its asker. `return` comments why, releases the seat's claim and re-assigns the same bead to the desk as `ask:return`, making no new bead. `show` prints the open asks for a seat, or every seat with `--all`, with each one's age, kind, asker and the bead it blocks, and `--older-than` keeps the old ones. Every bd call is bounded, and the exit codes follow `inbox.sh`'s.
