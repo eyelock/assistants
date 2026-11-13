@@ -50,7 +50,11 @@ add() {
 # --- memory ------------------------------------------------------------------
 # ynm or Beads, by wheelhouse.json's "memory" key.
 mc="$here/memory-checks.sh"
-if ! backend=$(bash "$mc" backend --dir "$dir"); then
+# The Wheelhouse's own memory.sh sources the library from beside itself, so without scripts/wheelhouse-lib.sh
+# it can't name the backend: that cause has its own row below ("shared library"), so this one stays quiet.
+if [ -f "$dir/scripts/memory.sh" ] && [ ! -f "$dir/scripts/wheelhouse-lib.sh" ]; then
+  backend=""
+elif ! backend=$(bash "$mc" backend --dir "$dir"); then
   add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\", or add scripts/memory.sh"
   backend=""
 fi

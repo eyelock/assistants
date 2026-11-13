@@ -133,6 +133,10 @@ test("a Wheelhouse with no scripts/wheelhouse-lib.sh is an error that says how t
     assert.equal(bad.ok, false);
     assert.equal(bad.level, "error");
     assert.match(bad.fix, /scripts\/wheelhouse-lib\.sh/);
+    // One report for the one cause: the backend row neither errors nor offers a fix that doesn't apply.
+    const r = without.check({ STUB_REMOTE: "1" });
+    assert.equal(r.by("memory backend"), undefined);
+    assert.deepEqual(r.json.checks.filter((c) => !c.ok && c.level === "error" && /memory backend|wheelhouse-lib/.test(c.name + c.detail)).map((c) => c.name), ["shared library"]);
     assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("shared library").ok, true);
   } finally {
     without.done();

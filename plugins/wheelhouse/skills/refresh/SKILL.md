@@ -68,7 +68,7 @@ against the default plugin refresh usually can't tell) the script is kept too, w
 of the plugin's repository: `--plugin <clone>/plugins/wheelhouse`. Otherwise port the local change
 into the plugin, then take the plugin's copy, or merge by hand.
 A script every Wheelhouse needs (`wake.sh`, `inbox.sh`, `memory.sh` and the shared library `wheelhouse-lib.sh`, copied from the `work-graph` skill's `scripts/` folder) that the Wheelhouse lacks is copied in
-whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake;
+whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake.
 It is reported in `pluginScriptsCopied`. `patrol.sh` and the like are optional, so one the Wheelhouse doesn't carry is left alone.
 It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
 when it can't find it. Ask before `--update`: it changes files in the repository.
