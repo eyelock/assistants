@@ -4,7 +4,7 @@
 // (the stubs log every call to $STUB_LOG, so a test can see what was run and what was not).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -595,5 +595,65 @@ test("a directory that is not a Wheelhouse is refused", () => {
     assert.equal(r.status, 2);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("--update copies in wake.sh, inbox.sh and memory.sh a Wheelhouse lacks, and leaves an optional script it doesn't carry alone", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    const pluginDir = join(w.dir, "plugin");
+    write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v1\n");
+    write(pluginDir, "skills/work-graph/scripts/memory.sh", "#!/bin/sh\n# memory\n");
+    write(pluginDir, "skills/work-graph/scripts/inbox.sh", "#!/bin/sh\n# inbox\n");
+    write(pluginDir, "skills/work-graph/scripts/open-pr.sh", "#!/bin/sh\n# optional\n");
+    write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# optional\n");
+
+    // Without --update it only says what differs: the two missing scripts are among them.
+    const offer = w.run(["HEAD..HEAD", "--plugin", pluginDir]);
+    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer, ["scripts/inbox.sh", "scripts/memory.sh"]);
+    assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), false);
+
+    const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
+    assert.equal(done.status, 0, done.stderr);
+    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/inbox.sh", "scripts/memory.sh"]);
+    assert.match(readFileSync(join(w.wh, "scripts", "memory.sh"), "utf8"), /# memory/);
+    assert.match(readFileSync(join(w.wh, "scripts", "inbox.sh"), "utf8"), /# inbox/);
+    for (const optional of ["open-pr.sh", "patrol.sh"]) assert.equal(existsSync(join(w.wh, "scripts", optional)), false, optional);
+    assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("a Wheelhouse built before memory.sh cannot wake; after refresh --update, with the real plugin scripts, it can", () => {
+  const w = wheelhouse();
+  try {
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    // The old Wheelhouse carries wake.sh and inbox.sh and the shared library from the plugin's real scripts but no memory.sh.
+    for (const [skill, script] of [["wake", "wake.sh"], ["work-graph", "inbox.sh"], ["work-graph", "wheelhouse-lib.sh"]]) {
+      copyFileSync(join(plugin, "skills", skill, "scripts", script), join(w.wh, "scripts", script));
+    }
+    git(w.wh, "add", "-A");
+    git(w.wh, "commit", "-qm", "an upgraded wake.sh, no memory.sh");
+    // CI has no bd: the stub answers every read with an empty list, as a Wheelhouse with nothing in it would.
+    writeFileSync(join(w.dir, "bin", "bd"), "#!/bin/sh\necho '[]'\n");
+    chmodSync(join(w.dir, "bin", "bd"), 0o755);
+    const wake = () => spawnSync("bash", [join(w.wh, "scripts", "wake.sh"), "--seat", "hq", "--no-sync", "--format", "text"], { cwd: w.wh, encoding: "utf8", env: { ...process.env, PATH: `${join(w.dir, "bin")}:${process.env.PATH}` } });
+
+    const before = wake();
+    assert.equal(before.status, 3, before.stdout + before.stderr);
+    assert.match(before.stderr, /memory\.sh/);
+
+    const done = w.run(["HEAD..HEAD", "--update", "--plugin", plugin]);
+    assert.equal(done.status, 0, done.stderr);
+    assert.ok(done.json.upstream.pluginScriptsCopied.includes("scripts/memory.sh"), JSON.stringify(done.json.upstream));
+    assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), true);
+
+    const after = wake();
+    assert.equal(after.status, 0, after.stdout + after.stderr);
+    assert.match(after.stdout, /Waking: hq/);
+  } finally {
+    w.done();
   }
 });

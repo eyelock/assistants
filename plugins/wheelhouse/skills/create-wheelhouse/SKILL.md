@@ -301,7 +301,9 @@ the files it finds, and would commit the human's.
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
    watcher patrols with it, on a timer, and is woken only when something changed.
    Copy the `work-graph` skill's `scripts/wheelhouse-lib.sh` beside them all, as `scripts/wheelhouse-lib.sh`: every
-   script sources the helpers it shares from beside itself, and none runs without it.
+   script sources the helpers it shares from beside itself, and none runs without it. Every Wheelhouse
+   carries `wake.sh`, `inbox.sh`, `memory.sh` and `wheelhouse-lib.sh` (the refresh skill copies them in when one is
+   missing); the patrol scripts are optional, so refresh leaves a Wheelhouse without them alone.
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
    it is run. Without the file, or without the `memory` key, the scripts assume ynm.

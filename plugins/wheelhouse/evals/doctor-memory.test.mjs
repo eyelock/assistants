@@ -5,7 +5,7 @@
 // only the tools the scripts need (so a Beads Wheelhouse really runs with no ynm installed).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const checkSh = join(plugin, "skills", "doctor", "scripts", "check.sh");
+const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 const refreshSh = join(plugin, "skills", "refresh", "scripts", "refresh.sh");
 
 // bd: a Wheelhouse database kept in $STUB_DIR. memories answers the map in memories.json (unless
@@ -52,7 +53,7 @@ const SEATS = [
 ];
 const IDENTITIES = Object.fromEntries(SEATS.map(([c]) => [`seat/${c}/identity`, `I am ${c}`]));
 
-function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [] } = {}) {
+function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], memorySh = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-doctor-memory-"));
   const wh = join(dir, "wh");
   const bin = join(dir, "bin");
@@ -70,6 +71,11 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [] } =
     chmodSync(join(bin, "ynm"), 0o755);
   }
   mkdirSync(join(wh, ".beads"));
+  if (memorySh) {
+    mkdirSync(join(wh, "scripts"));
+    writeFileSync(join(wh, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(wh, "scripts", "wheelhouse-lib.sh"), readFileSync(join(dirname(memorySrc), "wheelhouse-lib.sh")));
+  }
   mkdirSync(join(wh, ".agents/harness"), { recursive: true });
   writeFileSync(join(wh, ".agents/harness/plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0" }));
   mkdirSync(join(wh, "skills/roster/assets"), { recursive: true });
@@ -102,6 +108,37 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [] } =
     done: () => rmSync(dir, { recursive: true, force: true }),
   };
 }
+
+test("a Wheelhouse with no scripts/memory.sh is an error that says how to fix it, and one with it is fine", () => {
+  const without = wheelhouse({ memory: "beads", memorySh: false });
+  const withIt = wheelhouse({ memory: "beads" });
+  try {
+    const bad = without.check({ STUB_REMOTE: "1" }).by("memory script");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "error");
+    assert.match(bad.fix, /scripts\/memory\.sh/);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("memory script").ok, true);
+  } finally {
+    without.done();
+    withIt.done();
+  }
+});
+
+test("a Wheelhouse with no scripts/wheelhouse-lib.sh is an error that says how to fix it, and one with it is fine", () => {
+  const without = wheelhouse({ memory: "beads" });
+  const withIt = wheelhouse({ memory: "beads" });
+  try {
+    rmSync(join(without.dir, "wh", "scripts", "wheelhouse-lib.sh"));
+    const bad = without.check({ STUB_REMOTE: "1" }).by("shared library");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "error");
+    assert.match(bad.fix, /scripts\/wheelhouse-lib\.sh/);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("shared library").ok, true);
+  } finally {
+    without.done();
+    withIt.done();
+  }
+});
 
 test("beads memory: ynm is never checked, and a Wheelhouse with no ynm installed is fine", () => {
   const w = wheelhouse({ memory: "beads" });

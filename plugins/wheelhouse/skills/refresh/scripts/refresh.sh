@@ -17,7 +17,8 @@
 # With no diff (nothing to compare, or --upstream) it also compares each
 # seat's cached wheelhouse include with upstream (`ynh ls --check-updates`) and
 # offers `ynh update`; --update runs it, then re-copies the plugin scripts the
-# Wheelhouse already carries in scripts/ when they differ.
+# Wheelhouse already carries in scripts/ when they differ, and copies in the three every
+# Wheelhouse needs (wake.sh, inbox.sh, memory.sh) when it has none.
 #
 # Trust: ynh's digest covers a harness's sensors, hooks and MCP servers (top level and every
 # profile), workspace, launch focus (with its prompt) and delegates_to focuses, and a seat whose digest changed or was never
@@ -46,7 +47,8 @@ Maps the git diff <from>..<to> (default ORIG_HEAD..HEAD) to the ynh installs,
 trust instructions and restarts it needs, runs the safe ones, then the doctor,
 and prints a JSON report. --dry-run only prints. --upstream (implied by an
 empty diff) also compares each seat's wheelhouse include with upstream;
---update then runs `ynh update` and re-copies changed plugin scripts.
+--update then runs `ynh update`, re-copies changed plugin scripts and copies in wake.sh, inbox.sh and
+memory.sh when the Wheelhouse lacks one.
 EOF2
 }
 
@@ -259,7 +261,12 @@ if [ "$upstream" = 1 ]; then
       # copies of the scripts needs it beside them (until it carries none).
       for f in $(cd "$plugin/skills" && ls */scripts/*.sh */scripts/*.jq 2>/dev/null); do
         b=$(basename "$f")
-        [ -f "$dir/scripts/$b" ] || { [ "$b" = wheelhouse-lib.sh ] && [ -d "$dir/scripts" ] || continue; }
+        # A script the Wheelhouse carries is kept current. wake.sh, inbox.sh, memory.sh and wheelhouse-lib.sh are the
+        # ones every Wheelhouse needs (create-wheelhouse step 5), so they are copied in when the
+        # Wheelhouse lacks them: an upgrade from before memory.sh existed would otherwise leave
+        # wake.sh with nothing to read memory through, and no script runs without the library. The rest (patrol, tracker, open-pr) are
+        # optional, so one the Wheelhouse doesn't carry is left alone.
+        case "$b" in wake.sh | inbox.sh | memory.sh | wheelhouse-lib.sh) ;; *) [ -f "$dir/scripts/$b" ] || continue ;; esac
         [ -f "$plugin/skills/$f" ] || continue
         cmp -s "$plugin/skills/$f" "$dir/scripts/$b" && continue
         scripts_stale=$(jq -c --arg b "scripts/$b" '. + [$b]' <<<"$scripts_stale")
