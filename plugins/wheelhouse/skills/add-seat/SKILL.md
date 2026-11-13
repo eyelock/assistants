@@ -67,7 +67,7 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
    the human hasn't agreed to. Then stop and wait for the answer: one question per message.
 3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
    request, the constitution or the roster already answers.
-4. Don't change anything else while you seat it, such as the constitution or the scripts; mention
+4. Don't change anything else while you seat it, such as the constitution or the Wheelhouse's own scripts; mention
    what you'd fix, and leave it to the human.
 5. Seat it from the template, through "Seating one seat at a time" and sections 2 to 4 below, and
    record `"role": "<template>"` on its roster seat. The workers are the dispatcher's to seat: if
@@ -214,7 +214,7 @@ vendor-agnostic way, so the Wheelhouse is not tied to one vendor's model names:
 }
 ```
 
-`scripts/model.sh --seat <command> [--vendor <vendor>] [--format value|flag|json]` (in this
+`<skills>/add-seat/scripts/model.sh --seat <command> [--vendor <vendor>] [--format value|flag|json]` (in this
 skill's folder, run from the Wheelhouse root or with `--dir`) resolves a seat's model, and
 exits 4 when there is none. **Launch with it:** pass `$(model.sh --seat <command> --format flag)`
 (`--model=sonnet`) when starting a seat from a launcher, and its `value` as the Agent tool's
@@ -285,8 +285,8 @@ rules. In short:
     { "git": "../..", "pick": ["skills/roster"] }
   ],
   "hooks": {
-    "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }],
-    "on_session_end": [{ "command": "bash scripts/wake.sh --seat <command> --end || true", "timeout": 30 }]
+    "on_session_start": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <command> --format text || true; break; }; done; true" }],
+    "on_session_end": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <command> --end || true; break; }; done; true", "timeout": 30 }]
   },
   "workspace": ["../../<a repository's path in What it reaches>"],
   "launch_focus": "wake",
@@ -307,7 +307,8 @@ rules. In short:
   gains later reaches a seat only when its `pick` names it, so add it to the picks when the plugin
   gains one.
   Always keep `skills/work-graph` in a seat's `pick`: it carries `wheelhouse-lib.sh`, which every
-  wheelhouse script sources, so a seat without it has scripts that exit 3 (the doctor warns).
+  wheelhouse script sources, and `memory.sh` and `inbox.sh`, so a seat without it has scripts that exit 3 (the doctor warns).
+  The seat runs the plugin's scripts where ynh installed them, so the Wheelhouse holds no copy of them.
 - `labels` is an object of key to value, and stamps every run record of the seat with
   `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
   `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out
@@ -330,8 +331,8 @@ rules. In short:
   folder, so a repository at `../ynh` from the Wheelhouse root is `../../../ynh`. A request grants
   nothing: the human grants it, with `ynh trust accept local/<command>` or their own `workspace_roots`
   in `~/.ynh/config.json`. Never run either for them.
-- The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
-  `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
+- The `on_session_start` hook wakes the seat with purpose: it runs the installed
+  `wake.sh` (the `wake` skill's, where ynh put it: the hook command is in the `wake` skill, "The hook command"; nothing is copied into the Wheelhouse), and the seat
   starts with who it is, where it left off, its Kudos and what is waiting for it. The hook names
   the seat (`--seat <command>`).
 - The `on_session_end` hook pushes what the session wrote (`--end`: memory and the work graph),
@@ -389,10 +390,10 @@ with; a standing role or a worker hands it back to the desk.
 
 ## 4. Connect it
 
-1. Give the seat ynm, when the Wheelhouse's memory is in ynm (`bash scripts/memory.sh backend`
+1. Give the seat ynm, when the Wheelhouse's memory is in ynm (`bash <skills>/work-graph/scripts/memory.sh backend`
    prints `ynm`): run `ynm client install ynh` inside `harnesses/<command>/`. It adds ynm's
    MCP server, hooks and memory skill to the seat's harness. With Beads memory there is nothing to
-   install: the seat reads and writes memory through `scripts/memory.sh`.
+   install: the seat reads and writes memory through `<skills>/work-graph/scripts/memory.sh`.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
    the trial.

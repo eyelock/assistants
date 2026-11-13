@@ -258,10 +258,10 @@ fi
 
 # The seat's own memory, read through memory.sh: ynm namespace seat/<name>, or Beads keys seat/<name>/....
 memorysh=""
-for f in "$here/memory.sh" "scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
+for f in "$here/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memorysh="$f"; break; }
 done
-[ -n "$memorysh" ] || { echo "no memory.sh beside wake.sh: copy it from the work-graph skill into scripts/" >&2; exit 3; }
+[ -n "$memorysh" ] || { echo "no memory.sh in the work-graph skill beside the wake skill: the seat needs skills/work-graph in its pick" >&2; exit 3; }
 # A recall that fails reads as nothing; memory.sh says why on stderr, which the wake does not show.
 # Bounded: a recall that gives up reads the same.
 recall() {
@@ -334,16 +334,15 @@ retro=$( { echo "$wipbeads"; echo "$readybeads"; } |
 [ -n "$retro" ] || retro='[]'
 workread=true; [ "$workfail" = 0 ] || workread=false
 
-# The desk's wake opens with the humans' inbox. inbox.sh sits beside this
-# script in a Wheelhouse's scripts/, and in the work-graph skill otherwise.
+# The desk's wake opens with the humans' inbox. inbox.sh is in the work-graph skill, beside the wake skill.
 inbox='null'
 if [ "$group" = desk ]; then
   inboxsh=""
-  for f in "$here/inbox.sh" "scripts/inbox.sh" "$here/../../work-graph/scripts/inbox.sh"; do
+  for f in "$here/inbox.sh" "$here/../../work-graph/scripts/inbox.sh"; do
     [ -f "$f" ] && { inboxsh="$f"; break; }
   done
   if [ -z "$inboxsh" ]; then
-    inbox='{"error": "no inbox.sh beside wake.sh: copy it from the work-graph skill into scripts/"}'
+    inbox='{"error": "no inbox.sh in the work-graph skill beside the wake skill: the desk needs skills/work-graph in its include"}'
   else
     # No temp file for its errors: a sandboxed seat may not write outside the
     # repository. On failure, run it again for the first line of its stderr.
@@ -351,7 +350,7 @@ if [ "$group" = desk ]; then
     # read, with what failed in errors, which the block below names.
     shown=$(limited "$inbox_secs" bash "$inboxsh" show --dir . 2>/dev/null); inrc=$?
     if [ "$inrc" = 142 ]; then
-      inbox=$(jq -nc --arg e "inbox.sh show gave up after ${inbox_secs}s (bd busy); run it yourself: bash scripts/inbox.sh show" '{error: $e}')
+      inbox=$(jq -nc --arg e "inbox.sh show gave up after ${inbox_secs}s (bd busy); run it yourself: bash $inboxsh show" '{error: $e}')
     elif [ -n "$shown" ] && jq -e . >/dev/null 2>&1 <<<"$shown"; then
       inbox=$(jq -c . <<<"$shown")
     else
@@ -377,8 +376,8 @@ if [ "$format" = json ]; then
   exit 0
 fi
 
-jq -r '
-  def retire(id; why): "bash scripts/memory.sh forget --id \(id) --reason \"\(why)\"";
+jq -r --arg memsh "$memorysh" '
+  def retire(id; why): "bash \($memsh) forget --id \(id) --reason \"\(why)\"";
   def list(xs; empty_text): if (xs | length) == 0 then empty_text else (xs | map("- " + .) | join("\n")) end;
   "# Waking: \(.seat)\n",
   ([if .sync.memory == "failed" then (if .backend == "beads" then "memory and the work graph (bd sync)" else "memory (ynm sync)" end) else empty end,
@@ -411,7 +410,7 @@ jq -r '
              (if ($reports | length) > 0 then "Reports:\n" + ($reports | map(bead) | join("\n")) + "\n" else empty end),
              (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
            end)),
-        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `bash scripts/memory.sh forget --id <its memoryId> --reason relayed`.\n"
+        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `bash \($memsh) forget --id <its memoryId> --reason relayed`.\n"
       end),
      (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
    end),

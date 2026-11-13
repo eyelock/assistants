@@ -9,7 +9,7 @@
       "tools": ["Bash"],
       "stubs": ["ynm"],
       "evidence": "cat \"$EVAL_STUB_LOG\"",
-      "expected_output": "Runs scripts/refresh.sh over the last commit's diff, which reinstalls only wick (ynh install harnesses/wick), and reports that wick is the seat to restart. It reinstalls nothing else and tells the human nothing needs trusting.",
+      "expected_output": "Runs the plugin's refresh.sh over the last commit's diff, which reinstalls only wick (ynh install harnesses/wick), and reports that wick is the seat to restart. It reinstalls nothing else and tells the human nothing needs trusting.",
       "assertions": [
         "The stub log shows ynh install harnesses/wick",
         "The stub log shows no ynh install for hq, eno or the desk (no ynh install . and no ynh install harnesses/eno)",
@@ -30,7 +30,7 @@
         "The stub log shows ynh install harnesses/wick",
         "The reply gives ynh trust accept local/wick (not the bare seat name) as a command for the human to run",
         "The stub log has no ynh trust call",
-        "The reply says every seat (hq, eno and wick) needs a restart because scripts/wake.sh changed"
+        "The reply says every seat (hq, eno and wick) needs a restart because the Wheelhouse's own scripts/wake.sh changed"
       ]
     },
     {

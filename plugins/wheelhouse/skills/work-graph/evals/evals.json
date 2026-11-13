@@ -76,11 +76,11 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Records an event (through scripts/memory.sh, kind event, not a fact) of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
+      "expected_output": "Closes \"Bump the ynh formula in homebrew-tap\" as gahan, with a reason that says plainly that the Linux bottle was skipped because the runner was down. Records an event (through the plugin's memory.sh, kind event, not a fact) of what happened, including the skip. Ideally creates a follow-up bead for the Linux bottle.",
       "assertions": [
         "In the evidence, \"Bump the ynh formula in homebrew-tap\" is closed",
         "Its close_reason says the Linux bottle (or Linux build) was skipped",
-        "The stubbed calls include a ynm remember call (made by scripts/memory.sh) that mentions the Linux skip",
+        "The stubbed calls include a ynm remember call (made by the plugin's memory.sh) that mentions the Linux skip",
         "The bead was not closed with --force (the stubbed and shown commands, or the reply, give no sign of forcing)",
         "The reply does not describe the release as complete for every platform"
       ]
@@ -202,7 +202,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Uses the inbox (bash scripts/inbox.sh assign) to create a bead for the default human, Rook, looked up from the roster: titled for merging the changelog pull request, created as dalglish, with https://github.com/example/widget/pull/12 as its external_ref, blocking dalglish's own bead \"Write the ynh 0.13 changelog\". It does not merge the pull request itself, and does not assign the bead to a seat or to a person not in the roster.",
+      "expected_output": "Uses the inbox (the plugin's inbox.sh assign) to create a bead for the default human, Rook, looked up from the roster: titled for merging the changelog pull request, created as dalglish, with https://github.com/example/widget/pull/12 as its external_ref, blocking dalglish's own bead \"Write the ynh 0.13 changelog\". It does not merge the pull request itself, and does not assign the bead to a seat or to a person not in the roster.",
       "assertions": [
         "In the evidence, there is a new bead about merging the changelog pull request, assigned to rook (the default human), with created_by dalglish",
         "That bead's external_ref is https://github.com/example/widget/pull/12",
@@ -236,7 +236,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Leaves an inbox note, not a bead: bash scripts/inbox.sh note, which calls ynm remember in the default human's namespace, human/rook, tagged inbox, saying McCoist is off until Monday and Dalglish has the release work. Creates no bead for it.",
+      "expected_output": "Leaves an inbox note, not a bead: the plugin's inbox.sh note, which calls ynm remember in the default human's namespace, human/rook, tagged inbox, saying McCoist is off until Monday and Dalglish has the release work. Creates no bead for it.",
       "assertions": [
         "The stubbed calls include a ynm remember with namespace human/rook and the tag inbox, whose content mentions McCoist being off and Dalglish having the release work",
         "In the evidence, no new bead was created for the note (only the four release beads exist)",
@@ -251,7 +251,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Shows Pat's inbox for this session with bash scripts/inbox.sh show --name Pat (Pat's own beads and the notes in human/pat, with no roster entry needed), beside Rook's, the default human's. Writes nothing: no register command, no roster change, no email stored. Pat is not added to the roster's humans or seats.",
+      "expected_output": "Shows Pat's inbox for this session with the plugin's inbox.sh show --name Pat (Pat's own beads and the notes in human/pat, with no roster entry needed), beside Rook's, the default human's. Writes nothing: no register command, no roster change, no email stored. Pat is not added to the roster's humans or seats.",
       "assertions": [
         "The run used inbox.sh show --name Pat (or read the same), and did not try to register Pat",
         "In the evidence, the roster's humans are still only Rook, the default, with no email anywhere in the roster",
@@ -267,7 +267,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Runs bash scripts/inbox.sh show (or reads the same from the graph and ynm). Pat has named themselves, so it runs inbox.sh show --name Pat and shows Pat's own inbox first: the decision on dropping Go 1.24, asked by gahan. Then Rook's, the default human's, for anyone: the merge of [widget #12](https://github.com/example/widget/pull/12), asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday.",
+      "expected_output": "Runs the plugin's inbox.sh show (or reads the same from the graph and ynm). Pat has named themselves, so it runs inbox.sh show --name Pat and shows Pat's own inbox first: the decision on dropping Go 1.24, asked by gahan. Then Rook's, the default human's, for anyone: the merge of [widget #12](https://github.com/example/widget/pull/12), asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday.",
       "assertions": [
         "The reply shows Pat's own inbox, with the decision on dropping Go 1.24 asked by gahan",
         "The reply shows the default human Rook's inbox (for anyone), with the merge of the changelog asked by dalglish",
@@ -301,7 +301,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (bash scripts/inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so the work it holds up (dalglish's changelog bead, or the tag that waits on it) waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
+      "expected_output": "Doesn't merge, and doesn't wait silently. Assigns a bead for the merge to the default human, Rook, with the inbox script (the plugin's inbox.sh assign --to default --url https://github.com/example/widget/pull/12 --blocks <its changelog bead>), created as dalglish, so the work it holds up (dalglish's changelog bead, or the tag that waits on it) waits on the merge. It names the pull request as [widget #12](https://github.com/example/widget/pull/12) in its reply.",
       "assertions": [
         "In the evidence, a bead about merging the pull request is assigned to rook, with created_by dalglish and external_ref https://github.com/example/widget/pull/12",
         "That merge bead carries a repo: label",

@@ -13,7 +13,7 @@ cat >> AGENTS.md <<'MD'
 
 **Mandate:** Talk with the human and hand work to the seats. You act in the work graph as `hq`: pass
 `--actor hq` on every `bd` command that changes it. You close a human's inbox bead only through
-`bash scripts/inbox.sh close --from hq`, once the work it asked for is verified done.
+the work-graph skill's `inbox.sh close --from hq`, once the work it asked for is verified done.
 MD
 read -r _ changelog _ _ < <(release_graph)
 bd create "Merge the ynh 0.14 changelog" --actor dalglish --assignee rook --labels inbox,inbox:merge \

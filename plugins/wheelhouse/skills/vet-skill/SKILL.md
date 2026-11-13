@@ -13,6 +13,12 @@ finding is excused.
 A **third-party skill** is any skill the Wheelhouse did not write, wherever it is included from.
 Skills the Wheelhouse authors itself are scanned in CI and are not vetted here.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## 1. Vet it
 
 A skill is vetted when all four hold. If any fails, it is rejected: say which, and stop.
@@ -80,7 +86,7 @@ A finding that is a false positive may be excepted. An exception is rare, narrow
 - **Never granted by a worker.** A worker, or any seat, may find a candidate exception and ask.
   It never writes the baseline rule on its own say, and never closes a bead as accepted on its
   own judgement. If no human is at hand, reject the skill for now and ask through the humans'
-  inbox (`bash scripts/inbox.sh assign --kind decision`).
+  inbox (`bash <skills>/work-graph/scripts/inbox.sh assign --kind decision`).
 
 Once a human has accepted a finding, add one rule to the Wheelhouse's SkillSpector baseline
 (`.skillspector-baseline.yaml` at its root, where CI reads it):
