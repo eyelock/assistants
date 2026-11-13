@@ -87,21 +87,24 @@ docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
 
 ## Branch protection
 
-There is no merge queue: the repository is on a personal account, which GitHub does not offer one. All
-Clear is the required check, and pull requests merge one at a time. `develop` merges as squash; `main`
-merges as a merge commit.
+There is no merge queue: the repository is on a personal account, which GitHub does not offer one.
+There is no classic branch protection either. `develop` and `main` each have a ruleset (read it with
+`gh api repos/eyelock/assistants/rulesets`) that forbids deleting the branch and force-pushing to
+it, requires a pull request (no approving review is required) and requires the All Clear check. The
+check does not have to be up to date with the base (not strict). The rulesets allow merge, squash
+and rebase, so the method is a convention, not a setting: a maintainer squashes into `develop` and
+merges into `main` with a merge commit, as the pull request's `merge:` label says.
 
 The rulesets' bypass list holds the repository admin role in `"bypass_mode": "pull_request"`, not
-`"always"`. Every seat pushes under the admin account, and classic protection refuses even an admin's
-direct push (`enforce_admins`); `"always"` would let a seat's direct push to `develop` or `main` land.
-`pull_request` lets the admin bypass the rules only on a pull request, which is all the release
-back-merge below needs, and a direct push is still refused.
+`"always"`. `pull_request` lets an admin bypass the rules only through a pull request, for example to
+merge one whose All Clear is still outstanding; a direct push is still refused. `"always"` would let
+a seat's direct push to `develop` or `main` land, and every seat pushes under the admin account.
 
 Cutting a release: the `release/YYYY-MM-DD` pull request into `main` and the `changeset-release/main`
 Version Packages pull request merge like any other. The back-merge of `main` into `develop` after a
-release is the exception: it must land as a merge commit, which `develop`'s squash merge cannot do,
-so an admin merges that pull request directly with a merge commit:
-`gh pr merge <number> --repo eyelock/assistants --merge --admin`.
+release must land as a merge commit, which the `develop` ruleset allows, so it merges like any pull
+request with that method chosen; the admin bypass is needed only when All Clear is outstanding:
+`gh pr merge <number> --repo eyelock/assistants --merge` (with `--admin` for that case).
 
 ## Working with this repo
 
