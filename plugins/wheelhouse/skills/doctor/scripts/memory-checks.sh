@@ -28,9 +28,10 @@ memsh=""
 for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memsh="$f"; break; }
 done
-if ! backend=$(wl_backend "$dir"); then
-  echo "wheelhouse.json: memory must be \"ynm\" or \"beads\", not \"$backend\""; exit 1
-elif [ "$backend" = beads ] && [ -z "$memsh" ]; then
+backend=ynm
+if [ -n "$memsh" ]; then
+  backend=$(bash "$memsh" backend --dir "$dir" 2>&1) || { printf '%s\n' "$backend" | head -c 200; exit 1; }
+elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
   echo "wheelhouse.json names a memory backend but there is no memory.sh"; exit 1
 fi
 yesno() { if [ "$(jq 'length' 2>/dev/null)" -gt 0 ] 2>/dev/null; then echo yes; else echo no; fi; }

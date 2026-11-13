@@ -303,10 +303,13 @@ memsh=""
 for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memsh="$f"; break; }
 done
-if ! backend=$(wl_backend "$dir"); then
-  note "wheelhouse.json: memory must be \"ynm\" or \"beads\", not \"$backend\": seats' births not checked"
-  backend=""
-elif [ "$backend" = beads ] && [ -z "$memsh" ]; then
+backend=ynm
+if [ -n "$memsh" ]; then
+  if ! backend=$(bash "$memsh" backend --dir "$dir" 2>/dev/null); then
+    note "memory.sh could not name the memory backend (see wheelhouse.json): seats' births not checked"
+    backend=""
+  fi
+elif [ -f "$dir/wheelhouse.json" ] && [ "$(jq -r '.memory // "ynm"' "$dir/wheelhouse.json" 2>/dev/null)" != ynm ]; then
   note "wheelhouse.json chooses a memory backend but memory.sh was not found: seats' births not checked"
   backend=""
 fi
