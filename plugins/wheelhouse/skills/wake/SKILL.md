@@ -17,7 +17,7 @@ bash <skills>/wake/scripts/wake.sh --seat <command> --format text
 ## Where the scripts are
 
 A Wheelhouse keeps no copy of the plugin's scripts: they run where ynh installed them, in the `scripts/`
-folder of the skill that owns each (`wake.sh` here, `memory.sh` and `inbox.sh` in `work-graph`). In this
+folder of the skill that owns each (here `wake.sh`, with `sync.sh` and `render-wake.jq` beside it, which `wake.sh` runs and exits 3 without; `memory.sh`, `inbox.sh` and `wheelhouse-lib.sh` in `work-graph`). The three wake files travel together. In this
 skill and every other, `<skills>` is the folder that holds the skill folders: the parent of this skill's
 base directory (the path the skill was loaded from). Run them from the Wheelhouse's root, or give
 the Wheelhouse with `--dir`. Fixes go to the plugin only, so a script of the Wheelhouse's own never

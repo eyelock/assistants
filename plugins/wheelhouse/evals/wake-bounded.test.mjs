@@ -20,6 +20,7 @@ function run(args, { mode, env = {}, remote = false } = {}) {
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
