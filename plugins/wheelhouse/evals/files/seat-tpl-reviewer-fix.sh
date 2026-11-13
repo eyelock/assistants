@@ -6,6 +6,20 @@ set -euo pipefail
 . "$EVAL_FIXTURES/seat-template-lib.sh"
 tpl_world
 tpl_seat reviewer gore Gore
+fix=
+if [ "${1:-}" = pushed ]; then
+  # The author's fix is really on the remote: a commit on dalglish/empty-config in ./ynh, pushed to
+  # its origin, so a reviewer who looks (git ls-remote, git show) finds what the bead says was pushed.
+  git -C ynh checkout -q -b dalglish/empty-config
+  mkdir -p ynh/config
+  printf 'package config\n\nfunc Load(path string) (*Config, error) {\n\tif len(bytes.TrimSpace(data)) == 0 {\n\t\treturn nil, fmt.Errorf("config %%s is empty", path)\n\t}\n\treturn &parse(data)[0], nil\n}\n' >ynh/config/load.go
+  printf 'package config\n\nfunc TestEmptyConfig(t *testing.T) { _, err := Load(emptyFile(t)); if err == nil { t.Fatal("want an error") } }\n' >ynh/config/load_test.go
+  git -C ynh add config
+  git -C ynh -c user.name=dalglish -c user.email=dalglish@example.invalid commit -q -m "fix: return an error for an empty config"
+  fix=$(git -C ynh rev-parse --short HEAD)
+  git -C ynh push -q origin dalglish/empty-config
+  git -C ynh checkout -q main
+fi
 (
   cd hq
   bead=$(new_bead "Fix ynh #7: an empty config panics" -l repo:ynh --actor gore --assignee dalglish \
@@ -13,7 +27,7 @@ tpl_seat reviewer gore Gore
     -d "Review of ynh pull request 7: loading an empty config file panics; return an error instead.")
   BEADS_ACTOR=dalglish bd update "$bead" --claim --json >/dev/null
   if [ "${1:-}" = pushed ]; then
-    bd update "$bead" --notes "dalglish: pushed abc1234 to dalglish/empty-config, the pull request's branch, and replied on the review thread." >/dev/null
+    bd update "$bead" --notes "dalglish: pushed $fix to dalglish/empty-config, the pull request's branch, and replied on the review thread." >/dev/null
   else
     bd update "$bead" --notes "dalglish: starting on it; nothing pushed yet." >/dev/null
     seat_forbid '^bd close .*(--force| -f( |$))'
@@ -23,9 +37,9 @@ if [ "${1:-}" = pushed ]; then
   tpl_pr_view "ynh pull request 7: fix: load config files (draft)
 head: dalglish/empty-config, base: main; checks: all passing
 review by gore: Loading an empty config file panics in config.Load; return an error instead.
-  thread: unresolved, with a reply from dalglish: Fixed in abc1234.
-commits: 1111111 feat: load config files; abc1234 fix: return an error for an empty config (adds TestEmptyConfig)"
-  seat_gh_answer pr diff 'commit abc1234 fix: return an error for an empty config
+  thread: unresolved, with a reply from dalglish: Fixed in $fix.
+commits: 1111111 feat: load config files; $fix fix: return an error for an empty config (adds TestEmptyConfig)"
+  seat_gh_answer pr diff "commit $fix fix: return an error for an empty config
 --- a/config/load.go
 +++ b/config/load.go
 @@ func Load(path string) (*Config, error) {
@@ -36,7 +50,7 @@ commits: 1111111 feat: load config files; abc1234 fix: return an error for an em
 +	return &parse(data)[0], nil
 --- a/config/load_test.go
 +++ b/config/load_test.go
-+func TestEmptyConfig(t *testing.T) { _, err := Load(emptyFile(t)); if err == nil { t.Fatal("want an error") } }'
++func TestEmptyConfig(t *testing.T) { _, err := Load(emptyFile(t)); if err == nil { t.Fatal(\"want an error\") } }"
 else
   tpl_pr_view "ynh pull request 7: fix: load config files (draft)
 head: dalglish/empty-config, base: main; checks: all passing
