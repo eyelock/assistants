@@ -106,6 +106,7 @@ read, never that nothing is waiting.
 | Section | Where it comes from |
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `<skills>/work-graph/scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
+| Asks between seats (the desk only) | every open ask, from `<skills>/work-graph/scripts/ask.sh show --all`: kind, asker, answering seat, age and what it blocks, oldest first. Say so in your reply when they couldn't be read (never "no open asks"); route a return and chase an old one. Bounded by `WAKE_ASK_SECS` (30) |
 | What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |

@@ -28,7 +28,9 @@
 #   - the two memory.sh recalls (the seat's own, and the shared facts) and each gh pr view:
 #     WAKE_YNM_SECS (default 10) each;
 #   - the desk's inbox.sh show: WAKE_INBOX_SECS (default 30), twice when the first run fails for
-#     a reason other than the bound, to read its error.
+#     a reason other than the bound, to read its error;
+#   - the desk's ask.sh show --all: WAKE_ASK_SECS (default 30), twice when the first run fails for
+#     a reason other than the bound (ask.sh bounds its own bd calls too).
 # When bd is busy the block says plainly that the work graph couldn't be read (bd busy), and what
 # to run by hand, instead of hanging or passing off nothing as "nothing waiting".
 #
@@ -36,6 +38,9 @@
 # what the seats have asked of the human at the desk and of the default human,
 # and the notes left for them, from inbox.sh show (beside this script, as
 # create-wheelhouse copies it). Other seats' wakes have no inbox.
+# It also wakes to every open ask, with its kind, asker, answering seat and age, from
+# ask.sh show --all, so a request left unanswered is seen; a seat's own asks already show
+# under "Waiting for you".
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root, or
@@ -56,7 +61,8 @@
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
 # unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
-# null for other seats)}, or a Markdown
+# null for other seats), asks (the desk's only: ask.sh show --all's JSON, with errors when a bd
+# read failed, or {error}; null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
@@ -131,7 +137,7 @@ backend=$(wl_backend .) || { echo "wheelhouse.json: memory must be \"ynm\" or \"
 if [ "$backend" = ynm ]; then need ynm; fi
 
 bd_secs="${WAKE_BD_SECS:-20}"; sync_secs="${WAKE_SYNC_SECS:-45}"
-inbox_secs="${WAKE_INBOX_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
+inbox_secs="${WAKE_INBOX_SECS:-30}"; ask_secs="${WAKE_ASK_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
 # remote is yes, no or busy (wl_dolt_remote): a check that gave up (exit 142) or failed is not "no
 # remote", it is a bd that cannot be reached, which the callers report as a failed sync.
 remote=no
@@ -360,15 +366,38 @@ if [ "$group" = desk ]; then
   fi
 fi
 
+# The desk's wake also lists every open ask. ask.sh sits beside this script, as inbox.sh does.
+# show exits 3 but still prints JSON when a bd read failed: what it could read, with errors.
+asks='null'
+if [ "$group" = desk ]; then
+  asksh=""
+  for f in "$here/ask.sh" "$here/../../work-graph/scripts/ask.sh"; do
+    [ -f "$f" ] && { asksh="$f"; break; }
+  done
+  if [ -z "$asksh" ]; then
+    asks='{"error": "no ask.sh in the work-graph skill beside the wake skill: the desk needs skills/work-graph in its include"}'
+  else
+    shown=$(limited "$ask_secs" bash "$asksh" show --all --dir . 2>/dev/null); askrc=$?
+    if [ "$askrc" = 142 ]; then
+      asks=$(jq -nc --arg e "ask.sh show gave up after ${ask_secs}s (bd busy); run it yourself: bash $asksh show --all" '{error: $e}')
+    elif [ -n "$shown" ] && jq -e 'type == "object" and has("asks")' >/dev/null 2>&1 <<<"$shown"; then
+      asks=$(jq -c . <<<"$shown")
+    else
+      err=$(limited "$ask_secs" bash "$asksh" show --all --dir . 2>&1 >/dev/null | head -1)
+      asks=$(jq -nc --arg e "${err:-ask.sh show failed}" '{error: $e}')
+    fi
+  fi
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
-  --argjson inbox "$inbox" '{
+  --argjson inbox "$inbox" --argjson asks "$asks" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, inbox: $inbox
+    sync: {memory: $memsync, work: $worksync}, inbox: $inbox, asks: $asks
   }')
 
 if [ "$format" = json ]; then
@@ -413,6 +442,18 @@ jq -r --arg memsh "$memorysh" '
         "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `bash \($memsh) forget --id <its memoryId> --reason relayed`.\n"
       end),
      (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
+   end),
+  (if .asks == null then empty
+   elif .asks.error then "## Asks between seats\n\nThe open asks could not be read: \(.asks.error). Say so when you reply; don'"'"'t say there are none.\n"
+   else
+     def ask: "- \(.title) (\(.id), \(.kind // "ask"), asked by \(.askedBy // "unknown"), with \(.assignee // "no one")\(if .answered then ", answered" else "" end), open \(.age // "for an unknown time")\(if (.blocks // []) | length > 0 then ", blocks \(.blocks | join(", "))" else "" end))";
+     "## Asks between seats\n",
+     (if ((.asks.errors // []) | length) > 0
+      then "**The asks could not be read in full:** \(.asks.errors | join("; ")). Don'"'"'t say there are none: say what couldn'"'"'t be read when you reply, and what could.\n"
+      else empty end),
+     (if (.asks.asks | length) == 0
+      then (if ((.asks.errors // []) | length) > 0 then "None could be read.\n" else "No open asks.\n" end)
+      else "Oldest first. An answered ask waits for its asker to close it; a return (kind return) waits for you to route it.\n\n" + (.asks.asks | map(ask) | join("\n")) + "\n" end)
    end),
   "## Who you are\n",
   (if .firstWake
