@@ -1,6 +1,6 @@
 ---
 name: work-graph
-description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, ask a human for what only a human can do (a merge, a decision, a credential) through the humans' inbox, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, when work needs a human or the humans should be told something, who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
+description: Work from a Wheelhouse's Beads work graph as a named seat - find the next ready task (work assigned to you first), claim it as yourself, dispatch ready work to idle workers, break work into dependent tasks, see who is working on what and what is blocking it, ask a human for what only a human can do (a merge, a decision, a credential) through the humans' inbox, ask another seat for an answer, a piece of work or a hand-back through an ask bead (`scripts/ask.sh`) and check in for asks at each natural break, and close tasks honestly with a note of what happened. Use when asked what's next or what to pick up, to dispatch or hand out work to workers, to split work into tasks, when work needs a human or the humans should be told something, when a seat needs something from another seat (ask, answer, return or report), who has or is working on a task, what is blocking a task or epic, or to mark work done, in a repository with a .beads/ folder. Not for GitHub or JIRA issues.
 allowed-tools: Bash Read
 ---
 
@@ -342,6 +342,46 @@ human's inbox; when someone names themselves ("it's me, <name>"), the desk runs
 `bash scripts/inbox.sh show --name <Name>` for the rest of the session, which adds their inbox
 (the beads assigned to their lowercase name, and the ynm notes in `human/<command>`). Nothing is
 registered or written to the repository: no roster entry, no email, no username.
+
+## Asking another seat
+
+When you need something from another seat (an answer, a piece of work, a hand-back of work that isn't
+yours), never ask the human which seat to try, and never improvise a message to a session you can't
+name. Open an **ask**: a bead in the work graph, with `scripts/ask.sh` at the Wheelhouse root (a copy of
+this skill's, beside `inbox.sh`, which stays about humans). An ask is recorded, shows at the answering
+seat's wake and can be flagged when it is left unanswered.
+
+An ask is a bead labelled `ask` plus one kind:
+
+| Kind | What it is | Assigned to | Blocks | Ends when |
+|---|---|---|---|---|
+| `ask:question` | something you need to know | the seat that answers it | your bead | you close it after reading the answer |
+| `ask:request` | something you need done | the seat that does it | your bead | you close it after checking it was done |
+| `ask:return` | a bead handed back as outside your charter, unclear or unsafe (no new bead) | `ynw`, the desk | nothing new | the desk reroutes it or asks the human |
+| `ask:report` | something to know, needing no answer | `ynw` | nothing | the desk closes it once it has relayed or acted on it |
+
+1. **Open it** (a question, a request or a report):
+   `bash scripts/ask.sh open --to <seat> --kind question --title "<what you need>" --from <you> --blocks <your bead>`.
+   Address it to the seat that answers it, by its `command`. Only when you don't know who answers
+   does it go to `ynw`, and the desk routes it. `--blocks` makes your bead wait on it, and the
+   repository label comes from that bead. It prints the answering seat's session address,
+   `<wheelhouse>-<command>` (the desk is just `<wheelhouse>`): the comms skill says what to do with it.
+2. **Answer** (the seat the ask is assigned to):
+   `bash scripts/ask.sh answer <ask> --text "<the answer>" --from <you>` comments the answer and
+   re-assigns the ask to its asker. The asker reads it under "Waiting for you" at its next wake and
+   closes the ask, which unblocks its bead. A question or request is closed by the asker, not the answerer.
+3. **Return** a bead that is outside your charter, unclear or unsafe:
+   `bash scripts/ask.sh return <bead> --reason "<why>" --from <you>` comments why, releases your claim and
+   re-assigns the same bead to `ynw` as `ask:return`. No new bead is made. A report is not returned.
+4. **Report** something that needs no answer with `--kind report`, assigned to `ynw`: the desk closes
+   it once it has relayed or acted on it, with no hand-back.
+5. **Check in.** Run `bash scripts/ask.sh show` at each natural break: after closing or handing back a
+   bead, and before picking up the next. It lists the open asks assigned to you with their age, and
+   exits 3 saying what failed when it couldn't read them, never an empty list. Do this on every vendor:
+   a nudge may not reach you.
+
+The desk's wake lists every open ask with its age, and the patrol flags one left unanswered past a
+threshold, once. Asking a human is different: that is the inbox, above.
 
 ## Closing
 

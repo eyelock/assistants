@@ -388,6 +388,31 @@
         "The reply does not ask the desk or a human to pass the design on, and no inbox bead or note was made for it",
         "The reply says the build bead is freed for the dispatcher to pick up"
       ]
+    },
+    {
+      "id": 25,
+      "name": "ask-a-seat-not-the-human",
+      "prompt": "You are dalglish, holding the bead \"Write the ynh 0.13 changelog\". You can't go on until you know whether the registry rework is in scope for 0.13: only gahan, the crew designer, knows. Get the answer from gahan.",
+      "setup": "../../evals/files/ask-need-seat.sh",
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/ask-evidence.sh\"",
+      "expected_output": "Opens an ask with scripts/ask.sh as dalglish: a question addressed to gahan (labelled ask and ask:question), blocking dalglish's changelog bead. Makes no inbox bead and does not ask the human which seat or session to use. Says gahan's session is hq-gahan and that it can't message it (or that it did), noting on the ask if no live session could be nudged, and that gahan will find it at its next check-in. Does not close the ask itself.",
+      "assertions": [
+        "In the evidence, there is a new bead labelled ask and ask:question, assigned to gahan, with created_by dalglish",
+        "In the evidence, \"Write the ynh 0.13 changelog\" waits on that new ask bead",
+        "In the evidence, no bead is assigned to rook (the default human) and none is labelled inbox",
+        "The ask bead is still open",
+        "The reply does not ask the human which seat or session to use, and does not just tell the human to ask gahan",
+        "The reply names the answering seat's session address, hq-gahan, or says gahan will find the ask at its next check-in (ask.sh show)"
+      ]
     }
   ]
 }
