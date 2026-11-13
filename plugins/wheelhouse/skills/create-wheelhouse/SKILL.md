@@ -370,8 +370,10 @@ the repositories live in, which grants any local harness's folders under it from
 edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
-can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
+can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the desk and the seats and how to start each, with the session name
+(`<desk> --name=<desk>` for the desk, `<command> --name=<wheelhouse>-<command>` for a seat, and
+`<command> --focus <order> --name=<wheelhouse>-<command>` for a standing order; the name is Claude's
+flag, so on another vendor leave it off; once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (with ynm memory, the push hook; a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict, saying whether any fix was needed to reach it (none, when the layout passed as written). To join from another machine: `git clone` the repository, then

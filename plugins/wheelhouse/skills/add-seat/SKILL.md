@@ -85,7 +85,7 @@ official, so nothing about it is official when it is written.
    in the shared checkout. Commit it (`feat: seat <Name>`).
 2. **Push it and open a draft pull request.** Open it as the constitution's `## Handing over work`
    says (a Wheelhouse with a tracker opens it with its `open-pr.sh`). Its description names the
-   seat, its group and mandate, and says it is a trial: how to start it, and that the roster entry
+   seat, its group and mandate, and says it is a trial: how to start it (with its `--name=` flag, as in step 5), and that the roster entry
    and the delegate come when the trial ends.
 3. **Remove your own worktree,** once the branch is pushed (with no remote to push to, once it is
    committed: the branch survives the worktree), so the human can check the branch out. Never leave
@@ -203,11 +203,18 @@ model, so the roster is where it is declared, and the launcher or the Agent call
 applied. The `doctor` warns about a seat with no model.
 
 **Name the session.** A seat's session is named `<wheelhouse>-<command>`, and the desk's is named
-just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find it by name. `scripts/session-name.sh --seat <command> [--format value|flag]` (in
-this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`.
-**Launch with it:** pass it with the other launch flags, `<command> --name=hq-okafor`. Write it with
+just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find it by name. `scripts/session-name.sh --seat <command> [--vendor <vendor>] [--format value|flag]` (in
+this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`
+for Claude and prints nothing for a vendor with no checked launch flag (so Codex, Cursor, OpenCode
+and Copilot are started without it, as before). **Launch with it:** add the flag to the start
+command, `<command> --name=hq-okafor`, on Claude only. Write it with
 the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` would send
 `hq-okafor` as the prompt. The launcher sets the name, as with the model.
+
+Every instruction that says how to start a seat or the desk carries the flag, because the crew, the
+standing seats and the desk are started by the human, not by a launcher: `<command> --name=<name>`
+(the desk: `<desk> --name=<desk>`), and `<command> --focus <order> --name=<name>` for one standing
+order. Give the vendor's form where the seat's vendor is not Claude: no flag.
 
 On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
 session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
@@ -223,7 +230,7 @@ name is only a fast path.
 | OpenCode | `opencode run --title <title>` for a run; no flag for an interactive session | through its server (`opencode api`, `--server`), not tried |
 | Cursor | no flag found; `agent persist` manages sessions by id | no command found |
 
-Where a vendor can't be named or messaged, nothing breaks: the ask is a bead.
+Where a vendor can't be named or messaged, nothing breaks: `session-name.sh --format flag --vendor <vendor>` prints nothing, the start command has no flag, and the ask is a bead.
 
 ## 2. Name it
 
@@ -393,8 +400,8 @@ it, but don't start it.
 ## 5. Report
 
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
-start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command>` to wake it, or
-`<command> --focus <order>` for one standing order, written out for each seat when there are
+start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command> --name=<name>` to wake it (the name from `session-name.sh`; on a vendor with no flag, just `<command>`), or
+`<command> --focus <order> --name=<name>` for one standing order, written out for each seat when there are
 several. Say it is a trial and where the draft pull request is, and say in so many words that it
 is made official only by review and merge of that pull request, or is dropped (with no remote, there
 is no pull request yet: say so, and that review and merge follow once the branch is pushed). If it asks for workspace folders, say they are refused until the human grants them:

@@ -36,6 +36,15 @@ test("--format flag gives the launcher flag, with an equals sign", () => {
   assert.equal(name(roster, "--seat", "okafor", "--format", "flag").stdout.trim(), "--name=hq-okafor");
 });
 
+test("--format flag prints nothing, and exits 0, for a vendor with no launch flag", () => {
+  for (const vendor of ["codex", "cursor", "opencode", "copilot"]) {
+    const r = name(roster, "--seat", "okafor", "--format", "flag", "--vendor", vendor);
+    assert.equal(r.status, 0);
+    assert.equal(r.stdout, "");
+  }
+  assert.equal(name(roster, "--seat", "okafor", "--format", "flag", "--vendor", "claude").stdout.trim(), "--name=hq-okafor");
+});
+
 test("a seat that is not in the roster, or a roster with no desk, exits 4", () => {
   assert.equal(name(roster, "--seat", "nobody").status, 4);
   assert.equal(name({ seats: [seat("okafor", "workers")] }, "--seat", "okafor").status, 4);

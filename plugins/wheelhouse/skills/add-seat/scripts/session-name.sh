@@ -5,25 +5,29 @@
 # (hq, hq-okafor, hq-gore): the name is how another session finds it. The Wheelhouse's name is
 # the desk's command, the roster's seat in the group desk.
 #
-# Usage: session-name.sh --seat <command> [--dir <wheelhouse repo>] [--format value|flag]
+# Usage: session-name.sh --seat <command> [--dir <wheelhouse repo>] [--vendor <vendor>] [--format value|flag]
 #   value (default)  the name, such as hq-okafor
 #   flag             the launcher flag, --name=hq-okafor (always with "=": ynh reads the word
-#                    after a bare -n or --name as the prompt)
+#                    after a bare -n or --name as the prompt). Only Claude has a launch flag
+#                    that is checked; for any other vendor it prints nothing and exits 0, so a
+#                    start command built from it carries no flag the vendor might reject.
 # Exit codes: 0 resolved, 1 bad args, 2 no roster, 3 jq missing, 4 the seat is unknown or the
 # roster has no desk.
 set -uo pipefail
 
 usage() {
-  echo "Usage: session-name.sh --seat <command> [--dir <wheelhouse repo>] [--format value|flag]"
+  echo "Usage: session-name.sh --seat <command> [--dir <wheelhouse repo>] [--vendor <vendor>] [--format value|flag]"
 }
 
 dir="."
 seat=""
 format="value"
+vendor="claude"
 while [ $# -gt 0 ]; do
   case "$1" in
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; shift 2 ;;
+    --vendor) [ $# -ge 2 ] || { usage >&2; exit 1; }; vendor="$2"; shift 2 ;;
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
     --help | -h) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -48,5 +52,6 @@ if [ -z "$name" ]; then
 fi
 case "$format" in
   value) echo "$name" ;;
-  flag) echo "--name=$name" ;;
+  flag) if [ "$vendor" = "claude" ]; then echo "--name=$name"; fi ;;
 esac
+exit 0
