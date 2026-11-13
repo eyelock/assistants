@@ -115,6 +115,7 @@ read, never that nothing is waiting.
 | Your close notes | the two-line notes you wrote on your last three closes |
 | Waiting for you | beads in progress or assigned to you, and the ready unassigned ones (retro beads left out); or, when bd was busy, **The work graph couldn't be read (bd busy)** in their place |
 | Your retro | your own retro bead (labelled `retro:<command>`), in progress or ready, shown apart from Waiting for you; the section is absent when you have none |
+| Last line | always the closing line, for every seat: before you talk to the human, load the `comms` skill (every decision through your question tool; every report ends with Status, Work in progress and Your action). It comes after everything else so it is the freshest thing in context |
 
 ## Then
 
