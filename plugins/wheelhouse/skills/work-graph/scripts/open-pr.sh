@@ -61,6 +61,7 @@ EOF2
 
 refuse() { echo "open-pr: refused: $1" >&2; jq -n --arg r "$1" '{refused: $r}'; exit 1; }
 
+# shellcheck disable=SC2034 # read by wheelhouse-lib.sh
 WL_PREFIX="open-pr: "
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do

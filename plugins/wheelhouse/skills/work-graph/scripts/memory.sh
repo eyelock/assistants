@@ -46,6 +46,7 @@ Common: --dir <wheelhouse root>   (default: the current directory)
         recall --shared gives facts; ask for events with --kind event.
 EOF2
 }
+# shellcheck disable=SC2034 # read by wheelhouse-lib.sh
 WL_PREFIX="memory.sh: "
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
