@@ -79,7 +79,36 @@ test("each stub logs every call as one '<command> <arguments>' line", () => {
       "bd list --status open",
       "git --version",
       "gh pr comment 12 --body line one line two",
+      "gh-body line one line two",
     ]);
+  });
+});
+
+test("gh logs a posted body as its own line: inline, from a file, from stdin, or a body= field", () => {
+  withRun(({ dir, run, calls }) => {
+    writeFileSync(join(dir, "body.md"), "**Gore** · review seat\nLooks good.\n");
+    run("gh", ["pr", "comment", "7", "--body", "**Gore** · inline\nsecond"]);
+    run("gh", ["pr", "review", "7", "--body-file", join(dir, "body.md")]);
+    run("gh", ["pr", "review", "7", "-F", "-"], { input: "from stdin\n" });
+    run("gh", ["api", "repos/x/y/issues/7/comments", "-f", "body=api body"]);
+    run("gh", ["pr", "view", "7"]);
+    // gh api: -F is --field (key=value, @file read), never --body-file; --input's JSON body counts.
+    writeFileSync(join(dir, "review.md"), "**Gore** · from a field file\nok\n");
+    writeFileSync(join(dir, "review.json"), JSON.stringify({ body: "**Gore** · from input", event: "COMMENT" }));
+    run("gh", ["api", "repos/o/r/pulls/7/reviews", "-F", "body=@review.md", "-f", "event=COMMENT"], { cwd: dir });
+    run("gh", ["api", "repos/o/r/pulls/7/reviews", "--input", "review.json"], { cwd: dir });
+    run("gh", ["api", "repos/o/r/pulls/7/reviews", "-F", "event=COMMENT"], { cwd: dir });
+    assert.deepEqual(
+      calls().filter((l) => l.startsWith("gh-body ")),
+      [
+        "gh-body **Gore** · inline second",
+        "gh-body **Gore** · review seat Looks good.",
+        "gh-body from stdin",
+        "gh-body api body",
+        "gh-body **Gore** · from a field file ok",
+        "gh-body **Gore** · from input",
+      ],
+    );
   });
 });
 
