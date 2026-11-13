@@ -61,6 +61,7 @@ function setup({ memsh = true, wheelhouseJson, ynm = "[]", memories = "{}", with
     mkdirSync(join(dir, "skills", "doctor", "scripts"), { recursive: true });
     at = join(dir, "skills", "doctor", "scripts", "memory-checks.sh");
     copyFileSync(script, at);
+    copyFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(dirname(at), "wheelhouse-lib.sh"));
   }
   return { dir, wh, bin, at };
 }

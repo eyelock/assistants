@@ -74,6 +74,7 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   if (memorySh) {
     mkdirSync(join(wh, "scripts"));
     writeFileSync(join(wh, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(wh, "scripts", "wheelhouse-lib.sh"), readFileSync(join(dirname(memorySrc), "wheelhouse-lib.sh")));
   }
   mkdirSync(join(wh, ".agents/harness"), { recursive: true });
   writeFileSync(join(wh, ".agents/harness/plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0" }));
@@ -92,6 +93,7 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   const bash = spawnSync("sh", ["-c", "command -v bash"], { encoding: "utf8" }).stdout.trim();
   return {
     dir,
+    wh,
     check(extra = {}) {
       const out = spawnSync(bash, [checkSh, "--dir", wh], { encoding: "utf8", env: env(extra) });
       assert.equal(out.status, 0, out.stderr);
@@ -116,6 +118,26 @@ test("a Wheelhouse with no scripts/memory.sh is an error that says how to fix it
     assert.equal(bad.level, "error");
     assert.match(bad.fix, /scripts\/memory\.sh/);
     assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("memory script").ok, true);
+  } finally {
+    without.done();
+    withIt.done();
+  }
+});
+
+test("a Wheelhouse with no scripts/wheelhouse-lib.sh is an error that says how to fix it, and one with it is fine", () => {
+  const without = wheelhouse({ memory: "beads" });
+  const withIt = wheelhouse({ memory: "beads" });
+  try {
+    rmSync(join(without.dir, "wh", "scripts", "wheelhouse-lib.sh"));
+    const bad = without.check({ STUB_REMOTE: "1" }).by("shared library");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "error");
+    assert.match(bad.fix, /scripts\/wheelhouse-lib\.sh/);
+    // One report for the one cause: the backend row neither errors nor offers a fix that doesn't apply.
+    const r = without.check({ STUB_REMOTE: "1" });
+    assert.equal(r.by("memory backend"), undefined);
+    assert.deepEqual(r.json.checks.filter((c) => !c.ok && c.level === "error" && /memory backend|wheelhouse-lib/.test(c.name + c.detail)).map((c) => c.name), ["shared library"]);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("shared library").ok, true);
   } finally {
     without.done();
     withIt.done();
@@ -246,6 +268,39 @@ test("refresh reads ynm for the ynm backend", () => {
   try {
     assert.deepEqual(w.refresh().seatsNotReady, []);
     assert.deepEqual(w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat), ["eno"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat that picks skills but not work-graph is warned, the desk and a seat that picks it are not", () => {
+  const w = wheelhouse({ memory: "beads" });
+  try {
+    const harness = (cmd, includes) => {
+      const dir = join(w.wh, cmd === "hq" ? "." : `harnesses/${cmd}`, ".agents/harness");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0", includes }));
+    };
+    harness("hq", [{ git: "../..", path: "plugins/wheelhouse" }]);
+    harness("eno", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
+    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/doctor"] }]);
+    const bad = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.detail, /: wick$/);
+    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
+    // Entwistle's shape: a pick without work-graph, plus another plugin included whole, still warns.
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake"] },
+      { git: "../..", path: "plugins/gitflow" },
+    ]);
+    const shaped = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(shaped.ok, false);
+    assert.match(shaped.detail, /: wick$/);
+    // A seat with no wheelhouse include has no wheelhouse scripts, so it is not checked.
+    harness("wick", [{ git: "../..", path: "plugins/gitflow", pick: ["skills/branching"] }]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
   } finally {
     w.done();
   }

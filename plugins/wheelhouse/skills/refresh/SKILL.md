@@ -67,9 +67,9 @@ against the default plugin refresh usually can't tell) the script is kept too, w
 "cannot-tell"` and a note saying so. To have a merely-behind script updated, give refresh a full clone
 of the plugin's repository: `--plugin <clone>/plugins/wheelhouse`. Otherwise port the local change
 into the plugin, then take the plugin's copy, or merge by hand.
-A script every Wheelhouse needs (`wake.sh`, `inbox.sh`, `memory.sh`) that the Wheelhouse lacks is copied in
-whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake;
-`patrol.sh` and the like are optional, so one the Wheelhouse doesn't carry is left alone.
+A script every Wheelhouse needs (`wake.sh`, `inbox.sh`, `memory.sh` and the shared library `wheelhouse-lib.sh`, copied from the `work-graph` skill's `scripts/` folder) that the Wheelhouse lacks is copied in
+whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake.
+It is reported in `pluginScriptsCopied`. `patrol.sh` and the like are optional, so one the Wheelhouse doesn't carry is left alone.
 It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
 when it can't find it. Ask before `--update`: it changes files in the repository.
 
@@ -84,8 +84,9 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
 - `restart`: the seats to restart, so the new install and scripts take effect.
 - `seatsNotReady`: any roster seat not installed (with the exact `install` command) or not born
   (a pinned identity in `seat/<command>`, read from ynm or, when `wheelhouse.json`
-  says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is the human's when it is crew, standing
-  or the desk, and the dispatcher's when it is a worker; the entry's `reminder` says which.
+  says `"memory": "beads"`, from Beads through `memory.sh`). A seat's birth is its roster entry's `seated-by`
+  first; a seat with none falls back to the dispatcher when it is a worker, else the human. The entry's
+  `reminder` says which.
   Install it for the human to run, don't birth it.
 - `upstream`: `updates`, `pluginScriptsDiffer`, `pluginScriptsCopied` and `pluginScriptsKept` (each `{script, reason, diff, diffCutLines}`: `reason` is `local-changes` when the script carries changes the plugin never shipped, or `cannot-tell` when the plugin's history can't say; `diff` is cut at 60 lines and `diffCutLines` counts the lines cut, 0 when none).
 - `doctor`: the `doctor` skill's `ok` and its failing checks, run after the installs.

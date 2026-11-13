@@ -75,10 +75,14 @@ show      Prints {seat, all, olderThanSeconds, count, asks: [{id, title, kind, a
 USAGE
 }
 
-die() { echo "$2" >&2; exit "$1"; }
-
 [ $# -gt 0 ] || { usage >&2; exit 1; }
 cmd="$1"; shift
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 case "$cmd" in
   open | answer | return | show) ;;
   --help | -h) usage; exit 0 ;;
@@ -109,30 +113,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-command -v jq >/dev/null 2>&1 || die 3 "jq is required"
-roster="$dir/skills/roster/assets/roster.json"
+need jq
+roster="$dir/$WL_ROSTER_REL"
 [ -f "$roster" ] || die 2 "not a Wheelhouse (no $roster)"
-command -v bd >/dev/null 2>&1 || die 3 "bd is required"
+need bd
 cd "$dir" || exit 2
-roster=skills/roster/assets/roster.json
+roster=$WL_ROSTER_REL
 
-# Every bd call is bounded, so a stuck database can't hold a seat. bd runs in its own process
-# group and the whole group is killed on the alarm (exit 142): a child bd started would otherwise
-# hold the output pipe open past the limit. The same as wake.sh's limited().
-bd_secs="${ASK_BD_TIMEOUT:-20}"
+# Every bd call is bounded, so a stuck database can't hold a seat (limited kills bd's process
+# group and exits 142). ASK_BD_TIMEOUT sets the limit.
+bd_secs="${ASK_BD_TIMEOUT:-$WL_BD_SECS}"
 case "$bd_secs" in '' | *[!0-9]*) bd_secs=20 ;; esac
-bdb() {
-  if command -v perl >/dev/null 2>&1; then
-    perl -e 'my $s = shift; setpgrp(0, 0); my $p = fork; if (!$p) { exec @ARGV; exit 127 }
-      $SIG{ALRM} = sub { $SIG{TERM} = "IGNORE"; kill "TERM", -$$; exit 142 };
-      alarm $s; waitpid($p, 0); exit(($? & 127) ? 128 + ($? & 127) : $? >> 8)' -- "$bd_secs" bd "$@"
-  else bd "$@"; fi
-}
-
-# Beads' --json output is an array or object, or {"data": ...} with BD_JSON_ENVELOPE=1.
-first='(.data? // .) | if type == "array" then .[0] else . end'
-
-valid_command() { [[ "$1" =~ ^[a-z0-9][a-z0-9-]*$ ]]; }
+bdb() { limited "$bd_secs" bd "$@"; }
 
 # The desk: the roster's one seat in the desk group. Its command is the Wheelhouse's name.
 desk=$(jq -r '[.seats[] | select(.group == "desk")][0].command // empty' "$roster")
@@ -140,10 +132,7 @@ desk=$(jq -r '[.seats[] | select(.group == "desk")][0].command // empty' "$roste
 
 # A seat is in the roster, or is on trial: its harness is on the checked-out branch and it
 # has no roster entry until the trial ends. wake.sh, inbox.sh and the doctor agree.
-is_seat() {
-  jq -e --arg c "$1" '.seats | any(.command == $c)' "$roster" >/dev/null && return 0
-  valid_command "$1" && [ -f "harnesses/$1/AGENTS.md" ]
-}
+is_seat() { wl_valid_command "$1" && wl_is_seat "$roster" . "$1"; }
 check_from() {
   [ -n "$from" ] || die 1 "say which seat is acting: --from <seat>, or set BEADS_ACTOR"
   is_seat "$from" || die 1 "$from is not a seat in the roster, and there is no harnesses/$from/AGENTS.md here (a seat on trial has one on its branch)"
@@ -156,7 +145,7 @@ session_of() { if [ "$1" = "$desk" ]; then echo "$desk"; else echo "$desk-$1"; f
 read_bead() {
   local out bead
   out=$(bdb show "$1" --json 2>/dev/null) || die 1 "no bead $1"
-  bead=$(jq -c "$first" <<<"$out" 2>/dev/null)
+  bead=$(bd_first <<<"$out" 2>/dev/null)
   [ -n "$bead" ] && [ "$bead" != null ] || die 1 "no bead $1"
   printf '%s\n' "$bead"
 }
@@ -176,7 +165,7 @@ case "$cmd" in
       [ "$kind" = report ] || die 1 "a $kind needs --to: the seat that answers it (or desk, when you don't know who should)"
       to="$desk"
     fi
-    valid_command "$to" || die 1 "$to is not a seat's command: use a seat's command in lowercase, or desk"
+    wl_valid_command "$to" || die 1 "$to is not a seat's command: use a seat's command in lowercase, or desk"
     jq -e --arg c "$to" '.humans // [] | any(.command == $c)' "$roster" >/dev/null &&
       die 1 "$to is a human, not a seat: ask a human with inbox.sh assign"
     is_seat "$to" || die 1 "$to is not a seat in the roster, and there is no harnesses/$to/AGENTS.md here"
@@ -201,7 +190,7 @@ case "$cmd" in
     [ -n "$priority" ] && args+=(--priority "$priority")
     [ -n "$blocks" ] && args+=(--deps "blocks:$blocks")
     out=$(bdb "${args[@]}" --json 2>&1) || die 3 "bd create failed: $out"
-    newid=$(jq -r "$first | .id // empty" <<<"$out" 2>/dev/null)
+    newid=$(bd_first <<<"$out" 2>/dev/null | jq -r '.id // empty' 2>/dev/null)
     [ -n "$newid" ] || die 3 "bd create printed no id: $out"
     addr=$(session_of "$to")
     jq -n --arg id "$newid" --arg to "$to" --arg from "$from" --arg kind "$kind" --arg blocks "$blocks" --arg repo "$repo" --arg session "$addr" \
@@ -270,7 +259,7 @@ case "$cmd" in
     else
       [ -n "$seat" ] || seat="$from"
       [ -n "$seat" ] || die 1 "say whose asks to show: --seat <command>, --all, or set BEADS_ACTOR"
-      valid_command "$seat" || die 1 "$seat is not a seat's command"
+      wl_valid_command "$seat" || die 1 "$seat is not a seat's command"
     fi
     errors='[]'
     failed() { errors=$(jq -c --arg e "$1" 'if index($e) then . else . + [$e] end' <<<"$errors"); }
@@ -293,7 +282,7 @@ case "$cmd" in
     out=$(bdb "${largs[@]}" 2>"$errf"); rc=$?
     if [ "$rc" != 0 ]; then
       failed "$(why "bd list" "$rc")"; bdfail=1
-    elif asks=$(jq -c '(.data? // .) | if type == "array" then . else error("not a list") end' <<<"$out" 2>/dev/null) && [ -n "$asks" ]; then :; else
+    elif asks=$(bd_data <<<"$out" 2>/dev/null | jq -c 'if type == "array" then . else error("not a list") end' 2>/dev/null) && [ -n "$asks" ]; then :; else
       failed "bd list printed nothing readable"; bdfail=1; asks='[]'
     fi
     now="${ASK_NOW:-$(date +%s)}"
@@ -324,7 +313,7 @@ case "$cmd" in
         out=$(bdb dep list "$aid" --direction up --json 2>"$errf"); rc=$?
         if [ "$rc" != 0 ]; then
           failed "$(why "bd dep list $aid" "$rc")"; bdfail=1
-        elif bl=$(jq -c '(.data? // .) | map(select((.dependency_type // "blocks") == "blocks") | .id)' <<<"$out" 2>/dev/null) && [ -n "$bl" ]; then :; else
+        elif bl=$(bd_data <<<"$out" 2>/dev/null | jq -c 'map(select((.dependency_type // "blocks") == "blocks") | .id)' 2>/dev/null) && [ -n "$bl" ]; then :; else
           failed "bd dep list $aid printed nothing readable"; bdfail=1; bl=null
         fi
       fi

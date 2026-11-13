@@ -28,6 +28,7 @@ function wake(memory, { args = ["hynde", "--format", "json"], end = false, remot
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
     writeFileSync(join(dir, "wheelhouse.json"), JSON.stringify({ tasks: "beads", memory }));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
