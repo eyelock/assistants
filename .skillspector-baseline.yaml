@@ -227,12 +227,6 @@ rules:
     message: "*scripts/refresh.sh*"
     reason: "static_parse_limit on the skill's own shell script. It reads git diff and ynh's listing, runs ynh install for the seats the diff touches, prints ynh trust accept for the human and never runs it, and copies plugin scripts only with --update."
 
-  # Temporary: remove when the split of wake.sh from the design ynw-v981 is built.
-  - id: "AE1"
-    path: "plugins/wheelhouse/skills/wake/SKILL.md"
-    message: "*scripts/wake.sh*"
-    reason: "static_parse_limit: wake.sh (about 25 KB) is past the scanner's parse limit and reported as partially inspected. Read by a person and accepted for now; it reads the work graph (bd), memory (ynm) and, for a bead noting an open pull request, that pull request's state (one read-only gh pr view), each call time-limited, and writes nothing but the syncs at a session's start and end. Temporary: ynw-v981 designs the split that lets the scanner read it whole, and this rule goes when that is built."
-
   # --- dev and tech skills ----------------------------------------------------------------
 
   - id: "AS3"
