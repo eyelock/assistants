@@ -20,3 +20,7 @@ evals run a model, so they cost money and run only when you start them.
 
 - [Run evals](run-evals.md)
 - [Run SkillSpector](run-skillspector.md): the security scan CI runs.
+
+## Reference
+
+- [Seat eval stubs and fixture](seat-eval-stubs.md): the `gh`, `git` and `bd` stubs and the test Wheelhouse a seat eval's setup uses.

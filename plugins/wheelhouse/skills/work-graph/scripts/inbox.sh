@@ -115,7 +115,7 @@ while [ $# -gt 0 ]; do
     -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
     *)
       # close takes the bead bare: inbox.sh close <bead> --reason <text>
-      if { [ "$cmd" = close ] || [ "$cmd" = done ]; } && [ -z "$id" ]; then id="$1"; shift
+      if { [ "$cmd" = close ] || [ "$cmd" = "done" ]; } && [ -z "$id" ]; then id="$1"; shift
       else echo "unknown argument: $1" >&2; usage >&2; exit 1; fi ;;
   esac
 done

@@ -117,6 +117,28 @@ test("an issue in another repository is named in full", () => {
   h.done();
 });
 
+test("a bead whose external_ref is a pull request URL is a review fix: a dry run reports it, a real run opens no PR", () => {
+  const PR = "https://github.com/eyelock/ynh/pull/700";
+  const h = harness({ beads: [bead("hq-1", { external_ref: PR })] });
+  const dry = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.equal(dry.json.review_fix, true);
+  assert.equal(dry.json.pr, PR);
+  const real = h.run();
+  assert.equal(real.status, 1);
+  assert.match(real.json.refused, /review fix/);
+  assert.doesNotMatch(h.log(), /pr create/);
+  h.done();
+});
+
+test("an issue URL is not a review fix", () => {
+  const h = harness();
+  const r = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.notEqual(r.json.review_fix, true);
+  h.done();
+});
+
 test("refuses a build bead with no tracker item, and says why", () => {
   const h = harness({ beads: [bead("hq-1", { external_ref: null })] });
   const r = h.run();

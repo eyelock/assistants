@@ -31,6 +31,9 @@
 # Nothing in tracker.json is run. The release is read by the adapter's own code (release <item>),
 # after the reference has matched item.pattern (required) and again the adapter's strict form.
 #
+# A bead whose external_ref is a pull request URL is a review fix: --dry-run reports it ("review_fix":
+# true, exit 0) and a real run refuses (exit 1), since the fix goes to the existing pull request.
+#
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse or the bead not found,
 # 3 a tool (jq, bd, gh) is missing or failed.
 set -uo pipefail
@@ -86,6 +89,17 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 shown=$(cd "$dir" && bd show "$bead" --json 2>/dev/null) || die 2 "open-pr: no bead $bead"
 ref=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | .external_ref // ""' <<<"$shown")
 housekeeping=$(jq -r '(.data? // .) | (if type == "array" then .[0] else . end) | [(.labels // [])[] | select(. == "housekeeping")] | length' <<<"$shown")
+
+# A review fix: its external_ref is the URL of the pull request it fixes, not a tracker item. It
+# pushes to that PR and opens none, so there is nothing to link: a dry run reports it, and a real
+# run refuses (push to the existing pull request instead).
+if printf '%s\n' "$ref" | grep -Eq '^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+$'; then
+  if $dry; then
+    jq -n --arg pr "$ref" '{dry_run: true, review_fix: true, pr: $pr, exempt: true, item: "", release: "", closing: "", relation: "", gh: []}'
+    exit 0
+  fi
+  refuse "bead $bead is a review fix: its external_ref is the pull request $ref, which it pushes to; open no new one"
+fi
 
 # The tracker config.
 kind=none
@@ -146,7 +160,7 @@ if [ "$kind" != none ] && ! $exempt && { [ -n "$ref" ] || [ "$housekeeping" -eq 
     c=$(bash "$adapter" canon "$sib") || die 3 "open-pr: the $kind adapter failed to canonicalise $sib"
     if [ "$c" = "$mine" ]; then others=$((others + 1)); fi
   done <<<"$refs"
-  last=more; [ "$others" -eq 0 ] && last=last
+  last="more"; [ "$others" -eq 0 ] && last=last
 
   [ -z "$repo" ] && repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)
   relation=part-of; [ "$last" = last ] && relation=closes

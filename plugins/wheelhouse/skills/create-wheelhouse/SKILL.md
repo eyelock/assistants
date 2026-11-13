@@ -299,7 +299,9 @@ the files it finds, and would commit the human's.
    `scripts/memory.sh` beside them too, for either choice: the wake, the inbox and the skills read
    and write each seat's memory only with it, over ynm or Beads as `wheelhouse.json` says. Copy the `patrol` skill's
    `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
-   watcher patrols with it, on a timer, and is woken only when something changed.
+   watcher patrols with it, on a timer, and is woken only when something changed. Every Wheelhouse
+   carries `wake.sh`, `inbox.sh` and `memory.sh` (the refresh skill copies them in when one is
+   missing); the patrol scripts are optional, so refresh leaves a Wheelhouse without them alone.
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
    it is run. Without the file, or without the `memory` key, the scripts assume ynm.

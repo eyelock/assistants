@@ -47,6 +47,18 @@
 //               (assistants #133), so check the plain-text fallback.
 //   "max_turns": this case's turn cap, for a long workflow (default: the
 //               --max-turns option).
+//   "seat":     a seat harness to wake instead of a bare Claude session: its path,
+//               relative to the run's directory (a setup script lays the harness
+//               out there) or absolute. The run is `ynh run <seat> -v <vendor> --
+//               ...` with a scratch YNH_HOME inside the run's directory and
+//               YNH_WORKSPACE_ROOTS set to that directory, so the harness's
+//               workspace folders are granted with no `ynh trust accept` and
+//               nothing touches the real ~/.ynh. The seat is what is under test,
+//               not a skill, so a seat case has one arm (no without_skill).
+//               --vendor (or VENDOR=) picks the vendor, default claude. Only
+//               Claude's stream-json output is parsed today: on another vendor
+//               the judge sees the reply as plain text and no tool-call view,
+//               so a pass there rests on the plain checks and the reply alone.
 // The sandbox also points git at an empty global config and gh at a host that
 // does not resolve, so nothing reaches a real remote or credential. Any case
 // that grants shell access runs under Claude Code's OS sandbox, which confines
@@ -59,13 +71,16 @@
 
 import { spawn } from "node:child_process";
 import {
+  accessSync,
   chmodSync,
+  constants,
   cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -90,6 +105,8 @@ options:
   -j, --concurrency <n>  runs at once, 1-8 (default: 4)
   --runs <n>             run each case n times per arm (default: 1); with
                          more than one, each arm holds run-1/, run-2/...
+  --vendor <vendor>      vendor a seat case runs on, passed to ynh run -v (default:
+                         $VENDOR, else claude); plain cases always run on claude
   --no-baseline          skip the without_skill runs
   --triggers             run evals/eval_queries.json instead: does the skill
                          fire for should_trigger queries, and only those?
@@ -113,6 +130,7 @@ function parseArgs(argv) {
     concurrency: 4,
     runs: 1,
     baseline: true,
+    vendor: process.env.VENDOR || "claude",
   };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
@@ -148,6 +166,9 @@ function parseArgs(argv) {
         break;
       case "--runs":
         opts.runs = Number.parseInt(value(), 10);
+        break;
+      case "--vendor":
+        opts.vendor = value();
         break;
       case "--no-baseline":
         opts.baseline = false;
@@ -202,6 +223,49 @@ function caseSlug(c) {
 function runDir(c, arm, runNo, ctx) {
   const dir = join(ctx.iterationDir, caseSlug(c), arm);
   return ctx.runs > 1 ? join(dir, `run-${runNo}`) : dir;
+}
+
+// The arms a case runs: a seat case tests the seat as ynh assembles it, so there
+// is no skill to take away and no control arm.
+export function armsFor(c, baseline) {
+  return c.seat || !baseline ? ["with_skill"] : ["with_skill", "without_skill"];
+}
+
+// The first executable called name on the real PATH, so a case that stubs ynh for
+// other reasons (a recorder in $EVAL_BIN) cannot shadow the ynh that wakes the seat.
+export function findOnPath(name, path = process.env.PATH ?? "") {
+  for (const dir of path.split(":").filter(Boolean)) {
+    const file = join(dir, name);
+    try {
+      accessSync(file, constants.X_OK);
+      if (statSync(file).isFile()) return file;
+    } catch {
+      // not here
+    }
+  }
+  return null;
+}
+
+// The command that wakes a case's seat through ynh, and the environment it needs.
+// A scratch YNH_HOME keeps the real ~/.ynh out of it. The run's directory is the
+// only workspace root, so the seat's workspace folders are granted with no trust
+// step (a harness run from a path has no trust record anyway). The directory is
+// resolved with realpath because ynh compares resolved paths and a macOS temp
+// directory sits behind a symlink. Claude gets the run's own flags after --; any
+// other vendor gets only the prompt, as its flags are not mapped yet.
+export function seatLaunch(c, vendor, work, env, claudeArgs) {
+  const root = realpathSync(work);
+  const seat = resolve(root, c.seat);
+  const passed = vendor === "claude" ? claudeArgs : ["-p", c.prompt];
+  return {
+    cmd: findOnPath("ynh") ?? "ynh",
+    args: ["run", seat, "-v", vendor, "--", ...passed],
+    env: {
+      ...env,
+      YNH_HOME: join(root, ".eval", "ynh-home"),
+      YNH_WORKSPACE_ROOTS: root,
+    },
+  };
 }
 
 function nextIteration(workspace) {
@@ -422,12 +486,16 @@ async function runCase(c, arm, runNo, ctx) {
         .filter((tool) => !granted.has(tool))
         .join(","),
     ];
-    if (arm === "with_skill") args.push("--plugin-dir", ctx.packageDir);
+    // A seat's skills come from its own harness, through ynh, not from --plugin-dir.
+    if (arm === "with_skill" && !c.seat) args.push("--plugin-dir", ctx.packageDir);
     args.push("--model", ctx.model);
     args.push("--settings", sandbox.wantsShell ? osSandbox(arm) : JSON.stringify(isolation(arm)));
 
     const started = Date.now();
-    const res = await run("claude", args, work, sandbox.env);
+    const launch = c.seat
+      ? seatLaunch(c, ctx.vendor, work, sandbox.env, args)
+      : { cmd: "claude", args, env: sandbox.env };
+    const res = await run(launch.cmd, launch.args, work, launch.env);
     writeFileSync(join(outDir, "transcript.jsonl"), res.stdout);
     const events = parseEvents(res.stdout);
     const evidence = [await collectEvidence(c, work, sandbox), toolCallsShown(c, events)]
@@ -438,7 +506,9 @@ async function runCase(c, arm, runNo, ctx) {
     const result = events.findLast((e) => e.type === "result");
     const skillsUsed = skillCalls(events);
 
-    const answer = result?.result ?? "";
+    // Without Claude's stream-json there is no result event: the reply is the output.
+    const plain = c.seat && ctx.vendor !== "claude";
+    const answer = plain ? res.stdout.trim() : (result?.result ?? "");
     writeFileSync(join(outDir, "answer.md"), `${answer}\n`);
     const u = result?.usage ?? {};
     const timing = {
@@ -458,10 +528,17 @@ async function runCase(c, arm, runNo, ctx) {
       ),
     };
     writeJson(join(dirname(outDir), "timing.json"), timing);
-    if (!result || res.code !== 0) {
-      log(`${caseSlug(c)}/${arm}: claude exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`);
+    if ((!result && !plain) || res.code !== 0) {
+      log(
+        `${caseSlug(c)}/${arm}: ${launch.cmd} exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`,
+      );
     }
-    return { answer, evidence, timing, ok: Boolean(result) && !result.is_error };
+    return {
+      answer,
+      evidence,
+      timing,
+      ok: plain ? res.code === 0 : Boolean(result) && !result.is_error,
+    };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -737,14 +814,16 @@ async function main() {
   };
   mkdirSync(ctx.iterationDir, { recursive: true });
 
-  const arms = opts.baseline ? ["with_skill", "without_skill"] : ["with_skill"];
+  const arms = ["with_skill", "without_skill"].filter((a) =>
+    cases.some((c) => armsFor(c, opts.baseline).includes(a)),
+  );
   log(
     `${skillName}: ${cases.length} case(s) x ${arms.length} arm(s) x ${opts.runs} run(s) -> ${relative(ROOT, ctx.iterationDir)}`,
   );
 
   const runNumbers = Array.from({ length: opts.runs }, (_, i) => i + 1);
   const tasks = cases.flatMap((c) =>
-    arms.flatMap((arm) =>
+    armsFor(c, opts.baseline).flatMap((arm) =>
       runNumbers.map((runNo) => async () => {
         const r = await runCase(c, arm, runNo, ctx);
         const g = await grade(c, arm, runNo, r.answer, r.evidence, ctx);
@@ -781,10 +860,22 @@ async function main() {
     };
   }
   if (summary.with_skill && summary.without_skill) {
+    // A seat case runs only with the skill, so the delta compares the cases both arms ran.
+    const both = new Set(runs.filter((r) => r.arm === "without_skill").map((r) => r.case));
+    const paired = (arm) => {
+      const mine = runs.filter((r) => r.arm === arm && both.has(r.case));
+      return {
+        pass_rate: stats(mine.map((r) => r.pass_rate)),
+        time_seconds: stats(mine.map((r) => r.duration_ms / 1000)),
+        tokens: stats(mine.map((r) => r.total_tokens)),
+      };
+    };
+    const w = paired("with_skill");
+    const wo = paired("without_skill");
     const d = (k) =>
-      summary.with_skill[k].mean === null || summary.without_skill[k].mean === null
+      w[k].mean === null || wo[k].mean === null
         ? null
-        : Math.round((summary.with_skill[k].mean - summary.without_skill[k].mean) * 1000) / 1000;
+        : Math.round((w[k].mean - wo[k].mean) * 1000) / 1000;
     summary.delta = {
       pass_rate: d("pass_rate"),
       time_seconds: d("time_seconds"),
