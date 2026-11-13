@@ -356,6 +356,13 @@ if [ -f "$roster" ]; then
     add "inbox script" true info "scripts/inbox.sh"
   fi
 
+  if [ ! -f "$dir/scripts/ask.sh" ]; then
+    add "ask script" false warn "no scripts/ask.sh, so seats can't ask one another for things and the skills that say 'bash scripts/ask.sh' have nothing to run" \
+      "copy the work-graph skill's scripts/ask.sh into scripts/ beside inbox.sh and commit it, or run the refresh skill's refresh.sh --update"
+  else
+    add "ask script" true info "scripts/ask.sh"
+  fi
+
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
     # A seat on trial is not in the roster until the trial ends; its harness, on its branch,
     # is what makes it known meanwhile.

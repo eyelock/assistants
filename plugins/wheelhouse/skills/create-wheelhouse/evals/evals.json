@@ -31,7 +31,7 @@
         "AGENTS.md has a rule to ask a human through the inbox: when work needs a human (such as a merge, a decision or a credential), assign them a bead, the default human unless the seat knows who, and tell them things with an inbox note",
         "AGENTS.md's desk section says that when a person names themselves at the desk (\"it's me, <name>\"), the desk shows their own inbox for that session with the inbox script's show --name, and registers nothing",
         "The reply names the default human",
-        "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"ynm\"} and scripts/memory.sh is present beside wake.sh and inbox.sh"
+        "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"ynm\"} and scripts/memory.sh is present beside wake.sh and inbox.sh, and scripts/ask.sh is copied beside inbox.sh"
       ]
     },
     {
@@ -112,6 +112,7 @@
       "assertions": [
         "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"beads\"}",
         "scripts/memory.sh is present in ./hq beside scripts/wake.sh and scripts/inbox.sh",
+        "scripts/ask.sh is present in ./hq beside scripts/inbox.sh",
         "AGENTS.md's second rule says work and memory live in Beads and that memory goes through scripts/memory.sh; it does not say memory lives in ynm",
         "The stubbed calls include no ynm init and no ynm client install ynh, and the evidence shows no .ynm/config.json",
         "The reply does not ask the human to add the ynm push sync to the Beads pre-push hook",

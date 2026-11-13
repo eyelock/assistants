@@ -305,3 +305,19 @@ test("a seat that picks skills but not work-graph is warned, the desk and a seat
     w.done();
   }
 });
+
+test("a Wheelhouse with no scripts/ask.sh gets a warning that says how to fix it, and one with it is fine", () => {
+  const without = wheelhouse({ memory: "beads" });
+  const withIt = wheelhouse({ memory: "beads" });
+  try {
+    writeFileSync(join(withIt.wh, "scripts", "ask.sh"), readFileSync(join(dirname(memorySrc), "ask.sh")));
+    const bad = without.check({ STUB_REMOTE: "1" }).by("ask script");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.fix, /scripts\/ask\.sh/);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("ask script").ok, true);
+  } finally {
+    without.done();
+    withIt.done();
+  }
+});

@@ -261,12 +261,12 @@ if [ "$upstream" = 1 ]; then
       # copies of the scripts needs it beside them (until it carries none).
       for f in $(cd "$plugin/skills" && ls */scripts/*.sh */scripts/*.jq 2>/dev/null); do
         b=$(basename "$f")
-        # A script the Wheelhouse carries is kept current. wake.sh, inbox.sh, memory.sh and wheelhouse-lib.sh are the
+        # A script the Wheelhouse carries is kept current. wake.sh, inbox.sh, ask.sh, memory.sh and wheelhouse-lib.sh are the
         # ones every Wheelhouse needs (create-wheelhouse step 5), so they are copied in when the
         # Wheelhouse lacks them: an upgrade from before memory.sh existed would otherwise leave
         # wake.sh with nothing to read memory through, and no script runs without the library. The rest (patrol, tracker, open-pr) are
         # optional, so one the Wheelhouse doesn't carry is left alone.
-        case "$b" in wake.sh | inbox.sh | memory.sh | wheelhouse-lib.sh) ;; *) [ -f "$dir/scripts/$b" ] || continue ;; esac
+        case "$b" in wake.sh | inbox.sh | ask.sh | memory.sh | wheelhouse-lib.sh) ;; *) [ -f "$dir/scripts/$b" ] || continue ;; esac
         [ -f "$plugin/skills/$f" ] || continue
         cmp -s "$plugin/skills/$f" "$dir/scripts/$b" && continue
         scripts_stale=$(jq -c --arg b "scripts/$b" '. + [$b]' <<<"$scripts_stale")

@@ -598,7 +598,7 @@ test("a directory that is not a Wheelhouse is refused", () => {
   }
 });
 
-test("--update copies in wake.sh, inbox.sh and memory.sh a Wheelhouse lacks, and leaves an optional script it doesn't carry alone", () => {
+test("--update copies in wake.sh, inbox.sh, ask.sh and memory.sh a Wheelhouse lacks, and leaves an optional script it doesn't carry alone", () => {
   const w = wheelhouse();
   try {
     writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
@@ -606,17 +606,19 @@ test("--update copies in wake.sh, inbox.sh and memory.sh a Wheelhouse lacks, and
     write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v1\n");
     write(pluginDir, "skills/work-graph/scripts/memory.sh", "#!/bin/sh\n# memory\n");
     write(pluginDir, "skills/work-graph/scripts/inbox.sh", "#!/bin/sh\n# inbox\n");
+    write(pluginDir, "skills/work-graph/scripts/ask.sh", "#!/bin/sh\n# ask\n");
     write(pluginDir, "skills/work-graph/scripts/open-pr.sh", "#!/bin/sh\n# optional\n");
     write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# optional\n");
 
     // Without --update it only says what differs: the two missing scripts are among them.
     const offer = w.run(["HEAD..HEAD", "--plugin", pluginDir]);
-    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer, ["scripts/inbox.sh", "scripts/memory.sh"]);
+    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer, ["scripts/ask.sh", "scripts/inbox.sh", "scripts/memory.sh"]);
     assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), false);
 
     const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
     assert.equal(done.status, 0, done.stderr);
-    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/inbox.sh", "scripts/memory.sh"]);
+    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/ask.sh", "scripts/inbox.sh", "scripts/memory.sh"]);
+    assert.match(readFileSync(join(w.wh, "scripts", "ask.sh"), "utf8"), /# ask/);
     assert.match(readFileSync(join(w.wh, "scripts", "memory.sh"), "utf8"), /# memory/);
     assert.match(readFileSync(join(w.wh, "scripts", "inbox.sh"), "utf8"), /# inbox/);
     for (const optional of ["open-pr.sh", "patrol.sh"]) assert.equal(existsSync(join(w.wh, "scripts", optional)), false, optional);
