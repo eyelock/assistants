@@ -9,18 +9,18 @@ allowed-tools: Bash Read
 Merged changes don't reach the running seats by themselves. A seat is an installed ynh harness,
 so a changed charter, roster or desk skill needs `ynh install`; a change to a seat's sensors, hooks,
 MCP servers, workspace or focuses leaves it not accepted, and it loses its workspace folders until
-the human runs `ynh trust accept local/<seat>`; a changed script needs a restart. `scripts/refresh.sh` works out which,
+the human runs `ynh trust accept local/<seat>`; a changed script needs a restart. `refresh.sh` works out which,
 from the diff, so nobody has to remember the sequence.
 
 This is the desk's skill, and no other seat's. The desk runs it whenever the human pulls, or when
 the CI watcher reports merges to the Wheelhouse repository itself.
 
-Run it from this skill's folder, with `--dir` pointing at the Wheelhouse repository (the one with
+Run it from the Wheelhouse's root, by the path ynh installed it at (`<skills>` is the folder that holds the skill folders: the parent of this skill's base directory), with `--dir` pointing at the Wheelhouse repository (the one with
 the desk's `.agents/harness/` and `.beads/`), after the pull:
 
 ```bash
-bash path/to/refresh/scripts/refresh.sh --dir . --dry-run   # what it would do
-bash path/to/refresh/scripts/refresh.sh --dir .             # do the safe steps
+bash <skills>/refresh/scripts/refresh.sh --dir . --dry-run   # what it would do
+bash <skills>/refresh/scripts/refresh.sh --dir .             # do the safe steps
 ```
 
 ## What the diff means
@@ -35,7 +35,7 @@ just moved. After anything else that moved `ORIG_HEAD` since the pull, give the 
 | the root `AGENTS.md`, the root `.agents/harness/plugin.json`, `skills/roster/...` | `ynh install .` and every seat (they include `../..`) |
 | another `skills/<name>/...` | `ynh install .`, and each seat whose `../..` include picks that skill |
 | a change to a harness's workspace, sensors, hooks or MCP servers (top level or in any profile, and a profile's `includes`), launch focus (its name, and the profile and prompt of that entry in `focuses`) or `delegates_to` entries in its `plugin.json`, or a seat ynh lists as `changed` or `unreviewed` after the installs | **printed** `ynh trust accept local/<seat>`, never run |
-| `scripts/...` | a restart of every seat: hooks run the scripts from disk, and a running session keeps the old ones |
+| `scripts/...` (the Wheelhouse's own) | a restart of every seat: hooks run them from disk, and a running session keeps the old ones |
 | anything else, such as `docs/` or a `pinned-skills.md` | nothing |
 
 A seat folder that is gone is reported with `ynh uninstall local/<seat>` and not run.
@@ -57,21 +57,9 @@ is run again.
 
 When the diff is empty, or with `--upstream`, it also compares each seat's cached `wheelhouse`
 include with upstream (`ynh ls --check-updates`) and lists the `ynh update local/<seat>` each one
-needs. `--update` runs them, then re-copies the plugin scripts the Wheelhouse already carries in
-`scripts/` (such as `wake.sh`, `inbox.sh` and `patrol.sh`) when they differ from the plugin's, but
-only a copy that is a version the plugin once shipped (so it is merely behind). A script that carries
-changes the plugin never had (Wheelhouse-local work not yet ported upstream) is never overwritten:
-it is listed in `upstream.pluginScriptsKept` with its diff (cut at 60 lines, and saying so when cut) and named in the notes. Without `--update` the note says "would be left alone". When the plugin's history can't say
-(no git checkout, or a shallow clone: ynh's cache clones every include with `--depth 1`, so
-against the default plugin refresh usually can't tell) the script is kept too, with `reason:
-"cannot-tell"` and a note saying so. To have a merely-behind script updated, give refresh a full clone
-of the plugin's repository: `--plugin <clone>/plugins/wheelhouse`. Otherwise port the local change
-into the plugin, then take the plugin's copy, or merge by hand.
-A script every Wheelhouse needs (`wake.sh`, `inbox.sh`, `memory.sh` and the shared library `wheelhouse-lib.sh`, copied from the `work-graph` skill's `scripts/` folder) that the Wheelhouse lacks is copied in
-whatever the history says, so a Wheelhouse built before `memory.sh` existed gets it and can wake.
-It is reported in `pluginScriptsCopied`. `patrol.sh` and the like are optional, so one the Wheelhouse doesn't carry is left alone.
-It compares against the ynh cache checkout at upstream; `--plugin <dir>` names the plugin folder
-when it can't find it. Ask before `--update`: it changes files in the repository.
+needs. `--update` runs them, and the seats it updates are listed to restart. Refresh copies no script: a Wheelhouse
+keeps none of the plugin's scripts, and seats run them where ynh installed them, so `ynh update` is the whole way a fix reaches a seat.
+A copy left in `scripts/` by an older Wheelhouse is a fork the update never reaches; the doctor warns about each, and the fix is to delete it. Ask before `--update`: it changes what the seats run.
 
 ## What it prints
 
@@ -88,7 +76,7 @@ One JSON object. `--dry-run` fills `install`, `trust`, `restart` and the rest, a
   first; a seat with none falls back to the dispatcher when it is a worker, else the human. The entry's
   `reminder` says which.
   Install it for the human to run, don't birth it.
-- `upstream`: `updates`, `pluginScriptsDiffer`, `pluginScriptsCopied` and `pluginScriptsKept` (each `{script, reason, diff, diffCutLines}`: `reason` is `local-changes` when the script carries changes the plugin never shipped, or `cannot-tell` when the plugin's history can't say; `diff` is cut at 60 lines and `diffCutLines` counts the lines cut, 0 when none).
+- `upstream`: `updates`, each `{seat, installed, available, command}`.
 - `doctor`: the `doctor` skill's `ok` and its failing checks, run after the installs.
 - `notes`: what it couldn't do, such as no `ynh` on `PATH`.
 

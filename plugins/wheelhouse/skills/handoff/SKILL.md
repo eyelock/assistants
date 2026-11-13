@@ -11,6 +11,12 @@ session wakes up with, while you are still sharp.
 
 You are your seat's command name, which your charter gives. If you don't know it, ask.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## Handing off
 
 1. **Reach a clean stopping point.** Finish the small step in hand, or park it: leave no file
@@ -22,7 +28,7 @@ You are your seat's command name, which your charter gives. If you don't know it
 3. **Write your own notes** as a handoff memory ("what happened, when"):
 
    ```bash
-   bash scripts/memory.sh remember --actor <name> --seat <name> --kind handoff --text "<notes>"
+   bash <skills>/work-graph/scripts/memory.sh remember --actor <name> --seat <name> --kind handoff --text "<notes>"
    ```
 
    Not a scratch note that dies with the session: handoff notes are for the next session. They
@@ -78,7 +84,7 @@ If nothing would be lost, stop as asked.
 At the start of a seat's session, before anything else:
 
 1. Look for your notes:
-   `bash scripts/memory.sh recall --seat <name> --kind handoff --limit 1`. It prints a JSON
+   `bash <skills>/work-graph/scripts/memory.sh recall --seat <name> --kind handoff --limit 1`. It prints a JSON
    array; the newest note is first, with its text in `text` and its id in `id`.
 2. If there are none, start as usual (for example, with "what's next" from the work graph).
 3. If there are, read them, then check they still hold: `bd show <id> --json` for the bead in
@@ -87,7 +93,7 @@ At the start of a seat's session, before anything else:
    back, open with the pick-up, in this shape: "Picking up from my notes: <what they say is done>.
    Next: <the step I took>." Then the rest.
 5. Once you have picked up, retire the notes so they aren't read twice:
-   `bash scripts/memory.sh forget --id <id> --reason "picked up"`.
+   `bash <skills>/work-graph/scripts/memory.sh forget --id <id> --reason "picked up"`.
 
 If the notes and the world disagree, such as a bead now closed or claimed by someone else, trust
 the world, say what changed and ask the desk before going on.

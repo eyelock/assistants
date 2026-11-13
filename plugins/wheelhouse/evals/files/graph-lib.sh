@@ -51,21 +51,16 @@ install_ynm_stub() {
   mkdir -p .eval
   cp "$EVAL_FIXTURES/ynm-stub.sh" "$EVAL_BIN/ynm"
   chmod +x "$EVAL_BIN/ynm"
-  # Memory goes through scripts/memory.sh, which runs this stub (no wheelhouse.json means ynm).
-  mkdir -p scripts
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
-  chmod +x scripts/memory.sh
+  # Memory goes through the work-graph skill's memory.sh, installed with the plugin, which runs this stub
+  # (no wheelhouse.json means ynm). The Wheelhouse holds no copy of it.
 }
 
 # install_beads_memory: make this Wheelhouse keep its memory in Beads, as create-wheelhouse would:
-# wheelhouse.json says so, and scripts/memory.sh is copied in beside the other scripts. Bd is the
+# wheelhouse.json says so (memory.sh stays in the plugin, not in the Wheelhouse). Bd is the
 # case's real bd, so memory lands in its work graph; the ynm stub is left out on purpose, so a seat
 # that reaches for ynm finds nothing.
 install_beads_memory() {
   printf '{"tasks": "beads", "memory": "beads"}\n' > wheelhouse.json
-  mkdir -p scripts
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
-  chmod +x scripts/memory.sh
 }
 
 # changelog_in_progress: a CHANGELOG.md for ynh 0.13 with Features written
@@ -175,14 +170,12 @@ stub_ynh_ynd() {
 
 # team_wheelhouse: a Wheelhouse with Gahan (crew), two workers (Dalglish and
 # McCoist, each a seat of its own), Anderson (dispatcher), charters, a
-# constitution and the real wake.sh in scripts/, as create-wheelhouse leaves it.
+# constitution, as create-wheelhouse leaves it: no plugin script is copied in.
 team_wheelhouse() {
   wheelhouse_init
   install_ynm_stub
   stub_ynh_ynd
   mkdir -p skills/roster/assets scripts harnesses/gahan harnesses/dalglish harnesses/mccoist harnesses/anderson
-  cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   cat >> AGENTS.md <<'MD'
 
 ## Rules
@@ -231,8 +224,6 @@ specialist_wheelhouse() {
   install_ynm_stub
   stub_ynh_ynd
   mkdir -p .agents/harness skills/roster/assets scripts
-  cp "$EVAL_FIXTURES/../../skills/wake/scripts/wake.sh" scripts/wake.sh
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/memory.sh" scripts/memory.sh
   printf '{"name":"hq","version":"0.1.0","description":"The desk.","labels":{"wheelhouse":"hq"},"delegates_to":[]}\n' > .agents/harness/plugin.json
   local seats='[]' w name label cmd charter
   for w in Anderson "$@"; do
@@ -240,8 +231,8 @@ specialist_wheelhouse() {
     cmd=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     mkdir -p "harnesses/$cmd/.agents/harness"
     jq -n --arg c "$cmd" '{name: $c, version: "0.1.0", description: $c, labels: {wheelhouse: "hq"},
-      hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat \($c) --format text || true"}],
-      on_session_end: [{command: "bash scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
+      hooks: {on_session_start: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat \($c) --format text || true"}],
+      on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat \($c) --end || true", timeout: 30}]},
       launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' \
       > "harnesses/$cmd/.agents/harness/plugin.json"
     if [ "$name" = Anderson ]; then
@@ -274,18 +265,15 @@ specialist_wheelhouse() {
 
 # add_humans: the roster's humans: Rook, the default human, and nobody else (a
 # person at the desk is per session, never in the roster). Copies the real
-# inbox.sh into scripts/, as create-wheelhouse does.
+# inbox.sh stays in the plugin: a Wheelhouse keeps no copy.
 add_humans() {
   local humans='[{"name": "Rook", "command": "rook", "pronouns": "they/them", "default": true}]'
-  mkdir -p scripts
-  cp "$EVAL_FIXTURES/../../skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
   jq --argjson h "$humans" '.humans = $h' skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json
 }
 
 # inbox_wheelhouse: the team Wheelhouse with humans. The default human is Rook;
 # a person at the desk (Pat, say) names themselves per session. The desk
-# is hq (harness "."). scripts/ has the real wake.sh and inbox.sh, as
-# create-wheelhouse leaves them, and the constitution has the inbox rule.
+# is hq (harness "."). It keeps no plugin script, as create-wheelhouse leaves it, and the constitution has the inbox rule.
 inbox_wheelhouse() {
   team_wheelhouse
   git config user.name "Pat Example"
@@ -295,7 +283,7 @@ inbox_wheelhouse() {
 
 Ask a human through the inbox. When work needs a human (a merge, a decision, a credential), assign
 them a bead, the default human unless you know who; tell them things with an inbox note; never
-wait silently. The inbox script is `bash scripts/inbox.sh` (see `--help`).
+wait silently. The inbox script is the work-graph skill's `inbox.sh` (see `--help`).
 
 ## Naming things
 
@@ -310,11 +298,11 @@ and issues):
 
 ## The desk
 
-The desk is hq. It starts every session with its wake (`bash scripts/wake.sh --seat hq --format text`,
+The desk is hq. It starts every session with its wake (the wake skill's `wake.sh --seat hq --format text`,
 which its session-start hook runs; run it yourself if the hook didn't), whose block opens with the
 humans' inbox. Who is at the desk is per session: with no name, the wake shows the default human's
 inbox; when a person names themselves ("it's me, <name>"), it shows theirs as well, with
-`bash scripts/inbox.sh show --name <Name>`. Nothing about them is saved.
+the work-graph skill's `inbox.sh show --name <Name>`. Nothing about them is saved.
 MD
   jq '.seats = [{name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human and hand work to the seats."}] + .seats' \
     skills/roster/assets/roster.json > .r && mv .r skills/roster/assets/roster.json

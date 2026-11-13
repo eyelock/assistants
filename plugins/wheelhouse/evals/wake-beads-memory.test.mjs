@@ -84,7 +84,7 @@ test("beads: the text block shows the facts and the memory.sh retire command", (
   const { r } = wake("beads", { args: ["hynde", "--format", "text", "--no-sync"] });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /## What the Wheelhouse knows\n\n?- Pull requests target develop\./);
-  assert.match(r.stdout, /`bash scripts\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
+  assert.match(r.stdout, /`bash \S+\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
   assert.doesNotMatch(r.stdout, /ynm forget|bd forget/);
 });
 

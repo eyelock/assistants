@@ -50,19 +50,18 @@ function setup({ memsh = true, wheelhouseJson, ynm = "[]", memories = "{}", with
   };
   put(join(bin, "ynm"), ynmStub);
   if (withBd) put(join(bin, "bd"), bdStub);
-  if (memsh) put(join(wh, "scripts", "memory.sh"), memoryStub);
+  // The scripts run where ynh installs them: the doctor's script beside the work-graph skill, which
+  // holds the library and memory.sh. A Wheelhouse's own scripts/ plays no part.
   if (wheelhouseJson) writeFileSync(join(wh, "wheelhouse.json"), wheelhouseJson);
   writeFileSync(join(dir, "ynm.json"), ynm);
   writeFileSync(join(dir, "memories.json"), memories);
-  // Beside the plugin the script finds the work-graph skill's memory.sh; a copy in a folder of its
-  // own does not, which is a Wheelhouse with no memory.sh at all.
-  let at = script;
-  if (!memsh) {
-    mkdirSync(join(dir, "skills", "doctor", "scripts"), { recursive: true });
-    at = join(dir, "skills", "doctor", "scripts", "memory-checks.sh");
-    copyFileSync(script, at);
-    copyFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(dirname(at), "wheelhouse-lib.sh"));
-  }
+  const skills = join(dir, "skills");
+  mkdirSync(join(skills, "doctor", "scripts"), { recursive: true });
+  mkdirSync(join(skills, "work-graph", "scripts"), { recursive: true });
+  const at = join(skills, "doctor", "scripts", "memory-checks.sh");
+  copyFileSync(script, at);
+  copyFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(skills, "work-graph", "scripts", "wheelhouse-lib.sh"));
+  if (memsh) put(join(skills, "work-graph", "scripts", "memory.sh"), memoryStub);
   return { dir, wh, bin, at };
 }
 

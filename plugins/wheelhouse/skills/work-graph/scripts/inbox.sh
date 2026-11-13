@@ -129,7 +129,7 @@ roster="$dir/$WL_ROSTER_REL"
 cd "$dir" || exit 2
 roster=$WL_ROSTER_REL
 memory="$here/memory.sh"
-[ -f "$memory" ] || die 3 "memory.sh is missing: it belongs beside inbox.sh ($memory)"
+[ -f "$memory" ] || die 3 "memory.sh is missing: it belongs beside inbox.sh, in the work-graph skill ($memory)"
 wroot=$PWD
 
 # The default human's command; there must be exactly one.
@@ -315,7 +315,7 @@ case "$cmd" in
         '$hs + [{name: $n, command: $c, role: $role, beads: $beads, notes: $notes}]')
     }
     # One retire command for both backends: memory.sh knows which one holds the note.
-    retire='bash scripts/memory.sh forget --id <its memoryId> --reason relayed'
+    retire="bash $memory forget --id <its memoryId> --reason relayed"
     humans='[]'
     [ -n "$you" ] && inbox_of "$you" you "$name"
     inbox_of "$dflt" anyone "$(jq -r --arg c "$dflt" '[.humans[] | select(.command == $c)][0].name // $c' "$roster")"

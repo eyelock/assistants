@@ -43,6 +43,6 @@ gh_state() {
 }
 
 patrol_baseline() {
-  bash scripts/patrol.sh > /dev/null 2>&1
+  bash "$EVAL_FIXTURES/../../skills/patrol/scripts/patrol.sh" > /dev/null 2>&1
   : > "$EVAL_STUB_LOG"
 }

@@ -31,7 +31,7 @@ other: pick it up on the next round.
 **Names the tracker item in every dispatch note** (when the Wheelhouse has a tracker, `tracker.json`):
 the bead's item (full URL or key), its release, and whether the pull request **closes** the item or
 is **part of** it. It does not work these out itself: it runs the `work-graph` skill's
-`scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run` and quotes `item`, `release` and
+`open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run` and quotes `item`, `release` and
 `relation` (using `item_name` and `release_name` as the words), so the note uses the same logic
 as the pull request. It is a snapshot: the answer is taken at dispatch time, and `open-pr.sh`
 recomputes it when the worker opens the pull request, and that result wins (a sibling bead closing

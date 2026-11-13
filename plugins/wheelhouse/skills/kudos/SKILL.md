@@ -15,6 +15,12 @@ Two rules keep Kudos honest:
 - **Kudos come from others.** A seat never writes Kudos for itself, never asks for them, and
   never rewords praise to make it bigger.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## Giving Kudos
 
 1. **Find the seat.** Read the roster (`skills/roster/assets/roster.json`, under `seats`). If the
@@ -27,7 +33,7 @@ Two rules keep Kudos honest:
    as possible, saying who gave it and for what (`--actor` is you, who is writing it down):
 
    ```bash
-   bash scripts/memory.sh remember --actor <your command> --seat <command> --kind kudos \
+   bash <skills>/work-graph/scripts/memory.sh remember --actor <your command> --seat <command> --kind kudos \
      --text "<giver> on <date>: <the praise>. For: <the work, with its bead id if known>"
    ```
 
@@ -41,7 +47,7 @@ for others to give. Offer to note the work in its handoff notes instead.
 When a seat wakes, the `wake` block shows its recent Kudos. To read them yourself:
 
 ```bash
-bash scripts/memory.sh recall --seat <command> --kind kudos --limit 5
+bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind kudos --limit 5
 ```
 
 If there are any, mention them in a line, such as "Kudos waiting: Pat said the ynm conflict

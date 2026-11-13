@@ -7,8 +7,8 @@ roster_wheelhouse fresh
 r=skills/roster/assets/roster.json
 jq '.seats = [{name: "Anderson", group: "standing", command: "anderson", harness: "harnesses/anderson", role: "dispatcher", mandate: "Hands ready work to idle workers, and seats them."}]' "$r" > "$r.new" && mv "$r.new" "$r"
 mkdir -p harnesses/anderson/.agents/harness
-jq -n '{name: "anderson", version: "0.1.0", description: "anderson", hooks: {on_session_start: [{command: "bash scripts/wake.sh --seat anderson --format text || true"}],
-    on_session_end: [{command: "bash scripts/wake.sh --seat anderson --end || true", timeout: 30}]},
+jq -n '{name: "anderson", version: "0.1.0", description: "anderson", hooks: {on_session_start: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat anderson --format text || true"}],
+    on_session_end: [{command: "bash .claude/skills/wake/scripts/wake.sh --seat anderson --end || true", timeout: 30}]},
     launch_focus: "wake", focuses: {wake: {prompt: "Begin: act on your wake block."}}}' > harnesses/anderson/.agents/harness/plugin.json
 printf '# Anderson\n\nYou are the `anderson` seat, the dispatcher.\n' > harnesses/anderson/AGENTS.md
 jq '.delegates_to += [{git: ".", path: "harnesses/anderson"}]' .agents/harness/plugin.json > .p && mv .p .agents/harness/plugin.json

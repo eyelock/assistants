@@ -50,31 +50,37 @@ add() {
 # --- memory ------------------------------------------------------------------
 # ynm or Beads, by wheelhouse.json's "memory" key.
 mc="$here/memory-checks.sh"
-# The Wheelhouse's own memory.sh sources the library from beside itself, so without scripts/wheelhouse-lib.sh
-# it can't name the backend: that cause has its own row below ("shared library"), so this one stays quiet.
-if [ -f "$dir/scripts/memory.sh" ] && [ ! -f "$dir/scripts/wheelhouse-lib.sh" ]; then
-  backend=""
-elif ! backend=$(bash "$mc" backend --dir "$dir"); then
-  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\", or add scripts/memory.sh"
+work_graph_scripts="$here/../../work-graph/scripts"
+if ! backend=$(bash "$mc" backend --dir "$dir"); then
+  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\""
   backend=""
 fi
 
-# memory.sh is how the wake, the inbox and the skills read and write memory, over either backend:
-# without it every seat's wake stops, so it is an error, not a warning.
-if [ -f "$dir/scripts/memory.sh" ]; then
-  add "memory script" true info "scripts/memory.sh"
-else
-  add "memory script" false error "no scripts/memory.sh, so wake.sh stops (exit 3) and no seat can wake or read its memory" \
-    "copy the work-graph skill's scripts/memory.sh into scripts/ beside wake.sh and commit it, or run the refresh skill's refresh.sh --update"
-fi
+# The plugin's scripts run where ynh installed them, so a Wheelhouse keeps no copy. The ones every seat
+# runs are memory.sh (the wake, the inbox and the skills read and write memory through it) and inbox.sh; the
+# library every script sources is the one this script already loaded. A seat without the work-graph skill has none, so these are errors.
+for f in memory.sh inbox.sh; do
+  if [ -f "$work_graph_scripts/$f" ]; then
+    add "plugin script $f" true info "$(cd "$work_graph_scripts" && pwd)/$f"
+  else
+    add "plugin script $f" false error "no $f beside the doctor's skill, so the seat that runs this check has no work-graph skill and its wake, inbox and memory stop (exit 3)" \
+      "add \"skills/work-graph\" to the seat's include of the wheelhouse plugin (pick), then ynh update"
+  fi
+done
 
-# wheelhouse-lib.sh holds the helpers every Wheelhouse script sources from beside itself: without it
-# wake.sh, inbox.sh and memory.sh all stop at once, so it is an error too.
-if [ -f "$dir/scripts/wheelhouse-lib.sh" ]; then
-  add "shared library" true info "scripts/wheelhouse-lib.sh"
+# A copy of a plugin script left in the Wheelhouse's scripts/ is a fork: the plugin's fixes never reach it, and no seat
+# runs it unless something still names it. Seats run the plugin's scripts; a Wheelhouse keeps only its own.
+copies=""
+for f in "$here"/../../*/scripts/*.sh "$here"/../../*/scripts/*.jq; do
+  [ -f "$f" ] || continue
+  b=$(basename "$f")
+  [ -f "$dir/scripts/$b" ] && copies="$copies scripts/$b"
+done
+if [ -n "$copies" ]; then
+  add "plugin script copies" false warn "the Wheelhouse keeps copies of the plugin's scripts, which the plugin's fixes never reach:$copies" \
+    "delete them, and point hooks and docs at the installed scripts (the work-graph skill's \"Where the scripts are\"); a script of the Wheelhouse's own with one of these names has to be renamed"
 else
-  add "shared library" false error "no scripts/wheelhouse-lib.sh, so no Wheelhouse script runs (wake.sh, inbox.sh and memory.sh stop with exit 3)" \
-    "copy the work-graph skill's scripts/wheelhouse-lib.sh into scripts/ beside wake.sh and commit it, or run the refresh skill's refresh.sh --update"
+  add "plugin script copies" true info "scripts/ holds none of the plugin's scripts"
 fi
 
 # --- ynm ---------------------------------------------------------------------
@@ -185,7 +191,7 @@ if [ -f "$roster" ]; then
   done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
   if [ -n "$unwired" ]; then
     add "seats wired" false warn "seats without a harness of their own that wakes them by name:$unwired" \
-      "give each its own harnesses/<command>/ whose on_session_start hook runs scripts/wake.sh --seat <command>, with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
+      "give each its own harnesses/<command>/ whose on_session_start hook runs the installed wake.sh with --seat <command> (the wake skill's "The hook command"), with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
   else
     add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
   fi
@@ -200,7 +206,7 @@ if [ -f "$roster" ]; then
   done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
   if [ -n "$unpushed" ]; then
     add "seats push at end" false warn "seats whose session end leaves their writes on this machine until the next push or wake:$unpushed" \
-      "add to each harness's hooks: \"on_session_end\": [{\"command\": \"bash scripts/wake.sh --seat <command> --end || true\", \"timeout\": 30}] (needs ynh 0.14.0 or later), then ynh update"
+      "add to each harness's hooks an on_session_end command that runs the installed wake.sh with --seat <command> --end, and \"timeout\": 30 (the wake skill's \"The hook command\"; needs ynh 0.14.0 or later), then ynh update"
   else
     add "seats push at end" true info "every seat's session-end hook pushes memory and work"
   fi
@@ -320,7 +326,7 @@ if [ -f "$roster" ]; then
     done < <(jq -r '.seats[].command' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
       add "seats born" false warn "memory couldn't recall the identities of:$unread, so birth is unknown" \
-        "run scripts/memory.sh recall --seat <command> --kind identity, and see ynm doctor"
+        "run the work-graph skill's memory.sh recall --seat <command> --kind identity, and see ynm doctor"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -347,13 +353,6 @@ if [ -f "$roster" ]; then
   else
     add "default human" false error "the roster has $defaults default humans ($(jq -r '[.humans[] | select(.default == true) | .command] | join(", ")' "$roster")); the inbox needs exactly one" \
       "ask the human which is the default, and remove \"default\": true from the others"
-  fi
-
-  if [ ! -f "$dir/scripts/inbox.sh" ]; then
-    add "inbox script" false warn "no scripts/inbox.sh, so seats can't ask the humans for things and the desk's wake shows no inbox" \
-      "copy the work-graph skill's scripts/inbox.sh into scripts/ beside wake.sh, and commit it"
-  else
-    add "inbox script" true info "scripts/inbox.sh"
   fi
 
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
