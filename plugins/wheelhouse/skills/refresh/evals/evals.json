@@ -30,7 +30,7 @@
         "The stub log shows ynh install harnesses/wick",
         "The reply gives ynh trust accept local/wick (not the bare seat name) as a command for the human to run",
         "The stub log has no ynh trust call",
-        "The reply says every seat (hq, eno and wick) needs a restart because the plugin's wake.sh changed"
+        "The reply says every seat (hq, eno and wick) needs a restart because the Wheelhouse's own scripts/wake.sh changed"
       ]
     },
     {

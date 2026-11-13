@@ -9,7 +9,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
-      "expected_output": "Creates ./hq as a git repository with: an AGENTS.md constitution naming its purpose (running the day: mail, Slack, calendar) and rules (a human decides; work in Beads and memory in ynm; claim as yourself; hand off; never falsify the record; refuse what is outside the charter; never change a shared checkout (work in your own git worktree in your scratchpad, never stash); name things fully: web resources by short form as a Markdown link, local paths absolute); a rule to ask a human through the inbox; a roster skill with the three pools as given and a humans list holding exactly one default human, named by the skill (suggested from the themes) with no email; a desk harness named hq including the wheelhouse plugin and carrying labels {\"wheelhouse\": \"hq\"} (an object, not an array); and a Beads graph started with --skip-agents and prefix hq, so no Beads agent setup. It runs ynm init and ynm client install ynh, adds no remote and pushes nothing, and asks the human to add the ynm push sync to the Beads pre-push hook rather than doing it unasked. It also writes wheelhouse.json at the root with tasks beads and memory ynm, and copies the plugin's memory.sh beside wake.sh and inbox.sh.",
+      "expected_output": "Creates ./hq as a git repository with: an AGENTS.md constitution naming its purpose (running the day: mail, Slack, calendar) and rules (a human decides; work in Beads and memory in ynm; claim as yourself; hand off; never falsify the record; refuse what is outside the charter; never change a shared checkout (work in your own git worktree in your scratchpad, never stash); name things fully: web resources by short form as a Markdown link, local paths absolute); a rule to ask a human through the inbox; a roster skill with the three pools as given and a humans list holding exactly one default human, named by the skill (suggested from the themes) with no email; a desk harness named hq including the wheelhouse plugin and carrying labels {\"wheelhouse\": \"hq\"} (an object, not an array); and a Beads graph started with --skip-agents and prefix hq, so no Beads agent setup. It runs ynm init and ynm client install ynh, adds no remote and pushes nothing, and asks the human to add the ynm push sync to the Beads pre-push hook rather than doing it unasked. It also writes wheelhouse.json at the root with tasks beads and memory ynm. It copies no plugin script into the Wheelhouse: wake.sh, inbox.sh and memory.sh stay where ynh installed the plugin.",
       "assertions": [
         "The evidence shows ./hq is a git repository with at least one commit",
         "AGENTS.md states the Wheelhouse's purpose (running the day: mail, Slack and calendar) and includes rules that a human decides (or merges and sends) and that work lives in Beads and memory in ynm",
@@ -31,7 +31,7 @@
         "AGENTS.md has a rule to ask a human through the inbox: when work needs a human (such as a merge, a decision or a credential), assign them a bead, the default human unless the seat knows who, and tell them things with an inbox note",
         "AGENTS.md's desk section says that when a person names themselves at the desk (\"it's me, <name>\"), the desk shows their own inbox for that session with the inbox script's show --name, and registers nothing",
         "The reply names the default human",
-        "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"ynm\"} and no plugin script is copied into the Wheelhouse (no the plugin's wake.sh, the plugin's inbox.sh, the plugin's memory.sh or scripts/wheelhouse-lib.sh)"
+        "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"ynm\"} and no plugin script is copied into the Wheelhouse (no scripts/wake.sh, scripts/inbox.sh, scripts/memory.sh or scripts/wheelhouse-lib.sh)"
       ]
     },
     {
@@ -111,7 +111,7 @@
       "expected_output": "Creates ./hq as in the full brief, with memory in Beads: wheelhouse.json at the root holds tasks beads and memory beads, no plugin script is copied into the Wheelhouse, and AGENTS.md rule 2 says work and memory live in Beads, with memory read and written through the work-graph skill's memory.sh. It runs no ynm init and no ynm client install ynh, writes no .ynm/config.json, and does not ask for the ynm push sync. It runs the doctor, which reports no errors.",
       "assertions": [
         "wheelhouse.json in the evidence is {\"tasks\": \"beads\", \"memory\": \"beads\"}",
-        "./hq has no the plugin's wake.sh, the plugin's inbox.sh, the plugin's memory.sh or scripts/wheelhouse-lib.sh: nothing of the plugin's is copied in",
+        "./hq has no scripts/wake.sh, scripts/inbox.sh, scripts/memory.sh or scripts/wheelhouse-lib.sh: nothing of the plugin's is copied in",
         "AGENTS.md's second rule says work and memory live in Beads and that memory goes through the work-graph skill's memory.sh; it does not say memory lives in ynm",
         "The stubbed calls include no ynm init and no ynm client install ynh, and the evidence shows no .ynm/config.json",
         "The reply does not ask the human to add the ynm push sync to the Beads pre-push hook",
