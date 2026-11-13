@@ -39,7 +39,7 @@
 # and the notes left for them, from inbox.sh show (beside this script, as
 # create-wheelhouse copies it). Other seats' wakes have no inbox.
 # It also wakes to every open ask, with its kind, asker, answering seat and age, from
-# ask.sh show --all, so a request left unanswered is seen; a seat's own asks already show
+# ask.sh show --all (in the work-graph skill, beside the wake skill), so a request left unanswered is seen; a seat's own asks already show
 # under "Waiting for you".
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
@@ -366,7 +366,7 @@ if [ "$group" = desk ]; then
   fi
 fi
 
-# The desk's wake also lists every open ask. ask.sh sits beside this script, as inbox.sh does.
+# The desk's wake also lists every open ask. ask.sh is in the work-graph skill, beside the wake skill, as inbox.sh is.
 # show exits 3 but still prints JSON when a bd read failed: what it could read, with errors.
 asks='null'
 if [ "$group" = desk ]; then

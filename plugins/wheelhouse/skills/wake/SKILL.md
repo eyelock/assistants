@@ -55,7 +55,7 @@ Every call the script makes is bounded, so a wake never hangs when other seats h
 call that hangs is killed (with anything it started) after its limit: the syncs and the Dolt-remote
 check after `WAKE_SYNC_SECS` (default 45), each bd read after `WAKE_BD_SECS` (20), the memory
 recalls and each `gh pr view` after `WAKE_YNM_SECS` (10), and the desk's inbox after
-`WAKE_INBOX_SECS` (30). The first bd read that gives up ends the rest, so a busy bd costs one
+`WAKE_INBOX_SECS` (30) and open asks after `WAKE_ASK_SECS` (30). The first bd read that gives up ends the rest, so a busy bd costs one
 wait, not one per read. A Dolt-remote check that gives up counts as a failed sync (**Not synced**),
 never as "no remote". When bd is busy the block says so, as below.
 
@@ -98,8 +98,8 @@ bd list --status closed --assignee <command> --json |
 
 Then your charter, and your work with `bd list --status in_progress --assignee <command> --json`
 and `bd ready --assignee <command> --json`. The desk also runs `bash <skills>/work-graph/scripts/inbox.sh show` for the
-humans' inbox and opens its reply with it, as below; if that fails too, say the inbox couldn't be
-read, never that nothing is waiting.
+humans' inbox and `bash <skills>/work-graph/scripts/ask.sh show --all` for the open asks, and opens its reply with them, as
+below; if either fails too, say it couldn't be read, never that nothing is waiting.
 
 ## What the block holds
 

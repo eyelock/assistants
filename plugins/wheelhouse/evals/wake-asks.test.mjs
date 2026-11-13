@@ -20,16 +20,20 @@ const ASKS = [
   { id: "x-1", title: "Wake May", status: "open", assignee: "eno", created_by: "hannett", labels: ["ask", "ask:request"], created_at: iso(3 * 86400), priority: 2 },
 ];
 
-// asks: what `bd list --label ask` answers; listFails: bd list exits 1; noAskSh: ask.sh is not copied in; askShBroken: ask.sh prints nothing and fails.
-function run(seat, { asks = ASKS, listFails = false, noAskSh = false, askShBroken = false } = {}) {
+// asks: what `bd list --label ask` answers; listFails: bd list exits 1; noAskSh: ask.sh is not in the work-graph skill;
+// askShBroken: ask.sh prints nothing and fails; beside: the pre-#266 layout, every script together in scripts/ (the
+// default is where ynh installs them: skills/wake/scripts/wake.sh finding skills/work-graph/scripts/ask.sh).
+function run(seat, { asks = ASKS, listFails = false, noAskSh = false, askShBroken = false, beside = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-wake-asks-"));
   try {
-    mkdirSync(join(dir, "scripts"));
-    for (const [from, to] of [[wakeSrc, "wake.sh"], [join(wg, "memory.sh"), "memory.sh"], [join(wg, "wheelhouse-lib.sh"), "wheelhouse-lib.sh"], [join(wg, "inbox.sh"), "inbox.sh"]]) {
-      writeFileSync(join(dir, "scripts", to), readFileSync(from));
-    }
-    if (askShBroken) writeFileSync(join(dir, "scripts", "ask.sh"), "#!/bin/bash\nexit 1\n");
-    else if (!noAskSh) writeFileSync(join(dir, "scripts", "ask.sh"), readFileSync(join(wg, "ask.sh")));
+    const wakeDir = beside ? join(dir, "scripts") : join(dir, "skills", "wake", "scripts");
+    const wgDir = beside ? join(dir, "scripts") : join(dir, "skills", "work-graph", "scripts");
+    mkdirSync(wakeDir, { recursive: true });
+    mkdirSync(wgDir, { recursive: true });
+    writeFileSync(join(wakeDir, "wake.sh"), readFileSync(wakeSrc));
+    for (const name of ["memory.sh", "wheelhouse-lib.sh", "inbox.sh"]) writeFileSync(join(wgDir, name), readFileSync(join(wg, name)));
+    if (askShBroken) writeFileSync(join(wgDir, "ask.sh"), "#!/bin/bash\nexit 1\n");
+    else if (!noAskSh) writeFileSync(join(wgDir, "ask.sh"), readFileSync(join(wg, "ask.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(
       join(dir, "skills", "roster", "assets", "roster.json"),
@@ -61,8 +65,8 @@ esac
     }
     spawnSync("git", ["init", "-q"], { cwd: dir });
     const env = { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, ASK_NOW: String(NOW), WAKE_BD_SECS: "5", WAKE_ASK_SECS: "10", WAKE_INBOX_SECS: "10", WAKE_SYNC_SECS: "5", WAKE_YNM_SECS: "5" };
-    const text = spawnSync("bash", [join(dir, "scripts", "wake.sh"), seat, "--format", "text", "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
-    const json = spawnSync("bash", [join(dir, "scripts", "wake.sh"), seat, "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
+    const text = spawnSync("bash", [join(wakeDir, "wake.sh"), seat, "--format", "text", "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
+    const json = spawnSync("bash", [join(wakeDir, "wake.sh"), seat, "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
     return { text, json: JSON.parse(json.stdout) };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -95,7 +99,7 @@ test("ask.sh failing to read bd: the wake says the asks could not be read, never
   assert.ok(json.asks.errors.length > 0);
 });
 
-test("ask.sh broken, or not copied in: the wake says so and carries on", () => {
+test("ask.sh broken, or missing from the work-graph skill: the wake says so and carries on", () => {
   const broken = run("ynw", { askShBroken: true });
   assert.equal(broken.text.status, 0, broken.text.stderr);
   assert.match(broken.text.stdout, /The open asks could not be read: /);
@@ -104,6 +108,13 @@ test("ask.sh broken, or not copied in: the wake says so and carries on", () => {
   assert.match(missing.text.stdout, /The open asks could not be read: no ask\.sh in the work-graph skill/);
   assert.doesNotMatch(missing.text.stdout, /No open asks/);
   assert.match(missing.text.stdout, /## Who you are/);
+});
+
+test("the pre-#266 layout, every script beside wake.sh in scripts/, still finds ask.sh", () => {
+  const { text, json } = run("ynw", { beside: true });
+  assert.equal(text.status, 0, text.stderr);
+  assert.match(text.stdout, /- Wake May \(x-1, request, asked by hannett, with eno, open 3d\)/);
+  assert.equal(json.asks.count, 2);
 });
 
 test("another seat's wake carries no asks section", () => {
