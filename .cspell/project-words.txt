@@ -88,6 +88,7 @@ nonisolated
 nvm
 offloadable
 oneline
+opencode
 Optimise
 osascript
 overcomplicating
