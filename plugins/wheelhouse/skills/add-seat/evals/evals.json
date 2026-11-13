@@ -664,6 +664,22 @@
         "The reply says the bead is reassigned to martin with --force, and why that is allowed (the seat is gone, the lease long expired)",
         "The bead's notes record why in the evidence, or the reply says it did"
       ]
+    },
+    {
+      "id": 38,
+      "name": "trial-over-standing",
+      "prompt": "The trial of Reni, the CI watcher I had you seat from the starter-team ci-watcher template, is over: we are keeping the seat. I am back on the default branch.",
+      "setup": "../../evals/files/seat-trial-reni.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Makes the trial official: adds the roster entry for Reni (group standing, from the ci-watcher template, whose seated-by is the role desk) and the desk's delegates_to entry to the branch seat/reni, in a worktree of its own that it removes again. The roster records seated-by hq, the desk's command, not the word desk and not human. Changes nothing in the shared checkout.",
+      "assertions": [
+        "On the branch seat/reni, the roster's seats include Reni with group standing",
+        "The roster entry records seated-by hq, the desk's command: not desk and not human",
+        "On the branch seat/reni, the desk's delegates_to includes harnesses/reni",
+        "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed"
+      ]
     }
   ]
 }
