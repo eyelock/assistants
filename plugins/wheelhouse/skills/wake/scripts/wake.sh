@@ -5,8 +5,8 @@
 # (its Kudos), its record (what it closed lately), its latest close notes (the
 # two lines it wrote on closing a bead) and what is waiting for it.
 #
-# Memory is read and synced through memory.sh (beside this script, as
-# create-wheelhouse copies it, or in the work-graph skill), which follows
+# Memory is read and synced through memory.sh (in the work-graph skill, beside
+# the wake skill, where ynh installed it), which follows
 # wheelhouse.json's "memory" key: ynm (the default) or Beads.
 #
 # First it syncs, through sync.sh (beside this script): memory with a git remote and the work
@@ -35,8 +35,8 @@
 #
 # The desk (the seat in the desk group) also wakes to the humans' inbox, first:
 # what the seats have asked of the human at the desk and of the default human,
-# and the notes left for them, from inbox.sh show (beside this script, as
-# create-wheelhouse copies it). Other seats' wakes have no inbox.
+# and the notes left for them, from inbox.sh show (in the work-graph skill, beside
+# the wake skill). Other seats' wakes have no inbox.
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root, or
