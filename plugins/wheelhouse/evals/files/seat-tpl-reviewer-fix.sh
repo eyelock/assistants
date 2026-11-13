@@ -12,8 +12,53 @@ if [ "${1:-}" = pushed ]; then
   # its origin, so a reviewer who looks (git ls-remote, git show) finds what the bead says was pushed.
   git -C ynh checkout -q -b dalglish/empty-config
   mkdir -p ynh/config
-  printf 'package config\n\nfunc Load(path string) (*Config, error) {\n\tif len(bytes.TrimSpace(data)) == 0 {\n\t\treturn nil, fmt.Errorf("config %%s is empty", path)\n\t}\n\treturn &parse(data)[0], nil\n}\n' >ynh/config/load.go
-  printf 'package config\n\nfunc TestEmptyConfig(t *testing.T) { _, err := Load(emptyFile(t)); if err == nil { t.Fatal("want an error") } }\n' >ynh/config/load_test.go
+  cat >ynh/config/load.go <<'GO'
+package config
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+)
+
+type Config struct{ Name string }
+
+func parse(data []byte) []Config { return []Config{{Name: string(data)}} }
+
+func Load(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return nil, fmt.Errorf("config %s is empty", path)
+	}
+	return &parse(data)[0], nil
+}
+GO
+  cat >ynh/config/load_test.go <<'GO'
+package config
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func emptyFile(t *testing.T) string {
+	p := filepath.Join(t.TempDir(), "empty.yaml")
+	if err := os.WriteFile(p, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+func TestEmptyConfig(t *testing.T) {
+	if _, err := Load(emptyFile(t)); err == nil {
+		t.Fatal("want an error")
+	}
+}
+GO
   git -C ynh add config
   git -C ynh -c user.name=dalglish -c user.email=dalglish@example.invalid commit -q -m "fix: return an error for an empty config"
   fix=$(git -C ynh rev-parse --short HEAD)
