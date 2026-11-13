@@ -25,8 +25,9 @@ Then, in this order:
 | any other `git` or `bd` call | runs the real tool, the first on `PATH` that is not the stub |
 | any other `gh` call | prints a canned answer and touches nothing; no call reaches GitHub |
 
-A `gh` call that posts a body (`--body` or `-b`, `--body-file` or `-F`, a file or `-` for stdin, or a
-`body=` field) also logs the body as a second line, `gh-body <text>` (newlines become spaces), so a
+A `gh` call that posts a body (`--body` or `-b`, or `--body-file` or `-F`, a file or `-` for stdin; on
+`gh api`, a `body=` field given by `-f` or `-F`, where `-F body=@file` reads the file because `-F` is
+`--field` there, or `--input` with a JSON body) also logs the body as a second line, `gh-body <text>` (newlines become spaces), so a
 plain check can read what was posted: `"forbidden": ["^gh-body [^*]"]` fails a review whose body
 does not start with a bold byline, and `"required": ["^gh-body \\*\\*Gore\\*\\*"]` asserts the byline.
 
