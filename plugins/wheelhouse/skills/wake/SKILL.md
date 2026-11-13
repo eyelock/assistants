@@ -1,6 +1,6 @@
 ---
 name: wake
-description: Start a Wheelhouse seat's session with purpose, not amnesia - who you are, what you are for, where you left off, what you have been thanked for, your record and what is waiting for you, in one block from <skills>/wake/scripts/wake.sh. Use at the start of every session of the desk or any named seat or worker (the desk's block opens with the humans' inbox), or when a seat asks where it is or what to do now.
+description: Start a Wheelhouse seat's session with purpose, not amnesia - who you are, what you are for, where you left off, what you have been thanked for, your record and what is waiting for you, in one block from <skills>/wake/scripts/wake.sh. Use at the start of every session of the desk or any named seat or worker (the desk's block opens with the humans' inbox, then names the seats to wake first), or when a seat asks where it is or what to do now.
 allowed-tools: Bash Read
 ---
 
@@ -106,6 +106,7 @@ read, never that nothing is waiting.
 | Section | Where it comes from |
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `<skills>/work-graph/scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
+| Wake first (the desk only) | the roster's seats with the role `ci-watcher` and `releaser`, right after the inbox: "Wake first: <CI watcher> (open PRs and CI), <releaser> (release in hand: next on the route)". Absent when the roster has neither role. In the JSON it is `wakeFirst` |
 | What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
@@ -135,6 +136,10 @@ read, never that nothing is waiting.
    with its notes relayed and retired, and theirs is added beside it. Nothing is registered or saved: no roster entry, no email, no username. If the inbox couldn't be read, or
    couldn't be read in full (bd or ynm failed), say so and why, never that nothing is waiting,
    relay what could be read, and check the Wheelhouse with the `doctor` skill.
+0a. **Wake first** (the desk only): when the block has a "Wake first" section, wake each seat it names at the
+   start of the session, on its roster model (`<skills>/add-seat/scripts/model.sh --seat <command>`), or send it a message if it is
+   already live, and ask for what its role is for: the CI watcher for the open pull requests and CI, the releaser for the release in
+   hand. Relay both reports together with the inbox, and don't check GitHub yourself.
 1. **First session?** If the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    and kept in front of you (`memory.sh` pins it), so you see it every time you wake.
