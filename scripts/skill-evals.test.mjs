@@ -21,7 +21,15 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { armsFor, findOnPath, grade, plainChecks, seatLaunch, setupFor } from "./skill-evals.mjs";
+import {
+  armsFor,
+  findOnPath,
+  grade,
+  plainChecks,
+  runTempEnv,
+  seatLaunch,
+  setupFor,
+} from "./skill-evals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_FILE = join(ROOT, "scripts", "skills-without-evals.txt");
@@ -321,4 +329,20 @@ test("grade: a refused call fails the case with no judge call", async () => {
   assert.equal(judged, false);
   assert.equal(grading.plain_check_failed, true);
   assert.equal(grading.summary.pass_rate, 0);
+});
+
+test("runTempEnv: each run's temp and scratch folder is inside its own directory, so two runs never share one", () => {
+  const a = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  const b = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  try {
+    const ra = runTempEnv(a);
+    const rb = runTempEnv(b);
+    assert.equal(ra.env.CLAUDE_CODE_TMPDIR, join(a, ".eval", "tmp"));
+    assert.equal(ra.env.TMPDIR, ra.env.CLAUDE_CODE_TMPDIR);
+    assert.notEqual(ra.env.CLAUDE_CODE_TMPDIR, rb.env.CLAUDE_CODE_TMPDIR);
+    assert.ok(relative(a, ra.tmp).startsWith(".eval"), "inside the run's directory");
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
 });

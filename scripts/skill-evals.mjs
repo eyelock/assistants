@@ -397,6 +397,16 @@ export function setupFor(c, arm) {
   return { script: c.setup, control: arm === "without_skill" ? "plugin hidden" : null };
 }
 
+// Where one run's temporary files go: inside the run's own directory, so they go when it does.
+// Claude Code puts its scratchpad (the folder a model is told to use for worktrees and scratch
+// files) in /tmp/claude-<uid> unless CLAUDE_CODE_TMPDIR says otherwise. Left alone, every run
+// shares that folder, and a worktree one run leaves behind (dredd-wt, say) collides with the next
+// run's.
+export function runTempEnv(work) {
+  const tmp = join(work, ".eval", "tmp");
+  return { tmp, env: { TMPDIR: tmp, CLAUDE_CODE_TMPDIR: tmp } };
+}
+
 // Sets up a case's shell sandbox, if it asks for one: stub commands on PATH
 // that only record their calls, git and gh cut off from real config and
 // hosts, then the case's setup script. Returns the environment for the run.
@@ -406,7 +416,9 @@ async function prepareSandbox(c, work, ctx, arm) {
   const stubs = c.stubs ?? (wantsShell ? ["gh"] : []);
   const binDir = join(work, ".eval", "bin");
   const stubLog = join(work, ".eval", "stub-calls.log");
+  const temp = runTempEnv(work);
   mkdirSync(binDir, { recursive: true });
+  mkdirSync(temp.tmp, { recursive: true });
   writeFileSync(stubLog, "");
   for (const name of stubs) {
     const stub = join(binDir, name);
@@ -421,6 +433,7 @@ async function prepareSandbox(c, work, ctx, arm) {
   const env = {
     ...process.env,
     PATH: `${binDir}:${process.env.PATH}`,
+    ...temp.env,
     EVAL_BIN: binDir,
     EVAL_STUB_LOG: stubLog,
     // Build caches live in the run's directory, the only place the OS sandbox
