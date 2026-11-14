@@ -23,6 +23,8 @@ bash <skills>/refresh/scripts/refresh.sh --dir . --dry-run   # what it would do
 bash <skills>/refresh/scripts/refresh.sh --dir .             # do the safe steps
 ```
 
+The dry run only previews: it installs nothing and skips the doctor (`doctor: "skipped: dry run"`). When you are asked to apply what changed, run the second command too, and report from its output; stop after the dry run only when asked just to look, or when you are told to ask before `--update`.
+
 ## What the diff means
 
 It reads `git diff --name-only <from>..<to>`, by default `ORIG_HEAD..HEAD`, which is what the pull
