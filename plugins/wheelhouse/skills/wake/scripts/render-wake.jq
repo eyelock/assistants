@@ -37,6 +37,9 @@
       end),
      (if .inbox.you == null then "This is the default human's inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it's me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
    end),
+  (if (.wakeFirst // []) | length == 0 then empty
+   else "## Wake first\n\nWake first: \(.wakeFirst | map("\(.name) (\(.for))") | join(", ")). Wake each on its roster model, or send it a message if it is already live, at the start of the session. Relay their reports together with the inbox, and don't check GitHub yourself.\n"
+   end),
   (if .asks == null then empty
    elif .asks.error then "## Asks between seats\n\nThe open asks could not be read: \(.asks.error). Say so when you reply; don't say there are none.\n"
    else
