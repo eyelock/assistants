@@ -40,6 +40,18 @@
   (if (.wakeFirst // []) | length == 0 then empty
    else "## Wake first\n\nWake first: \(.wakeFirst | map("\(.name) (\(.for))") | join(", ")). Wake each on its roster model, or send it a message if it is already live, at the start of the session. Relay their reports together with the inbox, and don't check GitHub yourself.\n"
    end),
+  (if .asks == null then empty
+   elif .asks.error then "## Asks between seats\n\nThe open asks could not be read: \(.asks.error). Say so when you reply; don't say there are none.\n"
+   else
+     def ask: "- \(.title) (\(.id), \(.kind // "ask"), asked by \(.askedBy // "unknown"), with \(.assignee // "no one")\(if .answered then ", answered" else "" end), open \(.age // "for an unknown time")\(if (.blocks // []) | length > 0 then ", blocks \(.blocks | join(", "))" else "" end))";
+     "## Asks between seats\n",
+     (if ((.asks.errors // []) | length) > 0
+      then "**The asks could not be read in full:** \(.asks.errors | join("; ")). Don't say there are none: say what couldn't be read when you reply, and what could.\n"
+      else empty end),
+     (if (.asks.asks | length) == 0
+      then (if ((.asks.errors // []) | length) > 0 then "None could be read.\n" else "No open asks.\n" end)
+      else "Oldest first. An answered ask waits for its asker to close it; a return (kind return) waits for you to route it.\n\n" + (.asks.asks | map(ask) | join("\n")) + "\n" end)
+   end),
   "## Who you are\n",
   (if .firstWake
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"
