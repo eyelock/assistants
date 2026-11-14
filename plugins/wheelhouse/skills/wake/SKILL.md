@@ -151,7 +151,7 @@ read, never that nothing is waiting.
    what they say is done. Once you have picked up, retire the notes so they aren't read twice:
    `bash <skills>/work-graph/scripts/memory.sh forget --id <id> --reason "picked up"` (the `id` is in the block).
    If the bead you are picking up is
-   assigned to you but not yet claimed, claim it first (`bd update <id> --claim`): that is not a
+   assigned to you but not yet claimed, claim it first (`claim.sh <id> --seat <command>` in the `work-graph` skill, which is `bd update <id> --claim` and warns when the bead is outside your charter): that is not a
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
 5. **Waiting for you:** if the block says **The work graph couldn't be read (bd busy)**, your
