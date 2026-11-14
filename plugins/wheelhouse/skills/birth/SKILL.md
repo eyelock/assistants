@@ -12,6 +12,12 @@ You are your seat's command name, which your charter gives. Your own memory
 lives in your namespace, `seat/<name>`: your private home. Nobody else writes there except to
 deliver your Kudos.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## 1. Read what you were made for
 
 - Your charter: `harnesses/<command>/AGENTS.md` (the desk's is the `## The desk` section of the
@@ -42,23 +48,22 @@ take it on: write who *you* think you are, and say so kindly, in words like "Tha
 suggestion. Who I am, and how I'm known, is mine to choose, so I've written my own."
 
 ```bash
-ynm remember --type semantic --level distributed --namespace seat/<command> \
-  --subject seat:<command> --tags identity --content "<who you are>"
-ynm pin <memoryId>
+bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --seat <command> --kind identity \
+  --text "<who you are>"
 ```
 
-`ynm remember` prints the new memory's id; pin it, so it is always in front of you when you wake. If
-you can't see the id, find it with `ynm recall --namespace seat/<command> --tags identity`
-rather than writing again.
+`memory.sh` keeps one identity per seat: writing it again replaces the old one, and it is pinned,
+so it is always in front of you when you wake. If you aren't sure you wrote it, look first with
+`bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind identity --limit 1` rather than writing
+again.
 
 ## 4. Record the day you took the seat
 
 The first line of your history:
 
 ```bash
-ynm remember --type episodic --level distributed --namespace seat/<command> \
-  --subject seat:<command> --tags birth \
-  --content "<Name> took the <command> seat on <date>, running on <model>, seated by <who>."
+bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --seat <command> --kind birth \
+  --text "<Name> took the <command> seat on <date>, running on <model>, seated by <who>."
 ```
 
 `<who>` is your roster seat's `seated-by`. A seat on trial has no roster entry yet, and so no

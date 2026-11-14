@@ -58,8 +58,14 @@ if (a[0] === "remember" || a[0] === "supersede") {
 } else if (a[0] === "forget") { db.find((m) => m.memoryId === opt("memory-id")).tombstoned = true; save();
 } else if (a[0] === "recall") {
   const ns = opt("namespace"), tags = opt("tags"), subj = opt("subject");
+  // Like ynm's toIndexed: recall returns content with the memory's string data values (in key order,
+  // joined by a space) appended after a newline, so memory.sh must strip that line.
+  const shown = (m) => {
+    const tail = Object.values(m.data ?? {}).filter((v) => typeof v === "string").join(" ");
+    return tail ? { ...m, content: m.content + "\\n" + tail } : m;
+  };
   console.log(JSON.stringify(db.filter((m) => !m.tombstoned && (!ns || m.namespace === ns) && (!subj || m.subject === subj) &&
-    (!tags || tags.split(",").every((t) => m.tags.includes(t)))).reverse()));
+    (!tags || tags.split(",").every((t) => m.tags.includes(t)))).reverse().map(shown)));
 }
 `;
 
@@ -99,6 +105,7 @@ const story = (w) => {
   w.json(["remember", "--actor", "gahan", "--kind", "close-note", "--seat", "gahan", "--bead", "ynw-1", "--text", "Surprised: a.\nSharp edges: b."]);
   w.json(["remember", "--actor", "marr", "--kind", "note", "--human", "stakker", "--text", "FYI: merged."]);
   w.json(["remember", "--actor", "gahan", "--kind", "fact", "--slug", "dolt-ports", "--text", "Dolt ports clash."]);
+  w.json(["remember", "--actor", "gahan", "--kind", "event", "--bead", "ynw-1", "--text", "ynw-1: closed; the Linux build was skipped."]);
 };
 
 const SHAPE = ["at", "bead", "by", "id", "kind", "text"];
@@ -137,6 +144,9 @@ for (const memory of ["ynm", "beads"]) {
       assert.deepEqual([note.kind, note.by, note.text], ["note", "marr", "FYI: merged."]);
       const facts = w.json(["recall", "--shared"]);
       assert.deepEqual(facts.map((m) => [m.kind, m.text]), [["fact", "Dolt ports clash."]]);
+      const events = w.json(["recall", "--shared", "--kind", "event"]);
+      assert.deepEqual(events.map((m) => [m.kind, m.bead, m.text]), [["event", "ynw-1", "ynw-1: closed; the Linux build was skipped."]]);
+      assert.equal(w.json(["recall", "--shared", "--kind", "fact"]).length, 1, "events are not facts");
     } finally {
       w.done();
     }
@@ -191,6 +201,8 @@ for (const memory of ["ynm", "beads"]) {
       assert.equal(w.run([...base, "--kind", "note", "--seat", "gahan"]).status, 1, "note needs --human");
       assert.equal(w.run([...base, "--kind", "close-note", "--seat", "gahan"]).status, 1, "close-note needs --bead");
       assert.equal(w.run([...base, "--kind", "fact", "--seat", "gahan"]).status, 1, "fact is shared");
+      assert.equal(w.run([...base, "--kind", "event", "--shared"]).status, 1, "event needs --bead");
+      assert.equal(w.run([...base, "--kind", "event", "--bead", "ynw-1", "--seat", "gahan"]).status, 1, "event is shared");
       assert.equal(w.run([...base, "--kind", "gossip", "--seat", "gahan"]).status, 1, "unknown kind");
       assert.equal(w.run([...base, "--kind", "kudos", "--seat", "Bad/Name"]).status, 1, "a seat is a command name");
       assert.equal(w.run(["recall", "--kind", "kudos"]).status, 1, "recall needs a scope");
@@ -250,10 +262,11 @@ test("beads: keys follow the layout and never touch ynm", () => {
   try {
     story(w);
     const keys = Object.keys(JSON.parse(readFileSync(join(w.dir, "stub", "bd.json"), "utf8"))).sort();
-    assert.equal(keys.length, 6);
+    assert.equal(keys.length, 7);
     assert.ok(keys.includes("seat/gahan/identity"));
     assert.ok(keys.includes("seat/gahan/handoff"));
     assert.ok(keys.includes("wheelhouse/dolt-ports"));
+    assert.ok(keys.some((k) => /^event\/\d{8}T\d{6}Z-ynw-1$/.test(k)));
     assert.ok(keys.some((k) => /^seat\/gahan\/kudos\/\d{8}T\d{6}Z-marr$/.test(k)));
     assert.ok(keys.some((k) => /^seat\/gahan\/close-note\/\d{8}T\d{6}Z-ynw-1$/.test(k)));
     assert.ok(keys.some((k) => /^human\/stakker\/note\/\d{8}T\d{6}Z-marr$/.test(k)));
@@ -299,5 +312,42 @@ test("sync: ynm syncs memory when there is a git remote and leaves work alone", 
   } finally {
     none.done();
     some.done();
+  }
+});
+
+// ynm recall appends a memory's string data values to its content as a last line, so the stub
+// above cannot show the bug: this case runs the real ynm in a scratch git repository with its own
+// HOME (no personal or team store of the machine is touched). Skipped where ynm is not installed.
+const realYnm = spawnSync("ynm", ["--version"], { encoding: "utf8" }).status === 0;
+test("ynm (real): memories round-trip exactly and an inbox note parses", { skip: !realYnm && "ynm is not installed" }, () => {
+  const dir = mkdtempSync(join(tmpdir(), "wheelhouse-realynm-"));
+  const env = { ...process.env, HOME: join(dir, "home") };
+  const sh = (cmd, args) => spawnSync(cmd, args, { cwd: dir, env, encoding: "utf8" });
+  try {
+    mkdirSync(env.HOME);
+    assert.equal(sh("git", ["init", "-q", "."]).status, 0);
+    assert.equal(sh("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty", "-m", "init"]).status, 0);
+    const init = sh("ynm", ["init", "--json"]);
+    assert.equal(init.status, 0, init.stderr);
+    const mem = (args) => {
+      const r = sh("bash", [script, ...args]);
+      assert.equal(r.status, 0, r.stderr);
+      return JSON.parse(r.stdout);
+    };
+    const closeNote = "Surprised: a.\nSharp edges: b.";
+    mem(["remember", "--actor", "gahan", "--kind", "close-note", "--seat", "gahan", "--bead", "ynw-1", "--text", closeNote]);
+    mem(["remember", "--actor", "marr", "--kind", "kudos", "--seat", "gahan", "--text", "Thanks."]);
+    mem(["remember", "--actor", "marr", "--kind", "note", "--human", "stakker", "--text", "FYI: merged."]);
+    mem(["remember", "--actor", "gahan", "--kind", "event", "--bead", "ynw-1", "--text", "ynw-1: closed."]);
+    const cn = mem(["recall", "--seat", "gahan", "--kind", "close-note"])[0];
+    assert.deepEqual([cn.text, cn.by, cn.bead], [closeNote, "gahan", "ynw-1"]);
+    const kudos = mem(["recall", "--seat", "gahan", "--kind", "kudos"])[0];
+    assert.deepEqual([kudos.text, kudos.by], ["Thanks.", "marr"]);
+    const note = mem(["recall", "--human", "stakker"])[0];
+    assert.deepEqual([note.kind, note.by, note.text], ["note", "marr", "FYI: merged."]);
+    const ev = mem(["recall", "--shared", "--kind", "event"])[0];
+    assert.deepEqual([ev.text, ev.bead], ["ynw-1: closed.", "ynw-1"]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

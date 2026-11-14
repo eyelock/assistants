@@ -4,7 +4,7 @@
 // (the stubs log every call to $STUB_LOG, so a test can see what was run and what was not).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -413,28 +413,29 @@ test("a seat that is not installed or not born is reported with the exact comman
   }
 });
 
-test("with no diff it offers ynh update for a stale wheelhouse include, and --update runs it and re-copies changed plugin scripts", () => {
+test("with no diff it offers ynh update for a stale wheelhouse include, and --update runs it, copies no script and restarts the updated seats", () => {
   const w = wheelhouse();
   try {
     writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
-    const pluginDir = join(w.dir, "plugin");
-    write(pluginDir, "skills/wake/scripts/wake.sh", "#!/bin/sh\n# v2\n");
-    write(pluginDir, "skills/patrol/scripts/patrol.sh", "#!/bin/sh\n# not carried here\n");
+    // An older Wheelhouse still carries a copy of the plugin's wake.sh: refresh leaves it exactly as it is.
+    mkdirSync(join(w.wh, "scripts"), { recursive: true });
+    writeFileSync(join(w.wh, "scripts", "wake.sh"), "#!/bin/sh\n# an old copy\n");
+    git(w.wh, "add", "-A");
+    git(w.wh, "commit", "-qm", "an old copy of wake.sh");
 
-    const offer = w.run(["HEAD..HEAD", "--plugin", pluginDir]);
+    const offer = w.run(["HEAD..HEAD"]);
     assert.equal(offer.status, 0, offer.stderr);
     assert.deepEqual(offer.json.upstream.updates.map((u) => u.command).sort(), ["ynh update local/dree", "ynh update local/eno", "ynh update local/hq", "ynh update local/wick"]);
-    assert.deepEqual(offer.json.upstream.pluginScriptsDiffer, ["scripts/wake.sh"]);
-    assert.deepEqual(offer.json.upstream.pluginScriptsCopied, []);
+    assert.deepEqual(Object.keys(offer.json.upstream), ["updates"]);
     assert.doesNotMatch(w.log(), /ynh update/);
-    assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v1/);
 
-    const done = w.run(["HEAD..HEAD", "--update", "--plugin", pluginDir]);
+    const done = w.run(["HEAD..HEAD", "--update"]);
     assert.equal(done.status, 0, done.stderr);
     assert.match(w.log(), /^ynh update local\/hq$/m);
-    assert.deepEqual(done.json.upstream.pluginScriptsCopied, ["scripts/wake.sh"]);
-    assert.match(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), /v2/);
-    assert.equal(existsSync(join(w.wh, "scripts", "patrol.sh")), false);
+    assert.deepEqual(Object.keys(done.json.upstream), ["updates"]);
+    assert.equal(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), "#!/bin/sh\n# an old copy\n");
+    assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), false);
+    assert.equal(existsSync(join(w.wh, "scripts", "wheelhouse-lib.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
   } finally {
     w.done();
@@ -474,3 +475,4 @@ test("a directory that is not a Wheelhouse is refused", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+

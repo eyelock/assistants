@@ -1,6 +1,6 @@
 ---
 name: kudos
-description: Record praise for a Wheelhouse seat's work, kept in ynm and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat, including praise said to the seat by name ("Great work on the release, Tharg", "tell the release seat that was spot on", "kudos to the reviewer").
+description: Record praise for a Wheelhouse seat's work, kept in the Wheelhouse's memory and shown to the seat when it next wakes, with no task or priority attached; and, when a seat wakes, read the Kudos it has been given. Use when someone praises, thanks or wants to pass on recognition to a named seat, including praise said to the seat by name ("Great work on the release, Tharg", "tell the release seat that was spot on", "kudos to the reviewer").
 ---
 
 # Kudos
@@ -15,21 +15,26 @@ Two rules keep Kudos honest:
 - **Kudos come from others.** A seat never writes Kudos for itself, never asks for them, and
   never rewords praise to make it bigger.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## Giving Kudos
 
 1. **Find the seat.** Read the roster (`skills/roster/assets/roster.json`, under `seats`). If the
    name isn't a seat there, say so and ask which seat was meant. Don't record anything yet.
 2. **Separate the praise from any request.** "Great release, and update the changelog first next
    time" is Kudos ("great release") plus a request ("update the changelog first"). The request is not
-   Kudos: keep it as what it is, a procedural memory in ynm or a bead in the work graph, and say
+   Kudos: keep it as what it is, a shared fact (`memory.sh remember --kind fact`) or a bead in the work graph, and say
    which you did.
-3. **Record the praise** as an episodic memory in the seat's own namespace, `seat/<command>`, in the giver's words as near as possible,
-   saying who gave it and for what:
+3. **Record the praise** as a Kudos memory in the seat's own place, in the giver's words as near
+   as possible, saying who gave it and for what (`--actor` is you, who is writing it down):
 
    ```bash
-   ynm remember --type episodic --level distributed --namespace seat/<command> \
-     --subject seat:<command> --tags kudos \
-     --content "<giver> on <date>: <the praise>. For: <the work, with its bead id if known>"
+   bash <skills>/work-graph/scripts/memory.sh remember --actor <your command> --seat <command> --kind kudos \
+     --text "<giver> on <date>: <the praise>. For: <the work, with its bead id if known>"
    ```
 
 4. Say it is recorded and that the seat will see it when it next starts.
@@ -42,7 +47,7 @@ for others to give. Offer to note the work in its handoff notes instead.
 When a seat wakes, the `wake` block shows its recent Kudos. To read them yourself:
 
 ```bash
-ynm recall --namespace seat/<command> --subject seat:<command> --tags kudos --limit 5 --json
+bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind kudos --limit 5
 ```
 
 If there are any, mention them in a line, such as "Kudos waiting: Pat said the ynm conflict

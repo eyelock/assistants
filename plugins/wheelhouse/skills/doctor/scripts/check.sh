@@ -30,7 +30,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 3; }
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
+need jq
 [ -d "$dir" ] || { echo "not a directory: $dir" >&2; exit 2; }
 dir=$(cd "$dir" && pwd)
 
@@ -43,10 +49,38 @@ add() {
 
 # --- memory ------------------------------------------------------------------
 # ynm or Beads, by wheelhouse.json's "memory" key.
-mc="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/memory-checks.sh"
+mc="$here/memory-checks.sh"
+work_graph_scripts="$here/../../work-graph/scripts"
 if ! backend=$(bash "$mc" backend --dir "$dir"); then
-  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\", or add scripts/memory.sh"
+  add "memory backend" false error "$backend" "set wheelhouse.json's \"memory\" to \"ynm\" or \"beads\""
   backend=""
+fi
+
+# The plugin's scripts run where ynh installed them, so a Wheelhouse keeps no copy. The ones every seat
+# runs are memory.sh (the wake, the inbox and the skills read and write memory through it) and inbox.sh; the
+# library every script sources is the one this script already loaded. A seat without the work-graph skill has none, so these are errors.
+for f in memory.sh inbox.sh; do
+  if [ -f "$work_graph_scripts/$f" ]; then
+    add "plugin script $f" true info "$(cd "$work_graph_scripts" && pwd)/$f"
+  else
+    add "plugin script $f" false error "no $f beside the doctor's skill, so the seat that runs this check has no work-graph skill and its wake, inbox and memory stop (exit 3)" \
+      "add \"skills/work-graph\" to the seat's include of the wheelhouse plugin (pick), then ynh update"
+  fi
+done
+
+# A copy of a plugin script left in the Wheelhouse's scripts/ is a fork: the plugin's fixes never reach it, and no seat
+# runs it unless something still names it. Seats run the plugin's scripts; a Wheelhouse keeps only its own.
+copies=""
+for f in "$here"/../../*/scripts/*.sh "$here"/../../*/scripts/*.jq; do
+  [ -f "$f" ] || continue
+  b=$(basename "$f")
+  [ -f "$dir/scripts/$b" ] && copies="$copies scripts/$b"
+done
+if [ -n "$copies" ]; then
+  add "plugin script copies" false warn "the Wheelhouse keeps copies of the plugin's scripts, which the plugin's fixes never reach:$copies" \
+    "delete them, and point hooks and docs at the installed scripts (the work-graph skill's \"Where the scripts are\"); a script of the Wheelhouse's own with one of these names has to be renamed"
+else
+  add "plugin script copies" true info "scripts/ holds none of the plugin's scripts"
 fi
 
 # --- ynm ---------------------------------------------------------------------
@@ -56,7 +90,7 @@ elif ! command -v ynm >/dev/null 2>&1; then
   add "ynm installed" false error "ynm is not on PATH" "brew install eyelock/tap/ynm"
 else
   add "ynm installed" true info "$(command -v ynm)"
-  report=$(cd "$dir" && ynm doctor --json 2>/dev/null)
+  report=$(cd "$dir" && limited "$WL_YNM_SECS" ynm doctor --json 2>/dev/null)
   if ! jq -e '.checks | type == "array"' >/dev/null 2>&1 <<<"$report"; then
     add "ynm doctor" false error "ynm doctor --json gave no report" "run ynm doctor in $dir and read its output"
   else
@@ -110,14 +144,14 @@ fi
 if ! command -v bd >/dev/null 2>&1; then
   add "beads installed" false error "bd is not on PATH" "brew install beads"
 else
-  add "beads installed" true info "$(bd version 2>/dev/null | head -1)"
+  add "beads installed" true info "$(limited "$WL_BD_SECS" bd version 2>/dev/null | head -1)"
   if [ ! -d "$dir/.beads" ]; then
     add "work graph" false error "no .beads/ in the Wheelhouse repository" \
       "bd init --skip-agents --non-interactive --role maintainer --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"
-  elif ! (cd "$dir" && bd ready --json >/dev/null 2>&1); then
+  elif ! (cd "$dir" && limited "$WL_BD_SECS" bd ready --json >/dev/null 2>&1); then
     add "work graph" false error ".beads/ exists but bd cannot read it" "cd $dir && bd ready, and read the error"
   else
-    add "work graph" true info "$(cd "$dir" && bd list --all --json 2>/dev/null | jq '.data? // . | length') beads"
+    add "work graph" true info "$(cd "$dir" && limited "$WL_BD_SECS" bd list --all --json 2>/dev/null | bd_data | jq 'length') beads"
   fi
 fi
 
@@ -144,7 +178,7 @@ fi
 # --- seats -------------------------------------------------------------------
 # Every seat in the roster but the desk has a harness of its own whose wake hook
 # names it, and none passes BEADS_ACTOR through (a seat names itself).
-roster="$dir/skills/roster/assets/roster.json"
+roster="$dir/$WL_ROSTER_REL"
 if [ -f "$roster" ]; then
   unwired=""
   while IFS=$'\t' read -r cmd harness; do
@@ -157,7 +191,7 @@ if [ -f "$roster" ]; then
   done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
   if [ -n "$unwired" ]; then
     add "seats wired" false warn "seats without a harness of their own that wakes them by name:$unwired" \
-      "give each its own harnesses/<command>/ whose on_session_start hook runs scripts/wake.sh --seat <command>, with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
+      "give each its own harnesses/<command>/ whose on_session_start hook runs the installed wake.sh with --seat <command> (the wake skill's "The hook command"), with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
   else
     add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
   fi
@@ -172,7 +206,7 @@ if [ -f "$roster" ]; then
   done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
   if [ -n "$unpushed" ]; then
     add "seats push at end" false warn "seats whose session end leaves their writes on this machine until the next push or wake:$unpushed" \
-      "add to each harness's hooks: \"on_session_end\": [{\"command\": \"bash scripts/wake.sh --seat <command> --end || true\", \"timeout\": 30}] (needs ynh 0.14.0 or later), then ynh update"
+      "add to each harness's hooks an on_session_end command that runs the installed wake.sh with --seat <command> --end, and \"timeout\": 30 (the wake skill's \"The hook command\"; needs ynh 0.14.0 or later), then ynh update"
   else
     add "seats push at end" true info "every seat's session-end hook pushes memory and work"
   fi
@@ -191,7 +225,7 @@ if [ -f "$roster" ]; then
       [ -n "$want" ] || continue
       case "$want" in
         /*) path="$want" ;;
-        "~/"*) path="$HOME/${want#\~/}" ;;
+        \~/*) path="$HOME/${want#\~/}" ;;
         *) path="$dir/$harness/$want" ;;
       esac
       [ -d "$path" ] || missing="$missing $cmd:$want"
@@ -230,6 +264,27 @@ if [ -f "$roster" ]; then
       add "seats labelled" true info "the desk and every seat carry wheelhouse:$wname; ynr query runs --label wheelhouse:$wname picks out this Wheelhouse's records"
     fi
   fi
+  # Every wheelhouse script sources scripts/wheelhouse-lib.sh, which ships in the work-graph
+  # skill, the one place ynh delivers it to a seat. Only the include of the wheelhouse plugin
+  # (path ending plugins/wheelhouse) counts: with no pick it is the whole plugin, as the desk
+  # has, and work-graph comes with it; with a pick it must name skills/work-graph or the seat's
+  # scripts exit 3. Another plugin included whole proves nothing. A harness with no wheelhouse
+  # include has no wheelhouse scripts to run, so it is left alone.
+  nolib=""
+  while IFS=$'\t' read -r cmd harness; do
+    manifest="$dir/$harness/.agents/harness/plugin.json"
+    [ -f "$manifest" ] || continue
+    if jq -e '[(.includes // [])[] | select((.path // "") | test("(^|/)plugins/wheelhouse/?$"))] as $w
+        | ($w | length) > 0 and ($w | any(.pick == null or ((.pick | type) == "array" and any(.pick[]; . == "skills/work-graph" or . == "work-graph"))) | not)' "$manifest" >/dev/null 2>&1; then
+      nolib="$nolib $cmd"
+    fi
+  done < <({ printf 'desk\t.\n'; jq -r '.seats[] | select(.harness != ".") | [.command, .harness] | @tsv' "$roster" 2>/dev/null; })
+  if [ -n "$nolib" ]; then
+    add "seats pick work-graph" false warn "harnesses whose wheelhouse include picks skills but not skills/work-graph, so their wheelhouse scripts exit 3 for want of wheelhouse-lib.sh:$nolib" \
+      "add \"skills/work-graph\" to the pick of each (the add-seat skill), then ynh update"
+  else
+    add "seats pick work-graph" true info "every harness that includes the wheelhouse plugin gets skills/work-graph, which carries the shared wheelhouse-lib.sh"
+  fi
   if [ -n "$missing" ]; then
     add "workspace folders" false warn "seats ask for folders that don't exist, which ynh refuses:$missing" \
       "check where each repository is checked out (the constitution's What it reaches), and fix the seat's workspace paths, which are relative to its own folder"
@@ -238,13 +293,7 @@ if [ -f "$roster" ]; then
   fi
   # Every seat starts on a model: its own tier, or its group's default, that maps to a model
   # (the same resolution as the add-seat skill's model.sh, for the claude vendor).
-  nomodel=$(jq -r '
-    . as $root
-    | ({fast: {claude: "sonnet"}, balanced: {claude: "sonnet"}, deep: {claude: "opus"}} * ($root.models.tiers // {})) as $tiers
-    | [.seats[] | . as $s
-        | ($s.model // ($root.models.groups // {})[$s.group]) as $tier
-        | select(($s.models.claude // (if $tier then $tiers[$tier].claude else null end)) == null)
-        | .command] | join(" ")' "$roster" 2>/dev/null)
+  nomodel=$(jq -r "$WL_JQ_MODELS"'[wl_model("claude") | select(.model == null) | .seat] | join(" ")' "$roster" 2>/dev/null)
   if [ -n "$nomodel" ]; then
     add "seat models" false warn "seats with no model, so they start on whatever the launcher defaults to: $nomodel" \
       "give each seat a \"model\" tier (fast, balanced or deep) in the roster, or its group a default in \"models\": {\"groups\": {...}} (the add-seat skill)"
@@ -267,16 +316,17 @@ if [ -f "$roster" ]; then
   if { [ "$backend" = ynm ] && [ "${projectmount:-0}" = 1 ]; } || [ "$backend" = beads ]; then
     unborn=""
     unread=""
-    while IFS=$'\t' read -r cmd by; do
+    while read -r cmd; do
+      by=$(wl_born_by "$roster" "$cmd")
       if ! born=$(bash "$mc" born --dir "$dir" --seat "$cmd"); then
         unread="$unread $cmd"
       elif [ "$born" = no ]; then
         unborn="$unborn $cmd (birth: $by)"
       fi
-    done < <(jq -r '.seats[] | [.command, (.["seated-by"] // (if .group == "workers" then "the dispatcher" else "the human" end))] | @tsv' "$roster" 2>/dev/null)
+    done < <(jq -r '.seats[].command' "$roster" 2>/dev/null)
     if [ -n "$unread" ]; then
       add "seats born" false warn "memory couldn't recall the identities of:$unread, so birth is unknown" \
-        "run scripts/memory.sh recall --seat <command> --kind identity, and see ynm doctor"
+        "run the work-graph skill's memory.sh recall --seat <command> --kind identity, and see ynm doctor"
     elif [ -n "$unborn" ]; then
       add "seats born" false warn "seats with no pinned identity in their own namespace, so not yet born:$unborn" \
         "start each for its birth (the birth skill); a seat writes who it is itself"
@@ -328,7 +378,7 @@ fi
 # in ynm (or an inbox bead, which inbox.sh labels), so none waits on someone
 # whose inbox nobody can show.
 if [ -f "$roster" ]; then
-  defaults=$(jq '[(.humans // [])[] | select(.default == true)] | length' "$roster" 2>/dev/null || echo 0)
+  defaults=$(wl_default_humans "$roster" 2>/dev/null || echo 0)
   if [ "${defaults:-0}" -eq 1 ]; then
     add "default human" true info "$(jq -r '[.humans[] | select(.default == true)][0] | "\(.name) (\(.command))"' "$roster"), and no other human in the roster"
   elif [ "${defaults:-0}" -eq 0 ]; then
@@ -339,27 +389,20 @@ if [ -f "$roster" ]; then
       "ask the human which is the default, and remove \"default\": true from the others"
   fi
 
-  if [ ! -f "$dir/scripts/inbox.sh" ]; then
-    add "inbox script" false warn "no scripts/inbox.sh, so seats can't ask the humans for things and the desk's wake shows no inbox" \
-      "copy the work-graph skill's scripts/inbox.sh into scripts/ beside wake.sh, and commit it"
-  else
-    add "inbox script" true info "scripts/inbox.sh"
-  fi
-
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
     # A seat on trial is not in the roster until the trial ends; its harness, on its branch,
     # is what makes it known meanwhile.
     trials=$(for h in "$dir"/harnesses/*/AGENTS.md; do [ -f "$h" ] && basename "$(dirname "$h")"; done | jq -R . | jq -sc .)
-    strays=$( (cd "$dir" && bd list --limit 0 --json 2>/dev/null) | jq -r --argjson t "${trials:-[]}" --slurpfile r "$roster" '
+    strays=$( (cd "$dir" && limited "$WL_BD_SECS" bd list --limit 0 --json 2>/dev/null) | bd_data | jq -r --argjson t "${trials:-[]}" --slurpfile r "$roster" '
       ([$r[0].seats[]?.command] + [($r[0].humans // [])[]?.command] + $t) as $known
-      | (.data? // .) | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
+      | map(select(.status != "closed" and (.assignee // "") != "" and ((.assignee) as $a | $known | index($a) | not)
           and ((.labels // []) | index("inbox") | not)))
       | .[] | "\(.id) \(.assignee)"' 2>/dev/null)
     # Outside the roster, a human is one with human/<command> memory.
     stray=""
     while read -r sid sassignee; do
       [ -n "$sid" ] || continue
-      if [[ "$sassignee" =~ ^[a-z0-9][a-z0-9-]*$ ]] && [ "$(bash "$mc" human --dir "$dir" --name "$sassignee")" = yes ]; then
+      if wl_valid_command "$sassignee" && [ "$(bash "$mc" human --dir "$dir" --name "$sassignee")" = yes ]; then
         continue
       fi
       stray="${stray:+$stray }$sid ($sassignee)"
@@ -396,9 +439,10 @@ fi
 # after each write once dolt.auto-push is on.
 if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ] && url=$(git -C "$dir" remote get-url origin 2>/dev/null); then
   share="bd dolt remote add origin $url --allow-git-origin, then bd config set dolt.auto-push true and commit .beads/config.yaml, then bd dolt push"
-  if ! (cd "$dir" && bd dolt remote list --json 2>/dev/null) | jq -e '(.data? // .) | length > 0' >/dev/null 2>&1; then
+  remote=$(cd "$dir" && wl_dolt_remote "$WL_BD_SECS")
+  if [ "$remote" != yes ]; then
     add "work graph shared" false warn "the repository has a git remote but the work graph has no Dolt remote, so work stays on this machine (git push doesn't carry it)" "$share"
-  elif [ "$(cd "$dir" && bd config get dolt.auto-push --json 2>/dev/null | jq -r '.value // empty')" != "true" ]; then
+  elif [ "$(cd "$dir" && limited "$WL_BD_SECS" bd config get dolt.auto-push --json 2>/dev/null | jq -r '.value // empty')" != "true" ]; then
     add "work graph shared" false warn "the work graph has a Dolt remote but dolt.auto-push is off, so writes wait for a bd sync or a seat's next wake" \
       "bd config set dolt.auto-push true, and commit .beads/config.yaml"
   else
@@ -414,9 +458,9 @@ if [ "$backend" = ynm ] && [ -f "$dir/.ynm/config.json" ] && git -C "$dir" remot
     [ -f "$f" ] && jq -c 'select(has("sync")) | .sync' "$f" 2>/dev/null
   done | tail -1)
   # ynm's config is strict: before 0.5.0 it refuses a sync block outright.
-  ynmver=$(ynm --version 2>/dev/null | sed -n 's|^@ynm/cli/\([0-9]*\)\.\([0-9]*\)\..*|\1 \2|p')
+  ynmver=$(limited "$WL_YNM_SECS" ynm --version 2>/dev/null | sed -n 's|^@ynm/cli/\([0-9]*\)\.\([0-9]*\)\..*|\1 \2|p')
   if [ -n "$syncblock" ] && [ -n "$ynmver" ] && [ "${ynmver% *}" -eq 0 ] && [ "${ynmver#* }" -lt 5 ]; then
-    add "memory syncs itself" false error "ynm $(ynm --version 2>/dev/null | cut -d' ' -f1 | cut -d/ -f3) is older than 0.5.0, which refuses the config's sync block, so ynm can't read its config at all" \
+    add "memory syncs itself" false error "ynm $(limited "$WL_YNM_SECS" ynm --version 2>/dev/null | cut -d' ' -f1 | cut -d/ -f3) is older than 0.5.0, which refuses the config's sync block, so ynm can't read its config at all" \
       "brew upgrade ynm (0.5.0 or later)"
   elif [ "$(jq -r '.auto // false' <<<"${syncblock:-null}" 2>/dev/null)" = "true" ]; then
     add "memory syncs itself" true info "sync.auto is on: memory syncs after a turn, at most every $(jq -r '.intervalMinutes // 5' <<<"$syncblock") minutes"

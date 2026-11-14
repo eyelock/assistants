@@ -48,6 +48,7 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
   }
   const scripts = join(dir, "scripts");
   cpSync(scriptsDir, scripts, { recursive: true });
+  cpSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(scripts, "wheelhouse-lib.sh"));
   for (const [kind, body] of Object.entries(adapters)) writeFileSync(join(scripts, `tracker-${kind}.sh`), body);
   const script = join(scripts, "open-pr.sh");
   const wh = join(dir, "wh");
@@ -114,6 +115,28 @@ test("an issue in another repository is named in full", () => {
   const h = harness();
   const r = h.run(["--bead", "hq-1", "--repo", "eyelock/assistants"]);
   assert.equal(r.json.closing, "Closes eyelock/ynh#680");
+  h.done();
+});
+
+test("a bead whose external_ref is a pull request URL is a review fix: a dry run reports it, a real run opens no PR", () => {
+  const PR = "https://github.com/eyelock/ynh/pull/700";
+  const h = harness({ beads: [bead("hq-1", { external_ref: PR })] });
+  const dry = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.equal(dry.json.review_fix, true);
+  assert.equal(dry.json.pr, PR);
+  const real = h.run();
+  assert.equal(real.status, 1);
+  assert.match(real.json.refused, /review fix/);
+  assert.doesNotMatch(h.log(), /pr create/);
+  h.done();
+});
+
+test("an issue URL is not a review fix", () => {
+  const h = harness();
+  const r = h.run(["--bead", "hq-1", "--dry-run"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.notEqual(r.json.review_fix, true);
   h.done();
 });
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs skill evals for every skill under the given paths, via skill-evals.mjs.
 #
-#   scripts/run-evals.sh [--mode all|output|triggers] [--runs N] [--model M] [-j N] [--dry-run] <path>...
+#   scripts/run-evals.sh [--mode all|output|triggers] [--runs N] [--model M] [--vendor V] [-j N] [--dry-run] <path>...
 #
 # A path may be one skill (a directory holding SKILL.md), a package such as
 # skills/triage, or a plugin such as plugins/gitflow: every skill below it that
@@ -20,6 +20,7 @@ prefix="run-evals:"
 mode=all
 runs=1
 model=sonnet
+vendor="${VENDOR:-claude}"
 jobs=4
 dry_run=false
 paths=()
@@ -39,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --mode) mode="${2:-}"; shift 2 ;;
     --runs) runs="${2:-}"; shift 2 ;;
     --model) model="${2:-}"; shift 2 ;;
+    --vendor) vendor="${2:-}"; shift 2 ;;
     -j | --concurrency) jobs="${2:-}"; shift 2 ;;
     --dry-run) dry_run=true; shift ;;
     -*) fail "unknown option $1 (see --help)" ;;
@@ -49,6 +51,7 @@ done
 case "$mode" in all | output | triggers) ;; *) fail "--mode must be all, output or triggers" ;; esac
 [[ "$runs" =~ ^[1-9][0-9]*$ ]] || fail "--runs must be a positive integer"
 [[ -n "$model" ]] || fail "--model needs a value"
+[[ -n "$vendor" ]] || fail "--vendor needs a value"
 [[ "$jobs" =~ ^[1-8]$ ]] || fail "-j must be 1-8"
 [[ ${#paths[@]} -gt 0 ]] || fail "give at least one skill, package or plugin path (see --help)"
 
@@ -103,7 +106,7 @@ failed=0
 for item in "${planned[@]}"; do
   kind="${item%%|*}"
   skill="${item#*|}"
-  args=("$skill" -j "$jobs" --model "$model")
+  args=("$skill" -j "$jobs" --model "$model" --vendor "$vendor")
   [[ "$kind" == triggers ]] && args+=(--triggers) || args+=(--runs "$runs")
   printf '%-9s %-55s ' "$kind" "$skill"
   if out="$(node scripts/skill-evals.mjs "${args[@]}" 2>/dev/null)"; then

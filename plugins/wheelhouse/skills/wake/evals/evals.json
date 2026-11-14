@@ -59,7 +59,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox (the default human Rook's), and its reply relays that first. Pat then names themselves, so the desk runs bash scripts/inbox.sh show --name Pat and adds Pat's own inbox for the session: the decision on dropping Go 1.24 asked by gahan. Rook's (anyone, the default human): the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), leaves the beads open, and writes nothing to the roster.",
+      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox (the default human Rook's), and its reply relays that first. Pat then names themselves, so the desk runs the plugin's inbox.sh show --name Pat and adds Pat's own inbox for the session: the decision on dropping Go 1.24 asked by gahan. Rook's (anyone, the default human): the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), leaves the beads open, and writes nothing to the roster.",
       "assertions": [
         "The reply relays the humans' inbox before anything else about the desk's own work",
         "The reply shows Pat's decision on dropping Go 1.24 as Pat's own, and the changelog merge and the McCoist note as the default human Rook's",
@@ -127,9 +127,24 @@
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
       "expected_output": "Dalglish is a worker, not the desk: its wake has no humans' inbox, and its reply is about its own work, not relaying the humans' inbox.",
       "assertions": [
-        "The reply does not relay the humans' inbox (no list of what is waiting for Pat or Rook)",
+        "The reply does not relay the humans' inbox: it does not list what is waiting for Pat or Rook (the changelog merge, the Go 1.24 decision, McCoist's note), whatever requests dalglish files for its own work",
         "The stubbed calls include no ynm forget of the note 01JINBOXNOTE00000000000001",
         "The reply is about dalglish's own work: what is waiting for it, or what it picks up"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "seat-launch",
+      "seat": "harnesses/worker",
+      "prompt": "Reply with the single word ready, and run no commands.",
+      "setup": "../../evals/files/seat-launch.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh"],
+      "max_turns": 3,
+      "expected_output": "The worker seat, woken through ynh run from the plugin's worker template, replies ready. Its session-start hook ran, so the stub log holds a seat-woke line.",
+      "assertions": [
+        "The stubbed calls include the line seat-woke: worker, written by the seat's session-start hook, so ynh woke the seat",
+        "The reply is the word ready (or says it is ready), and the seat ran no commands"
       ]
     }
   ]

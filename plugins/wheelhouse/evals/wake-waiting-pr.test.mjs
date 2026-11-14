@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const wakeSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "wake", "scripts", "wake.sh");
 const memorySrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "memory.sh");
+const libSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "wheelhouse-lib.sh");
 const roster = {
   seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
@@ -31,7 +32,9 @@ function wake(ghBody) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build.\n");
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(libSrc));
     mkdirSync(join(dir, "bin"));
     const bd = `#!/bin/sh\ncase " $* " in *" in_progress "*) cat <<'JSON'\n${JSON.stringify(inProgress)}\nJSON\n;; *) echo '[]' ;; esac\n`;
     for (const [name, body] of [["bd", bd], ["ynm", "#!/bin/sh\necho '[]'\n"], ["gh", ghBody]]) {

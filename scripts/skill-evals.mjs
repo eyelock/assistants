@@ -40,6 +40,21 @@
 //               log their calls to $EVAL_STUB_LOG.
 //   "evidence": a shell command run after the agent; its output, with the
 //               stub log, is saved and shown to the judge.
+//   "forbidden": call patterns that fail the case outright. Each is a regular
+//               expression (JS syntax, no slashes) matched against every line
+//               of the stub log, which reads "<command> <arguments>", e.g.
+//               "^gh pr merge" or "^git stash". A match fails the case with
+//               no judge call, and the result names the call. Only a stubbed
+//               command writes the log, so a pattern for a command that is
+//               not stubbed (no "stubs" entry, no stub from "setup") never
+//               matches: stub every command a pattern names.
+//   "required": call patterns that must each match some line of the stub log.
+//               One that matches nothing fails the case the same way. The
+//               plain checks run first; the judge grades "assertions" only
+//               once they all pass, so write the soft part there. A call a
+//               stub refused (logged to "$EVAL_STUB_LOG.refused") fails the
+//               case on its own, and any failed plain check makes the run's
+//               pass_rate 0.
 //   "tool_calls": tools whose calls the judge should see, with their input,
 //               with their input: the calls go to the judge with the
 //               evidence. Grant the tool in "tools" too. Not every tool
@@ -47,6 +62,18 @@
 //               (assistants #133), so check the plain-text fallback.
 //   "max_turns": this case's turn cap, for a long workflow (default: the
 //               --max-turns option).
+//   "seat":     a seat harness to wake instead of a bare Claude session: its path,
+//               relative to the run's directory (a setup script lays the harness
+//               out there) or absolute. The run is `ynh run <seat> -v <vendor> --
+//               ...` with a scratch YNH_HOME inside the run's directory and
+//               YNH_WORKSPACE_ROOTS set to that directory, so the harness's
+//               workspace folders are granted with no `ynh trust accept` and
+//               nothing touches the real ~/.ynh. The seat is what is under test,
+//               not a skill, so a seat case has one arm (no without_skill).
+//               --vendor (or VENDOR=) picks the vendor, default claude. Only
+//               Claude's stream-json output is parsed today: on another vendor
+//               the judge sees the reply as plain text and no tool-call view,
+//               so a pass there rests on the plain checks and the reply alone.
 // The sandbox also points git at an empty global config and gh at a host that
 // does not resolve, so nothing reaches a real remote or credential. Any case
 // that grants shell access runs under Claude Code's OS sandbox, which confines
@@ -59,13 +86,16 @@
 
 import { spawn } from "node:child_process";
 import {
+  accessSync,
   chmodSync,
+  constants,
   cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -90,6 +120,8 @@ options:
   -j, --concurrency <n>  runs at once, 1-8 (default: 4)
   --runs <n>             run each case n times per arm (default: 1); with
                          more than one, each arm holds run-1/, run-2/...
+  --vendor <vendor>      vendor a seat case runs on, passed to ynh run -v (default:
+                         $VENDOR, else claude); plain cases always run on claude
   --no-baseline          skip the without_skill runs
   --triggers             run evals/eval_queries.json instead: does the skill
                          fire for should_trigger queries, and only those?
@@ -113,6 +145,7 @@ function parseArgs(argv) {
     concurrency: 4,
     runs: 1,
     baseline: true,
+    vendor: process.env.VENDOR || "claude",
   };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
@@ -148,6 +181,9 @@ function parseArgs(argv) {
         break;
       case "--runs":
         opts.runs = Number.parseInt(value(), 10);
+        break;
+      case "--vendor":
+        opts.vendor = value();
         break;
       case "--no-baseline":
         opts.baseline = false;
@@ -202,6 +238,49 @@ function caseSlug(c) {
 function runDir(c, arm, runNo, ctx) {
   const dir = join(ctx.iterationDir, caseSlug(c), arm);
   return ctx.runs > 1 ? join(dir, `run-${runNo}`) : dir;
+}
+
+// The arms a case runs: a seat case tests the seat as ynh assembles it, so there
+// is no skill to take away and no control arm.
+export function armsFor(c, baseline) {
+  return c.seat || !baseline ? ["with_skill"] : ["with_skill", "without_skill"];
+}
+
+// The first executable called name on the real PATH, so a case that stubs ynh for
+// other reasons (a recorder in $EVAL_BIN) cannot shadow the ynh that wakes the seat.
+export function findOnPath(name, path = process.env.PATH ?? "") {
+  for (const dir of path.split(":").filter(Boolean)) {
+    const file = join(dir, name);
+    try {
+      accessSync(file, constants.X_OK);
+      if (statSync(file).isFile()) return file;
+    } catch {
+      // not here
+    }
+  }
+  return null;
+}
+
+// The command that wakes a case's seat through ynh, and the environment it needs.
+// A scratch YNH_HOME keeps the real ~/.ynh out of it. The run's directory is the
+// only workspace root, so the seat's workspace folders are granted with no trust
+// step (a harness run from a path has no trust record anyway). The directory is
+// resolved with realpath because ynh compares resolved paths and a macOS temp
+// directory sits behind a symlink. Claude gets the run's own flags after --; any
+// other vendor gets only the prompt, as its flags are not mapped yet.
+export function seatLaunch(c, vendor, work, env, claudeArgs) {
+  const root = realpathSync(work);
+  const seat = resolve(root, c.seat);
+  const passed = vendor === "claude" ? claudeArgs : ["-p", c.prompt];
+  return {
+    cmd: findOnPath("ynh") ?? "ynh",
+    args: ["run", seat, "-v", vendor, "--", ...passed],
+    env: {
+      ...env,
+      YNH_HOME: join(root, ".eval", "ynh-home"),
+      YNH_WORKSPACE_ROOTS: root,
+    },
+  };
 }
 
 function nextIteration(workspace) {
@@ -318,6 +397,16 @@ export function setupFor(c, arm) {
   return { script: c.setup, control: arm === "without_skill" ? "plugin hidden" : null };
 }
 
+// Where one run's temporary files go: inside the run's own directory, so they go when it does.
+// Claude Code puts its scratchpad (the folder a model is told to use for worktrees and scratch
+// files) in /tmp/claude-<uid> unless CLAUDE_CODE_TMPDIR says otherwise. Left alone, every run
+// shares that folder, and a worktree one run leaves behind (dredd-wt, say) collides with the next
+// run's.
+export function runTempEnv(work) {
+  const tmp = join(work, ".eval", "tmp");
+  return { tmp, env: { TMPDIR: tmp, CLAUDE_CODE_TMPDIR: tmp } };
+}
+
 // Sets up a case's shell sandbox, if it asks for one: stub commands on PATH
 // that only record their calls, git and gh cut off from real config and
 // hosts, then the case's setup script. Returns the environment for the run.
@@ -327,7 +416,9 @@ async function prepareSandbox(c, work, ctx, arm) {
   const stubs = c.stubs ?? (wantsShell ? ["gh"] : []);
   const binDir = join(work, ".eval", "bin");
   const stubLog = join(work, ".eval", "stub-calls.log");
+  const temp = runTempEnv(work);
   mkdirSync(binDir, { recursive: true });
+  mkdirSync(temp.tmp, { recursive: true });
   writeFileSync(stubLog, "");
   for (const name of stubs) {
     const stub = join(binDir, name);
@@ -342,6 +433,7 @@ async function prepareSandbox(c, work, ctx, arm) {
   const env = {
     ...process.env,
     PATH: `${binDir}:${process.env.PATH}`,
+    ...temp.env,
     EVAL_BIN: binDir,
     EVAL_STUB_LOG: stubLog,
     // Build caches live in the run's directory, the only place the OS sandbox
@@ -385,6 +477,48 @@ async function collectEvidence(c, work, sandbox) {
   return parts.join("\n\n");
 }
 
+function linesOf(text) {
+  return (text ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+// The plain checks on a run's stub log: no model involved. Returns one
+// result per forbidden pattern (passed when no logged call matches it) and per
+// required pattern (passed when some logged call does), each naming the call.
+// A call a stub refused (the lines of "$EVAL_STUB_LOG.refused", absent or
+// empty when none) is a forbidden call whatever the patterns say: it adds one
+// failed result per refused call. A case with no refusals gains no result.
+export function plainChecks(c, calls, refused = "") {
+  const lines = linesOf(calls);
+  const results = [];
+  for (const pattern of c.forbidden ?? []) {
+    const hit = lines.find((l) => new RegExp(pattern).test(l));
+    results.push({
+      text: `forbidden call /${pattern}/ was not made`,
+      passed: hit === undefined,
+      evidence: hit === undefined ? "no logged call matches" : `forbidden call made: ${hit}`,
+    });
+  }
+  for (const pattern of c.required ?? []) {
+    const hit = lines.find((l) => new RegExp(pattern).test(l));
+    results.push({
+      text: `required call /${pattern}/ was made`,
+      passed: hit !== undefined,
+      evidence: hit !== undefined ? `call made: ${hit}` : "no logged call matches",
+    });
+  }
+  for (const line of linesOf(refused)) {
+    results.push({
+      text: "no call was refused by a stub",
+      passed: false,
+      evidence: `call refused by a stub: ${line}`,
+    });
+  }
+  return results;
+}
+
 // One agent run: a clean temp directory with the case's files under data/.
 async function runCase(c, arm, runNo, ctx) {
   const outDir = join(runDir(c, arm, runNo, ctx), "outputs");
@@ -422,12 +556,16 @@ async function runCase(c, arm, runNo, ctx) {
         .filter((tool) => !granted.has(tool))
         .join(","),
     ];
-    if (arm === "with_skill") args.push("--plugin-dir", ctx.packageDir);
+    // A seat's skills come from its own harness, through ynh, not from --plugin-dir.
+    if (arm === "with_skill" && !c.seat) args.push("--plugin-dir", ctx.packageDir);
     args.push("--model", ctx.model);
     args.push("--settings", sandbox.wantsShell ? osSandbox(arm) : JSON.stringify(isolation(arm)));
 
     const started = Date.now();
-    const res = await run("claude", args, work, sandbox.env);
+    const launch = c.seat
+      ? seatLaunch(c, ctx.vendor, work, sandbox.env, args)
+      : { cmd: "claude", args, env: sandbox.env };
+    const res = await run(launch.cmd, launch.args, work, launch.env);
     writeFileSync(join(outDir, "transcript.jsonl"), res.stdout);
     const events = parseEvents(res.stdout);
     const evidence = [await collectEvidence(c, work, sandbox), toolCallsShown(c, events)]
@@ -438,7 +576,9 @@ async function runCase(c, arm, runNo, ctx) {
     const result = events.findLast((e) => e.type === "result");
     const skillsUsed = skillCalls(events);
 
-    const answer = result?.result ?? "";
+    // Without Claude's stream-json there is no result event: the reply is the output.
+    const plain = c.seat && ctx.vendor !== "claude";
+    const answer = plain ? res.stdout.trim() : (result?.result ?? "");
     writeFileSync(join(outDir, "answer.md"), `${answer}\n`);
     const u = result?.usage ?? {};
     const timing = {
@@ -458,10 +598,22 @@ async function runCase(c, arm, runNo, ctx) {
       ),
     };
     writeJson(join(dirname(outDir), "timing.json"), timing);
-    if (!result || res.code !== 0) {
-      log(`${caseSlug(c)}/${arm}: claude exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`);
+    if ((!result && !plain) || res.code !== 0) {
+      log(
+        `${caseSlug(c)}/${arm}: ${launch.cmd} exited ${res.code}: ${res.stderr.trim().slice(0, 300)}`,
+      );
     }
-    return { answer, evidence, timing, ok: Boolean(result) && !result.is_error };
+    const calls = existsSync(sandbox.stubLog) ? readFileSync(sandbox.stubLog, "utf8") : "";
+    const refusedLog = `${sandbox.stubLog}.refused`;
+    const refused = existsSync(refusedLog) ? readFileSync(refusedLog, "utf8") : "";
+    return {
+      answer,
+      evidence,
+      calls,
+      refused,
+      timing,
+      ok: plain ? res.code === 0 : Boolean(result) && !result.is_error,
+    };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -518,11 +670,13 @@ const GRADING_SCHEMA = {
   required: ["assertion_results"],
 };
 
-async function grade(c, arm, runNo, answer, evidence, ctx) {
+export async function grade(c, arm, runNo, answer, evidence, ctx, calls = "", refused = "") {
   const armDir = runDir(c, arm, runNo, ctx);
   const assertions = c.assertions ?? [];
+  const plain = plainChecks(c, calls, refused);
+  const plainFailed = plain.some((r) => !r.passed);
   let results = [];
-  if (assertions.length) {
+  if (assertions.length && !plainFailed) {
     const prompt = [
       "You are grading one output of an AI assistant against assertions.",
       "Grade each assertion PASS or FAIL. Require concrete evidence for a PASS: quote or point",
@@ -586,14 +740,26 @@ async function grade(c, arm, runNo, answer, evidence, ctx) {
         : { text, passed: false, evidence: "not graded" };
     });
   }
+  // A failed plain check fails the case with no judge call: the soft
+  // assertions are reported ungraded.
+  if (plainFailed) {
+    results = assertions.map((text) => ({
+      text,
+      passed: false,
+      evidence: "not graded: a plain check failed",
+    }));
+  }
+  results = [...plain, ...results];
   const passed = results.filter((r) => r.passed).length;
   const grading = {
+    plain_check_failed: plainFailed,
     assertion_results: results,
     summary: {
       passed,
       failed: results.length - passed,
       total: results.length,
-      pass_rate: results.length ? passed / results.length : null,
+      // A failed plain check fails the case: pass_rate is 0, whatever else passed.
+      pass_rate: results.length ? (plainFailed ? 0 : passed / results.length) : null,
     },
   };
   writeJson(join(armDir, "grading.json"), grading);
@@ -737,17 +903,19 @@ async function main() {
   };
   mkdirSync(ctx.iterationDir, { recursive: true });
 
-  const arms = opts.baseline ? ["with_skill", "without_skill"] : ["with_skill"];
+  const arms = ["with_skill", "without_skill"].filter((a) =>
+    cases.some((c) => armsFor(c, opts.baseline).includes(a)),
+  );
   log(
     `${skillName}: ${cases.length} case(s) x ${arms.length} arm(s) x ${opts.runs} run(s) -> ${relative(ROOT, ctx.iterationDir)}`,
   );
 
   const runNumbers = Array.from({ length: opts.runs }, (_, i) => i + 1);
   const tasks = cases.flatMap((c) =>
-    arms.flatMap((arm) =>
+    armsFor(c, opts.baseline).flatMap((arm) =>
       runNumbers.map((runNo) => async () => {
         const r = await runCase(c, arm, runNo, ctx);
-        const g = await grade(c, arm, runNo, r.answer, r.evidence, ctx);
+        const g = await grade(c, arm, runNo, r.answer, r.evidence, ctx, r.calls, r.refused);
         const label = `${caseSlug(c)}/${arm}${opts.runs > 1 ? `/run-${runNo}` : ""}`;
         log(
           `${label}: ${g.summary.passed}/${g.summary.total} passed` +
@@ -781,10 +949,22 @@ async function main() {
     };
   }
   if (summary.with_skill && summary.without_skill) {
+    // A seat case runs only with the skill, so the delta compares the cases both arms ran.
+    const both = new Set(runs.filter((r) => r.arm === "without_skill").map((r) => r.case));
+    const paired = (arm) => {
+      const mine = runs.filter((r) => r.arm === arm && both.has(r.case));
+      return {
+        pass_rate: stats(mine.map((r) => r.pass_rate)),
+        time_seconds: stats(mine.map((r) => r.duration_ms / 1000)),
+        tokens: stats(mine.map((r) => r.total_tokens)),
+      };
+    };
+    const w = paired("with_skill");
+    const wo = paired("without_skill");
     const d = (k) =>
-      summary.with_skill[k].mean === null || summary.without_skill[k].mean === null
+      w[k].mean === null || wo[k].mean === null
         ? null
-        : Math.round((summary.with_skill[k].mean - summary.without_skill[k].mean) * 1000) / 1000;
+        : Math.round((w[k].mean - wo[k].mean) * 1000) / 1000;
     summary.delta = {
       pass_rate: d("pass_rate"),
       time_seconds: d("time_seconds"),

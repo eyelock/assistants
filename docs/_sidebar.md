@@ -34,6 +34,7 @@
   * [Overview](/testing/README.md)
   * [Run evals](/testing/run-evals.md)
   * [Run SkillSpector](/testing/run-skillspector.md)
+  * [Seat eval stubs and fixture](/testing/seat-eval-stubs.md)
 
 * **Advanced: Triage**
   * [Overview](/triage/README.md)

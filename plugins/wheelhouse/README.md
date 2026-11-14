@@ -13,15 +13,17 @@ from parts that work on any vendor:
 | Memory: facts, handoff notes, what happened | [ynm](https://github.com/eyelock/ynm) |
 | Models: what each seat starts on | the roster, by vendor-agnostic tier (`fast`, `balanced`, `deep`) with per-vendor overrides, applied at launch with `--model` or the Agent tool's `model` |
 | Who's who | a `roster` skill in the Wheelhouse repository: its naming pools, the seats, and the humans who work with it, one of them the default human |
-| The humans' inbox | beads assigned to a human and notes left for them in ynm, through `scripts/inbox.sh`, shown at the desk's wake |
+| The humans' inbox | beads assigned to a human and notes left for them in ynm, through the `work-graph` skill's `inbox.sh`, shown at the desk's wake |
+| Shared helpers | `skills/work-graph/scripts/wheelhouse-lib.sh`: the one place the scripts' common helpers live (`limited`, `die`, `need`, the `bd` envelope, the roster path, backend detection, the seat tests, the model tiers), sourced by every script from beside itself or from the work-graph skill's `scripts/` folder (ynh delivers only skill folders, so the library rides in a skill every seat picks) |
+| No copies | a Wheelhouse keeps none of these scripts: seats run them where ynh installed them, in the `scripts/` folder of the skill that owns each; `create-wheelhouse` and `refresh` copy nothing, and the hooks find `wake.sh` through the vendor's plugin root (the `wake` skill's "The hook command") |
 
 ## Skills
 
 | Skill | Use it to |
 |---|---|
 | `create-wheelhouse` | start a Wheelhouse: its constitution, roster, desk, work graph and memory |
-| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; one seat at a time, each a trial on a branch with a draft pull request until the human makes it official or drops it (a throwaway sandbox the human names as one skips the trial); a seat other than the desk picks the wheelhouse skills, leaving `refresh` out; the starter team's roles are offered one at a time: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, an optional verifier, workers and optional specialist workers; `scripts/model.sh` resolves the model a seat launches with |
-| `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches; give them reports to read, listed last; and leave them notes; read and write seat and human memory through `scripts/memory.sh`, over ynm or Beads as `wheelhouse.json` says; link every build bead to its tracker item (GitHub issue, JIRA key, other) as the Wheelhouse's `tracker.json` says, and read its release from the item; open draft pull requests with `scripts/open-pr.sh`, which sets the release and the closing link and refuses a bead with no tracker item |
+| `add-seat` | add a named seat: its harness, charter, standing orders, model and roster entry; one seat at a time, each a trial on a branch with a draft pull request until the human makes it official or drops it (a throwaway sandbox the human names as one skips the trial); a seat other than the desk picks the wheelhouse skills, leaving `refresh` out; the starter team's roles are offered one at a time: designer, reviewer, dispatcher, CI watcher, releaser, an optional programme manager, an optional verifier, workers and optional specialist workers; `<skills>/add-seat/scripts/model.sh` resolves the model a seat launches with |
+| `work-graph` | find, claim, break down and close work in Beads, as a named seat; ask a human for what only a human can do (a merge, a decision, a credential) with a bead in their inbox, labelled with the repository it touches; give them reports to read, listed last; and leave them notes; read and write seat and human memory through the `work-graph` skill's `memory.sh`, over ynm or Beads as `wheelhouse.json` says; link every build bead to its tracker item (GitHub issue, JIRA key, other) as the Wheelhouse's `tracker.json` says, and read its release from the item; open draft pull requests with `<skills>/work-graph/scripts/open-pr.sh`, which sets the release and the closing link and refuses a bead with no tracker item |
 | `handoff` | end a session by writing your own notes and asking to restart, and pick up from them |
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
@@ -35,13 +37,13 @@ from parts that work on any vendor:
 
 ## Setting up
 
-Needs `ynh`, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`) and Beads (`brew install beads`).
+Needs `ynh`, Beads (`brew install beads`) and, when memory is in ynm, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`). `create-wheelhouse` asks where Agent Tasks (Beads) and Agent Memory (ynm or Beads) live, and records the answer in `wheelhouse.json`.
 
 - Start Beads with `bd init --skip-agents --non-interactive --role maintainer`. In a terminal,
   `bd init` otherwise asks questions. Without `--skip-agents`, Beads writes its own agent
-  setup, which tells agents to keep memory in Beads rather than ynm. `bd init` also commits the
+  setup, which tells agents to keep memory in `bd remember` instead of through the `work-graph` skill's `memory.sh`. `bd init` also commits the
   files it finds, so run it in a clean tree.
-- Run `ynm init` in the Wheelhouse repository, and `ynm client install ynh` in each harness folder.
+- With ynm memory, run `ynm init` in the Wheelhouse repository, and `ynm client install ynh` in each harness folder. With Beads memory, skip this and the next step.
 - Beads takes over the repository's git hooks, so `ynm init` can't add its pre-push sync. Append
   `ynm sync` to `.beads/hooks/pre-push`, after the Beads block; the `doctor` skill prints the line.
 - `.claude/settings.json` can't be changed from inside a Claude Code session, so remove any Beads
