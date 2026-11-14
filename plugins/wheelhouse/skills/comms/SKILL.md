@@ -119,11 +119,11 @@ rm -f "$body" "$body.bak"
 
 ## 6. Reaching another seat
 
-A seat that needs something from another seat opens an ask (the work-graph skill's `scripts/ask.sh`),
+A seat that needs something from another seat opens an ask (the work-graph skill's `<skills>/work-graph/scripts/ask.sh`),
 never asks the human which session is which, and never guesses at one.
 
 - **A seat's live session is `<wheelhouse>-<command>`**, and the desk, whose command is the
-  Wheelhouse's own name, is just `<wheelhouse>` (`ynw`, `ynw-eno`, `ynw-page`). `ask.sh open` prints
+  Wheelhouse's own name, is just `<wheelhouse>` (in a Wheelhouse named `ynw`: `ynw`, `ynw-eno`, `ynw-page`). `ask.sh open` prints
   the answering seat's address.
 - **Nudge where the vendor can message a session** (Claude's SendMessage): after `ask.sh open`, send
   the answering seat's session one line saying the ask is waiting, naming its bead id and synopsis. If
@@ -133,4 +133,4 @@ never asks the human which session is which, and never guesses at one.
 - **Where the vendor can't message a session**, the ask is still recorded, and the answering seat finds
   it at its next check-in (`ask.sh show`, at each natural break). Nothing more is needed.
 - **Never ask the human which session is which.** If you don't know who answers, address the ask to
-  `ynw` and the desk routes it. A human is asked only through the inbox, for what only a human can do.
+  the desk (`--to desk`) and it routes it. A human is asked only through the inbox, for what only a human can do.
