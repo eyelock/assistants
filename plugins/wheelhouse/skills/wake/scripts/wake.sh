@@ -54,7 +54,8 @@
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
 # unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, session {state: held|forced|unknown|unchecked, bead, ...; see session.sh}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
-# null for other seats)}, or a Markdown
+# null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
+# [] when it has neither; null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing, 4 another session of the seat is live (the block
@@ -312,15 +313,25 @@ if [ "$group" = desk ]; then
   fi
 fi
 
+# The desk also wakes to a "Wake first" section after the inbox: the roster's CI-watcher and
+# releaser seats (role ci-watcher, releaser), so the desk asks them for the open PRs and CI and
+# the release in hand instead of checking GitHub itself. A Wheelhouse with neither prints none.
+wakefirst='null'
+if [ "$group" = desk ]; then
+  wakefirst=$(jq -c '[.seats[] | select(.role == "ci-watcher" or .role == "releaser")
+      | {name, command, role, for: (if .role == "ci-watcher" then "open PRs and CI" else "release in hand: next on the route" end)}]
+      | sort_by(.role == "releaser")' "$roster" 2>/dev/null) || wakefirst='[]'
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
-  --argjson inbox "$inbox" --argjson session "$sessionjson" '{
+  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson wakefirst "$wakefirst" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox
+    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, wakeFirst: $wakefirst
   }')
 
 if [ "$format" = json ]; then
