@@ -28,7 +28,7 @@ function wake(seat) {
     mkdirSync(join(dir, "harnesses", "hynde"), { recursive: true });
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build.\n");
     mkdirSync(join(dir, "scripts"));
-    for (const [from, to] of [[src("wake", "scripts", "wake.sh"), "wake.sh"], [src("work-graph", "scripts", "memory.sh"), "memory.sh"], [src("work-graph", "scripts", "wheelhouse-lib.sh"), "wheelhouse-lib.sh"], [src("work-graph", "scripts", "inbox.sh"), "inbox.sh"]]) {
+    for (const [from, to] of [[src("wake", "scripts", "wake.sh"), "wake.sh"], [src("wake", "scripts", "sync.sh"), "sync.sh"], [src("wake", "scripts", "render-wake.jq"), "render-wake.jq"], [src("work-graph", "scripts", "memory.sh"), "memory.sh"], [src("work-graph", "scripts", "wheelhouse-lib.sh"), "wheelhouse-lib.sh"], [src("work-graph", "scripts", "inbox.sh"), "inbox.sh"]]) {
       writeFileSync(join(dir, "scripts", to), readFileSync(from));
     }
     mkdirSync(join(dir, "bin"));

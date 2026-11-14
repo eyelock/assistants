@@ -29,7 +29,7 @@
       "assertions": [
         "The stub log shows ynh install harnesses/wick",
         "The reply gives ynh trust accept local/wick (not the bare seat name) as a command for the human to run",
-        "The stub log has no ynh trust call",
+        "The stub log has no ynh trust accept call (refresh itself may run ynh trust ls, to read what is trusted)",
         "The reply says every seat (hq, eno and wick) needs a restart because the Wheelhouse's own scripts/wake.sh changed"
       ]
     },
@@ -45,7 +45,7 @@
       "assertions": [
         "The stub log shows no ynh install",
         "The reply says nothing needs reinstalling, trusting or restarting",
-        "The reply does not invent work the diff did not need"
+        "The reply asks for no reinstall, trust or restart the diff did not need (it may still list seats not installed or not born, and say to start an unborn seat so it can be born, which refresh reports on every run whatever the diff; that is not a restart, and it may say what the doctor found)"
       ]
     }
   ]
