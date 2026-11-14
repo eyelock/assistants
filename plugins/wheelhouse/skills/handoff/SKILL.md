@@ -25,7 +25,23 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
    seat's normal practice.
 2. **Keep your claims.** The beads you have claimed stay claimed by you. Your next session carries
    on with them. Don't close or release a bead just because you are handing off.
-3. **Write your own notes** as a handoff memory ("what happened, when"):
+3. **Park held work in the work graph, not in your notes.** A handoff lists only what you can act on
+   next. Work that is held (a pull request waiting on a design, a decision or another merge) is not a
+   next step: copying it forward means every wake re-reads it, and "to be safe" the note grows until the
+   next session starts by sorting it again. Record what it waits on instead, as a blocked bead:
+
+   ```bash
+   # the held bead is blocked by the bead it waits on (a design, a decision, the other pull request's bead)
+   bd dep add <held-id> --blocked-by <waits-on-id> --actor <name>
+   ```
+
+   A blocked bead drops out of `bd ready` and comes back by itself when what it waits on closes, so
+   nobody has to remember it. If what it waits on has no bead yet, make one first (`bd create`, or a
+   question for a human through the `work-graph` skill's inbox), then block on it. A held bead that is
+   waiting on its open pull request keeps that pull request's `PR: <url>` note; nothing else of it goes
+   into your notes. Add a line to the handoff only to **point to it by id**, such as "Held: <held-id>,
+   blocked by <waits-on-id>", never its state, history or next step: that lives on the bead.
+4. **Write your own notes** as a handoff memory ("what happened, when"):
 
    ```bash
    bash <skills>/work-graph/scripts/memory.sh remember --actor <name> --seat <name> --kind handoff --text "<notes>"
@@ -34,20 +50,22 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
    Not a scratch note that dies with the session: handoff notes are for the next session. They
    are kept in your own place in the Wheelhouse's memory, your private home there.
 
-   The notes are for you, tomorrow, and are short and concrete:
+   The notes are for you, tomorrow, and are short and concrete, and hold only what you can act on next:
 
    - **Done:** what is finished this session, with bead ids.
    - **In progress:** the bead you are on, where the work is (repository, branch, files), and the
      exact next step.
+   - **Held:** only ids, one line each, of beads parked in step 3 ("<id>, blocked by <id>"). No state, no
+     history, no "to be safe" copy of what they say.
    - **Watch out for:** anything you would warn yourself about: a flaky test, a decision still
-     open, something the human said.
+     open, something the human said. Not an item you can't act on: that is a blocked bead.
    - **Open questions** for the human, if any.
 
    A handoff that keeps your claims is not a reason for a close note: the `work-graph` skill's
    Closing step has you write that, two lines, when a bead closes or when you give one to another
    seat unfinished. If you closed a bead this session, make sure its close note is written too.
 
-4. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
+5. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
    notes are saved in my memory. Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.
 
@@ -88,7 +106,8 @@ At the start of a seat's session, before anything else:
    array; the newest note is first, with its text in `text` and its id in `id`.
 2. If there are none, start as usual (for example, with "what's next" from the work graph).
 3. If there are, read them, then check they still hold: `bd show <id> --json` for the bead in
-   progress (still claimed by you, still open), and the repository state they describe.
+   progress (still claimed by you, still open), and the repository state they describe. A bead the notes
+   list as held is not re-read: it is blocked, and `bd ready` shows it again when what it waits on closes.
 4. Carry on from **the exact next step**. Don't redo what the notes say is done. When you report
    back, open with the pick-up, in this shape: "Picking up from my notes: <what they say is done>.
    Next: <the step I took>." Then the rest.

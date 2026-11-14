@@ -5,16 +5,17 @@
 # (its Kudos), its record (what it closed lately), its latest close notes (the
 # two lines it wrote on closing a bead) and what is waiting for it.
 #
-# Memory is read and synced through memory.sh (beside this script, as
-# create-wheelhouse copies it, or in the work-graph skill), which follows
+# Memory is read and synced through memory.sh (in the work-graph skill, beside
+# the wake skill, where ynh installed it), which follows
 # wheelhouse.json's "memory" key: ynm (the default) or Beads.
 #
-# First it syncs, so the seat wakes to what other machines and seats wrote.
-# With ynm, memory syncs when the repository has a git remote and the Beads work
-# graph when it has a Dolt remote. With Beads, memory and work are one database
-# and one bd sync, with one result for both. Each sync is skipped when there is
-# no remote, gives up after WAKE_SYNC_SECS (default 45), and never stops the wake; one that
-# fails is named in the block. --no-sync skips both. It changes nothing else.
+# First it syncs, through sync.sh (beside this script): memory with a git remote and the work
+# graph with a Dolt remote (with Beads, one bd sync for both), each skipped without a remote, given
+# up after WAKE_SYNC_SECS (default 45), never stopping the wake; one that fails is named in the
+# block. --no-sync skips both. Then it gathers what the seat should know as JSON, and, with
+# --format text, render-wake.jq (beside this script) lays that JSON out as the Markdown block. It
+# changes nothing else. All three files travel together, in the wake skill's scripts/ folder, with
+# wheelhouse-lib.sh from the work-graph skill.
 #
 # Every bd, memory.sh, inbox.sh and gh call is bounded, so a wake never hangs when other seats
 # hold bd's lock. The bounds are per call; there is no total, because the number of calls changes
@@ -34,29 +35,26 @@
 #
 # The desk (the seat in the desk group) also wakes to the humans' inbox, first:
 # what the seats have asked of the human at the desk and of the default human,
-# and the notes left for them, from inbox.sh show (beside this script, as
-# create-wheelhouse copies it). Other seats' wakes have no inbox.
+# and the notes left for them, from inbox.sh show (in the work-graph skill, beside
+# the wake skill). Other seats' wakes have no inbox.
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root, or
 # pass --dir <wheelhouse repo> from anywhere. The seat is --seat <name> or the
 # name given bare, as in wake.sh gahan.
 #
-# Its session-end hook runs it with --end, which only syncs what the session
-# wrote: memory (ynm sync) and the work graph (bd sync), each skipped without a
-# remote and run side by side (with Beads, memory and work are one bd sync, reported for both; the Dolt-remote check is inside the work sync's budget, a third of it) and given up after 25 seconds, inside the 30-second session-end hook
-# (WHEELHOUSE_END_SYNC_SECS sets the budget, at most 28). A full sync, not a push alone: when
-# another seat has pushed since, a push alone is rejected until it merges. It prints
-# {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a sync did not
-# push, errors {memory, work}: its exit code and the first line it printed. With
-# --no-sync it syncs neither and reports both as skipped.
+# Its session-end hook runs it with --end, which hands over to sync.sh --end: it syncs what the
+# session wrote and prints {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a
+# sync did not push, errors {memory, work}; see sync.sh for its budget. With --no-sync it syncs
+# neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, backend, firstWake, identity, mandate,
 # handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned,
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
 # unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
-# null for other seats)}, or a Markdown
+# null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
+# [] when it has neither; null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
 # 3 a tool it needs (jq, ynm, bd) is missing.
@@ -94,14 +92,14 @@ positional=""
 seat_flag=0
 dir="."
 format="json"
-sync=1
+nosync=""
 end=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; seat_flag=1; shift 2 ;;
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
-    --no-sync) sync=0; shift ;;
+    --no-sync) nosync=1; shift ;;
     --end) end=1; shift ;;
     --help | -h) usage; exit 0 ;;
     -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -130,84 +128,13 @@ cd "$dir" || exit 2
 backend=$(wl_backend .) || { echo "wheelhouse.json: memory must be \"ynm\" or \"beads\"" >&2; exit 2; }
 if [ "$backend" = ynm ]; then need ynm; fi
 
-bd_secs="${WAKE_BD_SECS:-20}"; sync_secs="${WAKE_SYNC_SECS:-45}"
+bd_secs="${WAKE_BD_SECS:-20}"
 inbox_secs="${WAKE_INBOX_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
-# remote is yes, no or busy (wl_dolt_remote): a check that gave up (exit 142) or failed is not "no
-# remote", it is a bd that cannot be reached, which the callers report as a failed sync.
-remote=no
 
-# At the end of a session, sync what it wrote and stop (--no-sync skips both).
+# At the end of a session sync.sh syncs what it wrote and prints the result (--no-sync skips both).
 if [ "$end" = 1 ]; then
-  mempush=skipped
-  workpush=skipped
-  memerr=""
-  workerr=""
-  # The two syncs run side by side, each given the same budget, so the worst case is the budget
-  # itself, not twice it. The session-end hook gives wake.sh 30 seconds and kills it after that,
-  # before the JSON below prints, so the budget stays under it: 25 seconds by default, never more
-  # than 28 (WHEELHOUSE_END_SYNC_SECS lowers or raises it within that).
-  budget="${WHEELHOUSE_END_SYNC_SECS:-25}"
-  case "$budget" in '' | *[!0-9]*) budget=25 ;; esac
-  [ "$budget" -gt 28 ] && budget=28
-  [ "$budget" -lt 1 ] && budget=1
-  tmp=$(mktemp -d "${TMPDIR:-/tmp}/wake-end.XXXXXX")
-  # Runs one sync for <secs> seconds and keeps its output in <tmp>/<name>.rc and .err: the exit
-  # code (142 when the alarm killed it) and "exit N: first line".
-  endsync() {
-    local secs="$1" name="$2"; shift 2
-    local rc first
-    limited "$secs" "$@" >"$tmp/$name.out" 2>&1
-    rc=$?
-    echo "$rc" >"$tmp/$name.rc"
-    if [ "$rc" != 0 ]; then
-      first=$(grep -m1 . "$tmp/$name.out" 2>/dev/null | cut -c1-200)
-      printf '%s' "exit $rc${first:+: $first}" >"$tmp/$name.err"
-    fi
-  }
-  # The work sync, with its Dolt-remote check in the same budget (at most a third for the check,
-  # the sync gets what is left of it), run in the background beside the memory sync. A check that
-  # gave up or failed is a failed sync, not "no remote".
-  endwork() {
-    local check=$(( budget / 3 )) began=$SECONDS rest
-    [ "$check" -ge 1 ] || check=1
-    remote=$(wl_dolt_remote "$check")
-    # SECONDS counts whole seconds, so one more is held back for the rounding.
-    rest=$(( budget - (SECONDS - began) - 1 ))
-    [ "$rest" -ge 1 ] || rest=1
-    if [ "$remote" = busy ]; then
-      echo 142 >"$tmp/work.rc"; printf '%s' "exit 142: the Dolt-remote check gave up or failed (bd busy)" >"$tmp/work.err"
-    elif [ "$remote" = yes ]; then
-      endsync "$rest" work bd sync
-    fi
-  }
-  # With Beads, memory and work are one database: one bd sync, and its result is both.
-  if [ "$backend" = ynm ]; then
-    if [ "$sync" = 1 ] && wl_has_git_remote; then endsync "$budget" mem ynm sync --quiet & fi
-    if [ "$sync" = 1 ]; then endwork & fi
-  else
-    if [ "$sync" = 1 ]; then endwork & fi
-  fi
-  wait
-  if [ "$backend" = beads ]; then
-    for f in rc err; do [ -f "$tmp/work.$f" ] && cp "$tmp/work.$f" "$tmp/mem.$f"; done
-  fi
-  # <var> becomes pushed, timeout or failed from the sync's exit code; <errvar> its error text.
-  endresult() {
-    local name="$1" var="$2" errvar="$3" rc
-    [ -f "$tmp/$name.rc" ] || return 0
-    rc=$(cat "$tmp/$name.rc")
-    if [ "$rc" = 0 ]; then printf -v "$var" pushed
-    else
-      if [ "$rc" = 142 ]; then printf -v "$var" timeout; else printf -v "$var" failed; fi
-      printf -v "$errvar" '%s' "$(cat "$tmp/$name.err")"
-    fi
-  }
-  endresult mem mempush memerr
-  endresult work workpush workerr
-  rm -rf "$tmp"
-  jq -nc --arg seat "$seat" --arg m "$mempush" --arg w "$workpush" --arg me "$memerr" --arg we "$workerr" \
-    '{seat: $seat, push: {memory: $m, work: $w}} + (if $me != "" or $we != "" then {errors: ({memory: $me, work: $we} | with_entries(select(.value != "")))} else {} end)'
-  exit 0
+  [ -f "$here/sync.sh" ] || { echo "no sync.sh beside wake.sh in the wake skill: reinstall the seat (ynh update)" >&2; exit 3; }
+  exec bash "$here/sync.sh" --end --seat "$seat" --dir . ${nosync:+--no-sync}
 fi
 
 # Which seat this is.
@@ -232,29 +159,12 @@ mandate=$(awk '
 ' "$charter" 2>/dev/null)
 [ -n "$mandate" ] || mandate=$(jq -r .mandate <<<"$entry")
 
-# Sync first, so what follows is current.
-memsync=skipped
-worksync=skipped
-if [ "$sync" = 1 ]; then
-  if [ "$backend" = ynm ]; then
-    if wl_has_git_remote; then
-      if limited "$sync_secs" ynm sync --quiet >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
-    fi
-    remote=$(wl_dolt_remote "$sync_secs")
-    if [ "$remote" = busy ]; then worksync=failed
-    elif [ "$remote" = yes ]; then
-      if limited "$sync_secs" bd sync >/dev/null 2>&1; then worksync=synced; else worksync=failed; fi
-    fi
-  else
-    # Memory and work are one database: one sync, one result for both.
-    remote=$(wl_dolt_remote "$sync_secs")
-    if [ "$remote" = busy ]; then memsync=failed
-    elif [ "$remote" = yes ]; then
-      if limited "$sync_secs" bd sync >/dev/null 2>&1; then memsync=synced; else memsync=failed; fi
-    fi
-    worksync=$memsync
-  fi
-fi
+# Sync first, so what follows is current: sync.sh prints {memory, work, remote}.
+[ -f "$here/sync.sh" ] || { echo "no sync.sh beside wake.sh in the wake skill: reinstall the seat (ynh update)" >&2; exit 3; }
+syncjson=$(bash "$here/sync.sh" --seat "$seat" --dir . ${nosync:+--no-sync}) || exit $?
+memsync=$(jq -r .memory <<<"$syncjson")
+worksync=$(jq -r .work <<<"$syncjson")
+remote=$(jq -r .remote <<<"$syncjson")
 
 # The seat's own memory, read through memory.sh: ynm namespace seat/<name>, or Beads keys seat/<name>/....
 memorysh=""
@@ -360,15 +270,25 @@ if [ "$group" = desk ]; then
   fi
 fi
 
+# The desk also wakes to a "Wake first" section after the inbox: the roster's CI-watcher and
+# releaser seats (role ci-watcher, releaser), so the desk asks them for the open PRs and CI and
+# the release in hand instead of checking GitHub itself. A Wheelhouse with neither prints none.
+wakefirst='null'
+if [ "$group" = desk ]; then
+  wakefirst=$(jq -c '[.seats[] | select(.role == "ci-watcher" or .role == "releaser")
+      | {name, command, role, for: (if .role == "ci-watcher" then "open PRs and CI" else "release in hand: next on the route" end)}]
+      | sort_by(.role == "releaser")' "$roster" 2>/dev/null) || wakefirst='[]'
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
-  --argjson inbox "$inbox" '{
+  --argjson inbox "$inbox" --argjson wakefirst "$wakefirst" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, inbox: $inbox
+    sync: {memory: $memsync, work: $worksync}, inbox: $inbox, wakeFirst: $wakefirst
   }')
 
 if [ "$format" = json ]; then
@@ -376,74 +296,5 @@ if [ "$format" = json ]; then
   exit 0
 fi
 
-jq -r --arg memsh "$memorysh" '
-  def retire(id; why): "bash \($memsh) forget --id \(id) --reason \"\(why)\"";
-  def list(xs; empty_text): if (xs | length) == 0 then empty_text else (xs | map("- " + .) | join("\n")) end;
-  "# Waking: \(.seat)\n",
-  ([if .sync.memory == "failed" then (if .backend == "beads" then "memory and the work graph (bd sync)" else "memory (ynm sync)" end) else empty end,
-    if .sync.work == "failed" and .backend != "beads" then "the work graph (bd sync)" else empty end] as $failed
-   | if ($failed | length) > 0
-     then "**Not synced:** \($failed | join(" and ")) failed, so what follows may be out of date. Say so when you reply, and run the sync by hand before relying on it.\n"
-     else empty end),
-  (if .inbox == null then empty
-   elif .inbox.error then "## For the humans\n\nThe inbox could not be read: \(.inbox.error). Say so when you reply; the doctor skill can help.\n"
-   else
-     def bead: "- \(.title)"
-       + (if .ref then ": [\(.ref.short // .ref.url)](\(.ref.url))" else "" end)
-       + " (\(.id), asked by \(.askedBy // "unknown"), unblocks \(.unblocks))";
-     def note: "- \(.content) (note \(.memoryId))";
-     "## For the humans\n",
-     (if ((.inbox.errors // []) | length) > 0
-      then "**The inbox could not be read in full:** \(.inbox.errors | join("; ")). Don'"'"'t say nothing is waiting: say what couldn'"'"'t be read when you reply, and what could; the doctor skill can help.\n"
-      else empty end),
-     (if .inbox.empty == true then "Nothing waiting for the humans.\n"
-      else
-        (.inbox.humans[] |
-          "### \(.name) (\(.role))\n",
-          (if .beads == null then "Their beads couldn'"'"'t be read.\n" else empty end),
-          (if .notes == null then "Their notes couldn'"'"'t be read.\n" else empty end),
-          (if .beads != null and .notes != null and (.beads | length) == 0 and (.notes | length) == 0 then "Nothing waiting.\n"
-           else
-             ((.beads // []) | map(select(.kind != "report"))) as $todo
-             | ((.beads // []) | map(select(.kind == "report"))) as $reports
-             | (if ($todo | length) > 0 then ($todo | map(bead) | join("\n")) + "\n" else empty end),
-             (if ($reports | length) > 0 then "Reports:\n" + ($reports | map(bead) | join("\n")) + "\n" else empty end),
-             (if (.notes // [] | length) > 0 then "Notes:\n" + (.notes | map(note) | join("\n")) + "\n" else empty end)
-           end)),
-        "Open your reply with this, before anything else (even who you are), naming each pull request or page by its short form as a Markdown link. Retire each note you relay, in the same turn, so it is not shown twice: `bash \($memsh) forget --id <its memoryId> --reason relayed`.\n"
-      end),
-     (if .inbox.you == null then "This is the default human'"'"'s inbox, and the desk treats the human at the desk as them. After the inbox, tell the human so in your reply, and that they can name themselves for this session (\"it'"'"'s me, <name>\") to see their own inbox instead; nothing is saved. Always say it: do not leave it out because the inbox is empty or you have much else to report.\n" else empty end)
-   end),
-  "## Who you are\n",
-  (if .firstWake
-    then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"
-    else "\(.identity)\n" end),
-  "## Your purpose\n", "\(.mandate) (\(.group))\n",
-  "## Where you left off\n",
-  (if .handoff
-    then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `\(retire(.handoffId; "picked up"))`.\n"
-    else "No handoff notes: start fresh.\n" end),
-  (if (.facts | length) == 0 then empty
-    else "## What the Wheelhouse knows\n", (.facts | map("- " + (. | gsub("\n"; " / "))) | join("\n")) + "\n"
-    end),
-  "## What you have been thanked for\n",
-  (if (.kudos | length) == 0 then "Nothing yet.\n"
-    else list(.kudos; "") + "\n\nMention them in a line when you reply.\n" end),
-  (if .workRead == false
-   then "**The work graph couldn'"'"'t be read (bd busy):** your record, your work in progress, your retro bead (if you have one) and what is ready are missing, not empty. Say so when you reply, and run `bd list --status in_progress --assignee \(.seat)`, `bd ready --assignee \(.seat)` and `bd ready --unassigned` yourself.\n"
-   else empty end),
-  "## Your record\n", (list(.record; "Nothing closed yet.") + "\n"),
-  (if (.closeNotes | length) == 0 then empty
-    else "## Your close notes\n", (.closeNotes | map("- " + (.bead // "?") + ": " + (.note | gsub("\n"; " / "))) | join("\n")) + "\n"
-    end),
-  "## Waiting for you\n",
-  (if .workRead == false then "Couldn'"'"'t read the work graph (bd busy); run the bd commands above yourself.\n" else
-  ((if (.inProgress | length) > 0 then "In progress, yours: " + (.inProgress | join("; ")) + "\n" else "" end)
-    + list(.assigned; "Nothing assigned to you.") + "\n"),
-  (if (.unassignedReady | length) == 0 then "Ready and unassigned: none."
-    else "Ready and unassigned:\n" + (.unassignedReady | map("- " + .) | join("\n")) end) end),
-  (if (.retro | length) == 0 then empty
-    else "\n## Your retro\n", (.retro | map("- " + .) | join("\n")),
-      "\nA retro bead never comes before the bead you were woken or asked for: finish that first. In a Wheelhouse that runs a retro cycle, your retro is opened for you (by the coach, or by the human with --focus retro): then do only the round your bead shows, and report back. Never release one with bd unclaim: if you must stop, reassign it to the coach. If you have a retro skill, it says what to do; if you have none, do not guess at the rounds: leave the bead as it is and tell the desk or the human that your seat has a retro bead but no retro skill.\n"
-    end)
-' <<<"$json"
+[ -f "$here/render-wake.jq" ] || { echo "no render-wake.jq beside wake.sh in the wake skill: reinstall the seat (ynh update)" >&2; exit 3; }
+jq -r --arg memsh "$memorysh" -f "$here/render-wake.jq" <<<"$json"
