@@ -5,7 +5,7 @@ description: Check a Wheelhouse is set up right - ynm installed and healthy, wit
 
 # Doctor
 
-Run `scripts/check.sh` from this skill's folder, with `--dir` pointing at the Wheelhouse
+Run `<skills>/doctor/scripts/check.sh` from this skill's folder, with `--dir` pointing at the Wheelhouse
 repository (the one with the desk's `.agents/harness/` and `.beads/`). From the Wheelhouse root:
 
 ```bash
@@ -17,13 +17,19 @@ bash path/to/doctor/scripts/check.sh --dir .
 It prints JSON: `ok`, and one entry per check with `name`, `ok`, `level`, `detail` and `fix`. It
 changes nothing. `ok` is false when any check has level `error`.
 
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
+
 ## What it checks
 
 | Check | Why it matters |
 |---|---|
 | memory backend | `wheelhouse.json`'s `memory` key (`ynm`, or `beads`; ynm when there is none), read through `memory.sh`. The ynm checks below run for ynm only; a Beads Wheelhouse needs no ynm. A key that is neither is an error (and so is a `wheelhouse.json` naming a backend when no `memory.sh` exists anywhere to read it) |
-| memory script | the Wheelhouse's own `scripts/memory.sh`, which `wake.sh`, `inbox.sh` and the skills read and write memory through for either backend. An error when it is missing: `wake.sh` stops (exit 3) and no seat can wake. The fix is to copy the work-graph skill's `memory.sh` in, or run `refresh.sh --update`, which copies it. This is the one report for that cause: the memory backend row errors only for an unreadable or unknown `memory` key, so a missing script is not reported twice |
-| shared library | the Wheelhouse's own `scripts/wheelhouse-lib.sh`, which every Wheelhouse script sources from beside itself. An error when it is missing: `wake.sh`, `inbox.sh` and `memory.sh` all stop (exit 3). The fix is to copy the work-graph skill's `wheelhouse-lib.sh` in, or run `refresh.sh --update`, which copies it. This is the one report for that cause: with a `memory.sh` but no library, the memory backend row stays quiet (the Wheelhouse's `memory.sh` can't run to name the backend), so the missing library is not reported twice |
+| plugin script memory.sh, inbox.sh | the work-graph skill's scripts, beside this skill where ynh installed them: `memory.sh` (how `wake.sh`, `inbox.sh` and the skills read and write memory for either backend) and `inbox.sh` (how seats ask the humans for things and how the desk's wake shows their inbox). An error when one is missing: the seat that runs the doctor has no work-graph skill, so its wake, inbox and memory stop (exit 3). The fix is to add `skills/work-graph` to the seat's `pick`. The memory backend row errors only for an unreadable or unknown `memory` key |
+| plugin script copies | a Wheelhouse keeps none of the plugin's scripts, so a `scripts/` file with the name of one is a copy the plugin's fixes never reach. A warning naming each; delete it, and point hooks and docs at the installed script |
 | beads memory readable (Beads memory) | `bd --readonly memories --json` must parse: seats keep their identity, handoff notes and Kudos there. An error when it doesn't |
 | beads memory shared (Beads memory) | memory shares through the work graph's Dolt remote; a warning without one, as memory then stays on this machine |
 | ynm installed (ynm memory) | seats keep their memory, handoff notes and Kudos in ynm |
@@ -33,7 +39,7 @@ changes nothing. `ok` is false when any check has level `error`.
 | ynm registered with ynh | seats are ynh harnesses; without `ynm client install ynh` they get none of ynm's tools or hooks, on any vendor |
 | Beads installed, work graph readable | all work lives in Beads |
 | no Beads agent setup | `bd init` without `--skip-agents` writes skills, hooks and AGENTS.md blocks that tell agents to keep memory in `bd remember`, splitting it from ynm |
-| seats wired (once the roster has seats) | each seat is started by its own name and wakes as itself: a harness of its own whose wake hook names it, and no `BEADS_ACTOR` passed through for a stray shell variable to override |
+| seats wired (once the roster has seats) | each seat is started by its own name and wakes as itself: a harness of its own whose wake hook (the installed wake.sh, as the wake skill's "The hook command" gives it) names it, and no `BEADS_ACTOR` passed through for a stray shell variable to override |
 | seats push at end (once the roster has seats) | each seat's session-end hook (`wake.sh --end`) pushes the memory and work it wrote; without it, they wait on this machine for the next `git push`, write or wake |
 | seats wake by themselves (once the roster has seats) | each seat's `launch_focus` (ynh 0.15.0) names a focus it has, so started by its name it acts on its wake block instead of waiting bare |
 | seats labelled (once the roster has seats) | the desk and every seat's harness carries `"labels": {"wheelhouse": "<name>"}`, the Wheelhouse's own name (the desk's), and no other Wheelhouse's. ynh stamps a harness's labels on every run record, so `ynr query runs --label wheelhouse:<name>` picks out this Wheelhouse's records when several share the laptop spool. A harness without it, or with another's, is a warning; needs ynh 0.17.0 or later, which an older ynh refuses |
@@ -43,7 +49,6 @@ changes nothing. `ok` is false when any check has level `error`.
 | general worker (once a worker has specialities) | a worker with no `specialities` takes what the specialists can't: their overflow, and beads none of them covers |
 | seats born (once the roster has seats) | a seat with no pinned identity in its own namespace hasn't had its birth; the check names whose birth it is to run. With Beads memory it asks `memory.sh` for the seat's identity key |
 | default human (once the roster exists) | the roster's `humans` holds exactly one human, with `"default": true`: the name for work that needs a human but no particular one. Any other human is per session and never in the roster. None is a warning (nothing to assign to, and no inbox at the desk); two or more is an error (the inbox script refuses to guess) |
-| inbox script (once the roster exists) | `scripts/inbox.sh`, copied from the `work-graph` skill, is how seats ask the humans for things and how the desk's wake shows their inbox |
 | assignees known (once the roster exists) | every open bead is unassigned or assigned to a seat (in the roster, or on trial: `harnesses/<command>/AGENTS.md` on the checked-out branch, no roster entry yet), the default human, a human command with a `human/<command>` namespace in memory (ynm, or Beads' `human/<command>/` keys), or any human command on a bead labelled `inbox` (which `inbox.sh assign` puts on every bead it makes); one assigned to anyone else is in no seat's queue and no inbox |
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
 | work graph shared (once there is a remote) | `git push` doesn't carry the work graph: it shares through a Dolt remote on the repository's own origin, and pushes itself after each write once `dolt.auto-push` is on |

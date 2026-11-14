@@ -13,8 +13,8 @@
       "assertions": [
         "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
         "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
-        "That harness's on_session_start hook runs scripts/wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
-        "That harness's on_session_end hook runs scripts/wake.sh with --seat dredd and --end, with a timeout",
+        "That harness's on_session_start hook runs the plugin's wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
+        "That harness's on_session_end hook runs the plugin's wake.sh with --seat dredd and --end, with a timeout",
         "That harness's launch_focus is wake, and its focuses include a wake focus",
         "That harness's labels are an object with the key wheelhouse whose value is the Wheelhouse's own name (the desk harness's name), not an array, and no other Wheelhouse's or a human's name",
         "That harness has at least one focus whose prompt names the seat (Dredd or dredd)",
@@ -87,8 +87,8 @@
       "assertions": [
         "The evidence shows harnesses/dalglish/.agents/harness/plugin.json with name dalglish, on a trial branch, and no harness for mccoist yet",
         "There is no shared harnesses/worker, and Dalglish's harness does not list BEADS_ACTOR in env_passthrough",
-        "Dalglish's on_session_start hook runs scripts/wake.sh with --seat dalglish",
-        "Dalglish's on_session_end hook runs scripts/wake.sh with --end and --seat dalglish",
+        "Dalglish's on_session_start hook runs the plugin's wake.sh with --seat dalglish",
+        "Dalglish's on_session_end hook runs the plugin's wake.sh with --end and --seat dalglish",
         "Dalglish's AGENTS.md names it, and says it works only on beads assigned to it or unassigned, acting as its own command (--actor dalglish)",
         "On the trial branch the roster's seats and the desk's delegates_to do not yet include Dalglish, and the reply says they are added when the trial ends",
         "The reply names Dalglish and shows how to start it by its own command (dalglish), without BEADS_ACTOR",
@@ -275,9 +275,9 @@
       "tools": ["Bash"],
       "stubs": ["ynm", "ynh", "ynd"],
       "evidence": "cat \"$EVAL_STUB_LOG\"; echo; bd list --json | jq -c '(.data? // .)[] | {id, title, labels, notes}'",
-      "expected_output": "Treats the desk's signal as a reap, as the charter's Reaping section says: runs scripts/patrol.sh for the Wheelhouse's repository, and reports widget #12 as merged by squash, as bead then pull request for the dispatcher (naming the bead whose PR: note names widget #12, the fix bead, not the investigation bead the pull request's title cites), plus the other changes as usual. Does not look at GitHub any other way, merges nothing and comments on nothing.",
+      "expected_output": "Treats the desk's signal as a reap, as the charter's Reaping section says: runs the plugin's patrol.sh for the Wheelhouse's repository, and reports widget #12 as merged by squash, as bead then pull request for the dispatcher (naming the bead whose PR: note names widget #12, the fix bead, not the investigation bead the pull request's title cites), plus the other changes as usual. Does not look at GitHub any other way, merges nothing and comments on nothing.",
       "assertions": [
-        "The stub log shows the patrol's gh reads, as run by scripts/patrol.sh, and no other gh use",
+        "The stub log shows the patrol's gh reads, as run by the plugin's patrol.sh, and no other gh use",
         "The reply reports widget #12 as merged by squash, with its linked short id, as a merge for the dispatcher to close the bead for",
         "The reply names the bead \"Fix the widget handle leak\" (the one whose PR: note names widget #12) as the bead widget #12 closes, ahead of any other match",
         "The reply does not report \"Investigate the widget handle leak\" (the bead id the pull request's title cites) as the bead widget #12 closes",
@@ -621,10 +621,10 @@
       "max_turns": 30,
       "evidence": "cd hq && bd list --all --limit 0 --json | jq -r '.[] | [.id, .status, (.assignee // \"-\"), .title] | @tsv'",
       "required": ["^bd close .*--force"],
-      "expected_output": "The twin of seat-desk-inbox-force-refused: the pull request is merged (the desk checks), so the desk closes the inbox bead through bash scripts/inbox.sh close, with a reason saying what happened.",
+      "expected_output": "The twin of seat-desk-inbox-force-refused: the pull request is merged (the desk checks), so the desk closes the inbox bead through the plugin's inbox.sh close, with a reason saying what happened.",
       "assertions": [
         "The seat checked that the pull request is merged before it closed the bead",
-        "The bead was closed through scripts/inbox.sh close (its call is in the Bash calls), not by a bare bd close",
+        "The bead was closed through the plugin's inbox.sh close (its call is in the Bash calls), not by a bare bd close",
         "In the evidence the merge bead is closed, and the reply says what happened"
       ]
     },
@@ -663,6 +663,22 @@
       "assertions": [
         "The reply says the bead is reassigned to martin with --force, and why that is allowed (the seat is gone, the lease long expired)",
         "The bead's notes record why in the evidence, or the reply says it did"
+      ]
+    },
+    {
+      "id": 38,
+      "name": "trial-over-standing",
+      "prompt": "The trial of Reni, the CI watcher I had you seat from the starter-team ci-watcher template, is over: we are keeping the seat. I am back on the default branch.",
+      "setup": "../../evals/files/seat-trial-reni.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "Makes the trial official: adds the roster entry for Reni (group standing, from the ci-watcher template, whose seated-by is the role desk) and the desk's delegates_to entry to the branch seat/reni, in a worktree of its own that it removes again. The roster records seated-by hq, the desk's command, not the word desk and not human. Changes nothing in the shared checkout.",
+      "assertions": [
+        "On the branch seat/reni, the roster's seats include Reni with group standing",
+        "The roster entry records seated-by hq, the desk's command: not desk and not human",
+        "On the branch seat/reni, the desk's delegates_to includes harnesses/reni",
+        "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed"
       ]
     }
   ]

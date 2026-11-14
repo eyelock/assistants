@@ -7,7 +7,13 @@ allowed-tools: Bash Read
 # Work graph
 
 A Wheelhouse keeps all its work in one Beads graph (`bd`), in the Wheelhouse repository. Beads
-holds **work only**. Memory (facts, preferences, what happened) goes through `scripts/memory.sh`.
+holds **work only**. Memory (facts, preferences, what happened) goes through `<skills>/work-graph/scripts/memory.sh`.
+
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
 
 ## Who you are
 
@@ -28,7 +34,12 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
    the dispatcher, even when they are more urgent.
 3. Skip epics: they close when their children do. Take the task with the highest priority (`0` is
    highest), and the oldest when priorities tie.
-4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
+4. Claim it: `bash <skills>/work-graph/scripts/claim.sh <id> --seat <your command>` (it runs
+   `bd update <id> --claim --actor <your command> --json`, which is atomic). When the bead's
+   `repo:` label is outside your roster seat's `specialities`, the claim still happens and a
+   warning line follows it: "this bead is repo:assistants; your charter takes repo:ynh". Act on it:
+   tell the desk or hand the bead back (`ask.sh return`) unless you were given it on purpose. An
+   in-charter claim prints nothing extra.
 5. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
    reopen or edit a bead another seat has claimed; if it looks stuck, tell the desk.
 6. Say which bead you claimed and what you are about to do. Keep the claim alive
@@ -118,7 +129,7 @@ reaching for the same bead. Other seats skip this section.
    claim](#keeping-your-claim)): record why on the bead, then dispatch it again as in step 6.
 8. Report who got what, who is still idle, and what is left unassigned. With a tracker, each
    dispatch note names the bead's item, its release, and whether its pull request closes the item
-   or is part of it, read from `scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run`
+   or is part of it, read from `<skills>/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> --dry-run`
    (`item`, `release`, `relation`), the logic the worker's pull request will use. It is a snapshot taken now: `open-pr.sh`
    recomputes it when the PR opens, and that result wins. Without a
    tracker (`kind: none` or no `tracker.json`), for a `housekeeping` bead with no item, or for a
@@ -127,7 +138,7 @@ reaching for the same bead. Other seats skip this section.
    dispatch nothing.
 9. When you wake a worker for its bead, start it on its roster model: the Agent tool's `model`
    parameter for a subagent, `--model` for a launcher, both from the `add-seat` skill's
-   `scripts/model.sh --seat <worker>`.
+   `<skills>/add-seat/scripts/model.sh --seat <worker>`.
 10. **A worker woken as a subagent ends with its report.** It lives only as long as the session
     that woke it, so its brief says to finish by returning its report (after syncing memory), not
     by asking to be restarted. Whichever seat woke it (the desk, or a dispatcher in a session of
@@ -139,7 +150,9 @@ reaching for the same bead. Other seats skip this section.
 The dispatcher looks for lapsed claims at every check-in (each time it wakes, and before it reports
 who is idle), because nothing else prompts it to. Other seats skip this section.
 
-1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show --json <id>`
+1. List the beads in progress: `bd list --status in_progress --json`. Skip any labelled `session:<command>`: it is
+   a seat's live-session hold (the wake skill's "One live session per seat"), claimed with no lease on purpose, and
+   it is never reclaimed, only forced by a human or by the desk after checking. For each, `bd show --json <id>`
    has `lease_expires_at` and `heartbeat_at`: a lease whose `lease_expires_at` is in the past has
    expired (`bd show` prints it as "Lease: expires expired (heartbeat 28 mins ago)" or "Lease:
    expires in ...").
@@ -218,7 +231,7 @@ tracker: use the config's names and the adapter's commands.
 ## Opening a pull request
 
 A worker that hands work over with a pull request opens it only with this skill's
-`scripts/open-pr.sh`, never `gh pr create` by hand, so the PR carries its tracker item and release:
+`<skills>/work-graph/scripts/open-pr.sh`, never `gh pr create` by hand, so the PR carries its tracker item and release:
 
 ```bash
 bash path/to/work-graph/scripts/open-pr.sh --dir <the Wheelhouse> --bead <id> \
@@ -273,7 +286,7 @@ labelled `housekeeping`; do not close a tracker item from it.
 
 Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
 never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
-(`scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
+(`<skills>/work-graph/scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
 
 1. **Who:** a named person only when you know who: they asked for the work, or they have named
    themselves at the desk this session. Otherwise the default human (`--to default`, the
@@ -283,7 +296,7 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    visible:
 
    ```bash
-   bash scripts/inbox.sh assign --from <your command> --to default \
+   bash <skills>/work-graph/scripts/inbox.sh assign --from <your command> --to default \
      --title "Merge <repository> #<n>" --url <the pull request's URL> --blocks <your bead> \
      --repo <repository> \
      --description "<who asked, why, and what done means: merged, so <your bead> can go on>"
@@ -304,7 +317,7 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    decisions, until the human closes it:
 
    ```bash
-   bash scripts/inbox.sh assign --from <your command> --to default --kind report \
+   bash <skills>/work-graph/scripts/inbox.sh assign --from <your command> --to default --kind report \
      --title "<what it reports>" --description "<the report>"
    ```
 
@@ -315,7 +328,7 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    `inbox`, or Beads keys `human/<command>/note/...`), until the desk relays it:
 
    ```bash
-   bash scripts/inbox.sh note --from <your command> --to default --content "<the news>"
+   bash <skills>/work-graph/scripts/inbox.sh note --from <your command> --to default --content "<the news>"
    ```
 
    Name anything on the web by its short form as a Markdown link, such as
@@ -329,17 +342,17 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
    sanctioned way to force it:
 
    ```bash
-   bash scripts/inbox.sh close <bead> --reason "<what the human did>" --from <desk command>
+   bash <skills>/work-graph/scripts/inbox.sh close <bead> --reason "<what the human did>" --from <desk command>
    ```
 
    (`done` is an alias.) It refuses a `--from` that is not the desk, a bead that has no `inbox`
    label and one that is not assigned to a human, so it cannot close a seat's work.
 
-`bash scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
+`bash <skills>/work-graph/scripts/inbox.sh show` prints what is waiting for the humans, and the desk's wake opens with
 it. If bd or ynm fails, it exits 3 and names the failure in `errors`, still printing what the other
 returned: a broken tool never reads as an empty inbox. Who is at the desk is per session: with no name, the desk shows the default
 human's inbox; when someone names themselves ("it's me, <name>"), the desk runs
-`bash scripts/inbox.sh show --name <Name>` for the rest of the session, which adds their inbox
+`bash <skills>/work-graph/scripts/inbox.sh show --name <Name>` for the rest of the session, which adds their inbox
 (the beads assigned to their lowercase name, and the ynm notes in `human/<command>`). Nothing is
 registered or written to the repository: no roster entry, no email, no username.
 
@@ -389,7 +402,7 @@ When a bead closes depends on what kind it is:
 
 - **A build bead closes when its pull request merges**, never at review and never when the pull
   request opens. Until then it stays in progress with the worker, and a ready review does not
-  release it. `scripts/open-pr.sh` notes the pull request on the bead (`PR: <url>`) when it opens it:
+  release it. `<skills>/work-graph/scripts/open-pr.sh` notes the pull request on the bead (`PR: <url>`) when it opens it:
   that note is the one signal everything else reads to see a pull request is open (the dispatcher's
   idle check, the wake, the dead-claim check). Open pull requests only with the script; if its
   note failed, it says so, and you add the note with `bd note <id> "PR: <url>"`.
@@ -410,7 +423,7 @@ When a bead closes depends on what kind it is:
    `--kind event`). Keep `--kind fact` for what stays true, such as a gotcha.
 
    ```bash
-   bash scripts/memory.sh remember --actor <command> --kind event --bead <id> \
+   bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --kind event --bead <id> \
      --text "<id>: <what happened, including anything skipped>"
    ```
 
@@ -421,7 +434,7 @@ When a bead closes depends on what kind it is:
    bead closes. Your next wake shows the latest three.
 
    ```bash
-   bash scripts/memory.sh remember --actor <command> --seat <command> --kind close-note \
+   bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --seat <command> --kind close-note \
      --bead <id> --text "Surprised: <what>.
    Sharp edges: <where>."
    ```
@@ -435,13 +448,13 @@ When a bead closes depends on what kind it is:
 
 Beads ships its own memory (`bd remember`, `bd memories`) and `bd prime` tells agents to use it.
 **In a Wheelhouse, don't call them.** The Wheelhouse chooses where memory lives, and
-`scripts/memory.sh` is the one way in. When asked to remember something, use it:
+`<skills>/work-graph/scripts/memory.sh` is the one way in. When asked to remember something, use it:
 
 | What | Command |
 |---|---|
-| A fact or gotcha, for everyone | `bash scripts/memory.sh remember --actor <command> --kind fact --text "..."` |
-| Read the facts back | `bash scripts/memory.sh recall --shared` |
-| What happened to a bead (events, not facts) | `bash scripts/memory.sh remember --actor <command> --kind event --bead <id> --text "..."`; read back with `recall --shared --kind event` |
-| Retire a memory | `bash scripts/memory.sh forget --id <id> --reason "..."` |
+| A fact or gotcha, for everyone | `bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --kind fact --text "..."` |
+| Read the facts back | `bash <skills>/work-graph/scripts/memory.sh recall --shared` |
+| What happened to a bead (events, not facts) | `bash <skills>/work-graph/scripts/memory.sh remember --actor <command> --kind event --bead <id> --text "..."`; read back with `recall --shared --kind event` |
+| Retire a memory | `bash <skills>/work-graph/scripts/memory.sh forget --id <id> --reason "..."` |
 
 Likewise, don't track work in Markdown files, TODO lists or memory. If it is work, it is a bead.

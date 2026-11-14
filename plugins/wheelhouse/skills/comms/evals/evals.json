@@ -3,19 +3,18 @@
   "evals": [
     {
       "id": 1,
-      "name": "desk-asks-three-decisions",
+      "name": "desk-asks-three-independent-decisions",
       "prompt": "You are hq, the desk of this Wheelhouse. data/comms-pending.md has what's waiting on me. Sort it out with me. This session has no structured question tool, so ask in plain text.",
       "files": ["../../evals/files/comms-pending.md"],
-      "expected_output": "With no question tool, asks one decision first in plain text, a single question with lettered or numbered options: the 1.4 release (wait for widget #12, recommended, or tag now), the most urgent. Its context line names hq-14 with a synopsis and [widget #12](https://github.com/example/widget/pull/12) as a link, and shows there are three decisions in all (two more after this one). 2 to 4 options, the recommended one first and marked (Recommended), then stops to wait for the answer. It does not ask the --dry-run rename or the programme manager yet, does not list them as prose questions, addresses the human as you, and never names Pat.",
+      "expected_output": "With no question tool, asks all three independent decisions together in plain text, one numbered block each (the 1.4 release, the --dry-run rename, the programme manager), each with its own line of context and 2 to 4 lettered options with the recommended one first and marked (Recommended). The release block names hq-14 with a synopsis and [widget #12](https://github.com/example/widget/pull/12) as a link. It addresses the human as you, never names Pat, does not choose for them, and stops to wait.",
       "assertions": [
-        "The reply asks exactly one question in plain text as lettered or numbered options, not all three decisions batched together",
-        "That question is the 1.4 release (hq-14), the most urgent, and the --dry-run rename and the programme manager are not asked in the same reply",
-        "The question has between 2 and 4 options, and the first option, waiting for #12, is marked (Recommended)",
-        "The question carries a line of context saying what it is about, with its bead id (hq-14) and [widget #12](https://github.com/example/widget/pull/12) as a link",
-        "The context or reply shows where this question sits among the three, such as two more after this one or question 1 of 3",
-        "Neither the question nor the reply name Pat; the reply addresses the human as you",
-        "The reply does not list the other two decisions as prose questions",
-        "The reply ends at the question: it does not choose an option itself, act on a decision, or go on to a second question"
+        "The reply puts all three decisions (the 1.4 release, the --dry-run rename, the programme manager) as separate numbered blocks in one reply, none left for later or dropped",
+        "Each block has its own line of context and lettered or numbered options, so it can be answered on its own",
+        "Each block has between 2 and 4 options, and the recommended one is first and marked (Recommended)",
+        "The release block names hq-14 with a synopsis and shows [widget #12](https://github.com/example/widget/pull/12) as a link",
+        "Neither the blocks nor the reply name Pat; the reply addresses the human as you",
+        "The decisions are not asked as a prose paragraph or a bullet list of open questions",
+        "The reply ends at the questions: it does not choose an option itself or act on a decision"
       ]
     },
     {
@@ -41,6 +40,32 @@
         "The commit SHA is filled in afterwards with sed or jq, not inside an unquoted heredoc",
         "The body is posted with --body-file (or gh api --input), not as an inline --body string holding the backtick spans",
         "The file is a temporary one (mktemp or a scratchpad), not left in the repository checkout"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "dependent-decision-waits",
+      "prompt": "You are hq, the desk of this Wheelhouse. Two decisions are waiting on me. First: whether the widget 1.4 release waits for [widget #12](https://github.com/example/widget/pull/12) or tags now (hq-14, the 1.4 release). Second, and it depends on the first: if 1.4 tags now, whether #12 then goes in 1.5 or a 1.4.1 patch; if 1.4 waits, there is nothing to ask. Sort it out with me. This session has no structured question tool, so ask in plain text.",
+      "expected_output": "Asks only the first decision (wait for #12 or tag now) in plain text as one numbered block with lettered options, recommended first. It says one more decision may follow depending on the answer, does not ask the second now, and stops.",
+      "assertions": [
+        "The reply asks the release decision (wait for #12, or tag now) with lettered or numbered options",
+        "The reply does not ask whether #12 goes in 1.5 or a 1.4.1 patch as a question to answer now, because it depends on the first answer",
+        "The reply says another decision may follow, or is waiting, depending on the answer",
+        "The reply does not choose an option itself or act as if one were chosen (marking one Recommended is fine)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "report-action-not-ready",
+      "prompt": "You are hq, the desk. Report to me where widget 1.4 stands. Facts: [widget #12](https://github.com/example/widget/pull/12) is merged-ready in content but still a draft, and the reviewer, gore, has a review fix outstanding that gahan is making now; CI is green. After the fix, gore re-reviews and takes it out of draft, and only then can I merge it. Nothing else is open.",
+      "expected_output": "A short report ending in Status, Work in progress and Your action. Status is one line (1.4 is waiting on #12's review fix). Work in progress names gahan fixing and gore re-reviewing and taking it out of draft. Your action is 'No action required' and says what will bring the human back, not 'merge #12'.",
+      "assertions": [
+        "The report ends with three labelled lines: Status, Work in progress and Your action",
+        "Status is one line giving the outcome",
+        "Work in progress says gahan is making the review fix and gore will re-review and take #12 out of draft",
+        "Your action says no action is required, and says what will bring the human back",
+        "Your action does not tell the human to merge #12 now, since it is still a draft with a fix outstanding",
+        "Every reference to the pull request, each time it is named, is its short form as a Markdown link, never a bare #12"
       ]
     }
   ]

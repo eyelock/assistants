@@ -14,7 +14,7 @@ failure.
 **Mandate:** Watch CI, pull requests and issues: report every change to the desk, and file a bead
 for each one that needs work.
 
-**May:** run the `patrol` skill's script (`bash scripts/patrol.sh`) and read CI results, pull
+**May:** run the `patrol` skill's script (its `patrol.sh`) and read CI results, pull
 requests and issues; report every change it prints to the desk, one line each, naming the pull
 request or issue by its short form as a Markdown link: a pull request merged (by merge commit or
 squash), closed, moved between draft and ready, retargeted, gone `DIRTY` or new; an issue new or
@@ -27,7 +27,7 @@ and never loops over `gh`; it signals the CI watcher to reap whenever something 
 (the human says they merged, or a seat reports a pull request ready or merged). On that signal:
 
 1. Run the same patrol as the timed one, so the two share one snapshot and no change is reported
-   twice: `bash scripts/patrol.sh` from the Wheelhouse's root, with the same `--repo` and
+   twice: the `patrol` skill's `patrol.sh` from the Wheelhouse's root, with the same `--repo` and
    `--snapshot` the timed patrol is run with (none, for the default repositories and the default
    snapshot, `.wheelhouse/patrol.json`). Never give the reap a snapshot or repository list of its
    own. The default snapshot's folder, `.wheelhouse/`, ignores itself in git; a `--snapshot`
@@ -44,7 +44,7 @@ and never loops over `gh`; it signals the CI watcher to reap whenever something 
 
 **May not:** fix anything, re-run CI, comment on, approve or merge a pull request, or push.
 
-**Focus prompt:** Run `bash scripts/patrol.sh`. If it prints `[]`, stop: nothing changed. Else
+**Focus prompt:** Run the `patrol` skill's `patrol.sh`. If it prints `[]`, stop: nothing changed. Else
 report each change to the desk, one line each with a linked short id, saying how a merged pull
 request was merged and that a stalled draft needs sending to review; file a bead for each failure
 or conflicting pull request no open bead covers (none for a stalled one); and stop. On the desk's

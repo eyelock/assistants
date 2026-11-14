@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Shared by the patrol eval setups: a Wheelhouse (the hq desk, with a Beads
-# graph) whose own GitHub repository is example/widget, the patrol scripts in
-# scripts/, and a gh stub that answers from .eval/gh-state.json and logs each
+# graph) whose own GitHub repository is example/widget, no copy of the patrol
+# scripts (the seat runs the plugin's, where it is installed), and a gh stub that answers from .eval/gh-state.json and logs each
 # call. patrol_baseline takes the first snapshot, from the state given.
 set -euo pipefail
 . "$EVAL_FIXTURES/graph-lib.sh"
@@ -9,8 +9,7 @@ set -euo pipefail
 patrol_wheelhouse() {
   wheelhouse_init
   git remote add origin https://github.com/example/widget.git
-  mkdir -p scripts .eval
-  cp "$EVAL_FIXTURES/../../skills/patrol/scripts/"* scripts/
+  mkdir -p .eval
   cat > "$EVAL_BIN/gh" <<'SH'
 #!/bin/sh
 printf '%s\n' "gh $*" >> "$EVAL_STUB_LOG"
@@ -25,7 +24,6 @@ case "$1 $2" in
 esac
 SH
   chmod +x "$EVAL_BIN/gh"
-  git add scripts && git commit -qm "chore: The patrol scripts"
 }
 
 # A pull request, issue or run in gh's JSON, for example/widget.
@@ -43,6 +41,6 @@ gh_state() {
 }
 
 patrol_baseline() {
-  bash scripts/patrol.sh > /dev/null 2>&1
+  bash "$EVAL_FIXTURES/../../skills/patrol/scripts/patrol.sh" > /dev/null 2>&1
   : > "$EVAL_STUB_LOG"
 }

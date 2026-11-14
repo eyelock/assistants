@@ -9,16 +9,15 @@
 #   skills/roster/...                    ynh install . and every seat
 #   skills/<other>/...                   ynh install ., and each seat whose
 #                                        `../..` include picks that skill
-#   scripts/...                          restarts (hooks run these from disk)
+#   scripts/...                          restarts (the Wheelhouse's own scripts, run from disk)
 #   a change to what ynh's trust covers   print `ynh trust accept local/<seat>`;
 #                                        never run: accepting is the human's
 #   anything else (docs, pinned-skills.md, .beads, ...)   nothing
 #
 # With no diff (nothing to compare, or --upstream) it also compares each
 # seat's cached wheelhouse include with upstream (`ynh ls --check-updates`) and
-# offers `ynh update`; --update runs it, then re-copies the plugin scripts the
-# Wheelhouse already carries in scripts/ when they differ, and copies in the three every
-# Wheelhouse needs (wake.sh, inbox.sh, memory.sh) when it has none.
+# offers `ynh update`; --update runs it. It copies no script: a Wheelhouse keeps none of the
+# plugin's scripts, and seats run them where ynh installed them.
 #
 # Trust: ynh's digest covers a harness's sensors, hooks and MCP servers (top level and every
 # profile), workspace, launch focus (with its prompt) and delegates_to focuses, and a seat whose digest changed or was never
@@ -40,15 +39,15 @@ set -uo pipefail
 usage() {
   cat <<'EOF2'
 Usage: refresh.sh [--dir <wheelhouse repo>] [--from <rev>] [--to <rev>] [<from>..<to>]
-                  [--upstream] [--update] [--plugin <dir>] [--doctor <check.sh>]
+                  [--upstream] [--update] [--doctor <check.sh>]
                   [--dry-run]
 
 Maps the git diff <from>..<to> (default ORIG_HEAD..HEAD) to the ynh installs,
 trust instructions and restarts it needs, runs the safe ones, then the doctor,
 and prints a JSON report. --dry-run only prints. --upstream (implied by an
 empty diff) also compares each seat's wheelhouse include with upstream;
---update then runs `ynh update`, re-copies changed plugin scripts and copies in wake.sh, inbox.sh and
-memory.sh when the Wheelhouse lacks one.
+--update then runs `ynh update`. It copies no script: a Wheelhouse keeps none of the plugin's scripts,
+and seats run them where ynh installed them.
 EOF2
 }
 
@@ -58,14 +57,12 @@ to=""
 dry=0
 upstream=0
 update=0
-plugin=""
 doctor=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --dir) [ $# -ge 2 ] || { usage >&2; exit 1; }; dir="$2"; shift 2 ;;
     --from) [ $# -ge 2 ] || { usage >&2; exit 1; }; from="$2"; shift 2 ;;
     --to) [ $# -ge 2 ] || { usage >&2; exit 1; }; to="$2"; shift 2 ;;
-    --plugin) [ $# -ge 2 ] || { usage >&2; exit 1; }; plugin="$2"; shift 2 ;;
     --doctor) [ $# -ge 2 ] || { usage >&2; exit 1; }; doctor="$2"; shift 2 ;;
     --dry-run) dry=1; shift ;;
     --upstream) upstream=1; shift ;;
@@ -215,26 +212,6 @@ fi
 
 # --- upstream: the cached wheelhouse include against the plugin's upstream -----------
 updates="[]"
-scripts_stale="[]"
-copied="[]"
-kept="[]" # [{script, diff}]
-# plugin_had <plugin script path> <Wheelhouse script path>: 0 when the Wheelhouse's copy is
-# byte-for-byte a version the plugin once shipped (so it is only behind); 1 when the plugin's history
-# is there and never had it (Wheelhouse-local changes); 2 when the history can't say (no git, or a
-# shallow clone such as ynh's depth-1 cache, which holds only the current commit). Either failure
-# means refresh must not overwrite it.
-plugin_had() {
-  local src="$1" mine="$2" root rel want c
-  root=$(git -C "$(dirname "$src")" rev-parse --show-toplevel 2>/dev/null) || return 2
-  [ "$(git -C "$root" rev-parse --is-shallow-repository 2>/dev/null)" = false ] || return 2
-  rel=$(git -C "$(dirname "$src")" ls-files --full-name -- "$(basename "$src")" 2>/dev/null) || return 2
-  [ -n "$rel" ] || return 2
-  want=$(git hash-object "$mine") || return 2
-  for c in $(git -C "$root" log --format=%H -- "$rel" 2>/dev/null); do
-    [ "$(git -C "$root" rev-parse "$c:$rel" 2>/dev/null)" = "$want" ] && return 0
-  done
-  return 1
-}
 if [ "$upstream" = 1 ]; then
   if [ "$ynh_ok" = 0 ]; then
     note "ynh is not on PATH: upstream not checked"
@@ -246,70 +223,18 @@ if [ "$upstream" = 1 ]; then
         | {seat: $h.name, installed: .ref_installed, available: .ref_available, command: ("ynh update " + $h.id)} ]' <<<"$listing")
     if [ "$update" = 1 ] && [ "$dry" = 0 ]; then
       while IFS= read -r c; do [ -n "$c" ] && run_step "$c" $c; done < <(jq -r '.[].command' <<<"$updates")
-      listing=$(limited "$WL_YNH_SECS" ynh ls --check-updates --format json 2>/dev/null || echo "$listing")
-    fi
-    # The plugin's own copy of the scripts the Wheelhouse carries: the ynh cache checkout at upstream.
-    if [ -z "$plugin" ]; then
-      want=$(jq -r '[.harnesses[]?.includes[]? | select((.path // "") | endswith("plugins/wheelhouse")) | .ref_available][0] // empty' <<<"$listing")
-      for c in "${YNH_HOME:-$HOME/.ynh}"/cache/*/; do
-        [ -d "${c}plugins/wheelhouse" ] || continue
-        [ -n "$want" ] && [ "$(git -C "$c" rev-parse HEAD 2>/dev/null)" = "$want" ] && plugin="${c}plugins/wheelhouse" && break
-      done
-    fi
-    if [ -n "$plugin" ] && [ -d "$plugin/skills" ]; then
-      # The shared library sits in the work-graph skill's scripts folder; a Wheelhouse that still carries
-      # copies of the scripts needs it beside them (until it carries none).
-      for f in $(cd "$plugin/skills" && ls */scripts/*.sh */scripts/*.jq 2>/dev/null); do
-        b=$(basename "$f")
-        # A script the Wheelhouse carries is kept current. wake.sh, inbox.sh, memory.sh and wheelhouse-lib.sh are the
-        # ones every Wheelhouse needs (create-wheelhouse step 5), so they are copied in when the
-        # Wheelhouse lacks them: an upgrade from before memory.sh existed would otherwise leave
-        # wake.sh with nothing to read memory through, and no script runs without the library. The rest (patrol, tracker, open-pr) are
-        # optional, so one the Wheelhouse doesn't carry is left alone.
-        case "$b" in wake.sh | inbox.sh | memory.sh | wheelhouse-lib.sh) ;; *) [ -f "$dir/scripts/$b" ] || continue ;; esac
-        [ -f "$plugin/skills/$f" ] || continue
-        cmp -s "$plugin/skills/$f" "$dir/scripts/$b" && continue
-        scripts_stale=$(jq -c --arg b "scripts/$b" '. + [$b]' <<<"$scripts_stale")
-        # A script the Wheelhouse lacks is new to it. One it carries is overwritten only when it is
-        # a version the plugin once shipped; otherwise it holds Wheelhouse-local changes the plugin
-        # lacks (not yet ported upstream), and overwriting would regress them: keep it and show the diff.
-        if [ -f "$dir/scripts/$b" ]; then plugin_had "$plugin/skills/$f" "$dir/scripts/$b"; had=$?; else had=0; fi
-        if [ "$had" != 0 ]; then
-          full=$(diff -u "$dir/scripts/$b" "$plugin/skills/$f" 2>/dev/null || true)
-          d=$(printf '%s\n' "$full" | head -60)
-          cut=$(( $(printf '%s\n' "$full" | wc -l) - 60 )); [ "$cut" -gt 0 ] || cut=0
-          [ "$cut" -gt 0 ] && d="$d"$'\n'"... diff cut: $cut more lines (run: diff -u $dir/scripts/$b $plugin/skills/$f)"
-          kept=$(jq -c --arg b "scripts/$b" --arg d "$d" --argjson cut "$cut" --arg why "$([ "$had" = 2 ] && echo cannot-tell || echo local-changes)" \
-            '. + [{script: $b, reason: $why, diff: $d, diffCutLines: $cut}]' <<<"$kept")
-          continue
-        fi
-        if [ "$update" = 1 ] && [ "$dry" = 0 ]; then
-          cp "$plugin/skills/$f" "$dir/scripts/$b" && copied=$(jq -c --arg b "scripts/$b" '. + [$b]' <<<"$copied")
-        fi
-      done
-    else
-      note "plugin checkout at upstream not found in the ynh cache: plugin scripts not compared (pass --plugin <dir>)"
+      # An updated seat runs the plugin's new scripts only when its session restarts.
+      seat_install="$seat_install"$'\n'"$(jq -r '.[].seat' <<<"$updates")"
     fi
   else
     note "ynh ls --check-updates gave no listing: upstream not checked"
   fi
 fi
-[ "$(jq length <<<"$copied")" -gt 0 ] && restart_all=1
-if [ "$(jq length <<<"$kept")" -gt 0 ]; then
-  verb="would be left alone"; [ "$update" = 1 ] && [ "$dry" = 0 ] && verb="left alone, not overwritten"
-  l=$(jq -r 'map(select(.reason == "local-changes") | .script) | join(", ")' <<<"$kept")
-  t=$(jq -r 'map(select(.reason == "cannot-tell") | .script) | join(", ")' <<<"$kept")
-  [ -n "$l" ] && note "$verb: $l carry changes the plugin has never shipped (Wheelhouse-local, perhaps not yet ported upstream). upstream.pluginScriptsKept has each diff (Wheelhouse's copy to the plugin's): port the local changes into the plugin, then take the plugin's, or merge by hand"
-  [ -n "$t" ] && note "$verb: $t differ from the plugin's, and the plugin checkout has no history to say whether the Wheelhouse's copy is only behind (ynh's cache is a depth-1 clone). Give refresh a full clone of the plugin's repository with --plugin <clone>/plugins/wheelhouse (git clone <url> then re-run), or take the plugin's copy by hand after reading the diff in upstream.pluginScriptsKept"
-fi
 
 # --- installed and born -------------------------------------------------------------------
-# Where identities live is wheelhouse.json's "memory" key, read through memory.sh: the
-# Wheelhouse's own copy in scripts/, else the work-graph skill's beside this one.
+# Where identities live is wheelhouse.json's "memory" key, read through the work-graph skill's memory.sh, beside this skill.
 memsh=""
-for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
-  [ -f "$f" ] && { memsh="$f"; break; }
-done
+[ -f "$here/../../work-graph/scripts/memory.sh" ] && memsh="$here/../../work-graph/scripts/memory.sh"
 backend=ynm
 if [ -n "$memsh" ]; then
   if ! backend=$(bash "$memsh" backend --dir "$dir" 2>/dev/null); then
@@ -394,11 +319,11 @@ jq -n --arg range "$range" --argjson dry "$([ "$dry" = 1 ] && echo true || echo 
   --argjson install "$planned" --argjson ran "$ran" --argjson failed "$([ "$failed" = 1 ] && echo true || echo false)" \
   --argjson trust "$(lines_json "$trust_cmds")" --argjson restart "$(lines_json "$restart")" \
   --argjson scripts "$(lines_json "$scripts_changed")" --argjson ignored "$(lines_json "$ignored")" \
-  --argjson updates "$updates" --argjson stale "$scripts_stale" --argjson copied "$copied" --argjson kept "$kept" \
+  --argjson updates "$updates" \
   --argjson missing "$missing" --argjson doctor "$doctor_json" --argjson notes "$notes" \
   '{range: (if $range == "" then null else $range end), dryRun: $dry, failed: $failed,
     install: $install, ran: $ran,
     trust: $trust, restart: $restart, scriptsChanged: $scripts, ignored: $ignored,
-    upstream: {updates: $updates, pluginScriptsDiffer: $stale, pluginScriptsCopied: $copied, pluginScriptsKept: $kept},
+    upstream: {updates: $updates},
     seatsNotReady: $missing, doctor: $doctor, notes: $notes}'
 [ "$failed" = 0 ] || exit 3

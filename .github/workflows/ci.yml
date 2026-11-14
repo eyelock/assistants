@@ -5,15 +5,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  # The merge queue runs the required check (All Clear) on the branch as it will be
-  # with the queued pull requests merged. Every job runs there: there is no pull
-  # request to diff, and a skipped required job would stall the queue.
-  merge_group:
 
-# Only a pull request's superseded runs are cancelled. A push run on develop or main
-# is never cancelled by the next merge, so a red result always surfaces.
+# Only a pull request's superseded runs are cancelled. A push run on develop or main is never
+# cancelled by the next merge, so a red result always surfaces, and it gets a group of its own per
+# commit: GitHub keeps one pending run per group, so a quick third merge would otherwise replace the
+# second's push run before it started. Every pull-request run shares the
+# per-ref group and cancels the one before it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

@@ -76,15 +76,32 @@
       "tools": ["Bash"],
       "stubs": ["gh"],
       "evidence": "git status --short; echo; git log --oneline -4; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo '$ bd memories'; bd memories --json | jq -r 'to_entries[] | select(.key != \"schema_version\") | \"\\(.key): \\(.value)\"'",
-      "expected_output": "This Wheelhouse keeps its memory in Beads (wheelhouse.json), and there is no ynm. Writes its handoff notes through bash scripts/memory.sh remember with kind handoff for the gahan seat, never bd remember or ynm directly, covering what is done (Features), where the work is and the exact next step (write Fixes, then Breaking changes). The changelog bead stays claimed by gahan. It asks to be restarted and does no further work.",
+      "expected_output": "This Wheelhouse keeps its memory in Beads (wheelhouse.json), and there is no ynm. Writes its handoff notes through the plugin's memory.sh remember with kind handoff for the gahan seat, never bd remember or ynm directly, covering what is done (Features), where the work is and the exact next step (write Fixes, then Breaking changes). The changelog bead stays claimed by gahan. It asks to be restarted and does no further work.",
       "assertions": [
         "In the evidence, bd memories lists a memory whose key starts with seat/gahan/handoff",
         "That memory's text says Features is done and names the next step (the Fixes section, or Fixes then Breaking changes)",
         "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan",
-        "The seat reached memory through scripts/memory.sh: it did not run ynm, and the reply does not say memory failed",
+        "The seat reached memory through the plugin's memory.sh: it did not run ynm, and the reply does not say memory failed",
         "The reply asks to be restarted (or says it will pick up from the notes when restarted)"
       ],
       "id": 5
+    },
+    {
+      "id": 6,
+      "name": "take-a-beat-held-work",
+      "prompt": "You are the gahan seat. You have been writing the ynh 0.13 changelog in CHANGELOG.md: the Features section is done and committed, and the Fixes and Breaking changes sections are still to write. You also hold the bead for ynh #700, which waits on the deprecation-policy design: there is nothing you can do on it until that is settled. Great work. Take a beat, then hand off.",
+      "setup": "../../evals/files/handoff-held.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm"],
+      "evidence": "git status --short; echo; bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Writes handoff notes in ynm that hold only what it can act on next: Features done and the exact next step on the changelog (Fixes, then Breaking changes). The held bead (the ynh #700 deprecation notices) is not copied forward: the notes do not carry its pull request, its state or its next step, and at most point to it by id. Instead the held bead is recorded in the work graph as blocked by the design bead (bd dep add <held> --blocked-by <design>), so it leaves bd ready until the design closes. The changelog bead stays claimed by gahan and in progress. It asks to be restarted and does no further work.",
+      "assertions": [
+        "In the evidence, the bead \"Land the deprecation notices in ynh #700\" waits on \"Design the ynh 0.13 deprecation policy\" (waits_on lists it): the held work is a blocked bead",
+        "The ynm remember call for the handoff notes names the next step on the changelog (Fixes, then Breaking changes) and does not copy the held bead's pull request link, its state or its next step: at most it names the held bead by id",
+        "In the evidence, \"Write the ynh 0.13 changelog\" is still in_progress and claimed by gahan, and the held bead is not closed",
+        "CHANGELOG.md has no Fixes section: the seat did not carry on working",
+        "The reply asks to be restarted (or says it will pick up from the notes when restarted)"
+      ]
     }
   ]
 }
