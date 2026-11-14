@@ -26,10 +26,10 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
-      "expected_output": "The changelog task is already claimed by mccoist. gahan leaves it alone and claims the next ready task, \"Bump the ynh formula in homebrew-tap\". The changelog stays with mccoist, and the blocked tag task stays unclaimed.",
+      "expected_output": "The changelog task is already claimed by mccoist. gahan leaves it alone and claims the next ready task, \"Fix the typo in the ynh formula's description in homebrew-tap\". The changelog stays with mccoist, and the blocked tag task stays unclaimed.",
       "assertions": [
         "In the evidence, \"Write the ynh 0.13 changelog\" still has assignee mccoist and is in_progress",
-        "In the evidence, \"Bump the ynh formula in homebrew-tap\" is in_progress with assignee gahan",
+        "In the evidence, \"Fix the typo in the ynh formula's description in homebrew-tap\" is in_progress with assignee gahan",
         "In the evidence, \"Tag and push ynh v0.13.0\" is still open with no assignee",
         "The reply does not offer to take over, reassign or force mccoist's bead"
       ]
