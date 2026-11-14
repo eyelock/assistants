@@ -336,6 +336,40 @@ if [ -f "$roster" ]; then
   fi
 fi
 
+# --- bare-session guard ------------------------------------------------------
+# A plain vendor session in the repository, not started through ynh, is told it is not a seat:
+# a session-start hook per vendor the Wheelhouse's harnesses run on (scripts/bare-guard.sh, from
+# the create-wheelhouse skill). Claude Code, Codex and Cursor have a project-level session-start
+# hook whose output reaches the model; any other vendor is named as unguarded, never faked.
+desk_manifest="$dir/.agents/harness/plugin.json"
+if [ -f "$desk_manifest" ]; then
+  vendors=$({
+    jq -r '.default_vendor // "claude"' "$desk_manifest" 2>/dev/null
+    while IFS= read -r h; do
+      jq -r '.default_vendor // "claude"' "$dir/$h/.agents/harness/plugin.json" 2>/dev/null
+    done < <(jq -r '.seats[]?.harness' "$roster" 2>/dev/null)
+  } | sort -u | tr '\n' ' ')
+  unguarded=""
+  noguard=""
+  for v in $vendors; do
+    case "$v" in
+      claude) hookfile=".claude/settings.json" ;;
+      codex) hookfile=".codex/hooks.json" ;;
+      cursor) hookfile=".cursor/hooks.json" ;;
+      *) unguarded="$unguarded $v"; continue ;;
+    esac
+    if [ ! -f "$dir/scripts/bare-guard.sh" ] || ! grep -Eq "bare-guard\.sh[^ ]* --vendor $v" "$dir/$hookfile" 2>/dev/null; then
+      noguard="$noguard $v"
+    fi
+  done
+  if [ -n "$noguard" ]; then
+    add "bare-session guard" false warn "a plain session in this repository is not told it is not a seat, on:$noguard (no scripts/bare-guard.sh, or no session-start hook running it)" \
+      "copy the create-wheelhouse skill's scripts/bare-guard.sh into scripts/, then run its scripts/add-bare-guard-hook.sh --dir <repo> --vendor <v> for each vendor named (step 3.7), which appends to an existing hook file and keeps the rest; the human reads the diff of the hook files before committing"
+  else
+    add "bare-session guard" true info "a plain session is told it is not a seat, on:${vendors:- none}${unguarded:+; no project-level session-start hook can guard$unguarded}"
+  fi
+fi
+
 # --- humans ------------------------------------------------------------------
 # The roster's humans, beside its seats: exactly one, the default human, the
 # name for work that needs a human but no particular one. Any other human is per
