@@ -13,7 +13,8 @@
 #   hand it back (ask.sh return), unless you were given it on purpose.
 #
 # An in-charter claim prints nothing extra, and neither does a seat with no specialities, a
-# seat not in the roster, or a bead with no repo: label. A refused claim prints no warning.
+# seat not in the roster, or a bead with no repo: label. When bd declines the claim, the script
+# passes bd's message and exit code through and adds nothing of its own.
 # bd's own output goes to stdout unchanged; the claim's exit code is bd's.
 #
 # Run it from the Wheelhouse repository's root, or pass --dir.
