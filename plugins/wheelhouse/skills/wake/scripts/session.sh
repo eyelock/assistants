@@ -15,9 +15,13 @@
 #   {state: forced, bead, replaced: {label, started}}  --force took it over and commented which it replaced
 #   {state: unknown, why}                        bd could not be read or written; the wake carries on
 # release prints {state: released|not-held|not-yours|unknown, bead}. A session releases only the hold
-# it took: the token is a short hash of the vendor's session id, so a refused second session, whose
-# session-end hook also runs release, leaves the live session's hold alone. A vendor that gives no
-# session id has no token, and then release lets go of whatever the seat holds.
+# it took: the token is a short hash of the vendor's session id (CLAUDE_CODE_SESSION_ID, which Claude
+# Code sets), so a refused second session, whose session-end hook also runs release, leaves the live
+# session's hold alone. A vendor that gives no session id (Codex, Copilot, OpenCode, Cursor today) has no
+# token, so a refused take leaves a marker for the seat (in TMPDIR) and the next release, which is that
+# refused session's own end, finds it, removes it and releases nothing. Chosen over releasing whatever
+# the seat holds, which frees the live session's hold; if the live session ends first and spends the
+# marker, the hold stays until forced, the safe side.
 #
 # Only a human, answering the refused seat's question, or the desk, after checking that the seat's
 # named session (<wheelhouse>-<command>) is absent from ListAgents, may pass --force. A seat never forces
@@ -69,9 +73,11 @@ label="session:$seat"
 # This session: a token (a hash of the vendor's session id, never the id itself, or WAKE_SESSION_TOKEN),
 # a label to show a human (no host name or user: the bead is shared), and the time it started.
 token="${WAKE_SESSION_TOKEN:-}"
-if [ -z "$token" ] && [ -n "${CLAUDE_SESSION_ID:-}" ]; then
-  token=$(printf '%s' "$CLAUDE_SESSION_ID" | shasum -a 256 2>/dev/null | cut -c1-8)
+if [ -z "$token" ] && [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+  token=$(printf '%s' "$CLAUDE_CODE_SESSION_ID" | shasum -a 256 2>/dev/null | cut -c1-8)
 fi
+# With no token, a refused take leaves this marker, and the next release (its own end) spends it.
+marker="${TMPDIR:-/tmp}/wheelhouse-session-refused.$(printf '%s' "$PWD" | shasum -a 256 2>/dev/null | cut -c1-8).$seat"
 mylabel="${WAKE_SESSION_LABEL:-${seat} session ${token:-(pid $PPID)}}"
 now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 mynotes=$(jq -nc --arg t "$token" --arg l "$mylabel" --arg s "$now" '{token: $t, label: $l, started: $s}')
@@ -93,6 +99,7 @@ holder=$(jq -c '(.notes // "") | (try fromjson catch {label: "an earlier session
 
 if [ "$cmd" = release ]; then
   rel() { jq -nc --arg s "$1" --arg b "$id" '{state: $s, bead: $b}'; exit 0; }
+  if [ -z "$token" ] && [ -e "$marker" ]; then rm -f "$marker"; rel not-yours; fi
   [ -n "$id" ] || rel not-held
   [ "$status" = in_progress ] || rel not-held
   holdtoken=$(jq -r .token <<<"$holder")
@@ -112,7 +119,7 @@ if [ -z "$id" ]; then
   status=open
 fi
 held() { jq -nc --arg b "$id" '{state: "held", bead: $b}'; exit 0; }
-refused() { jq -nc --arg b "$id" --argjson h "$holder" '{state: "refused", bead: $b, holder: {label: $h.label, started: $h.started}}'; exit 0; }
+refused() { [ -n "$token" ] || : >"$marker" 2>/dev/null; jq -nc --arg b "$id" --argjson h "$holder" '{state: "refused", bead: $b, holder: {label: $h.label, started: $h.started}}'; exit 0; }
 
 if [ "$status" = in_progress ]; then
   [ "$force" = 1 ] || refused

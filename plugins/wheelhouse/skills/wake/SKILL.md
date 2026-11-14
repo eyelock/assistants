@@ -17,7 +17,7 @@ bash <skills>/wake/scripts/wake.sh --seat <command> --format text
 ## Where the scripts are
 
 A Wheelhouse keeps no copy of the plugin's scripts: they run where ynh installed them, in the `scripts/`
-folder of the skill that owns each (`wake.sh` here, `memory.sh` and `inbox.sh` in `work-graph`). In this
+folder of the skill that owns each (here `wake.sh`, with `sync.sh` and `render-wake.jq` beside it, which `wake.sh` runs and exits 3 without; `memory.sh`, `inbox.sh` and `wheelhouse-lib.sh` in `work-graph`). The three wake files travel together. In this
 skill and every other, `<skills>` is the folder that holds the skill folders: the parent of this skill's
 base directory (the path the skill was loaded from). Run them from the Wheelhouse's root, or give
 the Wheelhouse with `--dir`. Fixes go to the plugin only, so a script of the Wheelhouse's own never
@@ -118,8 +118,12 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
 - **The hold is released by the handoff.** The session-end hook's `--end` lets go of it before it syncs, so the
   release reaches the other machines, and prints `session: released`. A session lets go only of the hold it took
   (`not-yours` otherwise), so a refused session's own session-end hook leaves the live one alone. The token that tells
-  sessions apart is a short hash of the vendor's session id (the id is never printed or written); a vendor with
-  none gives no token, and then `--end` releases whatever the seat holds.
+  sessions apart is a short hash of the vendor's session id (Claude Code sets `CLAUDE_CODE_SESSION_ID`, checked in
+  a live session; the id is never printed or written). A vendor with no session id (Codex, Copilot, OpenCode and
+  Cursor today) gives no token, so a refused start leaves a marker for the seat in `TMPDIR`, and the next `--end`,
+  that refused session's own, finds it, removes it and releases nothing. Chosen over "release whatever the seat
+  holds", which lets a refused session free the live one's hold. If the live session ends first and spends the
+  marker, the hold stays until a start is forced: the safe side.
 - **A crash leaves the hold.** Nothing lapses, so the next start is refused, naming the old session, until it is forced.
 - **`wake.sh --force` takes the hold over**: it reassigns the session bead (a `--force` on a bead another session holds)
   and comments which session it replaced; the block says **Forced start**. Only two parties may force: a human,

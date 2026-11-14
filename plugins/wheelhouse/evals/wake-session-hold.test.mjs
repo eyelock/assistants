@@ -2,7 +2,12 @@
 // refused with the holder named, --force takes the hold over and comments which session it replaced,
 // --end (the handoff) releases it, and a crashed holder stays held until forced. The cases run the real
 // wake.sh and session.sh from the layout ynh installs, against the real `bd` in a scratch graph
-// (skipped when bd is not installed), with ynm stubbed. A session is told apart by WAKE_SESSION_TOKEN.
+// (skipped when bd is not installed), with ynm stubbed. A session is told apart by WAKE_SESSION_TOKEN,
+// or by CLAUDE_CODE_SESSION_ID, the variable Claude Code sets.
+//
+// CI has no bd, so the cases that need the real one are skipped there: CI runs only the case with a
+// stubbed bd. These cases verify take, refuse, force and release only where bd is installed (run them
+// locally before a change to session.sh or wake.sh).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -21,11 +26,11 @@ const roster = {
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
-function wheelhouse() {
+function wheelhouse({ realBd = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-session-"));
   const bd = (...args) => spawnSync("bd", args, { cwd: dir, encoding: "utf8" });
   spawnSync("git", ["init", "-q", "-b", "main", "."], { cwd: dir });
-  assert.equal(bd("init", "--skip-agents", "--prefix", "ss").status, 0);
+  if (realBd) assert.equal(bd("init", "--skip-agents", "--prefix", "ss").status, 0);
   mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
   mkdirSync(join(dir, "harnesses", "hynde"), { recursive: true });
@@ -51,11 +56,11 @@ function wheelhouse() {
 }
 
 // One session of a seat, told apart from another by its token.
-function run(dir, token, args) {
+function run(dir, token, args, env = {}) {
   return spawnSync("bash", [join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"), "--seat", "hynde", "--no-sync", ...args], {
     cwd: dir,
     encoding: "utf8",
-    env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "", CLAUDE_SESSION_ID: "", WAKE_SESSION_TOKEN: token },
+    env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "", CLAUDE_CODE_SESSION_ID: "", TMPDIR: dir, WAKE_SESSION_TOKEN: token, ...env },
   });
 }
 const wake = (dir, token, extra = []) => run(dir, token, ["--format", "json", ...extra]);
@@ -161,13 +166,42 @@ test("a crashed holder stays held, with no lease to lapse and nothing to reclaim
 });
 
 test("a bd that cannot be read never stops a wake: the block says the check was not made", () => {
-  const w = wheelhouse();
+  const w = wheelhouse({ realBd: false });
   try {
     writeFileSync(join(w.dir, "bin", "bd"), "#!/bin/sh\nexit 1\n");
     chmodSync(join(w.dir, "bin", "bd"), 0o755);
     const r = run(w.dir, "aaa", ["--format", "text"]);
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /\*\*Live-session check not made:\*\*/);
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test("the token comes from CLAUDE_CODE_SESSION_ID, so a refused session's end leaves the live hold alone", { skip: !hasBd }, () => {
+  const w = wheelhouse();
+  try {
+    const as = (id) => ({ CLAUDE_CODE_SESSION_ID: id });
+    assert.equal(run(w.dir, "", ["--format", "json"], as("live-session")).status, 0);
+    assert.equal(run(w.dir, "", ["--format", "json"], as("second-session")).status, 4);
+    assert.equal(JSON.parse(run(w.dir, "", ["--end"], as("second-session")).stdout).session, "not-yours");
+    assert.equal(sessionBead(w).status, "in_progress", "the live session still holds it");
+    assert.doesNotMatch(sessionBead(w).notes, /live-session/, "the id itself is never written");
+    assert.equal(JSON.parse(run(w.dir, "", ["--end"], as("live-session")).stdout).session, "released");
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test("with no session id at all, a refused session's end releases nothing, and the live one's end still does", { skip: !hasBd }, () => {
+  const w = wheelhouse();
+  try {
+    assert.equal(wake(w.dir, "").status, 0);
+    assert.equal(wake(w.dir, "").status, 4, "the second start is refused");
+    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "its own end releases nothing");
+    assert.equal(sessionBead(w).status, "in_progress");
+    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "released", "the live session's end does");
+    assert.equal(sessionBead(w).status, "open");
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }
