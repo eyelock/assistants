@@ -30,7 +30,7 @@ function run(seat, { asks = ASKS, listFails = false, noAskSh = false, askShBroke
     const wgDir = beside ? join(dir, "scripts") : join(dir, "skills", "work-graph", "scripts");
     mkdirSync(wakeDir, { recursive: true });
     mkdirSync(wgDir, { recursive: true });
-    writeFileSync(join(wakeDir, "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["wake.sh", "sync.sh", "render-wake.jq"]) writeFileSync(join(wakeDir, f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     for (const name of ["memory.sh", "wheelhouse-lib.sh", "inbox.sh"]) writeFileSync(join(wgDir, name), readFileSync(join(wg, name)));
     if (askShBroken) writeFileSync(join(wgDir, "ask.sh"), "#!/bin/bash\nexit 1\n");
     else if (!noAskSh) writeFileSync(join(wgDir, "ask.sh"), readFileSync(join(wg, "ask.sh")));
