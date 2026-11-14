@@ -71,4 +71,5 @@
   (if (.retro | length) == 0 then empty
     else "\n## Your retro\n", (.retro | map("- " + .) | join("\n")),
       "\nA retro bead never comes before the bead you were woken or asked for: finish that first. In a Wheelhouse that runs a retro cycle, your retro is opened for you (by the coach, or by the human with --focus retro): then do only the round your bead shows, and report back. Never release one with bd unclaim: if you must stop, reassign it to the coach. If you have a retro skill, it says what to do; if you have none, do not guess at the rounds: leave the bead as it is and tell the desk or the human that your seat has a retro bead but no retro skill.\n"
-    end)
+    end),
+  "\nBefore you talk to the human, load the comms skill: every decision goes through your question tool, and every report ends with Status, Work in progress and Your action.\n"
