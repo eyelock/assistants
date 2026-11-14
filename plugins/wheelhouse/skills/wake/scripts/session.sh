@@ -18,10 +18,12 @@
 # it took: the token is a short hash of the vendor's session id (CLAUDE_CODE_SESSION_ID, which Claude
 # Code sets), so a refused second session, whose session-end hook also runs release, leaves the live
 # session's hold alone. A vendor that gives no session id (Codex, Copilot, OpenCode, Cursor today) has no
-# token, so a refused take leaves a marker for the seat (in TMPDIR) and the next release, which is that
-# refused session's own end, finds it, removes it and releases nothing. Chosen over releasing whatever
-# the seat holds, which frees the live session's hold; if the live session ends first and spends the
-# marker, the hold stays until forced, the safe side.
+# token, so each refused take adds one line to a count for the seat (in TMPDIR) and each tokenless release
+# spends one line and releases nothing; a release that finds the count empty releases the hold. So with the
+# live session and N refused ones, the first N ends release nothing and only the last frees the hold, and
+# no number of refused sessions can free a live one's hold. Chosen over releasing whatever the seat holds,
+# and over one flag, which the second refused session's end would find spent. If the live session ends
+# among the first N, the hold stays until forced (the safe side).
 #
 # Only a human, answering the refused seat's question, or the desk, after checking that the seat's
 # named session (<wheelhouse>-<command>) is absent from ListAgents, may pass --force. A seat never forces
@@ -76,7 +78,7 @@ token="${WAKE_SESSION_TOKEN:-}"
 if [ -z "$token" ] && [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
   token=$(printf '%s' "$CLAUDE_CODE_SESSION_ID" | shasum -a 256 2>/dev/null | cut -c1-8)
 fi
-# With no token, a refused take leaves this marker, and the next release (its own end) spends it.
+# With no token, each refused take adds a line to this count, and each release spends one line.
 marker="${TMPDIR:-/tmp}/wheelhouse-session-refused.$(printf '%s' "$PWD" | shasum -a 256 2>/dev/null | cut -c1-8).$seat"
 mylabel="${WAKE_SESSION_LABEL:-${seat} session ${token:-(pid $PPID)}}"
 now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -99,7 +101,10 @@ holder=$(jq -c '(.notes // "") | (try fromjson catch {label: "an earlier session
 
 if [ "$cmd" = release ]; then
   rel() { jq -nc --arg s "$1" --arg b "$id" '{state: $s, bead: $b}'; exit 0; }
-  if [ -z "$token" ] && [ -e "$marker" ]; then rm -f "$marker"; rel not-yours; fi
+  if [ -z "$token" ] && [ -s "$marker" ]; then
+    rest=$(tail -n +2 "$marker"); if [ -n "$rest" ]; then printf '%s\n' "$rest" >"$marker"; else rm -f "$marker"; fi
+    rel not-yours
+  fi
   [ -n "$id" ] || rel not-held
   [ "$status" = in_progress ] || rel not-held
   holdtoken=$(jq -r .token <<<"$holder")
@@ -119,7 +124,7 @@ if [ -z "$id" ]; then
   status=open
 fi
 held() { jq -nc --arg b "$id" '{state: "held", bead: $b}'; exit 0; }
-refused() { [ -n "$token" ] || : >"$marker" 2>/dev/null; jq -nc --arg b "$id" --argjson h "$holder" '{state: "refused", bead: $b, holder: {label: $h.label, started: $h.started}}'; exit 0; }
+refused() { [ -n "$token" ] || echo refused >>"$marker" 2>/dev/null; jq -nc --arg b "$id" --argjson h "$holder" '{state: "refused", bead: $b, holder: {label: $h.label, started: $h.started}}'; exit 0; }
 
 if [ "$status" = in_progress ]; then
   [ "$force" = 1 ] || refused

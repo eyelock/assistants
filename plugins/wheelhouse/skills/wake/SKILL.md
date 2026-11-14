@@ -55,7 +55,7 @@ Every call the script makes is bounded, so a wake never hangs when other seats h
 call that hangs is killed (with anything it started) after its limit: the syncs and the Dolt-remote
 check after `WAKE_SYNC_SECS` (default 45), each bd read after `WAKE_BD_SECS` (20), the memory
 recalls and each `gh pr view` after `WAKE_YNM_SECS` (10), and the desk's inbox after
-`WAKE_INBOX_SECS` (30). The first bd read that gives up ends the rest, so a busy bd costs one
+`WAKE_INBOX_SECS` (30) and open asks after `WAKE_ASK_SECS` (30). The first bd read that gives up ends the rest, so a busy bd costs one
 wait, not one per read. A Dolt-remote check that gives up counts as a failed sync (**Not synced**),
 never as "no remote". When bd is busy the block says so, as below.
 
@@ -98,8 +98,8 @@ bd list --status closed --assignee <command> --json |
 
 Then your charter, and your work with `bd list --status in_progress --assignee <command> --json`
 and `bd ready --assignee <command> --json`. The desk also runs `bash <skills>/work-graph/scripts/inbox.sh show` for the
-humans' inbox and opens its reply with it, as below; if that fails too, say the inbox couldn't be
-read, never that nothing is waiting.
+humans' inbox and `bash <skills>/work-graph/scripts/ask.sh show --all` for the open asks, and opens its reply with them, as
+below; if either fails too, say it couldn't be read, never that nothing is waiting.
 
 ## One live session per seat
 
@@ -120,10 +120,7 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
   (`not-yours` otherwise), so a refused session's own session-end hook leaves the live one alone. The token that tells
   sessions apart is a short hash of the vendor's session id (Claude Code sets `CLAUDE_CODE_SESSION_ID`, checked in
   a live session; the id is never printed or written). A vendor with no session id (Codex, Copilot, OpenCode and
-  Cursor today) gives no token, so a refused start leaves a marker for the seat in `TMPDIR`, and the next `--end`,
-  that refused session's own, finds it, removes it and releases nothing. Chosen over "release whatever the seat
-  holds", which lets a refused session free the live one's hold. If the live session ends first and spends the
-  marker, the hold stays until a start is forced: the safe side.
+  Cursor today) gives no token, so each refused start adds one to a count for the seat in `TMPDIR`, and each tokenless `--end` spends one and releases nothing; an `--end` that finds the count empty releases the hold. With the live session and N refused ones, the first N ends release nothing and only the last frees the hold, so no number of refused sessions can free a live one's hold. Chosen over "release whatever the seat holds", which lets a refused session free the live one's hold, and over one flag, which a second refused session's end would find spent. If the live session ends among the first N, the hold stays until a start is forced: the safe side.
 - **A crash leaves the hold.** Nothing lapses, so the next start is refused, naming the old session, until it is forced.
 - **`wake.sh --force` takes the hold over**: it reassigns the session bead (a `--force` on a bead another session holds)
   and comments which session it replaced; the block says **Forced start**. Only two parties may force: a human,
@@ -140,6 +137,7 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `<skills>/work-graph/scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
 | Wake first (the desk only) | the roster's seats with the role `ci-watcher` and `releaser`, right after the inbox: "Wake first: <CI watcher> (open PRs and CI), <releaser> (release in hand: next on the route)". Absent when the roster has neither role. In the JSON it is `wakeFirst` |
+| Asks between seats (the desk only) | every open ask, from `<skills>/work-graph/scripts/ask.sh show --all`: kind, asker, answering seat, age and what it blocks, oldest first. Say so in your reply when they couldn't be read (never "no open asks"); route a return and chase an old one. Bounded by `WAKE_ASK_SECS` (30) |
 | What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
 | Who you are | your identity, pinned in your namespace `seat/<command>` |
 | Your purpose | the mandate in your charter |
@@ -149,6 +147,7 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
 | Your close notes | the two-line notes you wrote on your last three closes |
 | Waiting for you | beads in progress or assigned to you, and the ready unassigned ones (retro beads left out); or, when bd was busy, **The work graph couldn't be read (bd busy)** in their place |
 | Your retro | your own retro bead (labelled `retro:<command>`), in progress or ready, shown apart from Waiting for you; the section is absent when you have none |
+| Last line | always the closing line, for every seat: before you talk to the human, load the `comms` skill (every decision through your question tool; every report ends with Status, Work in progress and Your action). It comes after everything else so it is the freshest thing in context |
 
 ## Then
 
@@ -183,7 +182,7 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
    what they say is done. Once you have picked up, retire the notes so they aren't read twice:
    `bash <skills>/work-graph/scripts/memory.sh forget --id <id> --reason "picked up"` (the `id` is in the block).
    If the bead you are picking up is
-   assigned to you but not yet claimed, claim it first (`bd update <id> --claim`): that is not a
+   assigned to you but not yet claimed, claim it first (`claim.sh <id> --seat <command>` in the `work-graph` skill, which is `bd update <id> --claim` and warns when the bead is outside your charter): that is not a
    guess, and it keeps other seats off it.
 4. **Kudos:** mention any in a line, and enjoy them. They change nothing about what you do next.
 5. **Waiting for you:** if the block says **The work graph couldn't be read (bd busy)**, your

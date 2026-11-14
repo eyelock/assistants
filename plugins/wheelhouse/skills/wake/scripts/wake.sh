@@ -29,7 +29,9 @@
 #   - the two memory.sh recalls (the seat's own, and the shared facts) and each gh pr view:
 #     WAKE_YNM_SECS (default 10) each;
 #   - the desk's inbox.sh show: WAKE_INBOX_SECS (default 30), twice when the first run fails for
-#     a reason other than the bound, to read its error.
+#     a reason other than the bound, to read its error;
+#   - the desk's ask.sh show --all: WAKE_ASK_SECS (default 30), twice when the first run fails for
+#     a reason other than the bound (ask.sh bounds its own bd calls too).
 # When bd is busy the block says plainly that the work graph couldn't be read (bd busy), and what
 # to run by hand, instead of hanging or passing off nothing as "nothing waiting".
 #
@@ -37,6 +39,9 @@
 # what the seats have asked of the human at the desk and of the default human,
 # and the notes left for them, from inbox.sh show (in the work-graph skill, beside
 # the wake skill). Other seats' wakes have no inbox.
+# It also wakes to every open ask, with its kind, asker, answering seat and age, from
+# ask.sh show --all (in the work-graph skill, beside the wake skill), so a request left unanswered is seen; a seat's own asks already show
+# under "Waiting for you".
 #
 # A seat's session-start hook runs it with --format text, and the seat starts
 # with the block it prints. Run it from the Wheelhouse repository's root, or
@@ -54,7 +59,8 @@
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
 # unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, session {state: held|forced|unknown|unchecked, bead, ...; see session.sh}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
-# null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
+# null for other seats), asks (the desk's only: ask.sh show --all's JSON, with errors when a bd
+# read failed, or {error}; null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
 # [] when it has neither; null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
@@ -138,7 +144,7 @@ backend=$(wl_backend .) || { echo "wheelhouse.json: memory must be \"ynm\" or \"
 if [ "$backend" = ynm ]; then need ynm; fi
 
 bd_secs="${WAKE_BD_SECS:-20}"
-inbox_secs="${WAKE_INBOX_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
+inbox_secs="${WAKE_INBOX_SECS:-30}"; ask_secs="${WAKE_ASK_SECS:-30}"; ynm_secs="${WAKE_YNM_SECS:-10}"
 
 # At the end of a session sync.sh syncs what it wrote and prints the result (--no-sync skips both).
 if [ "$end" = 1 ]; then
@@ -323,15 +329,38 @@ if [ "$group" = desk ]; then
       | sort_by(.role == "releaser")' "$roster" 2>/dev/null) || wakefirst='[]'
 fi
 
+# The desk's wake also lists every open ask. ask.sh is in the work-graph skill, beside the wake skill, as inbox.sh is.
+# show exits 3 but still prints JSON when a bd read failed: what it could read, with errors.
+asks='null'
+if [ "$group" = desk ]; then
+  asksh=""
+  for f in "$here/ask.sh" "$here/../../work-graph/scripts/ask.sh"; do
+    [ -f "$f" ] && { asksh="$f"; break; }
+  done
+  if [ -z "$asksh" ]; then
+    asks='{"error": "no ask.sh in the work-graph skill beside the wake skill: the desk needs skills/work-graph in its include"}'
+  else
+    shown=$(limited "$ask_secs" bash "$asksh" show --all --dir . 2>/dev/null); askrc=$?
+    if [ "$askrc" = 142 ]; then
+      asks=$(jq -nc --arg e "ask.sh show gave up after ${ask_secs}s (bd busy); run it yourself: bash $asksh show --all" '{error: $e}')
+    elif [ -n "$shown" ] && jq -e 'type == "object" and has("asks")' >/dev/null 2>&1 <<<"$shown"; then
+      asks=$(jq -c . <<<"$shown")
+    else
+      err=$(limited "$ask_secs" bash "$asksh" show --all --dir . 2>&1 >/dev/null | head -1)
+      asks=$(jq -nc --arg e "${err:-ask.sh show failed}" '{error: $e}')
+    fi
+  fi
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
-  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson wakefirst "$wakefirst" '{
+  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson asks "$asks" --argjson wakefirst "$wakefirst" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, wakeFirst: $wakefirst
+    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst
   }')
 
 if [ "$format" = json ]; then

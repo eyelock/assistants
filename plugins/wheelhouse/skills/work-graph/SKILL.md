@@ -34,7 +34,12 @@ Add `--json` to every `bd` command and read the result, rather than parsing the 
    the dispatcher, even when they are more urgent.
 3. Skip epics: they close when their children do. Take the task with the highest priority (`0` is
    highest), and the oldest when priorities tie.
-4. Claim it: `bd update <id> --claim --json`. The claim is atomic.
+4. Claim it: `bash <skills>/work-graph/scripts/claim.sh <id> --seat <your command>` (it runs
+   `bd update <id> --claim --actor <your command> --json`, which is atomic). When the bead's
+   `repo:` label is outside your roster seat's `specialities`, the claim still happens and a
+   warning line follows it: "this bead is repo:assistants; your charter takes repo:ynh". Act on it:
+   tell the desk or hand the bead back (`ask.sh return`) unless you were given it on purpose. An
+   in-charter claim prints nothing extra.
 5. **If the claim is refused**, someone else holds it. Take the next ready bead. Never reassign,
    reopen or edit a bead another seat has claimed; if it looks stuck, tell the desk.
 6. Say which bead you claimed and what you are about to do. Keep the claim alive

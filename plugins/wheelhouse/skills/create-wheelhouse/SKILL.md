@@ -140,8 +140,11 @@ the files it finds, and would commit the human's.
    11. **Never name a human** in anything you post or write (pull requests, reviews, comments,
        beads, notes, docs, commits): write the next action impersonally ("Decision needed before
        merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you".
-       Seats that talk to the humans follow the `comms` skill: decisions asked through the
-       question tool, with options; a synopsis beside every bead id; the outcome first.
+       Seats that talk to the humans follow the `comms` skill: a synopsis beside every bead id; the
+       outcome first.
+   12. **Ask through the question tool.** Every decision put to a human goes through the vendor's
+       question tool (in Claude Code, `AskUserQuestion`), and every report ends with Status, Work
+       in progress and Your action; the `comms` skill says how.
 
    Write rule 9 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.

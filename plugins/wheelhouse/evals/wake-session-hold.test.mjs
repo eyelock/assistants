@@ -206,3 +206,18 @@ test("with no session id at all, a refused session's end releases nothing, and t
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
+
+test("with no session id, two refused sessions ending in any order leave the live hold intact", { skip: !hasBd }, () => {
+  const w = wheelhouse();
+  try {
+    assert.equal(wake(w.dir, "").status, 0);
+    assert.equal(wake(w.dir, "").status, 4, "the second start is refused");
+    assert.equal(wake(w.dir, "").status, 4, "and the third");
+    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "the first refused end");
+    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "the second refused end");
+    assert.equal(sessionBead(w).status, "in_progress", "the live hold is still held");
+    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "released", "the live session's end frees it");
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
