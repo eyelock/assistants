@@ -236,6 +236,11 @@ standing seats and the desk are started by the human, not by a launcher: `<comma
 (the desk: `<desk> --name=<desk>`), and `<command> --focus <order> --name=<name>` for one standing
 order. Give the vendor's form where the seat's vendor is not Claude: no flag.
 
+**One live session per seat.** The name is also what the desk checks before it forces a seat's hold
+(the wake skill's "One live session per seat"): it may run `wake.sh --force` for a seat only after
+confirming `<wheelhouse>-<command>` is absent from ListAgents (Claude only), and a human may always force it.
+A seat never forces its own hold, and the session name is why a refused seat can be found and asked.
+
 On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
 session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
 `-n`). A seat messages another by that name. Other vendors differ, and a seat never relies on

@@ -65,7 +65,13 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
    Closing step has you write that, two lines, when a bead closes or when you give one to another
    seat unfinished. If you closed a bead this session, make sure its close note is written too.
 
-5. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
+5. **Your session hold goes with the session.** You hold your seat's session bead from your wake (the wake
+   skill's "One live session per seat"), and the session-end hook releases it (`wake.sh --end`) once
+   you stop, so the next session of you is not refused. If you handed off and no hook will run (a seat run by hand
+   with no hook), release it yourself: `bash <skills>/wake/scripts/wake.sh --seat <command> --end`. A crash leaves it held,
+   and the next start is refused until a human, or the desk after checking, forces it. Never force your own seat.
+
+6. **Ask to be restarted.** Say the notes are saved, and stop working. For example: "My handoff
    notes are saved in my memory. Restart me when you're ready and I'll pick up from
    them." Then do nothing more in this session.
 
@@ -80,8 +86,8 @@ off and nobody is left to restart it.
   or exit while a seat you woke as a subagent is still running. Wait for its report first, or ask
   the human to let it finish. If the human insists, say plainly which seats would be lost.
 - **A subagent seat:** you don't hand off and you don't ask to be restarted, because there is no
-  session of your own to restart. You end by returning your report to the seat that woke you, after
-  syncing your memory (a close note, if a bead closed). Anything the next run needs goes in the
+  session of your own to restart. You end by running `bash <skills>/wake/scripts/wake.sh --seat <command> --end` (it releases the session hold you took at your
+  wake, and syncs), then returning your report to the seat that woke you (with a close note, if a bead closed). Anything the next run needs goes in the
   report or on the bead.
 
 A seat in a session of its own (started by the human, with `ynh run`) hands off as above.

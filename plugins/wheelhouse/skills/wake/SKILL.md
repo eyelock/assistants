@@ -66,8 +66,8 @@ alone is rejected until it merges. The two syncs run side by side and share one 
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28; the Dolt-remote check takes at most a
 third of it and the work sync gets what is left, so the whole stays inside it), because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
-can print anything: keep the budget under the hook's timeout. It prints
-`{seat, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
+can print anything: keep the budget under the hook's timeout. It first releases the seat's session hold (above). It prints
+`{seat, session, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
 `errors` object with the exit code and the first line the sync printed. It wakes nobody. It is best
 effort: a crash skips it, and the next wake's sync catches up.
 
@@ -100,6 +100,36 @@ Then your charter, and your work with `bd list --status in_progress --assignee <
 and `bd ready --assignee <command> --json`. The desk also runs `bash <skills>/work-graph/scripts/inbox.sh show` for the
 humans' inbox and `bash <skills>/work-graph/scripts/ask.sh show --all` for the open asks, and opens its reply with them, as
 below; if either fails too, say it couldn't be read, never that nothing is waiting.
+
+## One live session per seat
+
+Every seat, the desk included, holds one live session per command; there is no list of single seats. The wake
+takes the seat's session bead (one per seat, made on first use, labelled `session:<command>`, never work): it
+claims it (status in progress, assigned to the seat) and writes who holds it, and when it started, in its notes.
+`<skills>/wake/scripts/session.sh` does this, bounded like the wake's other bd calls (`WAKE_BD_SECS`). The hold is
+the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and nothing runs `bd reclaim` on it.
+
+- **A second start is refused.** A new session, a subagent the desk woke or a ynh delegate that finds the hold
+  prints a block naming the holding session and when it started, and the wake exits 4. Stop there: read nothing,
+  write nothing, work as nobody. The desk, when its subagent is refused, opens an ask on that seat and nudges its
+  live session by name instead (the work-graph skill's asks); a seat started by a human asks that human.
+- **A subagent that finds no hold takes it**, and releases it when it finishes: its last step is
+  `bash <skills>/wake/scripts/wake.sh --seat <command> --end`, as a seat in its own session has a hook run it.
+- **The hold is released by the handoff.** The session-end hook's `--end` lets go of it before it syncs, so the
+  release reaches the other machines, and prints `session: released`. A session lets go only of the hold it took
+  (`not-yours` otherwise), so a refused session's own session-end hook leaves the live one alone. The token that tells
+  sessions apart is a short hash of the vendor's session id (Claude Code sets `CLAUDE_CODE_SESSION_ID`, checked in
+  a live session; the id is never printed or written). A vendor with no session id (Codex, Copilot, OpenCode and
+  Cursor today) gives no token, so each refused start adds one to a count for the seat in `TMPDIR`, and each `--end` with no token spends one and releases nothing; an `--end` that finds the count empty releases the hold. With the live session and N refused ones, the first N ends release nothing and only the last frees the hold, so no number of refused sessions can free a live one's hold. Chosen over "release whatever the seat holds", which lets a refused session free the live one's hold, and over one flag, which a second refused session's end would find spent. If the live session ends among the first N, the hold stays until a start is forced: the safe side.
+- **A crash leaves the hold.** Nothing lapses, so the next start is refused, naming the old session, until it is forced.
+- **`wake.sh --force` takes the hold over**: it reassigns the session bead (a `--force` on a bead another session holds)
+  and comments which session it replaced; the block says **Forced start**. Only two parties may force: a human,
+  answering the refused seat's question (the refused seat asks through the question tool whether to take over, and
+  on yes runs `wake.sh --force`); or the desk, after checking that the seat's named session
+  (`<wheelhouse>-<command>`, add-seat's "Name the session") is absent from ListAgents, so is probably dead (Claude
+  only: on other vendors only a human forces). **A seat never forces on its own.**
+- **A hold that can't be read doesn't stop a wake.** When bd is busy or failing the block opens with **Live-session
+  check not made**: say so in your reply, and check before changing anything.
 
 ## What the block holds
 

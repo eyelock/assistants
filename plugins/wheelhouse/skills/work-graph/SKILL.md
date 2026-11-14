@@ -150,7 +150,9 @@ reaching for the same bead. Other seats skip this section.
 The dispatcher looks for lapsed claims at every check-in (each time it wakes, and before it reports
 who is idle), because nothing else prompts it to. Other seats skip this section.
 
-1. List the beads in progress: `bd list --status in_progress --json`. For each, `bd show --json <id>`
+1. List the beads in progress: `bd list --status in_progress --json`. Skip any labelled `session:<command>`: it is
+   a seat's live-session hold (the wake skill's "One live session per seat"), claimed with no lease on purpose, and
+   it is never reclaimed, only forced by a human or by the desk after checking. For each, `bd show --json <id>`
    has `lease_expires_at` and `heartbeat_at`: a lease whose `lease_expires_at` is in the past has
    expired (`bd show` prints it as "Lease: expires expired (heartbeat 28 mins ago)" or "Lease:
    expires in ...").

@@ -50,29 +50,31 @@
 #
 # Its session-end hook runs it with --end, which hands over to sync.sh --end: it syncs what the
 # session wrote and prints {seat, push {memory, work: pushed|skipped|failed|timeout}} and, when a
-# sync did not push, errors {memory, work}; see sync.sh for its budget. With --no-sync it syncs
+# sync did not push, errors {memory, work}; see sync.sh for its budget. It first releases the seat's
+# session hold (session.sh), and the JSON gains session: released|not-held|not-yours|unknown|none. With --no-sync it syncs
 # neither and reports both as skipped.
 #
 # Output: JSON on stdout by default, {seat, group, backend, firstWake, identity, mandate,
 # handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned,
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
-# unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, inbox (the desk's
+# unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, session {state: held|forced|unknown|unchecked, bead, ...; see session.sh}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
 # null for other seats), asks (the desk's only: ask.sh show --all's JSON, with errors when a bd
 # read failed, or {error}; null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
 # [] when it has neither; null for other seats)}, or a Markdown
 # block with --format text; with --end, the push above. Diagnostics on stderr.
 # Exit codes: 0 printed, 1 bad args or no seat named, 2 not a Wheelhouse,
-# 3 a tool it needs (jq, ynm, bd) is missing.
+# 3 a tool it needs (jq, ynm, bd) is missing, 4 another session of the seat is live (the block
+# says whose, and nothing else is read or written; --force takes the hold over).
 # shellcheck disable=SC2154  # fetch() assigns closedbeads, wipbeads, readybeads and openbeads by name (printf -v)
 set -uo pipefail
 
 usage() {
   cat <<'EOF'
 Usage: wake.sh [--seat <name>] [--dir <wheelhouse repo>] [--format json|text]
-               [--no-sync]
+               [--no-sync] [--force]
        wake.sh <name> [--dir <wheelhouse repo>] [--format json|text]
-               [--no-sync]
+               [--no-sync] [--force]
        wake.sh --end [--seat <name> | <name>] [--dir <wheelhouse repo>]
                [--no-sync]
 
@@ -84,6 +86,11 @@ when the current directory is not the Wheelhouse's root. --dir defaults to the
 current directory; --format to json. --no-sync skips the sync. --end, for the
 session-end hook, only syncs memory and work, and prints the result as JSON;
 --end --no-sync syncs neither and reports both as skipped.
+
+A seat holds one live session: the wake takes the seat's session bead and stops (exit 4) when another
+session holds it, naming the holder. --end lets go of it. --force takes a hold over: only for a human
+answering the refused seat's question, or the desk after checking the seat's session is not live; a seat
+never forces on its own.
 EOF
 }
 
@@ -100,6 +107,7 @@ dir="."
 format="json"
 nosync=""
 end=0
+force=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --seat) [ $# -ge 2 ] || { usage >&2; exit 1; }; seat="$2"; seat_flag=1; shift 2 ;;
@@ -107,6 +115,7 @@ while [ $# -gt 0 ]; do
     --format) [ $# -ge 2 ] || { usage >&2; exit 1; }; format="$2"; shift 2 ;;
     --no-sync) nosync=1; shift ;;
     --end) end=1; shift ;;
+    --force) force=1; shift ;;
     --help | -h) usage; exit 0 ;;
     -*) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
     *)
@@ -140,7 +149,21 @@ inbox_secs="${WAKE_INBOX_SECS:-30}"; ask_secs="${WAKE_ASK_SECS:-30}"; ynm_secs="
 # At the end of a session sync.sh syncs what it wrote and prints the result (--no-sync skips both).
 if [ "$end" = 1 ]; then
   [ -f "$here/sync.sh" ] || { echo "no sync.sh beside wake.sh in the wake skill: reinstall the seat (ynh update)" >&2; exit 3; }
-  exec bash "$here/sync.sh" --end --seat "$seat" --dir . ${nosync:+--no-sync}
+  # First let go of the seat's session hold (session.sh), so the sync pushes the release. It takes at
+  # most a third of the sync budget, and what it takes comes off the budget sync.sh is given.
+  sessionstate=none
+  budget="${WHEELHOUSE_END_SYNC_SECS:-25}"
+  case "$budget" in '' | *[!0-9]*) budget=25 ;; esac
+  [ "$budget" -gt 28 ] && budget=28
+  if [ -f "$here/session.sh" ]; then
+    relsecs=$(( budget / 3 )); [ "$relsecs" -ge 1 ] || relsecs=1
+    relbegan=$SECONDS
+    sessionstate=$(WAKE_BD_SECS="$relsecs" bash "$here/session.sh" release --seat "$seat" --dir . 2>/dev/null | jq -r '.state // "unknown"' 2>/dev/null)
+    [ -n "$sessionstate" ] || sessionstate=unknown
+    budget=$(( budget - (SECONDS - relbegan) )); [ "$budget" -ge 2 ] || budget=2
+  fi
+  WHEELHOUSE_END_SYNC_SECS="$budget" bash "$here/sync.sh" --end --seat "$seat" --dir . ${nosync:+--no-sync} | jq -c --arg ss "$sessionstate" '. + {session: $ss}'
+  exit "${PIPESTATUS[0]}"
 fi
 
 # Which seat this is.
@@ -170,6 +193,26 @@ mandate=$(awk '
 syncjson=$(bash "$here/sync.sh" --seat "$seat" --dir . ${nosync:+--no-sync}) || exit $?
 memsync=$(jq -r .memory <<<"$syncjson")
 worksync=$(jq -r .work <<<"$syncjson")
+
+# One live session per seat: take the seat's session bead, or stop when another session holds it. A
+# hold that cannot be read (bd busy or failing) never stops a wake: the block says it was not checked.
+sessionjson='{"state":"unchecked"}'
+if [ -f "$here/session.sh" ]; then
+  forceflag=""; [ "$force" = 1 ] && forceflag=--force
+  sessionjson=$(bash "$here/session.sh" take --seat "$seat" --dir . $forceflag 2>/dev/null | jq -c . 2>/dev/null) || sessionjson=""
+  [ -n "$sessionjson" ] || sessionjson='{"state":"unknown","why":"session.sh gave no answer"}'
+fi
+if [ "$(jq -r .state <<<"$sessionjson")" = refused ]; then
+  holder=$(jq -r '"\(.holder.label)" + (if .holder.started then ", started \(.holder.started)" else "" end)' <<<"$sessionjson")
+  if [ "$format" = json ]; then
+    jq -nc --arg seat "$seat" --argjson s "$sessionjson" '{seat: $seat, refused: true, session: $s}'
+  else
+    printf '# Not waking: %s is already live\n\n' "$seat"
+    printf 'Another session of %s holds the seat (session bead %s): %s.\n\n' "$seat" "$(jq -r .bead <<<"$sessionjson")" "$holder"
+    printf 'Stop here: do not work as %s, and do not run wake.sh --force yourself. If you were started by a human, ask them with the question tool whether to take the seat over; on yes, run wake.sh --force. If the desk woke you as a subagent, report this to the desk, which opens an ask on the live session instead.\n' "$seat"
+  fi
+  exit 4
+fi
 remote=$(jq -r .remote <<<"$syncjson")
 
 # The seat's own memory, read through memory.sh: ynm namespace seat/<name>, or Beads keys seat/<name>/....
@@ -231,15 +274,15 @@ while IFS=$'\t' read -r title prurl; do
     esac
   fi
   inprogress=$(jq -c --arg t "$title" '. + [$t]' <<<"$inprogress")
-done < <(jq -r --arg own "retro:$seat" '.[] | select(((.labels // []) | index($own)) | not) | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' <<<"$wipbeads" 2>/dev/null)
+done < <(jq -r --arg own "retro:$seat" '.[] | select(((.labels // []) | index($own)) | not) | select(((.labels // []) | any(startswith("session:"))) | not) | [.title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)")[0]] | last // "")] | @tsv' <<<"$wipbeads" 2>/dev/null)
 # The seat's own retro bead (labelled retro:<seat>) is its retro cycle, not its work: it is shown
 # apart, and never comes before the bead the seat was woken or asked for. Other beads labelled retro
 # (a review bead, a bead handed to the coach between rounds) are ordinary work for whoever holds
 # them. Nobody picks up an unassigned retro bead.
 own="retro:$seat"
-notown='select(((.labels // []) | index($own)) | not)'
+notown='select(((.labels // []) | index($own)) | not) | select(((.labels // []) | any(startswith("session:"))) | not)'
 isown='select(((.labels // []) | index($own)))'
-notretro='select(((.labels // []) | index("retro")) | not)'
+notretro='select(((.labels // []) | index("retro")) | not) | select(((.labels // []) | any(startswith("session:"))) | not)'
 fetch readybeads ready --assignee "$seat"
 assigned=$(jq -c --arg own "$own" "map(select(.issue_type != \"epic\") | $notown | .title)" <<<"$readybeads" 2>/dev/null || echo '[]')
 fetch openbeads ready --unassigned
@@ -313,11 +356,11 @@ json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
-  --argjson inbox "$inbox" --argjson asks "$asks" --argjson wakefirst "$wakefirst" '{
+  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson asks "$asks" --argjson wakefirst "$wakefirst" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst
+    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst
   }')
 
 if [ "$format" = json ]; then

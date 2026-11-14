@@ -8,6 +8,9 @@
    | if ($failed | length) > 0
      then "**Not synced:** \($failed | join(" and ")) failed, so what follows may be out of date. Say so when you reply, and run the sync by hand before relying on it.\n"
      else empty end),
+  (if .session.state == "forced" then "**Forced start:** you took this seat over from \(.session.replaced.label)" + (if .session.replaced.started then " (started \(.session.replaced.started))" else "" end) + ". The session bead says so. Say so in your reply.\n"
+   elif .session.state == "unknown" then "**Live-session check not made:** \(.session.why). Nothing stopped this start, so another session of you may be live: say so in your reply, and check before you change anything.\n"
+   else empty end),
   (if .inbox == null then empty
    elif .inbox.error then "## For the humans\n\nThe inbox could not be read: \(.inbox.error). Say so when you reply; the doctor skill can help.\n"
    else
