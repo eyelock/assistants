@@ -1,6 +1,6 @@
 ---
 name: comms
-description: How a Wheelhouse seat talks to the humans - every question or decision put to a human goes through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), independent decisions together in one call; every report or update ends with Status, Work in progress and Your action; never naming a human in anything written, a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, the outcome first in plain words. Use whenever a seat (the desk or crew) asks a human anything, puts a decision to them, reports or updates them, or writes a pull request, review, comment, bead, note or doc a human will read.
+description: How a Wheelhouse seat talks to the humans - every question or decision put to a human goes through the vendor's question tool with options (Claude Code's AskUserQuestion, or a numbered list where there is none), independent decisions together in one call; every report or update ends with Status, Work in progress and Your action; never naming a human in anything written, a synopsis beside every bead id, linked short ids and full paths, posting bodies from a file, the outcome first in plain words. Use whenever a seat (the desk or crew) asks a human anything, puts a decision to them, reports or updates them, or writes a pull request, review, comment, bead, note or doc a human will read, and when a seat needs another seat's answer or work and must reach its live session (the session address, the nudge, never asking the human which session is which).
 ---
 
 # Comms
@@ -116,3 +116,21 @@ rm -f "$body" "$body.bak"
   (build the JSON with `jq`, not by pasting the body into a string).
 - Put a value known only later, such as a commit SHA, in afterwards with `sed` or `jq`, never by
   switching the heredoc to an unquoted one.
+
+## 6. Reaching another seat
+
+A seat that needs something from another seat opens an ask (the work-graph skill's `scripts/ask.sh`),
+never asks the human which session is which, and never guesses at one.
+
+- **A seat's live session is `<wheelhouse>-<command>`**, and the desk, whose command is the
+  Wheelhouse's own name, is just `<wheelhouse>` (`ynw`, `ynw-eno`, `ynw-page`). `ask.sh open` prints
+  the answering seat's address.
+- **Nudge where the vendor can message a session** (Claude's SendMessage): after `ask.sh open`, send
+  the answering seat's session one line saying the ask is waiting, naming its bead id and synopsis. If
+  you couldn't (no live session, or the send failed), say so in a comment on the ask:
+  `bd comments add <ask> "no live session for <address>; left for its check-in"`. The script can't
+  nudge, because that is a tool of the agent, not of the shell.
+- **Where the vendor can't message a session**, the ask is still recorded, and the answering seat finds
+  it at its next check-in (`ask.sh show`, at each natural break). Nothing more is needed.
+- **Never ask the human which session is which.** If you don't know who answers, address the ask to
+  `ynw` and the desk routes it. A human is asked only through the inbox, for what only a human can do.
