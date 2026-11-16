@@ -1,6 +1,6 @@
 ---
 name: patrol
-description: Patrol a Wheelhouse's repositories - pull requests, issues and CI - with <skills>/patrol/scripts/patrol.sh, which compares them with the last patrol and prints only what changed (merged, closed, draft or ready, retargeted, conflicting, new, CI red or green again), so a CI-watcher seat on a 5-minute timer is woken only when there's news. Use when asked to patrol, to watch pull requests or CI, to report what changed since last time, or to set up a patrol timer.
+description: Patrol a Wheelhouse's repositories - pull requests, issues and CI - with its patrol script, which compares them with the last patrol and prints only what changed (merged, closed, draft or ready, retargeted, conflicting, new, CI red or green again), so a CI-watcher seat on a 5-minute timer is woken only when there's news. Use when asked to patrol, to watch pull requests or CI, to report what changed since last time, or to set up a patrol timer.
 allowed-tools: Bash Read
 ---
 
@@ -98,7 +98,7 @@ Pick one; the human chooses, since each runs on their machine or account:
 
 ## Acting on the list
 
-Report each change to the desk as an ask: `bash scripts/ask.sh open --to ynw --kind report --title "<the changes>" --from <you>` (a report needs no answer and blocks nothing; the desk closes it once it has relayed or acted on it), one line each (a `pr-stalled` one means the desk should send that pull request to review, and gets no bead), naming the pull request or issue by its short form
+Report each change to the desk as an ask: `bash <skills>/work-graph/scripts/ask.sh open --to desk --kind report --title "<the changes>" --from <you>` (a report needs no answer and blocks nothing; the desk closes it once it has relayed or acted on it), one line each (a `pr-stalled` one means the desk should send that pull request to review, and gets no bead), naming the pull request or issue by its short form
 as a Markdown link (`[api #12](https://github.com/<owner>/api/pull/12)`), and say how a merged
 one was merged. The humans don't announce merges; the patrol does. File work for what needs it as
 the CI watcher's charter says (a red CI, a conflicting pull request), skipping what an open bead
