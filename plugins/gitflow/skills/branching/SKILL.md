@@ -60,6 +60,8 @@ git rebase -i origin/develop             # fixup/reword until only meaningful se
 
 > Note: for a `release/vX.Y.Z` or `hotfix/vX.Y.Z` PR into `main`, these become `origin/main`.
 
+The rebase is for a branch you have not pushed. On a branch already pushed, merge `develop` in instead; don't rebase and force-push.
+
 ## Before Creating a PR
 
 Ensure the branch is up-to-date with the base branch (`develop` for feature/fix branches, `main` for `release/*` and `hotfix/*`):

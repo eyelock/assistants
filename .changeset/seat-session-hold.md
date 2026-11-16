@@ -1,0 +1,5 @@
+---
+"@eyelock-assistants/wheelhouse": minor
+---
+
+A seat refuses to start while another session of it is live (assistants #179). Every seat, the desk included, holds one live session per command: `wake.sh` takes the seat's session bead (one per seat, labelled `session:<command>`, made on first use, never listed as work) through the new `session.sh`, and `--end`, which the handoff runs, lets go of it. A second start, whether a new session, a subagent or a ynh delegate, is refused with exit 4 and a block naming the holder and when it started. The hold is a plain claim with no lease, so a crash leaves it held until a start is forced with `wake.sh --force`, which reassigns the bead and comments which session it replaced; only a human, or the desk after checking the seat's named session is absent from ListAgents, may force, and a seat never forces its own. The wake, handoff, add-seat and work-graph skills say so, and `node:test` cases cover a refusal, a forced takeover, a release and a crashed holder.

@@ -25,9 +25,7 @@ for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-
 done
 type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 memsh=""
-for f in "$dir/scripts/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
-  [ -f "$f" ] && { memsh="$f"; break; }
-done
+[ -f "$here/../../work-graph/scripts/memory.sh" ] && memsh="$here/../../work-graph/scripts/memory.sh"
 backend=ynm
 if [ -n "$memsh" ]; then
   backend=$(bash "$memsh" backend --dir "$dir" 2>&1) || { printf '%s\n' "$backend" | head -c 200; exit 1; }

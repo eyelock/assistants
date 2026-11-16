@@ -5,16 +5,13 @@
 // only the tools the scripts need (so a Beads Wheelhouse really runs with no ynm installed).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
-const checkSh = join(plugin, "skills", "doctor", "scripts", "check.sh");
-const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
-const refreshSh = join(plugin, "skills", "refresh", "scripts", "refresh.sh");
 
 // bd: a Wheelhouse database kept in $STUB_DIR. memories answers the map in memories.json (unless
 // STUB_BAD_MEMORIES), dolt remote list answers [] unless STUB_REMOTE, list answers beads.json.
@@ -71,11 +68,16 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
     chmodSync(join(bin, "ynm"), 0o755);
   }
   mkdirSync(join(wh, ".beads"));
-  if (memorySh) {
-    mkdirSync(join(wh, "scripts"));
-    writeFileSync(join(wh, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(wh, "scripts", "wheelhouse-lib.sh"), readFileSync(join(dirname(memorySrc), "wheelhouse-lib.sh")));
-  }
+  // The scripts run where ynh installs them, side by side in their skills' folders; the Wheelhouse keeps none.
+  const skills = join(dir, "skills");
+  const install = (skill, ...names) => {
+    mkdirSync(join(skills, skill, "scripts"), { recursive: true });
+    for (const n of names) copyFileSync(join(plugin, "skills", skill, "scripts", n), join(skills, skill, "scripts", n));
+  };
+  install("doctor", "check.sh", "memory-checks.sh");
+  install("refresh", "refresh.sh");
+  install("wake", "wake.sh");
+  install("work-graph", "wheelhouse-lib.sh", "inbox.sh", ...(memorySh ? ["memory.sh"] : []));
   mkdirSync(join(wh, ".agents/harness"), { recursive: true });
   writeFileSync(join(wh, ".agents/harness/plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0" }));
   mkdirSync(join(wh, "skills/roster/assets"), { recursive: true });
@@ -95,13 +97,13 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
     dir,
     wh,
     check(extra = {}) {
-      const out = spawnSync(bash, [checkSh, "--dir", wh], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(bash, [join(skills, "doctor", "scripts", "check.sh"), "--dir", wh], { encoding: "utf8", env: env(extra) });
       assert.equal(out.status, 0, out.stderr);
       const json = JSON.parse(out.stdout);
       return { json, by: (name) => json.checks.find((c) => c.name === name) };
     },
     refresh(extra = {}) {
-      const out = spawnSync(bash, [refreshSh, "--dir", wh, "--doctor", "/nonexistent", "--dry-run"], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(bash, [join(skills, "refresh", "scripts", "refresh.sh"), "--dir", wh, "--doctor", "/nonexistent", "--dry-run"], { encoding: "utf8", env: env(extra) });
       assert.equal(out.status, 0, out.stderr);
       return JSON.parse(out.stdout);
     },
@@ -109,38 +111,38 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   };
 }
 
-test("a Wheelhouse with no scripts/memory.sh is an error that says how to fix it, and one with it is fine", () => {
+test("a seat with no work-graph memory.sh is an error that says how to fix it, and one with it is fine", () => {
   const without = wheelhouse({ memory: "beads", memorySh: false });
   const withIt = wheelhouse({ memory: "beads" });
   try {
-    const bad = without.check({ STUB_REMOTE: "1" }).by("memory script");
+    const bad = without.check({ STUB_REMOTE: "1" }).by("plugin script memory.sh");
     assert.equal(bad.ok, false);
     assert.equal(bad.level, "error");
-    assert.match(bad.fix, /scripts\/memory\.sh/);
-    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("memory script").ok, true);
+    assert.match(bad.fix, /skills\/work-graph/);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("plugin script memory.sh").ok, true);
   } finally {
     without.done();
     withIt.done();
   }
 });
 
-test("a Wheelhouse with no scripts/wheelhouse-lib.sh is an error that says how to fix it, and one with it is fine", () => {
-  const without = wheelhouse({ memory: "beads" });
-  const withIt = wheelhouse({ memory: "beads" });
+test("a copy of a plugin script in the Wheelhouse's scripts/ is a warning that says to delete it", () => {
+  const w = wheelhouse({ memory: "beads" });
+  const clean = wheelhouse({ memory: "beads" });
   try {
-    rmSync(join(without.dir, "wh", "scripts", "wheelhouse-lib.sh"));
-    const bad = without.check({ STUB_REMOTE: "1" }).by("shared library");
+    mkdirSync(join(w.wh, "scripts"));
+    writeFileSync(join(w.wh, "scripts", "wake.sh"), "#!/bin/sh\n");
+    writeFileSync(join(w.wh, "scripts", "mine.sh"), "#!/bin/sh\n");
+    const bad = w.check({ STUB_REMOTE: "1" }).by("plugin script copies");
     assert.equal(bad.ok, false);
-    assert.equal(bad.level, "error");
-    assert.match(bad.fix, /scripts\/wheelhouse-lib\.sh/);
-    // One report for the one cause: the backend row neither errors nor offers a fix that doesn't apply.
-    const r = without.check({ STUB_REMOTE: "1" });
-    assert.equal(r.by("memory backend"), undefined);
-    assert.deepEqual(r.json.checks.filter((c) => !c.ok && c.level === "error" && /memory backend|wheelhouse-lib/.test(c.name + c.detail)).map((c) => c.name), ["shared library"]);
-    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("shared library").ok, true);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.detail, /scripts\/wake\.sh/);
+    assert.doesNotMatch(bad.detail, /mine\.sh/);
+    assert.match(bad.fix, /delete/);
+    assert.equal(clean.check({ STUB_REMOTE: "1" }).by("plugin script copies").ok, true);
   } finally {
-    without.done();
-    withIt.done();
+    w.done();
+    clean.done();
   }
 });
 

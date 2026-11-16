@@ -27,6 +27,7 @@ function wake(memory, { args = ["hynde", "--format", "json"], end = false, remot
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
     writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
     writeFileSync(join(dir, "wheelhouse.json"), JSON.stringify({ tasks: "beads", memory }));
@@ -84,7 +85,7 @@ test("beads: the text block shows the facts and the memory.sh retire command", (
   const { r } = wake("beads", { args: ["hynde", "--format", "text", "--no-sync"] });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /## What the Wheelhouse knows\n\n?- Pull requests target develop\./);
-  assert.match(r.stdout, /`bash scripts\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
+  assert.match(r.stdout, /`bash \S+\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
   assert.doesNotMatch(r.stdout, /ynm forget|bd forget/);
 });
 

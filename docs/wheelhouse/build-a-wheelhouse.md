@@ -96,8 +96,9 @@ filters here read `.data`. Without it, Beads prints a notice about the coming ch
 `--json` command. The two other exports say where the wheelhouse plugin comes from, and every
 step uses them:
 
-- **`ASSISTANTS`** is a copy of this repository on disk, for the two scripts the tutorial runs:
-  the `wake` script and the `doctor` check.
+- **`ASSISTANTS`** is a copy of this repository on disk, for the scripts the tutorial runs by hand:
+  the `doctor` check and the `work-graph` skill's `inbox.sh`. The seats never use it: they run the
+  plugin's scripts where ynh installs them.
 - **`WHEELHOUSE`** is the include every harness uses to get the plugin's skills: the published
   plugin, fetched from GitHub.
 
@@ -175,7 +176,7 @@ missing role of the starter team with the `add-seat` skill, one seat at a time: 
 on a branch until the human makes it official (a throwaway sandbox is the one exception). Answer questions about the
 Wheelhouse's state from what you check then, with the `doctor` skill, `bd` and `ynm`, not from
 memory. Talk to the humans as the `comms` skill says: ask what waits on them through the
-question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run `bash scripts/inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.
+question tool, with options. Who is at the desk is per session: with no name, your wake shows the default human's inbox; when a person names themselves ("it's me, <name>"), run the `work-graph` skill's `inbox.sh show --name <Name>` to show theirs for that session, and seats can assign work to them by their lowercase name. Nothing about them is saved: no roster entry, no email, no username.
 
 ## How tower cares for its seats
 
@@ -242,16 +243,16 @@ for news meant for whoever is at the desk. Seats assign to Rogue when they don't
 do something, and every desk shows Rogue's inbox. You join `humans` yourself later, when you tell
 the desk who you are.
 
-Every seat wakes through one script, `scripts/wake.sh`, which comes from the wheelhouse
-plugin's `wake` skill. Copy it in: each seat's session-start hook runs it from here, and its
-session-end hook runs it again with `--end` to push what the session wrote. Beside it goes
-`scripts/inbox.sh`, from the `work-graph` skill: seats ask the humans for things with it, and the
-desk's wake shows the humans' inbox with it.
+Every seat wakes through one script, `wake.sh`, from the wheelhouse plugin's `wake` skill, and asks the
+humans for things with `inbox.sh`, from the `work-graph` skill. You copy neither: a Wheelhouse keeps no
+copy of the plugin's scripts. Each seat's session-start hook runs `wake.sh` where ynh installed it, and its
+session-end hook runs it again with `--end` to push what the session wrote. The hook command names where each
+vendor puts the skills (the `wake` skill's "The hook command"); the two lines below hold it once, for every
+harness in this tutorial:
 
 ```bash
-mkdir -p scripts
-cp "$ASSISTANTS/plugins/wheelhouse/skills/wake/scripts/wake.sh" scripts/wake.sh
-cp "$ASSISTANTS/plugins/wheelhouse/skills/work-graph/scripts/inbox.sh" scripts/inbox.sh
+export WAKE_HOOK='for d in "$CLAUDE_PLUGIN_ROOT" "$PLUGIN_ROOT" "$CURSOR_PLUGIN_ROOT" .codex .cursor .opencode; do [ -f "$d/skills/wake/scripts/wake.sh" ] && { bash "$d/skills/wake/scripts/wake.sh" --seat @SEAT@ @ARGS@ || true; break; }; done; true'
+export INBOX="$ASSISTANTS/plugins/wheelhouse/skills/work-graph/scripts/inbox.sh"
 ```
 
 Expected: no output.
@@ -263,7 +264,7 @@ diagnose one that won't start. Its `labels` carry the Wheelhouse's name, which e
 carries too (the seats come below):
 
 ```bash
-jq -n --argjson plugin "$WHEELHOUSE" '{
+jq -n --argjson plugin "$WHEELHOUSE" --arg hook "$WAKE_HOOK" '{
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   name: "tower",
   version: "0.1.0",
@@ -272,8 +273,8 @@ jq -n --argjson plugin "$WHEELHOUSE" '{
   labels: {wheelhouse: "tower"},
   includes: [$plugin, {git: "https://github.com/eyelock/ynh", pick: ["skills/ynh-compose", "skills/ynh-troubleshoot"]}],
   hooks: {
-    on_session_start: [{command: "bash scripts/wake.sh --seat tower --format text || true"}],
-    on_session_end: [{command: "bash scripts/wake.sh --seat tower --end || true", timeout: 30}]
+    on_session_start: [{command: ($hook | gsub("@SEAT@"; "tower") | gsub("@ARGS@"; "--format text"))}],
+    on_session_end: [{command: ($hook | gsub("@SEAT@"; "tower") | gsub("@ARGS@"; "--end")), timeout: 30}]
   },
   launch_focus: "wake",
   focuses: {wake: {prompt: "Begin: act on your wake block. If there is none, gather it with the wake skill."}},
@@ -405,7 +406,7 @@ export TUTORIAL_RUN_MODEL=1
 ## Birth the desk
 
 An agent's first session is its **birth**, and it happens once. You don't run anything to wake
-it: the desk's session-start hook runs `scripts/wake.sh --seat tower --format text` and hands its
+it: the desk's session-start hook runs the installed `wake.sh --seat tower --format text` and hands its
 output to the desk before it says a word. On a first wake, it begins:
 
 ```text
@@ -484,7 +485,7 @@ This function writes a seat's harness. Each seat's harness includes:
 - **the roster**, picked from the Wheelhouse repository itself: `"git": "../.."` is resolved from
   the seat's folder. Use `pick`; `"path": "skills/roster"` would include nothing, because a
   `path` names a folder that holds `skills/`;
-- **a session-start hook** that runs `scripts/wake.sh --seat <command>`, so the seat wakes
+- **a session-start hook** that runs the installed `wake.sh --seat <command>`, so the seat wakes
   knowing who it is, and **a session-end hook** that runs it with `--end`, so what the seat
   wrote is pushed when it stops;
 - **a wake focus**, its `launch_focus`, so started by its name alone it acts on its wake block
@@ -498,7 +499,7 @@ This function writes a seat's harness. Each seat's harness includes:
 ```bash
 seat() { # seat <command> <description> <focus> <focus prompt> [extra include as JSON] [workspace as JSON]
   mkdir -p "harnesses/$1/.agents/harness"
-  jq -n --arg name "$1" --arg desc "$2" --arg focus "$3" --arg prompt "$4" --argjson plugin "$WHEELHOUSE" --argjson extra "${5:-null}" --argjson ws "${6:-null}" '{
+  jq -n --arg name "$1" --arg desc "$2" --arg focus "$3" --arg prompt "$4" --argjson plugin "$WHEELHOUSE" --argjson extra "${5:-null}" --argjson ws "${6:-null}" --arg hook "$WAKE_HOOK" '{
     "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
     name: $name, version: "0.1.0", description: $desc, default_vendor: "claude",
     labels: {wheelhouse: "tower"},
@@ -507,8 +508,8 @@ seat() { # seat <command> <description> <focus> <focus prompt> [extra include as
       {git: "../..", pick: ["skills/roster"]}
     ] + (if $extra then [$extra] else [] end)),
     hooks: {
-      on_session_start: [{command: "bash scripts/wake.sh --seat \($name) --format text || true"}],
-      on_session_end: [{command: "bash scripts/wake.sh --seat \($name) --end || true", timeout: 30}]
+      on_session_start: [{command: ($hook | gsub("@SEAT@"; $name) | gsub("@ARGS@"; "--format text"))}],
+      on_session_end: [{command: ($hook | gsub("@SEAT@"; $name) | gsub("@ARGS@"; "--end")), timeout: 30}]
     },
     launch_focus: "wake",
     focuses: {wake: {prompt: "Begin: act on your wake block. If there is none, gather it with the wake skill."}, ($focus): {prompt: $prompt}}
@@ -1054,7 +1055,7 @@ Expected: no output.
 
 McCoist's next session starts with the wake block: who they are, what they are for, where they
 left off, what they have been thanked for, and what is waiting. McCoist's session-start hook
-runs `scripts/wake.sh --seat mccoist --format text` and hands them this (the identity and notes are McCoist's
+runs the installed `wake.sh --seat mccoist --format text` and hands them this (the identity and notes are McCoist's
 own words, so with real seats they read differently):
 
 ```text
@@ -1289,7 +1290,7 @@ The release waits on the fixes, and nothing gets published until the work is don
 Saying so is a human's job, and no seat may do it for you. A seat that needs a human (a merge, a
 decision, a credential) never waits silently: it assigns a human a bead, blocking the work it
 holds up, and tells them things that need no action with a note. Both go through
-`scripts/inbox.sh`, and both go to Rogue, the default human, unless the seat knows who should do
+the `work-graph` skill's `inbox.sh`, and both go to Rogue, the default human, unless the seat knows who should do
 it. Ask Tharg to put the tag in a human's hands:
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
@@ -1307,10 +1308,10 @@ from the roster and refuses a human who isn't in it.
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-decision=$(bash scripts/inbox.sh assign --from tharg --to default --kind decision \
+decision=$(bash "$INBOX" assign --from tharg --to default --kind decision \
   --title "Decide: tag widget v1.2.0 once its changelog is written" --blocks "$tag" \
   --description "Tharg asked: the release plan is ready, and only a human may say it ships. Done means a yes or a no; a yes lets the tag go ahead." | jq -r .id)
-bash scripts/inbox.sh note --from tharg --to default \
+bash "$INBOX" note --from tharg --to default \
   --content "Widget 1.2 is planned: its changelog waits on the CI failure and the backoff cap, and its tag on your go-ahead." > /dev/null
 ```
 
@@ -1467,7 +1468,7 @@ you is written to the roster or anywhere else.
 
 <!-- tutorial: skip if TUTORIAL_RUN_MODEL -->
 ```bash
-note=$(bash scripts/inbox.sh show | jq -r '.humans[] | select(.command == "rogue") | .notes[0].memoryId')
+note=$(bash "$INBOX" show | jq -r '.humans[] | select(.command == "rogue") | .notes[0].memoryId')
 ynm forget --memory-id "$note" --reason relayed > /dev/null
 ```
 
@@ -1479,7 +1480,7 @@ Naming yourself changes nothing in the repository. Ask for your own inbox, then 
 anyone at the desk may pick up:
 
 ```bash
-bash scripts/inbox.sh show --name Pat | jq -r '.humans[] | "\(.name) (\(.role)): \(.beads | length) bead(s)"'
+bash "$INBOX" show --name Pat | jq -r '.humans[] | "\(.name) (\(.role)): \(.beads | length) bead(s)"'
 ```
 
 Expected: Pat has nothing waiting and Rogue has the decision. The roster is untouched.
@@ -1565,7 +1566,7 @@ you run there.
 ```bash
 cd /
 rm -rf /tmp/wheelhouse-tutorial
-unset YNH_HOME YNM_HOME YNM_USER BD_JSON_ENVELOPE ASSISTANTS WHEELHOUSE BEADS_ACTOR TUTORIAL_RUN_MODEL held epic client runner docs followup ci release changelog tag decision note asked id
+unset WAKE_HOOK INBOX YNH_HOME YNM_HOME YNM_USER BD_JSON_ENVELOPE ASSISTANTS WHEELHOUSE BEADS_ACTOR TUTORIAL_RUN_MODEL held epic client runner docs followup ci release changelog tag decision note asked id
 unset -f seat connect born
 ```
 
@@ -1582,9 +1583,9 @@ terminal; nothing is left there to run.
 | Workers | `harnesses/dalglish`, `harnesses/mccoist` and `harnesses/strachan`: one mandate, three selves |
 | Standing roles | `harnesses/anderson` dispatches, `harnesses/dredd` watches CI, `harnesses/tharg` releases |
 | Who's who | `skills/roster/`, with its pools, the seats that are filled, and the humans: Rogue, the default human, and you, Pat |
-| The humans' inbox | `scripts/inbox.sh`: seats assign a human a bead or leave them a note, and the desk's wake opens with them, **For the humans** |
+| The humans' inbox | the `work-graph` skill's `inbox.sh`: seats assign a human a bead or leave them a note, and the desk's wake opens with them, **For the humans** |
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
-| Waking | `scripts/wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record; and by its session-end hook with `--end`, to push what it wrote |
+| Waking | the `wake` skill's `wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record; and by its session-end hook with `--end`, to push what it wrote |
 | Care | the constitution's principles: purpose, bounded days, a private home, seen work, no blame |
 | Work | Beads in `.beads/`, started with `--skip-agents`, shared through the repository's Dolt refs and pushed after each write |
 | Memory | ynm, shared through this repository and synced on push |

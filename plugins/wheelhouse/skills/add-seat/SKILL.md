@@ -67,7 +67,7 @@ seat at a time"). Offer one role, the first template in `order` (a Wheelhouse's 
    the human hasn't agreed to. Then stop and wait for the answer: one question per message.
 3. Once they agree, ask the template's `## Ask` questions, one per message, skipping any the
    request, the constitution or the roster already answers.
-4. Don't change anything else while you seat it, such as the constitution or the scripts; mention
+4. Don't change anything else while you seat it, such as the constitution or the Wheelhouse's own scripts; mention
    what you'd fix, and leave it to the human.
 5. Seat it from the template, through "Seating one seat at a time" and sections 2 to 4 below, and
    record `"role": "<template>"` on its roster seat. The workers are the dispatcher's to seat: if
@@ -101,7 +101,7 @@ official, so nothing about it is official when it is written.
    in the shared checkout. Commit it (`feat: seat <Name>`).
 2. **Push it and open a draft pull request.** Open it as the constitution's `## Handing over work`
    says (a Wheelhouse with a tracker opens it with its `open-pr.sh`). Its description names the
-   seat, its group and mandate, and says it is a trial: how to start it, and that the roster entry
+   seat, its group and mandate, and says it is a trial: how to start it (with its `--name=` flag, as in step 5), and that the roster entry
    and the delegate come when the trial ends.
 3. **Remove your own worktree,** once the branch is pushed (with no remote to push to, once it is
    committed: the branch survives the worktree), so the human can check the branch out. Never leave
@@ -214,13 +214,48 @@ vendor-agnostic way, so the Wheelhouse is not tied to one vendor's model names:
 }
 ```
 
-`scripts/model.sh --seat <command> [--vendor <vendor>] [--format value|flag|json]` (in this
+`<skills>/add-seat/scripts/model.sh --seat <command> [--vendor <vendor>] [--format value|flag|json]` (in this
 skill's folder, run from the Wheelhouse root or with `--dir`) resolves a seat's model, and
 exits 4 when there is none. **Launch with it:** pass `$(model.sh --seat <command> --format flag)`
 (`--model=sonnet`) when starting a seat from a launcher, and its `value` as the Agent tool's
 `model` parameter when waking it as a subagent. ynh's `plugin.json` has no field for a launch
 model, so the roster is where it is declared, and the launcher or the Agent call is where it is
 applied. The `doctor` warns about a seat with no model.
+
+**Name the session.** A seat's session is named `<wheelhouse>-<command>`, and the desk's is named
+just `<wheelhouse>` (`hq-okafor`, `hq-gore`, `hq`), so another session can find it by name. `scripts/session-name.sh --seat <command> [--vendor <vendor>] [--format value|flag]` (in
+this skill's folder) gives the name from the roster, and `--format flag` gives `--name=hq-okafor`
+for Claude and prints nothing for a vendor with no checked launch flag (so Codex, Cursor, OpenCode
+and Copilot are started without it, as before). **Launch with it:** add the flag to the start
+command, `<command> --name=hq-okafor`, on Claude only. Write it with
+the `=`: `ynh run` takes the last bare word for the prompt, so `-n hq-okafor` would send
+`hq-okafor` as the prompt. The launcher sets the name, as with the model.
+
+Every instruction that says how to start a seat or the desk carries the flag, because the crew, the
+standing seats and the desk are started by the human, not by a launcher: `<command> --name=<name>`
+(the desk: `<desk> --name=<desk>`), and `<command> --focus <order> --name=<name>` for one standing
+order. Give the vendor's form where the seat's vendor is not Claude: no flag.
+
+**One live session per seat.** The name is also what the desk checks before it forces a seat's hold
+(the wake skill's "One live session per seat"): it may run `wake.sh --force` for a seat only after
+confirming `<wheelhouse>-<command>` is absent from ListAgents (Claude only), and a human may always force it.
+A seat never forces its own hold, and the session name is why a refused seat can be found and asked.
+
+On Claude, `claude --name=<name>` sets the `name` that `claude agents --json` lists for the
+session, the same field a `/rename` sets (checked live on Claude Code 2.1.322 with `--name=` and
+`-n`). A seat messages another by that name. Other vendors differ, and a seat never relies on
+messaging a live session: asks go through the work graph (the bead and the check-in rule), and the
+name is only a fast path.
+
+| Vendor | Name a session at launch | Message a live session |
+|---|---|---|
+| Claude | `--name=<name>` (checked live) | by name, through the session list (SendMessage) |
+| Copilot | `-n`, `--name <name>` (from its help, not run) | no command found |
+| Codex | no launch flag found; sessions have names, and `codex queue --thread <name>` takes an exact session name | `codex queue --thread <name> --message <text>` (from its help, not run) |
+| OpenCode | `opencode run --title <title>` for a run; no flag for an interactive session | through its server (`opencode api`, `--server`), not tried |
+| Cursor | no flag found; `agent persist` manages sessions by id | no command found |
+
+Where a vendor can't be named or messaged, nothing breaks: `session-name.sh --format flag --vendor <vendor>` prints nothing, the start command has no flag, and the ask is a bead.
 
 ## 2. Name it
 
@@ -255,8 +290,8 @@ rules. In short:
     { "git": "../..", "pick": ["skills/roster"] }
   ],
   "hooks": {
-    "on_session_start": [{ "command": "bash scripts/wake.sh --seat <command> --format text || true" }],
-    "on_session_end": [{ "command": "bash scripts/wake.sh --seat <command> --end || true", "timeout": 30 }]
+    "on_session_start": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <command> --format text || true; break; }; done; true" }],
+    "on_session_end": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <command> --end || true; break; }; done; true", "timeout": 30 }]
   },
   "workspace": ["../../<a repository's path in What it reaches>"],
   "launch_focus": "wake",
@@ -277,7 +312,8 @@ rules. In short:
   gains later reaches a seat only when its `pick` names it, so add it to the picks when the plugin
   gains one.
   Always keep `skills/work-graph` in a seat's `pick`: it carries `wheelhouse-lib.sh`, which every
-  wheelhouse script sources, so a seat without it has scripts that exit 3 (the doctor warns).
+  wheelhouse script sources, and `memory.sh` and `inbox.sh`, so a seat without it has scripts that exit 3 (the doctor warns).
+  The seat runs the plugin's scripts where ynh installed them, so the Wheelhouse holds no copy of them.
 - `labels` is an object of key to value, and stamps every run record of the seat with
   `wheelhouse:<wheelhouse>`, the value being the Wheelhouse's own name (the desk harness's
   `name`). Every seat carries it, so `ynr query runs --label wheelhouse:<wheelhouse>` picks out
@@ -300,8 +336,8 @@ rules. In short:
   folder, so a repository at `../ynh` from the Wheelhouse root is `../../../ynh`. A request grants
   nothing: the human grants it, with `ynh trust accept local/<command>` or their own `workspace_roots`
   in `~/.ynh/config.json`. Never run either for them.
-- The `on_session_start` hook wakes the seat with purpose: it runs the Wheelhouse's
-  `scripts/wake.sh` (copied there by `create-wheelhouse` from the `wake` skill), and the seat
+- The `on_session_start` hook wakes the seat with purpose: it runs the installed
+  `wake.sh` (the `wake` skill's, where ynh put it: the hook command is in the `wake` skill, "The hook command"; nothing is copied into the Wheelhouse), and the seat
   starts with who it is, where it left off, its Kudos and what is waiting for it. The hook names
   the seat (`--seat <command>`).
 - The `on_session_end` hook pushes what the session wrote (`--end`: memory and the work graph),
@@ -359,10 +395,10 @@ with; a standing role or a worker hands it back to the desk.
 
 ## 4. Connect it
 
-1. Give the seat ynm, when the Wheelhouse's memory is in ynm (`bash scripts/memory.sh backend`
+1. Give the seat ynm, when the Wheelhouse's memory is in ynm (`bash <skills>/work-graph/scripts/memory.sh backend`
    prints `ynm`): run `ynm client install ynh` inside `harnesses/<command>/`. It adds ynm's
    MCP server, hooks and memory skill to the seat's harness. With Beads memory there is nothing to
-   install: the seat reads and writes memory through `scripts/memory.sh`.
+   install: the seat reads and writes memory through `<skills>/work-graph/scripts/memory.sh`.
 2. Add the seat to the desk's `delegates_to` in `.agents/harness/plugin.json`:
    `{ "git": ".", "path": "harnesses/<command>" }`. On a trial, leave it out until the human ends
    the trial.
@@ -388,14 +424,14 @@ as its own session. Nobody is there to approve what a birth does, so `<flags>` a
 you were given for starting seats (such as `--permission-mode`): without them its memory writes
 are refused, and it can't save who it is. If you weren't given any, ask for them before you wake
 anyone. Add the model from the roster (`--model=<model>`, from `model.sh`), never one copied
-from another seat. Leave the birth
+from another seat, and the session name (`--name=<name>`, from `session-name.sh`). Leave the birth
 of a seat that isn't yours to wake under that rule to the one who is: install it, but don't start it.
 
 ## 5. Report
 
 Say who the seat is (name, group, mandate), what it can reach, its standing orders, and how to
-start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command>` to wake it, or
-`<command> --focus <order>` for one standing order, written out for each seat when there are
+start it, on trial: the human checks the branch out in the shared checkout, runs `ynh install ./harnesses/<command>`, then `<command> --name=<name>` to wake it (the name from `session-name.sh`; on a vendor with no flag, just `<command>`), or
+`<command> --focus <order> --name=<name>` for one standing order, written out for each seat when there are
 several. Say it is a trial and where the draft pull request is, and say in so many words that it
 is made official only by review and merge of that pull request, or is dropped (with no remote, there
 is no pull request yet: say so, and that review and merge follow once the branch is pushed). Say that

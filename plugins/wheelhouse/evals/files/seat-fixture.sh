@@ -6,7 +6,7 @@
 #   seat_world <root> [Worker[=label]...]
 #       <root>/hq        the Wheelhouse: constitution, desk, roster, one seat per name given
 #                        (a worker, as graph-lib.sh's specialist_wheelhouse makes them) beside
-#                        Anderson the dispatcher, wake.sh and memory.sh, a real Beads graph
+#                        Anderson the dispatcher, a real Beads graph
 #       <root>/<repo>    a sibling checkout of each YN repository (ynh, ynm, ynf, ynr,
 #                        assistants, homebrew-tap), at the relative path the constitution
 #                        names (../ynh from hq), each a git repository with one commit

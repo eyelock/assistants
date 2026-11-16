@@ -54,7 +54,7 @@ A Wheelhouse: named agent seats for one space of work, each a ynh harness, shari
 graph and ynm memory.
 
 - Skills: `add-seat`, `birth`, `create-wheelhouse`, `doctor`, `handoff`, `kudos`, `wake`, `work-graph`.
-- Seats are born once, in their own words, and wake every session with purpose: `scripts/wake.sh`
+- Seats are born once, in their own words, and wake every session with purpose: the `wake` skill's `wake.sh`
   runs from each seat's session-start hook.
 - Needs `ynh`, `ynm` and Beads (`bd`). The `doctor` skill checks they are set up right.
 - Walk through one in [Build a Wheelhouse](../wheelhouse/build-a-wheelhouse.md).

@@ -125,7 +125,7 @@ for (const [backend, memory] of [["ynm", null], ["ynm", "ynm"], ["beads", "beads
       assert.equal(notes[0].memoryId, written.memoryId);
       assert.equal(notes[0].content, "From gahan: PR 12 is ready: thanks");
       assert.equal(notes[0].by, "gahan");
-      assert.match(json.relay, /bash scripts\/memory\.sh forget --id <its memoryId> --reason relayed/);
+      assert.match(json.relay, /bash \S+\/memory\.sh forget --id <its memoryId> --reason relayed/);
       assert.doesNotMatch(json.relay, /ynm forget|bd forget/);
 
       const gone = spawnSync("bash", [memorySh, "forget", "--dir", w.dir, "--id", notes[0].memoryId, "--reason", "relayed"], {

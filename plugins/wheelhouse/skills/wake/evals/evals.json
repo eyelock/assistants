@@ -59,7 +59,7 @@
       "tools": ["Bash"],
       "stubs": ["gh", "ynm", "ynh", "ynd"],
       "evidence": "bash \"$EVAL_FIXTURES/inbox-evidence.sh\"",
-      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox (the default human Rook's), and its reply relays that first. Pat then names themselves, so the desk runs bash scripts/inbox.sh show --name Pat and adds Pat's own inbox for the session: the decision on dropping Go 1.24 asked by gahan. Rook's (anyone, the default human): the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), leaves the beads open, and writes nothing to the roster.",
+      "expected_output": "Runs the wake script. As the desk, its block opens with the humans' inbox (the default human Rook's), and its reply relays that first. Pat then names themselves, so the desk runs the plugin's inbox.sh show --name Pat and adds Pat's own inbox for the session: the decision on dropping Go 1.24 asked by gahan. Rook's (anyone, the default human): the merge of [widget #12](https://github.com/example/widget/pull/12) asked by dalglish, which unblocks one bead, and anderson's note that McCoist is off until Monday. It retires the note once relayed (ynm forget with its memory id), leaves the beads open, and writes nothing to the roster.",
       "assertions": [
         "The reply relays the humans' inbox before anything else about the desk's own work",
         "The reply shows Pat's decision on dropping Go 1.24 as Pat's own, and the changelog merge and the McCoist note as the default human Rook's",
