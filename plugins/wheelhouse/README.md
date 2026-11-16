@@ -28,6 +28,7 @@ from parts that work on any vendor:
 | `kudos` | pass praise on to a seat, with no work attached, and read it when the seat wakes |
 | `birth` | a seat's first session: read its charter, meet the team, write who it is in its own words |
 | `wake` | start every session with purpose: identity, mandate, handoff notes, Kudos, record and waiting work; the desk's wake opens with the humans' inbox |
+| `worktrees` | make, find and remove a seat's git worktrees where the Wheelhouse's `worktrees.json` says (`{repo}/.worktrees/{seat}/{branch}` in ynw; the scratchpad when there is no policy), with `<skills>/worktrees/scripts/worktree.sh`: `add` prints the path and notes it on the bead, `list` shows seat, repo, branch and bead and flags the stale, `remove` refuses force, a path outside the layout and uncommitted work |
 | `patrol` | diff the Wheelhouse's pull requests, issues and CI against the last patrol and print only what changed, so a CI watcher on a 5-minute timer wakes only for news |
 | `refresh` | the desk's, after a pull: map the git diff to the `ynh install`s, the `ynh trust accept local/<seat>` for each seat ynh no longer counts as trusted, and the restarts it needs, run the safe steps and the doctor, and report any seat not installed or born |
 | `comms` | talk to the humans: never name one in anything written, ask decisions through the question tool with options, one question at a time, a synopsis beside every bead id, post bodies from a file and never an unquoted heredoc, the outcome first |
