@@ -364,7 +364,7 @@ if [ -f "$desk_manifest" ]; then
   done
   if [ -n "$noguard" ]; then
     add "bare-session guard" false warn "a plain session in this repository is not told it is not a seat, on:$noguard (no scripts/bare-guard.sh, or no session-start hook running it)" \
-      "copy the create-wheelhouse skill's scripts/bare-guard.sh into scripts/, then run its scripts/add-bare-guard-hook.sh --dir <repo> --vendor <v> for each vendor named (step 3.7), which appends to an existing hook file and keeps the rest; the human reads the diff of the hook files before committing"
+      "copy the create-wheelhouse skill's scripts/bare-guard.sh into scripts/, then run its scripts/add-bare-guard-hook.sh --dir <repo> --vendor <v> for each vendor named (step 3.8), which appends to an existing hook file and keeps the rest; the human reads the diff of the hook files before committing"
   else
     add "bare-session guard" true info "a plain session is told it is not a seat, on:${vendors:- none}${unguarded:+; no project-level session-start hook can guard$unguarded}"
   fi
