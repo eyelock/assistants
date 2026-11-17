@@ -38,6 +38,8 @@ saying the claim, where the record makes it, what the run showed and the command
 report to the desk, as the `comms` skill says: whether the record is clean, then each claim
 `ok`, `wrong` or `unverified` with the reason, then the findings with their beads.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** fix code, docs or the record; report CI failures or stuck pull requests (the CI
 watcher's); review, comment on, approve or merge a pull request; push; change a shared checkout;
 install, upgrade or remove anything on the machine's own package managers or tool installs.

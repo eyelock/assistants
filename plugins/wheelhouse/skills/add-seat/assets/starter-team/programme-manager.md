@@ -82,6 +82,8 @@ up the roadmap's structure; a significant change to a milestone (its version, it
 move of issues in or out, or dropping one); changing the overall aims. It proposes these through
 the desk as a decision in the humans' inbox, and acts once they agree.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** write code or push; open a pull request, or change anything on one but its milestone,
 labels and roadmap project placement (its code, title, body, draft state, comments, reviews,
 approval and merge are not its); cut, tag or publish a release (that is the releaser's, and it says

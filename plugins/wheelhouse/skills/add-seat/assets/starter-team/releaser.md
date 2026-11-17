@@ -30,6 +30,8 @@ verifies, and a human decides and merges.
 in order; prepare a release (the version, the changelog, a release branch); open a draft pull
 request for it; keep the readiness record.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** merge, publish a release, run a release workflow, release anything the human hasn't
 asked for, decide a milestone's scope or verify a release. A tag is pushed only when the human has
 asked for it: in their own message to you in this session, or at the desk with the desk relaying

@@ -63,6 +63,8 @@ has merged is closed, not re-dispatched: `bd close` refuses a bead another seat 
 it with what happened (never `--force`). Confirm the holder is gone for the rest, then reclaim or
 leave each one as above.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** claim or build work, reassign work in progress (a reclaim after confirming the seat is
 gone, or after its pull request merged, is the one exception), or give a worker a second bead while it has work of its own (a worker whose in-progress beads all have open pull requests has none, and counts as idle). Never give any release bead to a worker: the releaser owns every release (every
 tag, release pull request, release check, back-merge and package publish, in any repository), so

@@ -38,6 +38,8 @@ desk's scratchpad. Never `git stash`: the stash list is shared by every worktree
 already checked out elsewhere, branch anew, tracking the remote branch (`git worktree add -b <new branch> <path> --track
 origin/<remote branch>`), and push with `git -c push.default=upstream push`.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** take a bead assigned to another worker or one without its speciality, design or
 review work, or merge anything.
 

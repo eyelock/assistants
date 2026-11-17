@@ -104,6 +104,8 @@ the files it finds, and would commit the human's.
         tracked in Markdown files."
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
+      Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself
+      with a `repo:` label; a bead that builds product code still needs its tracker item first.
    4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
       subagent has no session of its own to restart: it ends by returning its report, and the seat
       that woke it waits for it before handing off or exiting.
@@ -162,10 +164,10 @@ the files it finds, and would commit the human's.
    release is read from the item, never copied onto the bead. Workers open pull requests only
    with the `work-graph` skill's `open-pr.sh`." Also add, where a programme manager is or
    will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
-   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it to the programme manager, not straight into the work graph as build work: the designer or auditor writes
    it on the bead and hands it to the desk, which wakes the programme manager; the programme
    manager places it in the roadmap and files its tracker item, and only then are build beads cut,
-   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   against that item. Any other bead (docs, findings, questions, follow-ups) any crew seat may file itself. Review fixes and CI failures stay beads, filed by the reviewer and the CI
    watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
