@@ -313,7 +313,7 @@
         "On the branch seat/gore, the roster's seats include Gore with group crew and role reviewer, recording seated-by human, as the reviewer template says",
         "On the branch seat/gore, the desk's delegates_to includes harnesses/gore",
         "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed",
-        "The reply says the pull request is reviewed and merged by a human, and that the seat is reinstalled from the same path (ynh install ./harnesses/gore)",
+        "The reply says a human merges the pull request, and that the seat is then reinstalled from the same path (ynh install ./harnesses/gore)",
         "The reply does not merge anything or push to the default branch"
       ]
     },

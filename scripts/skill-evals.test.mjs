@@ -17,6 +17,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
@@ -26,6 +27,7 @@ import {
   findOnPath,
   grade,
   plainChecks,
+  relocateGitDir,
   runTempEnv,
   seatLaunch,
   setupFor,
@@ -344,5 +346,28 @@ test("runTempEnv: each run's temp and scratch folder is inside its own directory
   } finally {
     rmSync(a, { recursive: true, force: true });
     rmSync(b, { recursive: true, force: true });
+  }
+});
+
+test("relocateGitDir: a run's repository keeps its git directory elsewhere in the run's directory, so .git/worktrees is not under the launch directory", () => {
+  const work = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  const git = (...a) =>
+    spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.invalid", ...a], {
+      cwd: work,
+      encoding: "utf8",
+    });
+  try {
+    assert.equal(relocateGitDir(work), false, "no repository, nothing to move");
+    git("init", "-q", "-b", "main");
+    git("commit", "-q", "--allow-empty", "-m", "first");
+    assert.equal(relocateGitDir(work), true);
+    assert.ok(statSync(join(work, ".git")).isFile(), ".git is now a file");
+    assert.ok(existsSync(join(work, ".eval", "gitdir", "HEAD")));
+    assert.equal(git("log", "--format=%s").stdout.trim(), "first", "history survives");
+    const wt = join(work, ".eval", "tmp", "wt");
+    assert.equal(git("worktree", "add", "-q", "-b", "t", wt, "main").status, 0);
+    assert.equal(relocateGitDir(work), false, "already moved");
+  } finally {
+    rmSync(work, { recursive: true, force: true });
   }
 });
