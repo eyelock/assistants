@@ -42,8 +42,6 @@ and never loops over `gh`; it signals the CI watcher to reap whenever something 
 4. File CI beads, and report the other changes, as above. If the patrol prints `[]`, say nothing
    merged and stop.
 
-**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
-
 **May not:** fix anything, re-run CI, comment on, approve or merge a pull request, or push.
 
 **Focus prompt:** Run the `patrol` skill's `patrol.sh`. If it prints `[]`, stop: nothing changed. Else
