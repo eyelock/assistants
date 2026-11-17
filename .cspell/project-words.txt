@@ -178,3 +178,4 @@ Procida
 Licence
 opencode
 gsub
+gitdir
