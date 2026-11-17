@@ -44,8 +44,8 @@ merge). `--stale` keeps only those.
 bash <skills>/worktrees/scripts/worktree.sh remove <path> --seat <you>
 ```
 
-- You may remove your own worktrees. The dispatcher (`marr`, or a seat named in
-  `$WORKTREE_CLEANERS`) may remove any seat's whose bead is closed; a worker need not tidy.
+- You may remove your own worktrees. The dispatcher (the default cleaner built into
+  `worktree.sh`, or a seat named in `$WORKTREE_CLEANERS`) may remove any seat's whose bead is closed; a worker need not tidy.
 - It refuses a path outside the policy layout, a worktree with uncommitted work, and any other
   seat's whose bead is open. Commit or discard the work yourself; the script never forces.
 - It never runs `worktree prune`, `move`, `lock` or `repair`, and never `--force`; neither do you.
