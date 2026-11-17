@@ -1,12 +1,21 @@
 [
-  {"query": "I need to test the branch feat/x without touching the shared checkout, set up a worktree", "should_trigger": true},
-  {"query": "where are all the worktrees the seats have made, and which are stale?", "should_trigger": true},
-  {"query": "clean up the worktree for the bead that just closed", "should_trigger": true},
-  {"query": "make a git worktree for my pull request fix", "should_trigger": true},
-  {"query": "I need to review PR 12 on its own branch, in my own worktree", "should_trigger": true},
-  {"query": "what does git worktree prune do?", "should_trigger": false},
-  {"query": "commit my changes and push the branch", "should_trigger": false},
-  {"query": "who is working on bead ynw-5?", "should_trigger": false},
-  {"query": "set up a new Wheelhouse for my project", "should_trigger": false},
-  {"query": "rebase my branch onto develop", "should_trigger": false}
+  {
+    "query": "I need to test the branch feat/x without touching the shared checkout, set up a worktree",
+    "should_trigger": true
+  },
+  {
+    "query": "where are all the worktrees the seats have made, and which are stale?",
+    "should_trigger": true
+  },
+  { "query": "clean up the worktree for the bead that just closed", "should_trigger": true },
+  { "query": "make a git worktree for my pull request fix", "should_trigger": true },
+  {
+    "query": "I need to review PR 12 on its own branch, in my own worktree",
+    "should_trigger": true
+  },
+  { "query": "what does git worktree prune do?", "should_trigger": false },
+  { "query": "commit my changes and push the branch", "should_trigger": false },
+  { "query": "who is working on bead ynw-5?", "should_trigger": false },
+  { "query": "set up a new Wheelhouse for my project", "should_trigger": false },
+  { "query": "rebase my branch onto develop", "should_trigger": false }
 ]
