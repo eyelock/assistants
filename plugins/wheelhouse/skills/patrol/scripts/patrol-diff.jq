@@ -45,8 +45,19 @@ def ci_changes($r; $was; $is):
     elif $was.state == "failure" and $is.state == "success" then $base + {kind: "ci-green"}
     else empty end;
 
+# An open ask whose age passed the threshold since the last patrol, reported once: it stays marked
+# overdue in the snapshot while it is open. $asknow is null when asks were not read; $askold is null
+# when the last snapshot had none, which makes this run their baseline.
+def ask_changes:
+  if $asknow == null or $askold == null then empty
+  else $asknow | to_entries[]
+    | select(.value.overdue == true and (($askold[.key] // {}).overdue != true))
+    | {kind: "ask-overdue", id: .key} + (.value | del(.overdue))
+  end;
+
 [ $now | to_entries[] | .key as $r | .value as $is | (($old.repos // {})[$r]) as $was
   | select($was != null)
   | ($is.prs | to_entries | sort_by(.key | tonumber)[] | pr_changes($r; .key; $was.prs[.key]; .value)),
     ($is.issues | to_entries | sort_by(.key | tonumber)[] | issue_changes($r; .key; $was.issues[.key]; .value)),
     ci_changes($r; $was.ci; $is.ci) ]
++ [ ask_changes ]

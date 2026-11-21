@@ -29,6 +29,13 @@
 #   (reason), issue-reopened, ci-red and ci-green (the default branch's CI;
 #   branch instead of number), and error (detail), when gh couldn't read a
 #   repository: its last snapshot is kept, so nothing is lost or reported twice.
+#   ask-overdue (id, title, ask, askedBy, assignee, answered, age, ageSeconds), an open ask between
+#   seats (ask.sh show --all) whose age passed the threshold since the last patrol: reported once,
+#   never again while it stays open. The threshold is --ask-overdue-after, else
+#   $WHEELHOUSE_ASK_OVERDUE_AFTER, else 24h (a number and one of s, m, h or d). An ask labelled
+#   ask:report needs no answer and is never overdue. Asks are read only when the Wheelhouse has a
+#   work graph (.beads/) and an ask.sh beside patrol.sh (or in the work-graph skill); an ask.sh
+#   that fails is an error (source asks) and the last asks snapshot is kept.
 # A squash merge and a rebase merge both leave one parent: both read as squash.
 #
 # Exit codes: 0 done, 1 bad args, 2 not a Wheelhouse, 3 a tool (jq, gh, git)
@@ -38,7 +45,7 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: patrol.sh [--dir <wheelhouse repo>] [--repo <owner/name>]... [--snapshot <file>]
-                 [--limit <n>] [--stale-after <minutes>] [--dry-run]
+                 [--limit <n>] [--stale-after <minutes>] [--ask-overdue-after <duration>] [--dry-run]
 
 Prints a JSON list of what changed in the repositories' pull requests, issues
 and CI since the last run, and saves a new snapshot. [] means nothing changed.
@@ -47,6 +54,8 @@ repository (default 30). --dry-run prints the changes without saving the
 snapshot.
 --stale-after is how many minutes a green draft pull request may sit with
 commits no review has seen before it is reported as stalled (default 30).
+--ask-overdue-after is how old an open ask between seats may get before it is
+reported once as overdue (default 24h; $WHEELHOUSE_ASK_OVERDUE_AFTER sets it too).
 EOF
 }
 
@@ -57,15 +66,15 @@ for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-
 done
 type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 
-dir="."; snapshot=""; limit=30; stale=30; repos=(); dry=false
+dir="."; snapshot=""; limit=30; stale=30; overdue="${WHEELHOUSE_ASK_OVERDUE_AFTER:-24h}"; repos=(); dry=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
     --dry-run) dry=true; shift ;;
-    --dir | --repo | --snapshot | --limit | --stale-after)
+    --dir | --repo | --snapshot | --limit | --stale-after | --ask-overdue-after)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       case "$1" in
-        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;; --stale-after) stale="$2" ;;
+        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;; --stale-after) stale="$2" ;; --ask-overdue-after) overdue="$2" ;;
       esac
       shift 2 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -73,6 +82,8 @@ while [ $# -gt 0 ]; do
 done
 [[ "$limit" =~ ^[1-9][0-9]*$ ]] || die 1 "--limit must be a positive number"
 [[ "$stale" =~ ^[0-9]+$ ]] || die 1 "--stale-after must be a number of minutes"
+[[ "$overdue" =~ ^([0-9]+)([smhd])$ ]] || die 1 "--ask-overdue-after must be a number and one of s, m, h or d (30m, 24h, 2d)"
+case "${BASH_REMATCH[2]}" in s) overdue_secs=${BASH_REMATCH[1]} ;; m) overdue_secs=$((BASH_REMATCH[1] * 60)) ;; h) overdue_secs=$((BASH_REMATCH[1] * 3600)) ;; d) overdue_secs=$((BASH_REMATCH[1] * 86400)) ;; esac
 
 for t in jq gh git; do need "$t"; done
 [ -d "$dir" ] || die 2 "no folder $dir"
@@ -152,9 +163,39 @@ for r in "${repos[@]}"; do
   fi
 done
 
+# The open asks between seats, from ask.sh show --all, keyed by id with whether each is overdue.
+# Reports (ask:report) need no answer and are left out. null means asks were not read this run
+# (no work graph, no ask.sh, or ask.sh failed): the last run's asks are kept, so nothing is lost
+# or reported twice.
+asksh=""
+for f in "$here/ask.sh" "$here/../../work-graph/scripts/ask.sh"; do
+  [ -f "$f" ] && { asksh="$f"; break; }
+done
+asknow='null'
+if [ -n "$asksh" ] && [ -d .beads ] && command -v bd >/dev/null 2>&1; then
+  shown=$(limited "${WL_ASK_SECS:-30}" bash "$asksh" show --all --dir . 2>/dev/null); askrc=$?
+  if [ "$askrc" = 0 ] && asknow=$(jq -c --argjson t "$overdue_secs" '
+      if type == "object" and (.asks | type) == "array" then
+        .asks | map(select(.kind != "report"))
+        | map({key: .id, value: {title, ask: .kind, askedBy, assignee, answered, age, ageSeconds,
+                                 overdue: (.ageSeconds != null and .ageSeconds >= $t)}}) | from_entries
+      else error("no asks list") end' <<<"$shown" 2>/dev/null) && [ -n "$asknow" ]; then :; else
+    if [ "$askrc" = 142 ]; then detail="ask.sh show gave up after ${WL_ASK_SECS:-30}s"
+    else
+      detail=$(limited "${WL_ASK_SECS:-30}" bash "$asksh" show --all --dir . 2>&1 >/dev/null | head -1)
+      detail="ask.sh show failed: ${detail:-no readable output}"
+    fi
+    errors=$(jq -c --arg d "$detail" '. + [{kind: "error", source: "asks", detail: $d}]' <<<"$errors")
+    asknow='null'; status=3
+  fi
+fi
+# Keep the last asks when they were not read; the first read of them is a baseline.
+askold=$(jq -c '.asks // null' <<<"$old")
+asksave="$asknow"; [ "$asknow" != null ] || asksave="$askold"
+
 changes='[]'
 if [ "$old" != null ]; then
-  changes=$(jq -c --argjson old "$old" --argjson now "$now" -n -f "$here/patrol-diff.jq") || die 3 "could not compare with the snapshot"
+  changes=$(jq -c --argjson old "$old" --argjson now "$now" --argjson askold "$askold" --argjson asknow "$asknow" -n -f "$here/patrol-diff.jq") || die 3 "could not compare with the snapshot"
 fi
 
 # How each newly merged pull request was merged: two parents is a merge
@@ -171,7 +212,7 @@ fi
 changes=$(jq -c 'map(del(.mergeCommit))' <<<"$changes")
 
 if [ "$dry" = false ]; then
-  jq -nc --argjson repos "$now" '{repos: $repos}' > "$snapshot.new" && mv "$snapshot.new" "$snapshot" ||
+  jq -nc --argjson repos "$now" --argjson asks "$asksave" '{repos: $repos} + (if $asks == null then {} else {asks: $asks} end)' > "$snapshot.new" && mv "$snapshot.new" "$snapshot" ||
     die 3 "could not write the snapshot $snapshot"
 fi
 
