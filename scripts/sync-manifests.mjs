@@ -39,6 +39,12 @@ const MARKETPLACES = [
 // `source.path` (a workspace directory), so it is synced and checked apart from MARKETPLACES.
 const HARNESS_INDEX = ".agents/harness/marketplace.json";
 
+// Workspace directories deliberately left out of the vendor indexes in MARKETPLACES. Those
+// indexes list plugins and skills packages (`plugins/*`, `skills/*`), never ynh harnesses, so
+// `ynh/*` needs no entry here. Empty today: every plugin and skills package is listed. Add a
+// directory here, with the reason, rather than leave it unlisted, or `check` fails.
+const MARKETPLACES_EXCLUDED = [];
+
 // Workspace directories deliberately left out of the ynh marketplace index. Empty today:
 // every package is listed. Add a directory here, with the reason, rather than leave it
 // unlisted, or `check` fails.
@@ -354,12 +360,20 @@ function cmdCheck(pkgs) {
     const path = join(ROOT, rel);
     if (!existsSync(path)) continue;
     const mp = readJson(path);
+    const listed = new Set();
     for (const entry of mp.plugins ?? []) {
       if (typeof entry.source !== "string") continue;
       const entryPath = entry.source.replace(/^\.\//, "");
+      listed.add(entryPath);
       const v = vmap.get(entryPath);
       if (v && entry.version !== v.version) {
         drift.push(`${rel}:${entry.name} version ${entry.version} != ${v.version}`);
+      }
+    }
+    for (const dir of vmap.keys()) {
+      const indexed = dir.startsWith("plugins/") || dir.startsWith("skills/");
+      if (indexed && !listed.has(dir) && !MARKETPLACES_EXCLUDED.includes(dir)) {
+        drift.push(`${rel}: ${dir} is not listed (add it, or exclude it in the script)`);
       }
     }
   }

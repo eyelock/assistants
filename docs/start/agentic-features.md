@@ -88,7 +88,10 @@ vendor tool can add the whole list once and install by name.
 **Here.** One repository serves four indexes: `.claude-plugin/marketplace.json`,
 `.cursor-plugin/marketplace.json`, `.github/plugin/marketplace.json` (Copilot CLI) and
 `.agents/harness/marketplace.json` (ynh, which lists harnesses). `pnpm sync-manifests:check` keeps
-them in step. The Copilot index is separate because Copilot rejects an index over one source type
+them in step: it fails when an index's version differs from its package, and when a package is
+missing from an index. The three vendor indexes must list every `plugins/*` and `skills/*`
+package, the ynh index every package including `ynh/*`; a package left out on purpose is named
+in the script's exclusion lists. The Copilot index is separate because Copilot rejects an index over one source type
 Claude allows. See [Vendors](../harnesses/vendors.md#marketplaces).
 
 ## Harnesses

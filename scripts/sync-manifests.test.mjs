@@ -180,6 +180,50 @@ test("check fails when a workspace package is missing from the ynh marketplace i
   }
 });
 
+const vendorIndex = (...entries) => ({
+  name: "idx",
+  plugins: entries.map(([name, version]) => ({ name, source: `./plugins/${name}`, version })),
+});
+
+for (const index of [
+  ".claude-plugin/marketplace.json",
+  ".cursor-plugin/marketplace.json",
+  ".github/plugin/marketplace.json",
+]) {
+  test(`check fails when a plugin is missing from ${index}`, () => {
+    const root = tree({
+      "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+      "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+      "plugins/wheelhouse/.claude-plugin/plugin.json": agents("wheelhouse", "0.3.0"),
+      "plugins/wheelhouse/package.json": pkg("wheelhouse", "0.3.0"),
+      [index]: vendorIndex(["gitflow", "0.3.0"]),
+    });
+    try {
+      const r = run(root, "check");
+      assert.equal(r.status, 1, r.stdout + r.stderr);
+      assert.ok(r.stderr.includes(`${index}: plugins/wheelhouse is not listed`), r.stderr);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+test("check does not ask the vendor indexes to list a ynh harness", () => {
+  const root = tree({
+    "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+    "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+    "ynh/termq-dev/.agents/harness/plugin.json": agents("termq-dev", "0.3.0"),
+    "ynh/termq-dev/package.json": pkg("termq-dev", "0.3.0"),
+    ".claude-plugin/marketplace.json": vendorIndex(["gitflow", "0.3.0"]),
+  });
+  try {
+    const r = run(root, "check");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("generate syncs the ynh marketplace index versions, then check passes", () => {
   const root = tree({
     "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
