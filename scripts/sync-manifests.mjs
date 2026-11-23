@@ -35,6 +35,15 @@ const MARKETPLACES = [
   ".github/plugin/marketplace.json",
 ];
 
+// The ynh marketplace index. It lists harnesses, not plugins, and names each by
+// `source.path` (a workspace directory), so it is synced and checked apart from MARKETPLACES.
+const HARNESS_INDEX = ".agents/harness/marketplace.json";
+
+// Workspace directories deliberately left out of the ynh marketplace index. Empty today:
+// every package is listed. Add a directory here, with the reason, rather than leave it
+// unlisted, or `check` fails.
+const HARNESS_INDEX_EXCLUDED = [];
+
 // The source manifest of a package directory, and what kind of package it is. A ynh
 // harness keeps its manifest only in .agents/harness/ (assistants #44); a plugin that
 // also has .claude-plugin/plugin.json keeps that as its source and .agents/harness/
@@ -187,6 +196,7 @@ function cmdGenerate(pkgs) {
   }
   syncRegistry(pkgs);
   syncMarketplaces(pkgs);
+  syncHarnessIndex(pkgs);
 }
 
 // Each package also carries vendor plugin manifests consumed by each marketplace.
@@ -261,6 +271,30 @@ function syncMarketplaces(pkgs) {
   }
 }
 
+// The index's entries that name a workspace directory in this repository.
+function harnessIndexEntries(path) {
+  return (readJson(path).harnesses ?? []).filter((entry) => typeof entry.source?.path === "string");
+}
+
+function syncHarnessIndex(pkgs) {
+  const path = join(ROOT, HARNESS_INDEX);
+  if (!existsSync(path)) return;
+  const vmap = versionMap(pkgs);
+  const mp = readJson(path);
+  let changed = false;
+  for (const entry of mp.harnesses ?? []) {
+    const v = vmap.get(entry.source?.path);
+    if (v && entry.version !== v.version) {
+      entry.version = v.version;
+      changed = true;
+    }
+  }
+  if (changed) {
+    writeJson(path, mp);
+    process.stdout.write(`  sync      ${HARNESS_INDEX}\n`);
+  }
+}
+
 function cmdWriteback(pkgs) {
   for (const p of pkgs) {
     const target = join(p.dir, "package.json");
@@ -326,6 +360,22 @@ function cmdCheck(pkgs) {
       const v = vmap.get(entryPath);
       if (v && entry.version !== v.version) {
         drift.push(`${rel}:${entry.name} version ${entry.version} != ${v.version}`);
+      }
+    }
+  }
+  const indexPath = join(ROOT, HARNESS_INDEX);
+  if (existsSync(indexPath)) {
+    const entries = harnessIndexEntries(indexPath);
+    const listed = new Set(entries.map((entry) => entry.source.path));
+    for (const entry of entries) {
+      const v = vmap.get(entry.source.path);
+      if (v && entry.version !== v.version) {
+        drift.push(`${HARNESS_INDEX}:${entry.name} version ${entry.version} != ${v.version}`);
+      }
+    }
+    for (const dir of vmap.keys()) {
+      if (!listed.has(dir) && !HARNESS_INDEX_EXCLUDED.includes(dir)) {
+        drift.push(`${HARNESS_INDEX}: ${dir} is not listed (add it, or exclude it in the script)`);
       }
     }
   }
