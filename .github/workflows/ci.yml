@@ -93,12 +93,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Pull requests scan the skills they change; pushes scan every skill.
-      # Eval fixtures and e2e fixtures are test data, not shipped skills.
+      # Eval fixtures are test data, not shipped skills.
       - uses: eyelock/actions/skillspector@2b4b0eafc45da186506a6fd72774482b636d55aa # skillspector-v1
         with:
           exclude: |
             */evals/files/*
-            e2e-fixtures/*
 
   # Every wheelhouse plugin script is linted (shellcheck, warnings and up) and its tests are run, on
   # Linux and on macOS: the scripts run on both, and the Check job above runs on Linux alone. It sits
