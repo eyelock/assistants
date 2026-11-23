@@ -66,7 +66,7 @@ at a time**, in this order. Don't create anything until you have the first four.
     explicit and recorded, and take "Beads" as the answer when the request says nothing.
 11. **Agent Memory:** where the seats' identity, handoff notes, Kudos and close notes live: **ynm**
     (the default) or **Beads** (`bd remember`, in the same database as the work graph, shared by
-    the same Dolt remote). Say what Beads gives up: no private home (everyone who syncs the graph
+    the same Dolt remote). Say what Beads gives up: no memory kept apart from the graph (everyone who syncs the graph
     sees every memory), no search by meaning, no ynm tools or `ynm-memory` skill (seats use
     the `work-graph` skill's `memory.sh`), and no forget reason or history of superseded memories. If the request
     doesn't say and you aren't asking, use ynm, and say so in the report.
@@ -208,10 +208,11 @@ the files it finds, and would commit the human's.
    - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
      to seats waiting on them.
    - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
-   - **A private home.** With ynm memory: each seat's memory is its own, in its namespace
-     `seat/<name>`. With Beads memory, which has no private home, write: "**A home of its own.**
-     Each seat's memory is its own to write, under its keys `seat/<name>/`; everyone who syncs the
-     work graph can read it."
+   - **A home of its own, shared with the team.** With ynm memory: each seat's memory is its own to
+     write, in its namespace `seat/<name>`, and every note is shared with the team (the seats write
+     at ynm's distributed level, so every clone and every seat can read it). With Beads memory,
+     write: "**A home of its own.** Each seat's memory is its own to write, under its keys
+     `seat/<name>/`; everyone who syncs the work graph can read it."
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
