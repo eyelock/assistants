@@ -25,6 +25,16 @@
 #   wl_valid_command C       C is a command name: lower-case letters, digits, hyphens
 #   wl_backend [DIR]         print the memory backend (ynm or beads) from DIR/wheelhouse.json,
 #                            ynm when there is no file or no key; return 2 on any other value
+#   wl_conf KEY [DIR]        print the value of KEY (memory, tasks, shared_checkouts,
+#                            protected_branches, sanctioned_force, budgets or guards) from
+#                            DIR/wheelhouse.json as compact JSON, its default when the file or
+#                            key is missing (memory "ynm", tasks "beads", lists [], budgets {},
+#                            guards {"mode":"block","overrides":{}}); guards is merged over its
+#                            default, so a file with only overrides still has a mode. Returns
+#                            2 on an unknown KEY, 1 when the file is not a JSON object.
+#   wl_conf_problems [DIR]   print one line per problem in DIR/wheelhouse.json, each saying the
+#                            key, what is wrong and how to fix it; return 1 when there is any.
+#                            A missing file has none. Unknown top-level keys are problems.
 #   wl_is_trial_seat DIR C   C has no roster entry but a harness at DIR/harnesses/C/AGENTS.md
 #   wl_is_seat ROSTER DIR C  C is in the roster's seats, or is a seat on trial
 #   wl_default_humans ROSTER print how many humans the roster marks "default": true
@@ -91,6 +101,70 @@ wl_backend() {
   fi
   printf '%s\n' "$b"
   case "$b" in ynm | beads) return 0 ;; *) return 2 ;; esac
+}
+
+# wheelhouse.json: every key a Wheelhouse may set, with the default a script gets without it.
+# shellcheck disable=SC2016  # jq source, not shell
+WL_CONF_DEFAULTS='{"memory":"ynm","tasks":"beads","shared_checkouts":[],"protected_branches":[],"sanctioned_force":[],"budgets":{},"guards":{"mode":"block","overrides":{}}}'
+
+wl_conf() {
+  local key="${1:?key}" file="${2:-.}/wheelhouse.json" cfg="{}"
+  jq -e --arg k "$key" 'has($k)' <<<"$WL_CONF_DEFAULTS" >/dev/null || return 2
+  if [ -f "$file" ]; then
+    cfg=$(jq -c 'if type == "object" then . else error("not an object") end' "$file" 2>/dev/null) || return 1
+  fi
+  jq -nc --arg k "$key" --argjson d "$WL_CONF_DEFAULTS" --argjson c "$cfg" '
+    if $k == "guards" then $d.guards + ($c.guards // {}) else ($c[$k] // $d[$k]) end'
+}
+
+# shellcheck disable=SC2016  # jq source, not shell
+WL_JQ_CONF_PROBLEMS='
+def strs: type == "array" and all(.[]; type == "string" and length > 0);
+def obj($allowed): type == "object" and (keys - $allowed | length == 0);
+(["memory","tasks","shared_checkouts","protected_branches","sanctioned_force","budgets","guards"]) as $known
+| ($known | join(", ")) as $list
+| (keys[] | select(. as $k | $known | index($k) | not)
+    | "\(.): unknown key. Fix: remove it, or spell it as one of: \($list)"),
+  (if has("memory") and (.memory | IN("ynm","beads") | not)
+    then "memory: must be \"ynm\" or \"beads\". Fix: set it to one of them" else empty end),
+  (if has("tasks") and (.tasks != "beads")
+    then "tasks: must be \"beads\". Fix: set it to \"beads\"" else empty end),
+  (("shared_checkouts","protected_branches") as $k
+    | select(has($k) and (.[$k] | strs | not))
+    | "\($k): must be a list of non-empty strings. Fix: write it as [\"a\", \"b\"]"),
+  (if has("sanctioned_force") and (
+      (.sanctioned_force | type) != "array"
+      or (.sanctioned_force | any(.[];
+           (type == "object" | not)
+           or (keys - ["who","on","via"] | length > 0)
+           or ((.who | type) != "string") or (.who == "")
+           or ((.on | type) != "string") or (.on == "")
+           or (has("via") and (((.via | type) != "string") or .via == "")))))
+    then "sanctioned_force: must be a list of {\"who\": ..., \"on\": ..., \"via\": ...} with who and on as text and via optional. Fix: give each entry its who and on, and no other keys" else empty end),
+  (if has("budgets") and (
+      (.budgets | type) != "object"
+      or (.budgets | any(.[]; (type == "number" | not) or . < 0 or . != floor)))
+    then "budgets: must be an object of whole numbers, 0 or more, such as {\"charter_words\": 1715}. Fix: make each value a whole number" else empty end),
+  (if has("guards") then
+     (if (.guards | obj(["mode","overrides"]) | not)
+      then "guards: must be an object with only mode and overrides. Fix: remove other keys"
+      elif (.guards | has("mode")) and (.guards.mode | IN("block","log") | not)
+      then "guards.mode: must be \"block\" or \"log\". Fix: set it to one of them"
+      elif (.guards | has("overrides")) and (
+             (.guards.overrides | type) != "object"
+             or (.guards.overrides | any(.[]; . != "log")))
+      then "guards.overrides: must map a guard name to \"log\". Fix: write it as {\"guard-name\": \"log\"}"
+      else empty end)
+   else empty end)
+'
+
+wl_conf_problems() {
+  local file="${1:-.}/wheelhouse.json" out
+  [ -f "$file" ] || return 0
+  jq -e 'type == "object"' "$file" >/dev/null 2>&1 || { echo "wheelhouse.json: not a JSON object. Fix: make it a JSON object such as {\"memory\": \"ynm\"}"; return 1; }
+  out=$(jq -r "$WL_JQ_CONF_PROBLEMS" "$file") || { echo "wheelhouse.json: could not be checked"; return 1; }
+  [ -z "$out" ] && return 0
+  printf '%s\n' "$out"; return 1
 }
 
 wl_is_trial_seat() { [ -f "$1/harnesses/$2/AGENTS.md" ]; }

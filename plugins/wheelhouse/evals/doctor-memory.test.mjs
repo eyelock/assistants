@@ -215,6 +215,26 @@ test("a bad wheelhouse.json is an error from the doctor", () => {
   }
 });
 
+test("the doctor errors on a bad or unknown wheelhouse.json key, with the fix, and passes a good file", () => {
+  const w = wheelhouse({ memory: "ynm", ynm: true });
+  try {
+    const file = join(w.wh, "wheelhouse.json");
+    writeFileSync(file, JSON.stringify({ memory: "ynm", protected_branches: ["main"], guards: { mode: "log" } }));
+    assert.equal(w.check().by("wheelhouse.json keys").ok, true);
+    writeFileSync(file, JSON.stringify({ memory: "ynm", colour: 1, guards: { mode: "warn" } }));
+    const r = w.check();
+    const c = r.by("wheelhouse.json keys");
+    assert.equal(c.ok, false);
+    assert.equal(c.level, "error");
+    assert.match(c.detail, /colour: unknown key/);
+    assert.match(c.detail, /guards\.mode: must be "block" or "log"/);
+    assert.ok(c.fix);
+    assert.equal(r.json.ok, false);
+  } finally {
+    w.done();
+  }
+});
+
 test("ynm memory, by key or by default, runs ynm's checks and not Beads' memory checks", () => {
   for (const memory of [undefined, "ynm"]) {
     const w = wheelhouse({ memory, ynm: true });

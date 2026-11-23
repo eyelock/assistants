@@ -306,7 +306,9 @@ the files it finds, and would commit the human's.
    piece of work (assistants #241).
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
-   it is run. Without the file, or without the `memory` key, the scripts assume ynm.
+   it is run. Without the file, or without the `memory` key, the scripts assume ynm. The file may also
+   hold `shared_checkouts`, `protected_branches`, `sanctioned_force`, `budgets` and `guards`, read by
+   the plugin's guards and sensors and checked by the doctor; each is optional and has a default.
 7. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
    `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
    "Handing over work" section says that a build bead's `external_ref` holds its tracker item.

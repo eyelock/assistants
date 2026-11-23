@@ -56,6 +56,17 @@ if ! backend=$(bash "$mc" backend --dir "$dir"); then
   backend=""
 fi
 
+# wheelhouse.json's other keys: shared_checkouts, protected_branches, sanctioned_force, budgets and guards
+# are read by the plugin's guards and sensors, so a bad or unknown key is an error with the fix on its line.
+if [ -f "$dir/wheelhouse.json" ]; then
+  if problems=$(wl_conf_problems "$dir"); then
+    add "wheelhouse.json keys" true info "every key is known and well formed"
+  else
+    add "wheelhouse.json keys" false error "$(tr '\n' ';' <<<"$problems" | sed 's/;$//; s/;/; /g')" \
+      "$(sed -n 's/.*Fix: //p' <<<"$problems" | head -1), in $dir/wheelhouse.json"
+  fi
+fi
+
 # The plugin's scripts run where ynh installed them, so a Wheelhouse keeps no copy. The ones every seat
 # runs are memory.sh (the wake, the inbox and the skills read and write memory through it) and inbox.sh; the
 # library every script sources is the one this script already loaded. A seat without the work-graph skill has none, so these are errors.
