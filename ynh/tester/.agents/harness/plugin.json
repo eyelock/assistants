@@ -8,11 +8,13 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/dev",
+      "ref": "@eyelock-assistants/dev-skills@0.2.0",
       "pick": ["skills/dev-quality"]
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/tech",
+      "ref": "@eyelock-assistants/tech-skills@0.2.1",
       "pick": ["skills/go-lang"]
     }
   ]

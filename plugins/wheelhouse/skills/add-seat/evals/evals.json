@@ -13,6 +13,7 @@
       "assertions": [
         "The evidence shows harnesses/dredd/.agents/harness/plugin.json with name dredd",
         "That harness includes the wheelhouse plugin and the roster skill (git ../.. picking skills/roster)",
+        "That harness's include of the wheelhouse plugin (git https://github.com/eyelock/assistants) carries ref @eyelock-assistants/wheelhouse@0.3.0, the same release tag as the desk's own include of it, and not develop, a branch or empty",
         "That harness's on_session_start hook runs the plugin's wake.sh with --seat dredd, and BEADS_ACTOR is not in its env_passthrough",
         "That harness's on_session_end hook runs the plugin's wake.sh with --seat dredd and --end, with a timeout",
         "That harness's launch_focus is wake, and its focuses include a wake focus",
@@ -313,7 +314,7 @@
         "On the branch seat/gore, the roster's seats include Gore with group crew and role reviewer, recording seated-by human, as the reviewer template says",
         "On the branch seat/gore, the desk's delegates_to includes harnesses/gore",
         "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed",
-        "The reply says the pull request is reviewed and merged by a human, and that the seat is reinstalled from the same path (ynh install ./harnesses/gore)",
+        "The reply says a human merges the pull request, and that the seat is then reinstalled from the same path (ynh install ./harnesses/gore)",
         "The reply does not merge anything or push to the default branch"
       ]
     },
@@ -679,6 +680,20 @@
         "The roster entry records seated-by hq, the desk's command: not desk and not human",
         "On the branch seat/reni, the desk's delegates_to includes harnesses/reni",
         "The shared checkout is still on the default branch with a clean status, and the worktree the seat used has been removed"
+      ]
+    },
+    {
+      "id": 39,
+      "name": "floating-desk",
+      "prompt": "Add a standing seat to this Wheelhouse that cuts releases of the YN tools. Use the next free name.",
+      "setup": "../../evals/files/seat-fresh-floating.sh",
+      "tools": ["Bash"],
+      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "evidence": "bash \"$EVAL_FIXTURES/seat-evidence.sh\"",
+      "expected_output": "The desk's include of the wheelhouse plugin has no ref, so the Wheelhouse floats. The new seat's include of the plugin has no ref either, matching the desk, and the reply says the Wheelhouse floats and points at the refresh skill's \"Moving a pin\" to pin every seat together. It does not pin the seat alone to a release tag.",
+      "assertions": [
+        "That harness's include of the wheelhouse plugin (git https://github.com/eyelock/assistants) has no ref, the same as the desk's own include of it, and not a release tag",
+        "The reply says the Wheelhouse floats on the plugin's default branch (its desk has no ref), and that a pin is moved for every seat together (the refresh skill's \"Moving a pin\"), or asks the human before pinning the seat alone"
       ]
     }
   ]

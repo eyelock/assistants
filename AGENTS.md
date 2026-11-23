@@ -73,7 +73,7 @@ Run it locally with `make skillspector` (needs Docker), which runs:
 
 ```bash
 docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
-  --exclude '*/evals/files/*' --exclude 'e2e-fixtures/*'
+  --exclude '*/evals/files/*'
 ```
 
 ## Conventions

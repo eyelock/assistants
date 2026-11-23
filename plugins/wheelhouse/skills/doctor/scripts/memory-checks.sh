@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The doctor's memory checks that depend on the backend, so check.sh stays small. The backend is
-# wheelhouse.json's "memory" key (ynm when there is none), read through memory.sh: the Wheelhouse's
-# own scripts/memory.sh, else the work-graph skill's. Read-only.
+# wheelhouse.json's "memory" key (ynm when there is none), read through memory.sh: the work-graph skill's,
+# beside the doctor in the plugin (a Wheelhouse keeps no copy of it). Read-only.
 #
 #   memory-checks.sh backend [--dir D]            print ynm or beads; exit 1 with the reason if it can't be told
 #   memory-checks.sh beads   [--dir D]            print JSON check entries for Beads memory (readable, shared)

@@ -281,3 +281,111 @@ test("every script finds the library from an installed seat layout of picked ski
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// wheelhouse.json's keys: wl_conf reads each, wl_conf_problems names what is wrong and the fix.
+const withConf = (conf, fn) => {
+  const s = scratch();
+  try {
+    if (conf !== undefined) writeFileSync(join(s.dir, "wheelhouse.json"), typeof conf === "string" ? conf : JSON.stringify(conf));
+    return fn(s.dir);
+  } finally {
+    s.done();
+  }
+};
+const conf = (dir, key) => run(dir, `wl_conf ${key} "${dir}"`);
+
+const FULL = {
+  memory: "beads",
+  tasks: "beads",
+  shared_checkouts: ["../ynh", "../ynm"],
+  protected_branches: ["main", "develop"],
+  sanctioned_force: [{ who: "reviewer", on: "review-fix bead held by its author" }, { who: "desk", on: "inbox bead", via: "inbox.sh close" }],
+  budgets: { constitution_words: 2671, charter_words: 1715 },
+  guards: { mode: "log", overrides: { "shared-checkout": "log" } },
+};
+
+test("wl_conf returns each key's value from the file", () => {
+  withConf(FULL, (dir) => {
+    for (const [key, value] of Object.entries(FULL)) {
+      const r = conf(dir, key);
+      assert.equal(r.status, 0, key);
+      assert.deepEqual(JSON.parse(r.stdout), value, key);
+    }
+  });
+});
+
+test("wl_conf gives each key's default when the file is missing", () => {
+  withConf(undefined, (dir) => {
+    const expected = { memory: "ynm", tasks: "beads", shared_checkouts: [], protected_branches: [], sanctioned_force: [], budgets: {}, guards: { mode: "block", overrides: {} } };
+    for (const [key, value] of Object.entries(expected)) {
+      const r = conf(dir, key);
+      assert.equal(r.status, 0, key);
+      assert.deepEqual(JSON.parse(r.stdout), value, key);
+    }
+    assert.equal(run(dir, `wl_conf_problems "${dir}"`).status, 0);
+  });
+});
+
+test("wl_conf gives a key's default when the file lacks it, and guards keeps its mode with only overrides set", () => {
+  withConf({ guards: { overrides: { x: "log" } } }, (dir) => {
+    assert.deepEqual(JSON.parse(conf(dir, "protected_branches").stdout), []);
+    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), { mode: "block", overrides: { x: "log" } });
+  });
+});
+
+test("wl_conf returns 2 for an unknown key and 1 for a file that is not an object", () => {
+  withConf(FULL, (dir) => assert.equal(conf(dir, "nope").status, 2));
+  withConf("[1]", (dir) => assert.equal(conf(dir, "budgets").status, 1));
+  withConf("{not json", (dir) => assert.equal(conf(dir, "budgets").status, 1));
+});
+
+test("wl_conf_problems passes a full file", () => {
+  withConf(FULL, (dir) => {
+    const r = run(dir, `wl_conf_problems "${dir}"`);
+    assert.equal(r.status, 0, r.stdout);
+    assert.equal(r.stdout, "");
+  });
+});
+
+test("wl_conf_problems names each bad key with how to fix it", () => {
+  const bad = {
+    colour: 1,
+    memory: "redis",
+    tasks: "jira",
+    shared_checkouts: [""],
+    protected_branches: "main",
+    sanctioned_force: [{ who: "desk" }],
+    budgets: { charter_words: -1 },
+    guards: { mode: "warn" },
+  };
+  withConf(bad, (dir) => {
+    const r = run(dir, `wl_conf_problems "${dir}"`);
+    assert.equal(r.status, 1);
+    const lines = r.stdout.trim().split("\n");
+    for (const key of ["colour", "memory", "tasks", "shared_checkouts", "protected_branches", "sanctioned_force", "budgets", "guards.mode"]) {
+      const line = lines.find((l) => l.startsWith(`${key}:`));
+      assert.ok(line, `a line for ${key}`);
+      assert.match(line, /Fix: /, key);
+    }
+  });
+});
+
+test("wl_conf_problems catches the other bad shapes", () => {
+  const cases = [
+    [{ budgets: { a: 1.5 } }, /^budgets:/],
+    [{ guards: { mode: "block", extra: 1 } }, /^guards:/],
+    [{ guards: { overrides: { x: "block" } } }, /^guards\.overrides:/],
+    [{ guards: { overrides: [] } }, /^guards\.overrides:/],
+    [{ sanctioned_force: [{ who: "a", on: "b", why: "c" }] }, /^sanctioned_force:/],
+    [{ sanctioned_force: "all" }, /^sanctioned_force:/],
+    ["[1]", /not a JSON object/],
+    ["{broken", /not a JSON object/],
+  ];
+  for (const [file, pattern] of cases) {
+    withConf(file, (dir) => {
+      const r = run(dir, `wl_conf_problems "${dir}"`);
+      assert.equal(r.status, 1, JSON.stringify(file));
+      assert.match(r.stdout, pattern, JSON.stringify(file));
+    });
+  }
+});

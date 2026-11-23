@@ -84,7 +84,7 @@
 // Output: a JSON summary on stdout; progress on stderr.
 // Exit codes: 0 success, 1 bad args, 2 file not found, 3 tool error.
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   accessSync,
   chmodSync,
@@ -407,6 +407,26 @@ export function runTempEnv(work) {
   return { tmp, env: { TMPDIR: tmp, CLAUDE_CODE_TMPDIR: tmp } };
 }
 
+// Claude Code's OS sandbox keeps the launch directory's own .git/worktrees read-only, so a model
+// run in a repository cannot `git worktree add` there (a Wheelhouse skill tells a seat to work in
+// a worktree, and every such case failed on it). A repository whose git directory lives elsewhere
+// in the run's directory, with a .git file pointing to it, has no .git/worktrees under the launch
+// directory, and the sandbox lets it write there like any other file of the run.
+export function relocateGitDir(work) {
+  const dotGit = join(work, ".git");
+  if (!existsSync(dotGit) || !statSync(dotGit).isDirectory()) return false;
+  const gitDir = join(work, ".eval", "gitdir");
+  mkdirSync(dirname(gitDir), { recursive: true });
+  const res = spawnSync("git", ["init", "-q", "--separate-git-dir", gitDir], {
+    cwd: work,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+  });
+  if (res.status !== 0)
+    fail(`could not move the git directory out of ${work}: ${res.stderr.trim()}`, 3);
+  return true;
+}
+
 // Sets up a case's shell sandbox, if it asks for one: stub commands on PATH
 // that only record their calls, git and gh cut off from real config and
 // hosts, then the case's setup script. Returns the environment for the run.
@@ -459,6 +479,7 @@ async function prepareSandbox(c, work, ctx, arm) {
     if (res.code !== 0) {
       fail(`case ${c.id}: setup failed (exit ${res.code}): ${res.stderr.trim().slice(0, 300)}`, 3);
     }
+    relocateGitDir(work);
   }
   return { env, stubLog, wantsShell, used: wantsShell || stubs.length > 0 || Boolean(setupScript) };
 }

@@ -285,8 +285,8 @@ labelled `housekeeping`; do not close a tracker item from it.
 ## Needing a human
 
 Some work only a human can do: a merge, a decision, a credential. Never wait for it silently, and
-never do it yourself. Ask through the humans' inbox, with the inbox script at the Wheelhouse root
-(`<skills>/work-graph/scripts/inbox.sh`, a copy of this skill's), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
+never do it yourself. Ask through the humans' inbox, with this skill's inbox script
+(`<skills>/work-graph/scripts/inbox.sh`, run where ynh installed it; a Wheelhouse keeps no copy), which takes every name from the roster (a seat on trial, whose `harnesses/<command>/AGENTS.md` is on the checked-out branch with no roster entry yet, may ask as `--from` too):
 
 1. **Who:** a named person only when you know who: they asked for the work, or they have named
    themselves at the desk this session. Otherwise the default human (`--to default`, the
@@ -304,7 +304,7 @@ never do it yourself. Ask through the humans' inbox, with the inbox script at th
 
    It is created as you (`--from`), so the human sees who asked. A merge or review needs `--url`,
    or the script refuses it. Ask for a merge only once the pull request has left draft: with `gh`
-   available the script refuses a draft and says why (without `gh` it warns and carries on). Find the pull request's URL, or ask for it. Don't invent one. Like
+   available the script refuses a draft, merged or closed pull request and says why (a merged one needs no merge: close its work bead) (without `gh` it warns and carries on). Find the pull request's URL, or ask for it. Don't invent one. Like
    every task, it carries the `repo:` label of the one repository it touches: `--repo`, or, left
    out, the `repo:` label of the bead it blocks. A merge or review is refused without one; a
    decision or credential that touches no repository goes without. A merge gets its own small
@@ -392,8 +392,8 @@ An ask is a bead labelled `ask` plus one kind:
    exits 3 saying what failed when it couldn't read them, never an empty list. Do this on every vendor:
    a nudge may not reach you.
 
-The desk's wake lists every open ask with its age, and the patrol flags one left unanswered past a
-threshold, once. Asking a human is different: that is the inbox, above.
+The desk's wake lists every open ask with its age, and, once [assistants #263](https://github.com/eyelock/assistants/pull/263) merges, the patrol will flag one left
+unanswered past a threshold, once (planned: `patrol.sh` has no ask kind yet). Asking a human is different: that is the inbox, above.
 
 ## Closing
 

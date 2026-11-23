@@ -57,7 +57,7 @@
 # Output: JSON on stdout by default, {seat, group, backend, firstWake, identity, mandate,
 # handoff, handoffId, facts (the Wheelhouse's shared facts, at most 10), kudos, closeNotes [{bead, note}], record, inProgress, assigned,
 # retro (the seat's own beads labelled retro, in progress and ready, kept apart from the two before it),
-# unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), sync {memory, work: synced|skipped|failed}, session {state: held|forced|unknown|unchecked, bead, ...; see session.sh}, inbox (the desk's
+# unassignedReady (titles, most urgent first, retro beads skipped), workRead (false when bd was too slow to read), memoryRead (false when the seat's own memory could not be read; firstWake is then false too), sync {memory, work: synced|skipped|failed}, session {state: held|forced|unknown|unchecked, bead, ...; see session.sh}, inbox (the desk's
 # only: inbox.sh show's JSON, with errors when bd or ynm failed, or {error};
 # null for other seats), asks (the desk's only: ask.sh show --all's JSON, with errors when a bd
 # read failed, or {error}; null for other seats), wakeFirst (the desk's only: the roster's ci-watcher and releaser seats as [{name, command, role, for}],
@@ -221,15 +221,17 @@ for f in "$here/memory.sh" "$here/../../work-graph/scripts/memory.sh"; do
   [ -f "$f" ] && { memorysh="$f"; break; }
 done
 [ -n "$memorysh" ] || { echo "no memory.sh in the work-graph skill beside the wake skill: the seat needs skills/work-graph in its pick" >&2; exit 3; }
-# A recall that fails reads as nothing; memory.sh says why on stderr, which the wake does not show.
-# Bounded: a recall that gives up reads the same.
+# A recall that fails reads as nothing, and exits 1 so the caller can tell it from an empty store;
+# memory.sh says why on stderr, which the wake does not show. Bounded: a recall that gives up reads the same.
 recall() {
   local out
-  out=$(limited "$ynm_secs" bash "$memorysh" recall --dir . "$@" 2>/dev/null) && out=$(jq -c . <<<"$out" 2>/dev/null) && [ -n "$out" ] && echo "$out" || echo '[]'
+  out=$(limited "$ynm_secs" bash "$memorysh" recall --dir . "$@" 2>/dev/null) && out=$(jq -c . <<<"$out" 2>/dev/null) && [ -n "$out" ] && echo "$out" || { echo '[]'; return 1; }
 }
 # One recall for the whole seat (each memory.sh recall asks the store afresh, about 3s on ynm),
 # split by kind here. Newest first, so each slice keeps the latest.
-mine=$(recall --seat "$seat" --limit 200)
+# memoryread is false when that recall failed: the seat's identity, notes and Kudos are missing, not empty.
+memoryread=true
+mine=$(recall --seat "$seat" --limit 200) || memoryread=false
 of() { jq -c --arg k "$1" '[.[] | select(.kind == $k)]' <<<"$mine"; }
 identity=$(of identity | jq -c '[.[] | .text][0] // null')
 notes=$(of handoff | jq -c '.[:1]')
@@ -355,9 +357,9 @@ fi
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
-  --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" \
+  --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" --argjson memoryread "$memoryread" \
   --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson asks "$asks" --argjson wakefirst "$wakefirst" '{
-    seat: $seat, group: $group, backend: $backend, firstWake: ($identity == null), identity: $identity,
+    seat: $seat, group: $group, backend: $backend, firstWake: ($memoryread and $identity == null), memoryRead: $memoryread, identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
     sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst

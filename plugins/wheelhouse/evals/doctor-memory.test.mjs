@@ -28,7 +28,7 @@ const fs = require("node:fs");
 const d = process.env.STUB_DIR;
 const read = (f, dflt) => (fs.existsSync(d + "/" + f) ? fs.readFileSync(d + "/" + f, "utf8") : dflt);
 const a = process.argv.slice(2).filter((x) => x !== "--readonly");
-if (a[0] === "version") console.log("bd version 1.0.0 (stub)");
+if (a[0] === "version") console.log(process.env.STUB_BD_VERSION || "bd version 1.3.2 (stub)");
 else if (a[0] === "memories") {
   if (process.env.STUB_BAD_MEMORIES) { console.error("dolt is down"); process.exit(1); }
   console.log(read("memories.json", "{}"));
@@ -263,6 +263,26 @@ test("a bad wheelhouse.json is an error from the doctor", () => {
   }
 });
 
+test("the doctor errors on a bad or unknown wheelhouse.json key, with the fix, and passes a good file", () => {
+  const w = wheelhouse({ memory: "ynm", ynm: true });
+  try {
+    const file = join(w.wh, "wheelhouse.json");
+    writeFileSync(file, JSON.stringify({ memory: "ynm", protected_branches: ["main"], guards: { mode: "log" } }));
+    assert.equal(w.check().by("wheelhouse.json keys").ok, true);
+    writeFileSync(file, JSON.stringify({ memory: "ynm", colour: 1, guards: { mode: "warn" } }));
+    const r = w.check();
+    const c = r.by("wheelhouse.json keys");
+    assert.equal(c.ok, false);
+    assert.equal(c.level, "error");
+    assert.match(c.detail, /colour: unknown key/);
+    assert.match(c.detail, /guards\.mode: must be "block" or "log"/);
+    assert.ok(c.fix);
+    assert.equal(r.json.ok, false);
+  } finally {
+    w.done();
+  }
+});
+
 test("ynm memory, by key or by default, runs ynm's checks and not Beads' memory checks", () => {
   for (const memory of [undefined, "ynm"]) {
     const w = wheelhouse({ memory, ynm: true });
@@ -369,6 +389,26 @@ test("a seat that picks skills but not work-graph is warned, the desk and a seat
     // A seat with no wheelhouse include has no wheelhouse scripts, so it is not checked.
     harness("wick", [{ git: "../..", path: "plugins/gitflow", pick: ["skills/branching"] }]);
     assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
+  } finally {
+    w.done();
+  }
+});
+
+test("the doctor fails a bd older than the minimum, passes the minimum and later, and warns on a version it cannot read", () => {
+  const w = wheelhouse({ memory: "beads" });
+  try {
+    const old = w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.2 (stub)" }).by("beads version");
+    assert.equal(old.ok, false);
+    assert.equal(old.level, "error");
+    assert.match(old.detail, /1\.2\.2 is older than 1\.3\.0/);
+    assert.match(old.fix, /brew upgrade beads/);
+    for (const v of ["bd version 1.3.0 (stub)", "bd version 1.3.2 (Homebrew)", "bd version 1.4.0-rc.1", "bd version 2.0.0", "bd version 1.10.0"]) {
+      assert.equal(w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: v }).by("beads version").ok, true, v);
+    }
+    assert.equal(w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.10" }).by("beads version").ok, false);
+    const unreadable = w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "dev build" }).by("beads version");
+    assert.equal(unreadable.ok, false);
+    assert.equal(unreadable.level, "warn");
   } finally {
     w.done();
   }
