@@ -88,3 +88,16 @@ Lead with whether anything needs doing. Then, in the order the human acts: the `
 (they come first, since a restart before the trust starts the seat without its new folder); the
 seats to restart; the seats not installed or born; the doctor's failures. Name nothing the report
 doesn't list, and never run `ynh trust accept`.
+
+## Moving a pin
+
+A Wheelhouse pins the wheelhouse plugin, and so each seat's include of it, to a release tag in
+`ref` (`@eyelock-assistants/wheelhouse@<version>`), so `ynh update` fetches that release and
+nothing newer. To move to a newer release, a human reviews the plugin's CHANGELOG "Upgrading"
+notes and agrees the new version; then one pull request changes the `ref` in the desk's manifest
+and in every seat's manifest to it together, so no seat runs a different release from the desk.
+After the merge, run refresh with `--update` (ask first, as above): it installs the changed
+manifests and updates each seat's cached include, and a changed `ref` is a changed include, so
+the seats may need `ynh trust accept local/<seat>`, which refresh prints and never runs. List
+the tags with `git ls-remote --tags https://github.com/eyelock/assistants '@eyelock-assistants/wheelhouse@*'`.
+Never move a pin to `develop` to pick up a fix: ask for a release.

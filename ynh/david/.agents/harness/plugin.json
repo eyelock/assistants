@@ -8,6 +8,7 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/dev",
+      "ref": "@eyelock-assistants/dev-skills@0.2.0",
       "pick": [
         "skills/dev-project",
         "skills/dev-quality",
@@ -21,16 +22,19 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/tech",
+      "ref": "@eyelock-assistants/tech-skills@0.2.1",
       "pick": ["skills/go-lang"]
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/infra",
+      "ref": "@eyelock-assistants/infra-skills@0.2.0",
       "pick": ["skills/gh-os-repo", "skills/terraform-backend-aws"]
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/pause",
+      "ref": "@eyelock-assistants/pause-skills@0.1.1",
       "pick": ["skills/help-me-answer", "skills/take-a-moment"]
     }
   ]
