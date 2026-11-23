@@ -1,5 +1,12 @@
 # @eyelock-assistants/termq-dev
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [[`ada5bd2`](https://github.com/eyelock/assistants/commit/ada5bd26cd8176dd22b9a70730f0ed9b61b509fa)]:
+  - @eyelock-assistants/gitflow@0.3.1
+
 ## 0.3.1
 
 ### Patch Changes
