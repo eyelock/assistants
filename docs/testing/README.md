@@ -8,7 +8,7 @@ evals run a model, so they cost money and run only when you start them.
 | `pnpm test` | every skill has evals, harnesses and the triage list agree, every docs link works | CI and locally |
 | `pnpm lint` | code is formatted and linted (Biome), and skills and harnesses are well formed (`ynd lint`, `ynd validate`) | CI and locally |
 | `pnpm lint:spell` | no misspelling in any Markdown file | CI and locally |
-| `pnpm sync-manifests:check` | the marketplace indexes and plugin versions agree | CI and locally |
+| `pnpm sync-manifests:check` | the four marketplace indexes agree with the plugin versions and each lists every package it should | CI and locally |
 | `changeset status` | a pull request that changes a package carries a changeset | CI |
 | actionlint | the workflow files are well formed | CI |
 | shellcheck, whole repository | every shell script passes shellcheck at warning level and up | CI |
