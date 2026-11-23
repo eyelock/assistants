@@ -1,0 +1,7 @@
+# Terraform: state is local and never committed (it holds the live settings, and is for plan only).
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+crash.*.log
