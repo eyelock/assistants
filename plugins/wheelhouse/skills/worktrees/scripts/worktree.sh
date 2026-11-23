@@ -2,7 +2,8 @@
 # worktree.sh: where a seat's git worktrees live, decided by the Wheelhouse, never invented by the seat.
 #
 #   add     make a worktree for a branch at the policy path; print that absolute path and nothing
-#           else; note "Worktree: <path>" on the bead as the acting seat.
+#           else; append the line "Worktree: <path>" to the bead's notes as the acting seat (list finds the bead
+#           by that line, with one bd call).
 #   list    every worktree of every repository the Wheelhouse reaches, with seat, repo, branch,
 #           bead and path, and whether it is stale (bead closed, or branch merged).
 #   remove  remove one worktree: its own seat's, or any seat's whose bead is closed. Never --force,
@@ -127,22 +128,17 @@ valid_branch() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] && [[ "$1" != *..* 
 bd_note() { # bead path seat
   [ -n "$1" ] || return 0
   need bd
-  limited "${WL_BD_SECS:-20}" bd comments add "$1" "Worktree: $2" --author "$3" >/dev/null 2>&1 \
+  limited "${WL_BD_SECS:-20}" bd update "$1" --append-notes "Worktree: $2" --actor "$3" >/dev/null 2>&1 \
     || echo "worktree.sh: could not note the worktree on $1; add 'Worktree: $2' by hand" >&2
 }
 
-# bead_of PATH: the bead whose "Worktree: PATH" note names it, else empty. BEAD_CACHE holds every
-# bead id once per run.
+# bead_of PATH: the bead whose notes hold the line "Worktree: PATH", else empty. One bd call, whatever
+# the size of the graph: bd filters the notes itself, and jq keeps only an exact line, so a path that
+# is a prefix of another (or quoted in prose) does not match.
 bead_of() {
-  local id
-  [ -n "${BEAD_IDS+x}" ] || { command -v bd >/dev/null 2>&1 \
-    && BEAD_IDS=$(limited "${WL_BD_SECS:-20}" bd list --all --limit 0 --json 2>/dev/null | bd_data | jq -r '.[]?.id' 2>/dev/null) || BEAD_IDS=; }
-  for id in $BEAD_IDS; do
-    if limited "${WL_BD_SECS:-20}" bd comments "$id" --json 2>/dev/null | bd_data \
-         | jq -e --arg p "Worktree: $1" '[.. | strings | select(startswith($p))] | length > 0' >/dev/null 2>&1; then
-      printf '%s\n' "$id"; return 0
-    fi
-  done
+  command -v bd >/dev/null 2>&1 || return 0
+  limited "${WL_BD_SECS:-20}" bd list --all --limit 0 --notes-contains "Worktree: $1" --json 2>/dev/null | bd_data \
+    | jq -r --arg l "Worktree: $1" '[.[]? | select((.notes // "") | split("\n") | index($l)) | .id][0] // empty' 2>/dev/null
   return 0
 }
 

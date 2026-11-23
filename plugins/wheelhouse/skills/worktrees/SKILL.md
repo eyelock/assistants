@@ -25,7 +25,7 @@ cd "$path"
 - An existing branch is checked out. A new branch must start with `<you>/` (a seat creates only its
   own prefixed branches) and is cut from `--base`, default `origin/develop`, else `origin/main`:
   fetch first.
-- `--bead` writes the note `Worktree: <path>` on the bead as you, which is how `list` finds the bead
+- `--bead` appends the line `Worktree: <path>` to the bead's notes as you, which is how `list` finds the bead
   and how the dispatcher knows the worktree is finished when the bead closes. Always give it.
 
 ## Find worktrees

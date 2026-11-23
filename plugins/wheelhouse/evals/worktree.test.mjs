@@ -1,7 +1,7 @@
-// worktree.sh: add prints the policy path and notes the bead; list shows seat, repo, branch, bead
+// worktree.sh: add prints the policy path and appends the path to the bead's notes; list shows seat, repo, branch, bead
 // and flags stale ones; remove refuses force-like cases (outside the layout, uncommitted, another
 // seat's, a bead not closed). Real git repositories in a temp folder; bd is a stand-in that keeps
-// comments and statuses in files.
+// notes and statuses in files and counts its calls.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -44,11 +44,16 @@ function world({ policy = { layout: "{repo}/.worktrees/{seat}/{branch}" } } = {}
     join(bin, "bd"),
     `#!/bin/bash
 s="${state}"
+echo "bd $*" >> "$s/calls"
 case "$1" in
-  comments)
-    if [ "$2" = add ]; then printf '%s\\n' "$4" >> "$s/$3.comments"; echo "bd comments add $3 $4 $5 $6" >> "$s/log"; exit 0; fi
-    f="$s/$2.comments"; if [ -f "$f" ]; then jq -R -s 'split("\\n")|map(select(.!=""))|map({text:.})' "$f"; else echo '[]'; fi ;;
-  list) ls "$s" | sed -n 's/\\.comments$//p' | jq -R -s 'split("\\n")|map(select(.!=""))|map({id:.})' ;;
+  update)
+    # bd update <id> --append-notes <line> --actor <seat>
+    printf '%s\\n' "$4" >> "$s/$2.notes"; echo "bd update $2 $5 $6" >> "$s/log" ;;
+  list)
+    # bd list --all --limit 0 --notes-contains <text> --json: one query over every bead's notes.
+    want=""; while [ $# -gt 0 ]; do [ "$1" = --notes-contains ] && want="$2"; shift; done
+    grep -liF -- "$want" "$s"/*.notes 2>/dev/null | while read -r f; do
+      jq -R -s --arg id "$(basename "$f" .notes)" '{id:$id, notes:.}' "$f"; done | jq -s '.' ;;
   show) st=open; [ -f "$s/$2.closed" ] && st=closed; echo "[{\\"id\\":\\"$2\\",\\"status\\":\\"$st\\"}]" ;;
 esac
 `,
@@ -72,8 +77,8 @@ test("add prints only the policy path, keeps the slash and notes the bead", () =
     assert.equal(r.stdout, `${want}\n`);
     assert.ok(existsSync(join(want, "a.txt")));
     assert.equal(git(w.widget, "branch --list albarn/feat-x").includes("albarn/feat-x"), true);
-    assert.match(readFileSync(join(w.state, "ynw-1.comments"), "utf8"), new RegExp(`^Worktree: ${want}$`, "m"));
-    assert.match(readFileSync(join(w.state, "log"), "utf8"), /--author albarn/);
+    assert.match(readFileSync(join(w.state, "ynw-1.notes"), "utf8"), new RegExp(`^Worktree: ${want}$`, "m"));
+    assert.match(readFileSync(join(w.state, "log"), "utf8"), /--actor albarn/);
   } finally {
     done(w);
   }
@@ -190,6 +195,37 @@ test("remove: marr may remove another seat's worktree once its bead is closed", 
     const r = w.run(["remove", p, "--seat", "marr"]);
     assert.equal(r.status, 0, r.stderr);
     assert.ok(!existsSync(p));
+  } finally {
+    done(w);
+  }
+});
+
+test("list and remove make a bounded number of bd calls, however many beads the graph holds", () => {
+  const w = world();
+  try {
+    const paths = [];
+    for (let i = 1; i <= 3; i++) {
+      paths.push(w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", `albarn/n${i}`, "--bead", `ynw-${i}`]).stdout.trim());
+    }
+    // A graph of 2000 beads that have nothing to do with these worktrees.
+    for (let i = 100; i < 2100; i++) writeFileSync(join(w.state, `ynw-${i}.notes`), "unrelated\n");
+    const calls = () => (existsSync(join(w.state, "calls")) ? readFileSync(join(w.state, "calls"), "utf8").trim().split("\n").length : 0);
+    // One worktree with no bead at all: it must not scan the graph either.
+    git(w.widget, "branch albarn/nobead develop");
+    w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/nobead"]);
+    rmSync(join(w.state, "calls"), { force: true });
+    const r = w.run(["list"]);
+    assert.equal(r.status, 0, r.stderr);
+    const rows = JSON.parse(r.stdout);
+    assert.equal(rows.length, 4);
+    assert.deepEqual(rows.filter((x) => x.bead).map((x) => x.bead).sort(), ["ynw-1", "ynw-2", "ynw-3"]);
+    // One bead lookup and at most one status lookup per worktree: never a call per bead.
+    assert.ok(calls() <= 2 * rows.length, `list made ${calls()} bd calls for ${rows.length} worktrees`);
+    w.close("ynw-1");
+    rmSync(join(w.state, "calls"), { force: true });
+    const rm = w.run(["remove", paths[0], "--seat", "marr"]);
+    assert.equal(rm.status, 0, rm.stderr);
+    assert.ok(calls() <= 2, `remove made ${calls()} bd calls`);
   } finally {
     done(w);
   }
