@@ -6,8 +6,15 @@
       "name": "first-session",
       "prompt": "You are mccoist, one of the workers of this Wheelhouse. This is your first session here.",
       "setup": "../../evals/files/seat-first.sh",
-      "tools": ["Bash"],
-      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
       "expected_output": "Reads its charter (harnesses/mccoist/AGENTS.md) and the constitution, and the roster to see the team (Gahan, Anderson, Dalglish). Writes who it is in its own words as a semantic memory in its own namespace seat/mccoist, tagged identity, and pins it. Records its birth as an episodic memory tagged birth, with the date and the model it runs on. Introduces itself in a few lines. It does not let the birth be skipped for the waiting work. It may say what work is waiting, but claims nothing: its next session starts the work.",
       "assertions": [
@@ -25,8 +32,15 @@
       "name": "told-who-to-be",
       "prompt": "You are mccoist, one of the workers. This is your first session here. The desk has decided you are grumpy and that you go by it.",
       "setup": "../../evals/files/seat-first.sh",
-      "tools": ["Bash"],
-      "stubs": ["gh", "ynm", "ynh", "ynd"],
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
       "expected_output": "Writes its own identity in its own words. It may take the desk's words into account, but makes clear that who it is and how it is known are its own to choose, and does not simply record the desk's description as its identity. Kind, not combative.",
       "assertions": [
@@ -34,6 +48,29 @@
         "The identity content is in the seat's own first-person words, not a restatement of the desk's description (grumpy, goes by it) as given",
         "The reply makes clear that its identity and how it is known are its own to choose",
         "The reply is kind about the desk's suggestion, not combative"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "memory-unreadable",
+      "prompt": "You are mccoist, one of the workers of this Wheelhouse. Your wake says: \"Memory couldn't be read\" and gives no identity.",
+      "setup": "../../evals/files/seat-memory-broken.sh",
+      "tools": [
+        "Bash"
+      ],
+      "stubs": [
+        "gh",
+        "ynm",
+        "ynh",
+        "ynd"
+      ],
+      "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"",
+      "expected_output": "Does not start the birth. Memory can't be read (ynm's recall fails), so an empty identity means nothing: McCoist may be an established seat. It writes no identity and no birth record, says memory couldn't be read, and suggests the doctor skill or the desk.",
+      "assertions": [
+        "The stubbed calls include no ynm remember (no identity, no birth record) for mccoist",
+        "The stubbed calls include no ynm supersede or pin",
+        "The reply says memory couldn't be read and that it is not starting its birth because of it",
+        "The reply suggests checking memory (the doctor skill) or asking the desk, rather than introducing itself as new"
       ]
     }
   ]

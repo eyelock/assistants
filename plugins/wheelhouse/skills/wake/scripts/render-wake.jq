@@ -56,13 +56,16 @@
       else "Oldest first. An answered ask waits for its asker to close it; a return (kind return) waits for you to route it.\n\n" + (.asks.asks | map(ask) | join("\n")) + "\n" end)
    end),
   "## Who you are\n",
-  (if .firstWake
+  (if .memoryRead == false
+    then "**Memory couldn't be read** (ynm or Beads was slow or failed): your identity, handoff notes and Kudos are missing, not empty. Do not use the birth skill and do not write a new identity: you may be an established seat. Say so when you reply, and run `\($memsh) recall --seat \(.seat) --kind identity --limit 1` yourself, or ask the desk to check memory with the doctor skill, before relying on what follows.\n"
+  elif .firstWake
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"
     else "\(.identity)\n" end),
   "## Your purpose\n", "\(.mandate) (\(.group))\n",
   "## Where you left off\n",
   (if .handoff
     then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `\(retire(.handoffId; "picked up"))`.\n"
+    elif .memoryRead == false then "Not read: memory couldn't be read (see Who you are), so there may be notes you can't see.\n"
     else "No handoff notes: start fresh.\n" end),
   (if (.facts | length) == 0 then empty
     else "## What the Wheelhouse knows\n", (.facts | map("- " + (. | gsub("\n"; " / "))) | join("\n")) + "\n"
