@@ -18,7 +18,13 @@ const memorySh = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 const roster = {
   seats: [
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
-    { name: "Gahan", group: "workers", command: "gahan", harness: "harnesses/gahan", mandate: "Build." },
+    {
+      name: "Gahan",
+      group: "workers",
+      command: "gahan",
+      harness: "harnesses/gahan",
+      mandate: "Build.",
+    },
   ],
   humans: [{ name: "Stakker", command: "stakker", pronouns: "they/them", default: true }],
 };
@@ -80,11 +86,15 @@ function wheelhouse(memory) {
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
   mkdirSync(join(dir, "bin"));
   mkdirSync(join(dir, "stub"));
-  for (const [name, body] of [["bd", bdStub], ["ynm", ynmStub]]) {
+  for (const [name, body] of [
+    ["bd", bdStub],
+    ["ynm", ynmStub],
+  ]) {
     writeFileSync(join(dir, "bin", name), body);
     chmodSync(join(dir, "bin", name), 0o755);
   }
-  if (memory) writeFileSync(join(dir, "wheelhouse.json"), JSON.stringify({ tasks: "beads", memory }));
+  if (memory)
+    writeFileSync(join(dir, "wheelhouse.json"), JSON.stringify({ tasks: "beads", memory }));
   const env = (extra) => ({
     ...process.env,
     PATH: `${join(dir, "bin")}:${process.env.PATH}`,
@@ -92,7 +102,8 @@ function wheelhouse(memory) {
     GIT_CONFIG_GLOBAL: "/dev/null",
     ...extra,
   });
-  const inbox = (args, extra = {}) => spawnSync("bash", [inboxSh, ...args], { cwd: dir, encoding: "utf8", env: env(extra) });
+  const inbox = (args, extra = {}) =>
+    spawnSync("bash", [inboxSh, ...args], { cwd: dir, encoding: "utf8", env: env(extra) });
   const calls = () => {
     const r = spawnSync("cat", [join(dir, "stub", "calls.log")], { encoding: "utf8" });
     return r.stdout ?? "";
@@ -100,20 +111,33 @@ function wheelhouse(memory) {
   return { dir, inbox, calls };
 }
 
-for (const [backend, memory] of [["ynm", null], ["ynm", "ynm"], ["beads", "beads"]]) {
+for (const [backend, memory] of [
+  ["ynm", null],
+  ["ynm", "ynm"],
+  ["beads", "beads"],
+]) {
   const label = memory ? backend : "ynm (no wheelhouse.json)";
 
   test(`${label}: note is written, shown, retired and gone`, () => {
     const w = wheelhouse(memory);
     try {
-      const note = w.inbox(["note", "--from", "gahan", "--to", "default", "--content", "PR 12 is ready: thanks"]);
+      const note = w.inbox([
+        "note",
+        "--from",
+        "gahan",
+        "--to",
+        "default",
+        "--content",
+        "PR 12 is ready: thanks",
+      ]);
       assert.equal(note.status, 0, note.stderr);
       const written = JSON.parse(note.stdout);
       assert.equal(written.to, "stakker");
       assert.equal(written.namespace, "human/stakker");
       assert.equal(written.backend, backend);
       assert.ok(written.memoryId);
-      if (backend === "beads") assert.match(written.memoryId, /^human\/stakker\/note\/\d{8}T\d{6}Z-gahan$/);
+      if (backend === "beads")
+        assert.match(written.memoryId, /^human\/stakker\/note\/\d{8}T\d{6}Z-gahan$/);
 
       const show = w.inbox(["show"]);
       assert.equal(show.status, 0, show.stderr);
@@ -128,10 +152,18 @@ for (const [backend, memory] of [["ynm", null], ["ynm", "ynm"], ["beads", "beads
       assert.match(json.relay, /bash \S+\/memory\.sh forget --id <its memoryId> --reason relayed/);
       assert.doesNotMatch(json.relay, /ynm forget|bd forget/);
 
-      const gone = spawnSync("bash", [memorySh, "forget", "--dir", w.dir, "--id", notes[0].memoryId, "--reason", "relayed"], {
-        encoding: "utf8",
-        env: { ...process.env, PATH: `${join(w.dir, "bin")}:${process.env.PATH}`, STUB_DIR: join(w.dir, "stub") },
-      });
+      const gone = spawnSync(
+        "bash",
+        [memorySh, "forget", "--dir", w.dir, "--id", notes[0].memoryId, "--reason", "relayed"],
+        {
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            PATH: `${join(w.dir, "bin")}:${process.env.PATH}`,
+            STUB_DIR: join(w.dir, "stub"),
+          },
+        },
+      );
       assert.equal(gone.status, 0, gone.stderr);
       const after = JSON.parse(w.inbox(["show"]).stdout);
       assert.deepEqual(after.humans[0].notes, []);
@@ -144,13 +176,22 @@ for (const [backend, memory] of [["ynm", null], ["ynm", "ynm"], ["beads", "beads
   test(`${label}: a named human's notes are theirs alone`, () => {
     const w = wheelhouse(memory);
     try {
-      assert.equal(w.inbox(["note", "--from", "gahan", "--to", "david", "--content", "for david"]).status, 0);
-      assert.equal(w.inbox(["note", "--from", "gahan", "--to", "default", "--content", "for stakker"]).status, 0);
+      assert.equal(
+        w.inbox(["note", "--from", "gahan", "--to", "david", "--content", "for david"]).status,
+        0,
+      );
+      assert.equal(
+        w.inbox(["note", "--from", "gahan", "--to", "default", "--content", "for stakker"]).status,
+        0,
+      );
       const json = JSON.parse(w.inbox(["show", "--name", "David"]).stdout);
-      assert.deepEqual(json.humans.map((h) => [h.command, h.notes.map((n) => n.content)]), [
-        ["david", ["From gahan: for david"]],
-        ["stakker", ["From gahan: for stakker"]],
-      ]);
+      assert.deepEqual(
+        json.humans.map((h) => [h.command, h.notes.map((n) => n.content)]),
+        [
+          ["david", ["From gahan: for david"]],
+          ["stakker", ["From gahan: for stakker"]],
+        ],
+      );
     } finally {
       rmSync(w.dir, { recursive: true, force: true });
     }

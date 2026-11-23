@@ -4,7 +4,15 @@
 // files in $STUB_DIR. PATH holds only jq, git, node and the stubs.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -60,7 +68,10 @@ function setup({ memsh = true, wheelhouseJson, ynm = "[]", memories = "{}", with
   mkdirSync(join(skills, "work-graph", "scripts"), { recursive: true });
   const at = join(skills, "doctor", "scripts", "memory-checks.sh");
   copyFileSync(script, at);
-  copyFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"), join(skills, "work-graph", "scripts", "wheelhouse-lib.sh"));
+  copyFileSync(
+    join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"),
+    join(skills, "work-graph", "scripts", "wheelhouse-lib.sh"),
+  );
   if (memsh) put(join(skills, "work-graph", "scripts", "memory.sh"), memoryStub);
   return { dir, wh, bin, at };
 }
@@ -103,7 +114,13 @@ test("beads reports readable memory and a Dolt remote", () => {
   const r = run(ctx, ["beads"], { BACKEND: "beads", REMOTE: "1" });
   assert.equal(r.status, 0);
   const checks = JSON.parse(r.stdout);
-  assert.deepEqual(checks.map((c) => [c.name, c.ok]), [["beads memory readable", true], ["beads memory shared", true]]);
+  assert.deepEqual(
+    checks.map((c) => [c.name, c.ok]),
+    [
+      ["beads memory readable", true],
+      ["beads memory shared", true],
+    ],
+  );
   assert.equal(checks[0].detail, "2 memories");
 });
 
@@ -111,10 +128,13 @@ test("beads warns when there is no Dolt remote, and errors when memories can't b
   const r = run(setup({ memories: "not json" }), ["beads"], { BACKEND: "beads" });
   assert.equal(r.status, 0);
   const checks = JSON.parse(r.stdout);
-  assert.deepEqual(checks.map((c) => [c.name, c.ok, c.level]), [
-    ["beads memory readable", false, "error"],
-    ["beads memory shared", false, "warn"],
-  ]);
+  assert.deepEqual(
+    checks.map((c) => [c.name, c.ok, c.level]),
+    [
+      ["beads memory readable", false, "error"],
+      ["beads memory shared", false, "warn"],
+    ],
+  );
 });
 
 test("beads prints an empty list when bd is missing", () => {
@@ -125,24 +145,50 @@ test("beads prints an empty list when bd is missing", () => {
 
 test("born with ynm: yes only for a pinned identity in the seat's namespace", () => {
   const pinned = '[{"namespace":"seat/wick","pinned":true}]';
-  assert.equal(run(setup({ ynm: pinned }), ["born", "--seat", "wick"], { BACKEND: "ynm" }).stdout, "yes\n");
-  const other = run(setup({ ynm: '[{"namespace":"seat/eno","pinned":true}]' }), ["born", "--seat", "wick"], { BACKEND: "ynm" });
+  assert.equal(
+    run(setup({ ynm: pinned }), ["born", "--seat", "wick"], { BACKEND: "ynm" }).stdout,
+    "yes\n",
+  );
+  const other = run(
+    setup({ ynm: '[{"namespace":"seat/eno","pinned":true}]' }),
+    ["born", "--seat", "wick"],
+    { BACKEND: "ynm" },
+  );
   assert.equal(other.stdout, "no\n");
-  const unpinned = run(setup({ ynm: '[{"namespace":"seat/wick","pinned":false}]' }), ["born", "--seat", "wick"], { BACKEND: "ynm" });
+  const unpinned = run(
+    setup({ ynm: '[{"namespace":"seat/wick","pinned":false}]' }),
+    ["born", "--seat", "wick"],
+    { BACKEND: "ynm" },
+  );
   assert.equal(unpinned.stdout, "no\n");
 });
 
 test("born with Beads reads the identity through memory.sh", () => {
-  const yes = run(setup(), ["born", "--seat", "wick"], { BACKEND: "beads", RECALL: '[{"id":"seat/wick/identity"}]' });
+  const yes = run(setup(), ["born", "--seat", "wick"], {
+    BACKEND: "beads",
+    RECALL: '[{"id":"seat/wick/identity"}]',
+  });
   assert.equal(yes.stdout, "yes\n");
   const no = run(setup(), ["born", "--seat", "wick"], { BACKEND: "beads", RECALL: "[]" });
   assert.equal(no.stdout, "no\n");
 });
 
 test("human says whether memory holds human/<name>, on either backend", () => {
-  assert.equal(run(setup({ ynm: '[{"id":"1"}]' }), ["human", "--name", "pat"], { BACKEND: "ynm" }).stdout, "yes\n");
-  assert.equal(run(setup({ ynm: "[]" }), ["human", "--name", "pat"], { BACKEND: "ynm" }).stdout, "no\n");
-  assert.equal(run(setup(), ["human", "--name", "pat"], { BACKEND: "beads", RECALL: '[{"id":"human/pat/note/1"}]' }).stdout, "yes\n");
+  assert.equal(
+    run(setup({ ynm: '[{"id":"1"}]' }), ["human", "--name", "pat"], { BACKEND: "ynm" }).stdout,
+    "yes\n",
+  );
+  assert.equal(
+    run(setup({ ynm: "[]" }), ["human", "--name", "pat"], { BACKEND: "ynm" }).stdout,
+    "no\n",
+  );
+  assert.equal(
+    run(setup(), ["human", "--name", "pat"], {
+      BACKEND: "beads",
+      RECALL: '[{"id":"human/pat/note/1"}]',
+    }).stdout,
+    "yes\n",
+  );
 });
 
 test("a bad argument or command is refused with usage", () => {

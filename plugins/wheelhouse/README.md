@@ -38,7 +38,7 @@ from parts that work on any vendor:
 
 ## Setting up
 
-Needs `ynh`, Beads (`brew install beads`) and, when memory is in ynm, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`). `create-wheelhouse` asks where Agent Tasks (Beads) and Agent Memory (ynm or Beads) live, and records the answer in `wheelhouse.json`.
+Needs `ynh`, Beads 1.3.0 or later (`brew install beads`; the `doctor` fails on an older `bd`, as `bd update --if-assignee` and `--if-status` arrived in 1.3.0) and, when memory is in ynm, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`). `create-wheelhouse` asks where Agent Tasks (Beads) and Agent Memory (ynm or Beads) live, and records the answer in `wheelhouse.json`.
 
 - Start Beads with `bd init --skip-agents --non-interactive --role maintainer`. In a terminal,
   `bd init` otherwise asks questions. Without `--skip-agents`, Beads writes its own agent

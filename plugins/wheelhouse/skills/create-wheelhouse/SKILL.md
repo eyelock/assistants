@@ -66,7 +66,7 @@ at a time**, in this order. Don't create anything until you have the first four.
     explicit and recorded, and take "Beads" as the answer when the request says nothing.
 11. **Agent Memory:** where the seats' identity, handoff notes, Kudos and close notes live: **ynm**
     (the default) or **Beads** (`bd remember`, in the same database as the work graph, shared by
-    the same Dolt remote). Say what Beads gives up: no private home (everyone who syncs the graph
+    the same Dolt remote). Say what Beads gives up: no memory kept apart from the graph (everyone who syncs the graph
     sees every memory), no search by meaning, no ynm tools or `ynm-memory` skill (seats use
     the `work-graph` skill's `memory.sh`), and no forget reason or history of superseded memories. If the request
     doesn't say and you aren't asking, use ynm, and say so in the report.
@@ -104,6 +104,8 @@ the files it finds, and would commit the human's.
         tracked in Markdown files."
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
+      Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself
+      with a `repo:` label; a bead that builds product code still needs its tracker item first.
    4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
       subagent has no session of its own to restart: it ends by returning its report, and the seat
       that woke it waits for it before handing off or exiting.
@@ -162,10 +164,10 @@ the files it finds, and would commit the human's.
    release is read from the item, never copied onto the bead. Workers open pull requests only
    with the `work-graph` skill's `open-pr.sh`." Also add, where a programme manager is or
    will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
-   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it to the programme manager, not straight into the work graph as build work: the designer or auditor writes
    it on the bead and hands it to the desk, which wakes the programme manager; the programme
    manager places it in the roadmap and files its tracker item, and only then are build beads cut,
-   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   against that item. Any other bead (docs, findings, questions, follow-ups) any crew seat may file itself. Review fixes and CI failures stay beads, filed by the reviewer and the CI
    watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
@@ -206,10 +208,11 @@ the files it finds, and would commit the human's.
    - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
      to seats waiting on them.
    - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
-   - **A private home.** With ynm memory: each seat's memory is its own, in its namespace
-     `seat/<name>`. With Beads memory, which has no private home, write: "**A home of its own.**
-     Each seat's memory is its own to write, under its keys `seat/<name>/`; everyone who syncs the
-     work graph can read it."
+   - **A home of its own, shared with the team.** With ynm memory: each seat's memory is its own to
+     write, in its namespace `seat/<name>`, and every note is shared with the team (the seats write
+     at ynm's distributed level, so every clone and every seat can read it). With Beads memory,
+     write: "**A home of its own.** Each seat's memory is its own to write, under its keys
+     `seat/<name>/`; everyone who syncs the work graph can read it."
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
@@ -265,7 +268,7 @@ the files it finds, and would commit the human's.
      "default_vendor": "claude",
      "labels": { "wheelhouse": "<name>" },
      "includes": [
-       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
+       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse", "ref": "@eyelock-assistants/wheelhouse@<version>" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
      ],
      "hooks": {
@@ -304,7 +307,9 @@ the files it finds, and would commit the human's.
    piece of work (assistants #241).
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
-   it is run. Without the file, or without the `memory` key, the scripts assume ynm.
+   it is run. Without the file, or without the `memory` key, the scripts assume ynm. The file may also
+   hold `shared_checkouts`, `protected_branches`, `sanctioned_force`, `budgets` and `guards`, read by
+   the plugin's guards and sensors and checked by the doctor; each is optional and has a default.
 7. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
    `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
    "Handing over work" section says that a build bead's `external_ref` holds its tracker item.

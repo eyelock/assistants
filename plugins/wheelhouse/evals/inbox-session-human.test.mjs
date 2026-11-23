@@ -5,7 +5,15 @@
 // real inbox.sh and wake.sh against a small Wheelhouse with bd and ynm stubbed.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -18,12 +26,26 @@ const wakeSh = join(plugin, "skills", "wake", "scripts", "wake.sh");
 const rosterText = JSON.stringify({
   seats: [
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
-    { name: "Gahan", group: "workers", command: "gahan", harness: "harnesses/gahan", mandate: "Build." },
+    {
+      name: "Gahan",
+      group: "workers",
+      command: "gahan",
+      harness: "harnesses/gahan",
+      mandate: "Build.",
+    },
   ],
   humans: [{ name: "Stakker", command: "stakker", pronouns: "they/them", default: true }],
 });
 
-const bead = (id, title) => ({ id, title, issue_type: "task", priority: 1, created_by: "gahan", dependent_count: 0, labels: ["inbox"] });
+const bead = (id, title) => ({
+  id,
+  title,
+  issue_type: "task",
+  priority: 1,
+  created_by: "gahan",
+  dependent_count: 0,
+  labels: ["inbox"],
+});
 
 // bd ready --assignee <c> gives that human's bead; ynm recall --namespace human/<c> gives their note.
 const bdStub = `#!/bin/sh
@@ -49,20 +71,30 @@ function wheelhouse() {
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), rosterText);
   writeFileSync(join(dir, "AGENTS.md"), "**Mandate:** Talk with the human.\n");
   mkdirSync(join(dir, "bin"));
-  for (const [name, body] of [["bd", bdStub], ["ynm", ynmStub]]) {
+  for (const [name, body] of [
+    ["bd", bdStub],
+    ["ynm", ynmStub],
+  ]) {
     writeFileSync(join(dir, "bin", name), body);
     chmodSync(join(dir, "bin", name), 0o755);
   }
   return dir;
 }
 
-const files = (dir) => readdirSync(dir, { recursive: true }).filter((f) => !f.startsWith("bin")).sort();
+const files = (dir) =>
+  readdirSync(dir, { recursive: true })
+    .filter((f) => !f.startsWith("bin"))
+    .sort();
 
 function run(dir, script, args) {
   return spawnSync("bash", [script, ...args], {
     cwd: dir,
     encoding: "utf8",
-    env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, GIT_CONFIG_GLOBAL: "/dev/null" },
+    env: {
+      ...process.env,
+      PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+      GIT_CONFIG_GLOBAL: "/dev/null",
+    },
   });
 }
 
@@ -75,7 +107,10 @@ function scenario(name, check) {
     const show = run(dir, inboxSh, args);
     check({ show, json: show.stdout ? JSON.parse(show.stdout) : null, dir });
     assert.deepEqual(files(dir), before, "nothing is written to the repository");
-    assert.equal(readFileSync(join(dir, "skills", "roster", "assets", "roster.json"), "utf8"), roster);
+    assert.equal(
+      readFileSync(join(dir, "skills", "roster", "assets", "roster.json"), "utf8"),
+      roster,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -85,7 +120,10 @@ test("no name: show gives the default human's inbox, and nobody else's", () => {
   scenario(null, ({ show, json }) => {
     assert.equal(show.status, 0, show.stderr);
     assert.equal(json.you, null);
-    assert.deepEqual(json.humans.map((h) => [h.command, h.role]), [["stakker", "anyone"]]);
+    assert.deepEqual(
+      json.humans.map((h) => [h.command, h.role]),
+      [["stakker", "anyone"]],
+    );
     assert.equal(json.humans[0].beads[0].id, "hq-1");
     assert.equal(json.humans[0].notes[0].memoryId, "M-STAKKER");
     assert.equal("email" in json, false);
@@ -97,10 +135,13 @@ test("--name David: show adds David's inbox for the session, with no roster entr
   scenario("David", ({ show, json }) => {
     assert.equal(show.status, 0, show.stderr);
     assert.deepEqual(json.you, { name: "David", command: "david" });
-    assert.deepEqual(json.humans.map((h) => [h.name, h.command, h.role]), [
-      ["David", "david", "you"],
-      ["Stakker", "stakker", "anyone"],
-    ]);
+    assert.deepEqual(
+      json.humans.map((h) => [h.name, h.command, h.role]),
+      [
+        ["David", "david", "you"],
+        ["Stakker", "stakker", "anyone"],
+      ],
+    );
     const david = json.humans[0];
     assert.equal(david.beads[0].id, "hq-2");
     assert.equal(david.notes[0].memoryId, "M-DAVID");
@@ -153,8 +194,14 @@ test("no email matching: git's user.email and WHEELHOUSE_HUMAN_EMAIL change noth
       },
     });
     assert.equal(out.status, 0, out.stderr);
-    assert.deepEqual(JSON.parse(out.stdout).humans.map((h) => h.command), ["stakker"]);
-    const arg = spawnSync("bash", [inboxSh, "show", "--dir", ".", "--email", "david@example.com"], { cwd: dir, encoding: "utf8" });
+    assert.deepEqual(
+      JSON.parse(out.stdout).humans.map((h) => h.command),
+      ["stakker"],
+    );
+    const arg = spawnSync("bash", [inboxSh, "show", "--dir", ".", "--email", "david@example.com"], {
+      cwd: dir,
+      encoding: "utf8",
+    });
     assert.equal(arg.status, 1);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -169,7 +216,10 @@ test("the desk's wake: no name shows Stakker's inbox and says the human can name
     assert.match(wake.stdout, /### Stakker \(anyone\)/);
     assert.match(wake.stdout, /Merge the changelog/);
     assert.doesNotMatch(wake.stdout, /Decide the cache size/);
-    assert.match(wake.stdout, /tell the human so in your reply, and that they can name themselves for this session/);
+    assert.match(
+      wake.stdout,
+      /tell the human so in your reply, and that they can name themselves for this session/,
+    );
     assert.match(wake.stdout, /Always say it/);
     assert.doesNotMatch(wake.stdout, /register/i);
     assert.doesNotMatch(wake.stdout, /haven't said who you are/);

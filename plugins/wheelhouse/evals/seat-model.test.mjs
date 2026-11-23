@@ -15,7 +15,14 @@ const modelSh = join(plugin, "skills", "add-seat", "scripts", "model.sh");
 const checkSh = join(plugin, "skills", "doctor", "scripts", "check.sh");
 const team = join(plugin, "skills", "add-seat", "assets", "starter-team");
 
-const seat = (command, group, extra = {}) => ({ name: command, group, command, harness: `harnesses/${command}`, mandate: "m", ...extra });
+const seat = (command, group, extra = {}) => ({
+  name: command,
+  group,
+  command,
+  harness: `harnesses/${command}`,
+  mandate: "m",
+  ...extra,
+});
 
 function withRoster(roster, fn) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-seat-model-"));
@@ -28,7 +35,8 @@ function withRoster(roster, fn) {
   }
 }
 
-const model = (dir, ...args) => spawnSync("bash", [modelSh, "--dir", dir, ...args], { encoding: "utf8" });
+const model = (dir, ...args) =>
+  spawnSync("bash", [modelSh, "--dir", dir, ...args], { encoding: "utf8" });
 
 const roster = {
   models: {
@@ -51,7 +59,10 @@ test("a seat takes its group's tier, its own tier, or a vendor override, and the
     assert.equal(model(dir, "--seat", "tharg").stdout.trim(), "opus");
     assert.equal(model(dir, "--seat", "quick").stdout.trim(), "haiku");
     assert.equal(model(dir, "--seat", "gore", "--vendor", "codex").stdout.trim(), "big-model");
-    assert.equal(model(dir, "--seat", "okafor", "--format", "flag").stdout.trim(), "--model=sonnet");
+    assert.equal(
+      model(dir, "--seat", "okafor", "--format", "flag").stdout.trim(),
+      "--model=sonnet",
+    );
     assert.deepEqual(JSON.parse(model(dir, "--seat", "gore", "--format", "json").stdout), {
       seat: "gore",
       vendor: "claude",
@@ -63,7 +74,11 @@ test("a seat takes its group's tier, its own tier, or a vendor override, and the
 
 test("a seat with no model, no vendor mapping or no place in the roster exits 4", () => {
   withRoster(roster, (dir) => {
-    for (const args of [["--seat", "dredd"], ["--seat", "okafor", "--vendor", "codex"], ["--seat", "nobody"]]) {
+    for (const args of [
+      ["--seat", "dredd"],
+      ["--seat", "okafor", "--vendor", "codex"],
+      ["--seat", "nobody"],
+    ]) {
       const r = model(dir, ...args);
       assert.equal(r.status, 4, args.join(" "));
       assert.equal(r.stdout, "");
@@ -74,7 +89,10 @@ test("a seat with no model, no vendor mapping or no place in the roster exits 4"
 
 test("the starter team puts workers and watchers on the cheaper tier, and designers, reviewers, verifiers and dispatchers on the stronger", () => {
   const tier = Object.fromEntries(
-    readdirSync(team).map((f) => [f.replace(/\.md$/, ""), /^model:\s*(\S+)$/m.exec(readFileSync(join(team, f), "utf8"))?.[1]]),
+    readdirSync(team).map((f) => [
+      f.replace(/\.md$/, ""),
+      /^model:\s*(\S+)$/m.exec(readFileSync(join(team, f), "utf8"))?.[1],
+    ]),
   );
   assert.deepEqual(tier, {
     "ci-watcher": "fast",
@@ -109,13 +127,25 @@ test("the doctor warns about a seat with no model, and not when every seat has o
 test("the verifier is an optional standing role on the desk's seating, with a verify focus, and resolves to the deep tier", () => {
   const text = readFileSync(join(team, "verifier.md"), "utf8");
   const front = /^---\n([\s\S]*?)\n---/.exec(text)[1];
-  for (const line of ["group: standing", "model: deep", "focus: verify", "seated-by: desk", "optional: true"]) {
+  for (const line of [
+    "group: standing",
+    "model: deep",
+    "focus: verify",
+    "seated-by: desk",
+    "optional: true",
+  ]) {
     assert.match(front, new RegExp(`^${line}$`, "m"));
   }
   assert.match(text, /^\*\*Mandate:\*\*/m);
   assert.match(text, /^\*\*Focus prompt:\*\*/m);
   assert.match(text, /^## Ask$/m);
-  withRoster({ models: { groups: { standing: "deep" } }, seats: [seat("may", "standing", { model: "deep" })] }, (dir) => {
-    assert.equal(model(dir, "--seat", "may").stdout.trim(), "opus");
-  });
+  withRoster(
+    {
+      models: { groups: { standing: "deep" } },
+      seats: [seat("may", "standing", { model: "deep" })],
+    },
+    (dir) => {
+      assert.equal(model(dir, "--seat", "may").stdout.trim(), "opus");
+    },
+  );
 });

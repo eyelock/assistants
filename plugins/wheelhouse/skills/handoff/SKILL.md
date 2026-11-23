@@ -48,7 +48,8 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
    ```
 
    Not a scratch note that dies with the session: handoff notes are for the next session. They
-   are kept in your own place in the Wheelhouse's memory, your private home there.
+   are kept in your own namespace in the Wheelhouse's memory, shared with the team: write nothing there
+   you would not want a teammate to read.
 
    The notes are for you, tomorrow, and are short and concrete, and hold only what you can act on next:
 

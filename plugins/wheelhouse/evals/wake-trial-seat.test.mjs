@@ -11,7 +11,12 @@ import { fileURLToPath } from "node:url";
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
 const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
-const roster = { seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "x" }], humans: [] };
+const roster = {
+  seats: [
+    { name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "x" },
+  ],
+  humans: [],
+};
 
 function wake(seat) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-trial-"));
@@ -19,22 +24,33 @@ function wake(seat) {
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
     writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
     mkdirSync(join(dir, "harnesses", "zed"), { recursive: true });
-    writeFileSync(join(dir, "harnesses", "zed", "AGENTS.md"), "# Zed\n\n**Mandate:** Try things out.\n");
+    writeFileSync(
+      join(dir, "harnesses", "zed", "AGENTS.md"),
+      "# Zed\n\n**Mandate:** Try things out.\n",
+    );
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
-    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     mkdirSync(join(dir, "bin"));
     for (const name of ["bd", "ynm"]) {
       writeFileSync(join(dir, "bin", name), "#!/bin/sh\necho '[]'\n");
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    return spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--seat", seat, "--format", "json", "--no-sync"], {
-      cwd: dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
-    });
+    return spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), "--seat", seat, "--format", "json", "--no-sync"],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
+      },
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

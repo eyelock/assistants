@@ -3,7 +3,15 @@
 // stubbed to log every sync they are asked to do.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, existsSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -18,11 +26,23 @@ function run(args) {
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
-    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
-    writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
+    writeFileSync(
+      join(dir, "skills", "roster", "assets", "roster.json"),
+      JSON.stringify({
+        seats: [
+          { name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." },
+        ],
+        humans: [],
+      }),
+    );
     mkdirSync(join(dir, "bin"));
     const log = join(dir, "calls.log");
     const stubs = {
@@ -69,14 +89,29 @@ function runStub(ynmBody, env = {}, bdBody = "exit 0") {
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
-    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
-    writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
+    writeFileSync(
+      join(dir, "skills", "roster", "assets", "roster.json"),
+      JSON.stringify({
+        seats: [
+          { name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." },
+        ],
+        humans: [],
+      }),
+    );
     mkdirSync(join(dir, "bin"));
     writeFileSync(join(dir, "bin", "ynm"), `#!/bin/sh\n${ynmBody}\n`);
-    writeFileSync(join(dir, "bin", "bd"), `#!/bin/sh\nif [ "$1" = dolt ]; then echo '[{"name":"origin"}]'; exit 0; fi\n${bdBody}\n`);
+    writeFileSync(
+      join(dir, "bin", "bd"),
+      `#!/bin/sh\nif [ "$1" = dolt ]; then echo '[{"name":"origin"}]'; exit 0; fi\n${bdBody}\n`,
+    );
     chmodSync(join(dir, "bin", "ynm"), 0o755);
     chmodSync(join(dir, "bin", "bd"), 0o755);
     spawnSync("git", ["init", "-q"], { cwd: dir });

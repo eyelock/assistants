@@ -56,6 +56,17 @@ if ! backend=$(bash "$mc" backend --dir "$dir"); then
   backend=""
 fi
 
+# wheelhouse.json's other keys: shared_checkouts, protected_branches, sanctioned_force, budgets and guards
+# are read by the plugin's guards and sensors, so a bad or unknown key is an error with the fix on its line.
+if [ -f "$dir/wheelhouse.json" ]; then
+  if problems=$(wl_conf_problems "$dir"); then
+    add "wheelhouse.json keys" true info "every key is known and well formed"
+  else
+    add "wheelhouse.json keys" false error "$(tr '\n' ';' <<<"$problems" | sed 's/;$//; s/;/; /g')" \
+      "$(sed -n 's/.*Fix: //p' <<<"$problems" | head -1), in $dir/wheelhouse.json"
+  fi
+fi
+
 # The plugin's scripts run where ynh installed them, so a Wheelhouse keeps no copy. The ones every seat
 # runs are memory.sh (the wake, the inbox and the skills read and write memory through it) and inbox.sh; the
 # library every script sources is the one this script already loaded. A seat without the work-graph skill has none, so these are errors.
@@ -144,7 +155,20 @@ fi
 if ! command -v bd >/dev/null 2>&1; then
   add "beads installed" false error "bd is not on PATH" "brew install beads"
 else
-  add "beads installed" true info "$(limited "$WL_BD_SECS" bd version 2>/dev/null | head -1)"
+  bdversion=$(limited "$WL_BD_SECS" bd version 2>/dev/null | head -1)
+  bdnumber=$(sed -nE 's/^[^0-9]*([0-9]+(\.[0-9]+)*).*/\1/p' <<<"$bdversion")
+  if [ -z "$bdnumber" ]; then
+    add "beads installed" true info "$bdversion"
+    add "beads version" false warn "could not read a version from \`bd version\` (\"$bdversion\"), so the minimum $WL_BD_MIN is unchecked" \
+      "run bd version, and upgrade to $WL_BD_MIN or later if it is older: brew upgrade beads"
+  elif wl_version_ge "$bdnumber" "$WL_BD_MIN"; then
+    add "beads installed" true info "$bdversion"
+    add "beads version" true info "$bdnumber is at least $WL_BD_MIN"
+  else
+    add "beads installed" true info "$bdversion"
+    add "beads version" false error "bd $bdnumber is older than $WL_BD_MIN, the oldest the plugin's scripts work with: claims and session holds rely on bd update --if-assignee and --if-status (exit 13 on a stale guard), which older bd lacks" \
+      "brew upgrade beads (needs $WL_BD_MIN or later)"
+  fi
   if [ ! -d "$dir/.beads" ]; then
     add "work graph" false error "no .beads/ in the Wheelhouse repository" \
       "bd init --skip-agents --non-interactive --role maintainer --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"

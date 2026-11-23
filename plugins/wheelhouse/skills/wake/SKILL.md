@@ -81,7 +81,7 @@ bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind handof
 bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind kudos --limit 5
 ```
 
-Each prints a JSON array, newest first, of `{id, kind, text, at, by, bead}`. Your close notes
+Each prints a JSON array, newest first, of `{id, kind, text, at, by, bead}`. A recall that fails or times out (it exits non-zero) means your memory couldn't be read: that is not an empty store, so don't treat it as "no identity yet" and don't use the `birth` skill; say so and retry. Only an empty array `[]` from a recall that succeeded means nothing was written. Your close notes
 are the newest three:
 
 ```bash
@@ -139,9 +139,9 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
 | Wake first (the desk only) | the roster's seats with the role `ci-watcher` and `releaser`, right after the inbox: "Wake first: <CI watcher> (open PRs and CI), <releaser> (release in hand: next on the route)". Absent when the roster has neither role. In the JSON it is `wakeFirst` |
 | Asks between seats (the desk only) | every open ask, from `<skills>/work-graph/scripts/ask.sh show --all`: kind, asker, answering seat, age and what it blocks, oldest first. Say so in your reply when they couldn't be read (never "no open asks"); route a return and chase an old one. Bounded by `WAKE_ASK_SECS` (30) |
 | What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
-| Who you are | your identity, pinned in your namespace `seat/<command>` |
+| Who you are | your identity, pinned in your namespace `seat/<command>`; or, when your memory couldn't be read, **Memory couldn't be read** in its place |
 | Your purpose | the mandate in your charter |
-| Where you left off | your latest handoff notes |
+| Where you left off | your latest handoff notes; **Memory couldn't be read** when your memory couldn't be read |
 | What you have been thanked for | your Kudos |
 | Your record | the beads you closed most recently |
 | Your close notes | the two-line notes you wrote on your last three closes |
@@ -172,7 +172,8 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
    start of the session, on its roster model (`<skills>/add-seat/scripts/model.sh --seat <command>`), or send it a message if it is
    already live, and ask for what its role is for: the CI watcher for the open pull requests and CI, the releaser for the release in
    hand. Relay both reports together with the inbox, and don't check GitHub yourself.
-1. **First session?** If the block says you have no identity yet, this is your birth: use the
+1. **Memory couldn't be read?** If the block says **Memory couldn't be read** (the JSON has `memoryRead: false`), your identity, handoff notes and Kudos are missing, not empty: say so in your reply, don't use the `birth` skill, and run the recalls under "If there is no wake script" yourself before deciding you have no identity.
+   **First session?** Otherwise, if the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    and kept in front of you (`memory.sh` pins it), so you see it every time you wake.
 2. **Who you are** is yours. If it no longer fits, change it (write it again with

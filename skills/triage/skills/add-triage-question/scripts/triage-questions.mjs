@@ -105,13 +105,18 @@ export function check(root) {
         else if (focus.prompt !== want)
           problems.push(`${q.id}: ynh/${harness} focus prompt differs from the list (run sync)`);
         const ref = join(root, "skills", "platforms", "skills", harness, "references", "triage.md");
-        if (!existsSync(ref)) problems.push(`${q.id}: skills/platforms/skills/${harness}/references/triage.md is missing`);
+        if (!existsSync(ref))
+          problems.push(
+            `${q.id}: skills/platforms/skills/${harness}/references/triage.md is missing`,
+          );
         else if (!readFileSync(ref, "utf8").includes(q.id))
           problems.push(
             `${q.id}: the ${harness} skill's references/triage.md never mentions ${q.id}: say where to look`,
           );
       } else if (focus) {
-        problems.push(`${q.id}: ynh/${harness} has a ${q.id} focus but the list does not have it on`);
+        problems.push(
+          `${q.id}: ynh/${harness} has a ${q.id} focus but the list does not have it on`,
+        );
       }
     }
   }

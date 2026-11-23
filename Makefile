@@ -37,7 +37,7 @@ test-tutorials: ## Run the opted-in tutorials as tests: make test-tutorials [T=d
 # The same scan CI runs (needs Docker). Fixtures are test data, not shipped skills.
 skillspector: ## Scan every skill with SkillSpector, as CI does (needs Docker)
 	@docker run --rm -v "$(CURDIR):/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
-		--exclude '*/evals/files/*' --exclude 'e2e-fixtures/*'
+		--exclude '*/evals/files/*'
 
 docs: ## Serve docs/ at http://localhost:3000 with live reload (needs npx)
 	@command -v npx >/dev/null 2>&1 || { echo "npx not found. Install Node.js to browse docs locally." >&2; exit 1; }

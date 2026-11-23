@@ -4,7 +4,15 @@
 // (the stubs log every call to $STUB_LOG, so a test can see what was run and what was not).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -53,16 +61,31 @@ const manifest = (name, over = {}) => ({
 
 function write(root, rel, content) {
   mkdirSync(dirname(join(root, rel)), { recursive: true });
-  writeFileSync(join(root, rel), typeof content === "string" ? content : `${JSON.stringify(content, null, 2)}\n`);
+  writeFileSync(
+    join(root, rel),
+    typeof content === "string" ? content : `${JSON.stringify(content, null, 2)}\n`,
+  );
 }
-const git = (cwd, ...args) => spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd, encoding: "utf8" });
+const git = (cwd, ...args) =>
+  spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+    cwd,
+    encoding: "utf8",
+  });
 
 function ynhLs(names, installedRef = "aaa", availableRef = "aaa") {
   return {
     harnesses: names.map((name) => ({
       id: `local/${name}`,
       name,
-      includes: [{ git: "https://example.com/assistants", path: "plugins/wheelhouse", ref_installed: installedRef, ref_available: availableRef, is_pinned: false }],
+      includes: [
+        {
+          git: "https://example.com/assistants",
+          path: "plugins/wheelhouse",
+          ref_installed: installedRef,
+          ref_available: availableRef,
+          is_pinned: false,
+        },
+      ],
     })),
   };
 }
@@ -76,7 +99,11 @@ function wheelhouse() {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-refresh-"));
   const wh = join(dir, "wh");
   mkdirSync(join(dir, "bin"));
-  for (const [name, body] of [["ynh", ynhStub], ["ynm", ynmStub], ["doctor.sh", doctorStub]]) {
+  for (const [name, body] of [
+    ["ynh", ynhStub],
+    ["ynm", ynmStub],
+    ["doctor.sh", doctorStub],
+  ]) {
     writeFileSync(join(dir, "bin", name), body);
     chmodSync(join(dir, "bin", name), 0o755);
   }
@@ -85,7 +112,12 @@ function wheelhouse() {
   write(wh, ".agents/harness/plugin.json", manifest("hq", { workspace: ["../api"] }));
   write(wh, "skills/roster/SKILL.md", "roster\n");
   write(wh, "skills/roster/assets/roster.json", {
-    seats: SEATS.map(([command, group]) => ({ name: command, command, group, harness: command === "hq" ? "." : `harnesses/${command}` })),
+    seats: SEATS.map(([command, group]) => ({
+      name: command,
+      command,
+      group,
+      harness: command === "hq" ? "." : `harnesses/${command}`,
+    })),
   });
   write(wh, "skills/extra/SKILL.md", "extra\n");
   write(wh, "scripts/wake.sh", "#!/bin/sh\n# v1\n");
@@ -96,7 +128,11 @@ function wheelhouse() {
     write(wh, `harnesses/${command}/.agents/harness/pinned-skills.md`, "pins\n");
   }
   // dree's include of ../.. picks skills/extra as well.
-  write(wh, "harnesses/dree/.agents/harness/plugin.json", manifest("dree", { includes: [{ git: "../..", pick: ["skills/roster", "skills/extra"] }] }));
+  write(
+    wh,
+    "harnesses/dree/.agents/harness/plugin.json",
+    manifest("dree", { includes: [{ git: "../..", pick: ["skills/roster", "skills/extra"] }] }),
+  );
   git(wh, "add", "-A");
   git(wh, "commit", "-qm", "base");
   writeFileSync(join(dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c))));
@@ -122,14 +158,19 @@ function wheelhouse() {
       git(wh, "commit", "-qm", "change");
     },
     run(args = [], extra = {}) {
-      const out = spawnSync("bash", [refreshSh, "--dir", wh, "--doctor", join(dir, "bin", "doctor.sh"), ...args], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(
+        "bash",
+        [refreshSh, "--dir", wh, "--doctor", join(dir, "bin", "doctor.sh"), ...args],
+        { encoding: "utf8", env: env(extra) },
+      );
       let json = null;
       try {
         json = JSON.parse(out.stdout);
       } catch {}
       return { ...out, json };
     },
-    log: () => (existsSync(join(dir, "stub.log")) ? readFileSync(join(dir, "stub.log"), "utf8") : ""),
+    log: () =>
+      existsSync(join(dir, "stub.log")) ? readFileSync(join(dir, "stub.log"), "utf8") : "",
     done: () => rmSync(dir, { recursive: true, force: true }),
   };
 }
@@ -162,7 +203,11 @@ test("a changed seat is reinstalled alone, and a pinned-skills.md change is noth
 test("the root AGENTS.md, root plugin.json and the roster reinstall the desk and every seat", () => {
   for (const change of [
     (put) => put("AGENTS.md", "# hq, changed\n"),
-    (put) => put(".agents/harness/plugin.json", manifest("hq", { workspace: ["../api"], description: "changed" })),
+    (put) =>
+      put(
+        ".agents/harness/plugin.json",
+        manifest("hq", { workspace: ["../api"], description: "changed" }),
+      ),
     (put) => put("skills/roster/assets/extra.md", "roster change\n"),
   ]) {
     const w = wheelhouse();
@@ -170,7 +215,12 @@ test("the root AGENTS.md, root plugin.json and the roster reinstall the desk and
       w.change(change);
       const r = w.run(diff);
       assert.equal(r.status, 0, r.stderr);
-      assert.deepEqual(r.json.install, ["ynh install .", "ynh install harnesses/dree", "ynh install harnesses/eno", "ynh install harnesses/wick"]);
+      assert.deepEqual(r.json.install, [
+        "ynh install .",
+        "ynh install harnesses/dree",
+        "ynh install harnesses/eno",
+        "ynh install harnesses/wick",
+      ]);
       assert.deepEqual(r.json.restart, ["dree", "eno", "hq", "wick"]);
       assert.deepEqual(r.json.trust, []);
     } finally {
@@ -195,10 +245,16 @@ test("a workspace folder added to a harness prints a trust instruction and never
   const w = wheelhouse();
   try {
     w.change((put) => {
-      put("harnesses/wick/.agents/harness/plugin.json", manifest("wick", { workspace: ["../../api"] }));
+      put(
+        "harnesses/wick/.agents/harness/plugin.json",
+        manifest("wick", { workspace: ["../../api"] }),
+      );
       put(".agents/harness/plugin.json", manifest("hq", { workspace: ["../api", "../web"] }));
       // An unchanged workspace is not a trust change.
-      put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { description: "just words" }));
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", { description: "just words" }),
+      );
     });
     const r = w.run(diff);
     assert.equal(r.status, 0, r.stderr);
@@ -214,14 +270,28 @@ test("a hook, MCP server, sensor or launch focus change prints a trust instructi
   const w = wheelhouse();
   try {
     w.change((put) => {
-      put("harnesses/wick/.agents/harness/plugin.json", manifest("wick", { hooks: { before_tool: [{ command: "echo hi" }] } }));
-      put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { mcp_servers: { x: { command: "x" } }, launch_focus: "wake" }));
-      put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { sensors: { s: { command: "true" } } }));
+      put(
+        "harnesses/wick/.agents/harness/plugin.json",
+        manifest("wick", { hooks: { before_tool: [{ command: "echo hi" }] } }),
+      );
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", { mcp_servers: { x: { command: "x" } }, launch_focus: "wake" }),
+      );
+      put(
+        "harnesses/dree/.agents/harness/plugin.json",
+        manifest("dree", { sensors: { s: { command: "true" } } }),
+      );
       put(".agents/harness/plugin.json", manifest("hq", { workspace: [] }));
     });
     const r = w.run(diff);
     assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(r.json.trust, ["ynh trust accept local/dree", "ynh trust accept local/eno", "ynh trust accept local/hq", "ynh trust accept local/wick"]);
+    assert.deepEqual(r.json.trust, [
+      "ynh trust accept local/dree",
+      "ynh trust accept local/eno",
+      "ynh trust accept local/hq",
+      "ynh trust accept local/wick",
+    ]);
     assert.doesNotMatch(w.log(), /ynh trust (accept|show)/);
   } finally {
     w.done();
@@ -238,19 +308,42 @@ test("a hook in a profile, a changed launch focus prompt and a delegates_to focu
   const w = wheelhouse();
   try {
     w.change((put) => {
-      for (const c of ["eno", "wick", "dree"]) put(`harnesses/${c}/.agents/harness/plugin.json`, manifest(c, base));
+      for (const c of ["eno", "wick", "dree"])
+        put(`harnesses/${c}/.agents/harness/plugin.json`, manifest(c, base));
     });
     // The first change only gave eno, wick and dree these fields (dree is new in no sense: it existed).
     w.change((put) => {
-      put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { ...base, profiles: { ci: { hooks: { before_tool: [{ command: "echo b" }] } } } }));
-      put("harnesses/wick/.agents/harness/plugin.json", manifest("wick", { ...base, focuses: { wake: { prompt: "wake up, now" } } }));
-      put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { ...base, delegates_to: [{ git: "https://example.com/d", focus: "audit" }] }));
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", {
+          ...base,
+          profiles: { ci: { hooks: { before_tool: [{ command: "echo b" }] } } },
+        }),
+      );
+      put(
+        "harnesses/wick/.agents/harness/plugin.json",
+        manifest("wick", { ...base, focuses: { wake: { prompt: "wake up, now" } } }),
+      );
+      put(
+        "harnesses/dree/.agents/harness/plugin.json",
+        manifest("dree", {
+          ...base,
+          delegates_to: [{ git: "https://example.com/d", focus: "audit" }],
+        }),
+      );
       // Only profile text outside what the digest covers changes: not a trust change.
-      put(".agents/harness/plugin.json", manifest("hq", { workspace: ["../api"], profiles: { ci: { description: "other words" } } }));
+      put(
+        ".agents/harness/plugin.json",
+        manifest("hq", { workspace: ["../api"], profiles: { ci: { description: "other words" } } }),
+      );
     });
     const r = w.run(["HEAD~1..HEAD"]);
     assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(r.json.trust, ["ynh trust accept local/dree", "ynh trust accept local/eno", "ynh trust accept local/wick"]);
+    assert.deepEqual(r.json.trust, [
+      "ynh trust accept local/dree",
+      "ynh trust accept local/eno",
+      "ynh trust accept local/wick",
+    ]);
   } finally {
     w.done();
   }
@@ -259,8 +352,20 @@ test("a hook in a profile, a changed launch focus prompt and a delegates_to focu
 test("an include added to a profile prints a trust instruction", () => {
   const w = wheelhouse();
   try {
-    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a" } } })));
-    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a", includes: [{ git: "https://example.com/x" }] } } })));
+    w.change((put) =>
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", { profiles: { ci: { description: "a" } } }),
+      ),
+    );
+    w.change((put) =>
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", {
+          profiles: { ci: { description: "a", includes: [{ git: "https://example.com/x" }] } },
+        }),
+      ),
+    );
     const r = w.run(["HEAD~1..HEAD"]);
     assert.deepEqual(r.json.trust, ["ynh trust accept local/eno"]);
   } finally {
@@ -271,8 +376,18 @@ test("an include added to a profile prints a trust instruction", () => {
 test("a profile description change alone is not a trust change", () => {
   const w = wheelhouse();
   try {
-    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "a" } } })));
-    w.change((put) => put("harnesses/eno/.agents/harness/plugin.json", manifest("eno", { profiles: { ci: { description: "b" } } })));
+    w.change((put) =>
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", { profiles: { ci: { description: "a" } } }),
+      ),
+    );
+    w.change((put) =>
+      put(
+        "harnesses/eno/.agents/harness/plugin.json",
+        manifest("eno", { profiles: { ci: { description: "b" } } }),
+      ),
+    );
     const r = w.run(["HEAD~1..HEAD"]);
     assert.deepEqual(r.json.trust, []);
   } finally {
@@ -283,7 +398,13 @@ test("a profile description change alone is not a trust change", () => {
 test("a seat ynh lists as unavailable is noted with its problems and what fixes it, and is not offered trust accept", () => {
   const w = wheelhouse();
   try {
-    writeFileSync(join(w.dir, "trust.json"), JSON.stringify([...trustLs({ wick: "x" }).filter((t) => t.harness !== "local/wick"), { harness: "local/wick", state: "unavailable", problems: ["includes: not cached"] }]));
+    writeFileSync(
+      join(w.dir, "trust.json"),
+      JSON.stringify([
+        ...trustLs({ wick: "x" }).filter((t) => t.harness !== "local/wick"),
+        { harness: "local/wick", state: "unavailable", problems: ["includes: not cached"] },
+      ]),
+    );
     w.change((put) => put("docs/notes.md", "more\n"));
     const r = w.run(diff);
     assert.equal(r.status, 0, r.stderr);
@@ -301,7 +422,10 @@ test("a seat ynh lists as unavailable is noted with its problems and what fixes 
 test("a seat ynh reports changed or unreviewed after the installs gets a trust instruction, even when the diff shows no cause", () => {
   const w = wheelhouse();
   try {
-    writeFileSync(join(w.dir, "trust.json"), JSON.stringify(trustLs({ eno: "changed", dree: "unreviewed", wick: "no-commands" })));
+    writeFileSync(
+      join(w.dir, "trust.json"),
+      JSON.stringify(trustLs({ eno: "changed", dree: "unreviewed", wick: "no-commands" })),
+    );
     w.change((put) => put("docs/notes.md", "more\n"));
     const r = w.run(diff);
     assert.equal(r.status, 0, r.stderr);
@@ -316,7 +440,9 @@ test("a seat ynh reports changed or unreviewed after the installs gets a trust i
 test("a new seat's plugin.json is not a trust change by itself", () => {
   const w = wheelhouse();
   try {
-    w.change((put) => put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { description: "words" })));
+    w.change((put) =>
+      put("harnesses/dree/.agents/harness/plugin.json", manifest("dree", { description: "words" })),
+    );
     const r = w.run(diff);
     assert.deepEqual(r.json.trust, []);
   } finally {
@@ -329,7 +455,10 @@ test("a seat folder that is gone is reported with the canonical uninstall id", (
   try {
     w.change(() => rmSync(join(w.wh, "harnesses", "dree"), { recursive: true, force: true }));
     const r = w.run(diff);
-    assert.ok(r.json.notes.some((n) => /ynh uninstall local\/dree /.test(n)), r.json.notes.join("\n"));
+    assert.ok(
+      r.json.notes.some((n) => /ynh uninstall local\/dree /.test(n)),
+      r.json.notes.join("\n"),
+    );
   } finally {
     w.done();
   }
@@ -399,7 +528,10 @@ test("a failed install is reported, the rest still run, and the exit is 3", () =
 test("a seat that is not installed or not born is reported with the exact command", () => {
   const w = wheelhouse();
   try {
-    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(["hq", "eno", "dree", "wick"].filter((s) => s !== "dree"))));
+    writeFileSync(
+      join(w.dir, "ls.json"),
+      JSON.stringify(ynhLs(["hq", "eno", "dree", "wick"].filter((s) => s !== "dree"))),
+    );
     const r = w.run(["HEAD..HEAD"], { UNBORN: "wick dree" });
     assert.equal(r.status, 0, r.stderr);
     const by = Object.fromEntries(r.json.seatsNotReady.map((s) => [s.seat, s]));
@@ -416,7 +548,16 @@ test("a seat that is not installed or not born is reported with the exact comman
 test("with no diff it offers ynh update for a stale wheelhouse include, and --update runs it, copies no script and restarts the updated seats", () => {
   const w = wheelhouse();
   try {
-    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ynhLs(SEATS.map(([c]) => c), "old", "new")));
+    writeFileSync(
+      join(w.dir, "ls.json"),
+      JSON.stringify(
+        ynhLs(
+          SEATS.map(([c]) => c),
+          "old",
+          "new",
+        ),
+      ),
+    );
     // An older Wheelhouse still carries a copy of the plugin's wake.sh: refresh leaves it exactly as it is.
     mkdirSync(join(w.wh, "scripts"), { recursive: true });
     writeFileSync(join(w.wh, "scripts", "wake.sh"), "#!/bin/sh\n# an old copy\n");
@@ -425,7 +566,12 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
 
     const offer = w.run(["HEAD..HEAD"]);
     assert.equal(offer.status, 0, offer.stderr);
-    assert.deepEqual(offer.json.upstream.updates.map((u) => u.command).sort(), ["ynh update local/dree", "ynh update local/eno", "ynh update local/hq", "ynh update local/wick"]);
+    assert.deepEqual(offer.json.upstream.updates.map((u) => u.command).sort(), [
+      "ynh update local/dree",
+      "ynh update local/eno",
+      "ynh update local/hq",
+      "ynh update local/wick",
+    ]);
     assert.deepEqual(Object.keys(offer.json.upstream), ["updates"]);
     assert.doesNotMatch(w.log(), /ynh update/);
 
@@ -433,7 +579,10 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     assert.equal(done.status, 0, done.stderr);
     assert.match(w.log(), /^ynh update local\/hq$/m);
     assert.deepEqual(Object.keys(done.json.upstream), ["updates"]);
-    assert.equal(readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"), "#!/bin/sh\n# an old copy\n");
+    assert.equal(
+      readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"),
+      "#!/bin/sh\n# an old copy\n",
+    );
     assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), false);
     assert.equal(existsSync(join(w.wh, "scripts", "wheelhouse-lib.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
@@ -445,7 +594,11 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
 test("an include ynh could not probe (no ref_available) is not offered an update", () => {
   const w = wheelhouse();
   try {
-    const ls = ynhLs(SEATS.map(([c]) => c), "old", "new");
+    const ls = ynhLs(
+      SEATS.map(([c]) => c),
+      "old",
+      "new",
+    );
     for (const h of ls.harnesses) delete h.includes[0].ref_available;
     writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ls));
     const r = w.run(["HEAD..HEAD"]);
@@ -475,4 +628,3 @@ test("a directory that is not a Wheelhouse is refused", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
-

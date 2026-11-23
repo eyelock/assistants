@@ -16,7 +16,7 @@
         "path": "ynh/david"
       },
       "description": "David's personal full-stack development persona with Go, infra, and conversational alignment skills",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "keywords": ["go", "development", "full-stack", "infrastructure", "terraform"]
     },
     {
@@ -27,7 +27,7 @@
         "path": "ynh/planner"
       },
       "description": "Architecture and implementation planning persona",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "keywords": ["planning", "architecture", "design", "review"]
     },
     {
@@ -38,7 +38,7 @@
         "path": "ynh/researcher"
       },
       "description": "Research and analysis persona for investigating codebases, APIs, and technical topics",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "keywords": ["research", "analysis", "investigation", "codebase", "api"]
     },
     {
@@ -49,7 +49,7 @@
         "path": "ynh/tester"
       },
       "description": "Testing and quality assurance persona",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "keywords": ["testing", "quality", "qa", "go", "coverage"]
     },
     {
@@ -59,8 +59,8 @@
         "repo": "github.com/eyelock/assistants",
         "path": "ynh/ynh-dev"
       },
-      "description": "Development harness for the ynh project \u2014 Gitflow workflow with Go language support",
-      "version": "0.1.0",
+      "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
+      "version": "0.3.1",
       "keywords": ["ynh", "go", "development", "gitflow"]
     },
     {
@@ -70,8 +70,8 @@
         "repo": "github.com/eyelock/assistants",
         "path": "ynh/termq-dev"
       },
-      "description": "Development harness for the TermQ project \u2014 Gitflow workflow with Swift/SwiftUI language support",
-      "version": "0.1.0",
+      "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
+      "version": "0.3.1",
       "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
     },
     {
@@ -82,7 +82,7 @@
         "path": "plugins/gitflow"
       },
       "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"]
     },
     {
@@ -93,7 +93,7 @@
         "path": "plugins/media-management"
       },
       "description": "Process music purchases and audio CDs: extract or securely rip, tag, import to Apple Music, stage MP3 and WAV to NAS, and repair split or half-done imports.",
-      "version": "0.1.0",
+      "version": "0.4.0",
       "keywords": ["media", "music", "mp3", "apple-music", "ffmpeg", "metadata"]
     },
     {
@@ -103,8 +103,8 @@
         "repo": "github.com/eyelock/assistants",
         "path": "plugins/vendor-harness"
       },
-      "description": "Lifecycle management for LLM vendor harness artifacts \u2014 validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
-      "version": "0.1.0",
+      "description": "Lifecycle management for LLM vendor harness artifacts — validate, diagnose, feedback, and keep current across Claude Code, Cursor, Codex, and Copilot CLI.",
+      "version": "0.3.1",
       "keywords": [
         "vendor",
         "harness",
@@ -125,7 +125,7 @@
         "path": "ynh/github"
       },
       "description": "Reads GitHub for what is waiting on you and what you are waiting on: review requests, your PRs' reviews and checks, mentions and assigned issues. Read-only.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["github", "pull-requests", "reviews", "ci", "triage", "read-only"]
     },
     {
@@ -136,7 +136,7 @@
         "path": "ynh/slack"
       },
       "description": "Reads Slack for what is waiting on you and what you are waiting on: unanswered DMs and mentions, and threads where you asked and got no answer. Read-only.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["slack", "chat", "mentions", "messages", "triage", "read-only"]
     },
     {
@@ -147,7 +147,7 @@
         "path": "ynh/gmail"
       },
       "description": "Reads Gmail for what is waiting on you and what you are waiting on: threads whose last message is to you, and threads where you sent last and got no reply. Read-only.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["gmail", "mail", "email", "google", "triage", "read-only"]
     },
     {
@@ -158,7 +158,7 @@
         "path": "ynh/apple-calendar"
       },
       "description": "Reads Apple Calendar on a Mac for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read only, enforced by a guard on every other tool.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["calendar", "apple", "icloud", "meetings", "invites", "triage", "read-only"]
     },
     {
@@ -169,7 +169,7 @@
         "path": "ynh/google-calendar"
       },
       "description": "Reads Google Calendar for what is waiting on you and what you are waiting on: unanswered invites, pending replies to your invites, and meetings that need preparation. Read-only.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["calendar", "meetings", "invites", "google", "triage", "read-only"]
     },
     {
@@ -180,7 +180,7 @@
         "path": "ynh/google-drive"
       },
       "description": "Reads Google Drive for what is waiting on you and what you are waiting on: comments on your documents, comments that mention you, and documents you shared for comment. Read-only.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["drive", "docs", "comments", "google", "triage", "read-only"]
     },
     {
@@ -191,7 +191,7 @@
         "path": "ynh/imessage"
       },
       "description": "Reads Messages (iMessage and SMS) on a Mac for who is waiting on a reply, catching up on a thread, finding what was said and what you promised. Read-only. Reads message text by default so it can tell a question from a thank-you; profile `redacted` hides the text.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["imessage", "messages", "sms", "texts", "triage", "read-only"]
     },
     {
@@ -202,7 +202,7 @@
         "path": "skills/triage"
       },
       "description": "Triage skills: what is waiting on me, what am I waiting on, and what to act on now or soon, answered in one shape on any platform.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["skills"]
     },
     {
@@ -213,7 +213,7 @@
         "path": "skills/platforms"
       },
       "description": "Platform skills: how to work well in a specific tool through its MCP server. Today: Slack, GitHub, Gmail, Google Calendar and Google Drive.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "keywords": ["skills"]
     },
     {
@@ -224,7 +224,62 @@
         "path": "skills/voice"
       },
       "description": "Voice and reply-style skills: describe how you sound, compose several voices, and shape a reply for each platform.",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "wheelhouse",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "plugins/wheelhouse"
+      },
+      "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
+      "version": "0.3.0",
+      "keywords": ["wheelhouse", "seats", "beads", "ynm"]
+    },
+    {
+      "name": "dev-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/dev"
+      },
+      "description": "Development workflow skills: project setup, code quality, review, debugging, backend, UI, and security patterns.",
+      "version": "0.2.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "infra-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/infra"
+      },
+      "description": "Infrastructure skills: GitHub repository setup, Terraform backend provisioning on AWS.",
+      "version": "0.2.0",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "pause-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/pause"
+      },
+      "description": "Conversational skills: guided elicitation and context checkpoints for alignment.",
+      "version": "0.1.1",
+      "keywords": ["skills"]
+    },
+    {
+      "name": "tech-skills",
+      "source": {
+        "type": "github",
+        "repo": "github.com/eyelock/assistants",
+        "path": "skills/tech"
+      },
+      "description": "Language-specific development skills: Go, Java, Swift, and SwiftUI workflows, tooling, and patterns.",
+      "version": "0.2.1",
       "keywords": ["skills"]
     }
   ]
