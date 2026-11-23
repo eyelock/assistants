@@ -166,17 +166,20 @@ done < <(
     if [[ -n "$RELEASE" ]]; then
       for f in "$DOWNLOADS/$RELEASE"*; do
         [[ -f "$f" ]] || continue
-        case "$(echo "${f##*.}" | tr '[:upper:]' '[:lower:]')" in
-          mp3|wav|flac) if same_release "$(basename "$f")"; then echo "$f"; fi ;;
-        esac
+        ext=$(echo "${f##*.}" | tr '[:upper:]' '[:lower:]')
+        # (no case inside this $(...): bash 3.2 mis-parses it)
+        if [[ "$ext" == mp3 || "$ext" == wav || "$ext" == flac ]] && same_release "$(basename "$f")"; then
+          echo "$f"
+        fi
       done
     fi
     # Explicit --zip paths that are actually loose audio files (mp3/wav/flac), not ZIPs
     for p in "${explicit_zips[@]+"${explicit_zips[@]}"}"; do
       [[ -f "$p" ]] || continue
-      case "$(echo "${p##*.}" | tr '[:upper:]' '[:lower:]')" in
-        mp3|wav|flac) echo "$p" ;;
-      esac
+      ext=$(echo "${p##*.}" | tr '[:upper:]' '[:lower:]')
+      if [[ "$ext" == mp3 || "$ext" == wav || "$ext" == flac ]]; then
+        echo "$p"
+      fi
     done
   } | sort -u
 )
