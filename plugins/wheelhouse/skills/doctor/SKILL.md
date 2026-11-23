@@ -39,6 +39,7 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
 | ynm syncs on push | Beads owns the git hooks, so `ynm init` can't add its pre-push sync; until it is appended, `git push` doesn't share memory |
 | ynm registered with ynh | seats are ynh harnesses; without `ynm client install ynh` they get none of ynm's tools or hooks, on any vendor |
 | Beads installed, work graph readable | all work lives in Beads |
+| Beads version | `bd` is at least 1.3.0 (`WL_BD_MIN` in `wheelhouse-lib.sh`), the release that added `bd update --if-assignee` and `--if-status` (a stale guard exits 13), which the claim and session-hold scripts rely on. An error below it; a warning when `bd version` prints no version to compare |
 | no Beads agent setup | `bd init` without `--skip-agents` writes skills, hooks and AGENTS.md blocks that tell agents to keep memory in `bd remember`, splitting it from ynm |
 | seats wired (once the roster has seats) | each seat is started by its own name and wakes as itself: a harness of its own whose wake hook (the installed wake.sh, as the wake skill's "The hook command" gives it) names it, and no `BEADS_ACTOR` passed through for a stray shell variable to override |
 | seats push at end (once the roster has seats) | each seat's session-end hook (`wake.sh --end`) pushes the memory and work it wrote; without it, they wait on this machine for the next `git push`, write or wake |
