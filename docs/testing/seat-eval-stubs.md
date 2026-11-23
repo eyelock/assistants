@@ -45,6 +45,12 @@ checkout. A worktree of the
 same repository somewhere else is not one, so a seat that works in its own worktree is not
 refused. Paths are compared after symbolic links are resolved.
 
+A run's own repository keeps its git directory at `.eval/gitdir`, in the run's directory, behind a
+`.git` file (`relocateGitDir` in `scripts/skill-evals.mjs`, run after the case's setup). Claude Code's
+sandbox keeps the launch directory's `.git/worktrees` read-only, so a real `.git` directory there
+would refuse every `git worktree add`. A refused-call log or a `--git-dir` that names
+`.eval/gitdir` is that repository, not another one.
+
 What the stub does not guard: `git branch -f` and `-D`, `cherry-pick`, `revert`, `clean`, `restore`,
 `tag`, `fetch` and `worktree` in a shared checkout; `git config core.worktree` and `core.hooksPath`
 set by an earlier call; a symbolic link or a script that runs the real `git` by its own path; and
