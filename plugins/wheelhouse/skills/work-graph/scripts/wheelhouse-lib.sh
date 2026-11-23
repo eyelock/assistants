@@ -69,6 +69,7 @@ WL_PREFIX="${WL_PREFIX:-}"
 # shellcheck disable=SC2034  # the library's interface, read by the scripts that source it
 WL_ROSTER_REL=skills/roster/assets/roster.json
 WL_BD_SECS="${WL_BD_SECS:-20}"
+# shellcheck disable=SC2034  # read by check.sh, which sources this library
 WL_BD_MIN=1.3.0
 WL_YNM_SECS="${WL_YNM_SECS:-30}"
 WL_GH_SECS="${WL_GH_SECS:-30}"
