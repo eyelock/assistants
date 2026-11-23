@@ -1,5 +1,5 @@
-// A merge goes in the inbox only once its pull request has left draft. inbox.sh assign --kind merge
-// asks gh (stubbed here) and refuses a draft; without gh it warns and carries on.
+// A merge goes in the inbox only while its pull request is open and out of draft. inbox.sh assign --kind merge
+// asks gh (stubbed here) and refuses a draft, merged or closed one; without gh it warns and carries on.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -51,16 +51,31 @@ const run = (gh) => {
 };
 
 test("a merge for a draft pull request is refused, saying why", () => {
-  const r = run(`echo true`);
+  const r = run(`echo "OPEN true"`);
   assert.equal(r.status, 1, r.stderr);
   assert.match(r.stderr, /still a draft/);
   assert.equal(r.stdout, "");
 });
 
 test("a merge for a pull request out of draft is accepted", () => {
-  const r = run(`echo false`);
+  const r = run(`echo "OPEN false"`);
   assert.equal(r.status, 0, r.stderr);
   assert.equal(JSON.parse(r.stdout).id, "hq-9");
+});
+
+for (const state of ["MERGED false", "CLOSED false", "CLOSED true"]) {
+  test(`a merge for a ${state.toLowerCase()} pull request is refused, saying it is already ${state.split(" ")[0]}`, () => {
+    const r = run(`echo "${state}"`);
+    assert.equal(r.status, 1, r.stderr);
+    assert.match(r.stderr, new RegExp(`already ${state.split(" ")[0]}`));
+    assert.equal(r.stdout, "");
+  });
+}
+
+test("a state gh does not recognise warns and carries on", () => {
+  const r = run(`echo "WHATEVER"`);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stderr, /warning/);
 });
 
 test("when gh fails, it warns and carries on", () => {
