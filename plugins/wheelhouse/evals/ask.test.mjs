@@ -2,7 +2,15 @@
 // Wheelhouse with a stateful bd stand-in (files/ask-bd-stub.sh, beads kept in a JSON file).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -15,7 +23,13 @@ const bdStub = join(here, "files", "ask-bd-stub.sh");
 const roster = {
   seats: [
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
-    { name: "Dalglish", group: "workers", command: "dalglish", harness: "harnesses/dalglish", mandate: "Build." },
+    {
+      name: "Dalglish",
+      group: "workers",
+      command: "dalglish",
+      harness: "harnesses/dalglish",
+      mandate: "Build.",
+    },
     { name: "Gore", group: "crew", command: "gore", harness: "harnesses/gore", mandate: "Review." },
   ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
@@ -57,7 +71,14 @@ function world(beads = []) {
     spawnSync("bash", [askSh, ...args], { cwd: dir, encoding: "utf8", env: { ...env, ...extra } });
   const state = () => JSON.parse(readFileSync(store, "utf8"));
   const bead = (id) => state().beads.find((b) => b.id === id);
-  return { dir, ask, state, bead, log: () => readFileSync(join(dir, "bd.log"), "utf8"), done: () => rmSync(dir, { recursive: true, force: true }) };
+  return {
+    dir,
+    ask,
+    state,
+    bead,
+    log: () => readFileSync(join(dir, "bd.log"), "utf8"),
+    done: () => rmSync(dir, { recursive: true, force: true }),
+  };
 }
 
 const json = (r) => {
@@ -66,10 +87,24 @@ const json = (r) => {
 };
 
 test("open a question: assigned to the answering seat, as the asker, blocking the asker's bead", () => {
-  const w = world([seed("hq-1", { labels: ["repo:assistants"], assignee: "dalglish", status: "in_progress" })]);
+  const w = world([
+    seed("hq-1", { labels: ["repo:assistants"], assignee: "dalglish", status: "in_progress" }),
+  ]);
   try {
     const out = json(
-      w.ask(["open", "--to", "gore", "--kind", "question", "--title", "Is the rule right?", "--from", "dalglish", "--blocks", "hq-1"]),
+      w.ask([
+        "open",
+        "--to",
+        "gore",
+        "--kind",
+        "question",
+        "--title",
+        "Is the rule right?",
+        "--from",
+        "dalglish",
+        "--blocks",
+        "hq-1",
+      ]),
     );
     assert.equal(out.to, "gore");
     assert.equal(out.askedBy, "dalglish");
@@ -91,7 +126,21 @@ test("open a question: assigned to the answering seat, as the asker, blocking th
 test("open a request to the desk by its alias: the desk's session address is the Wheelhouse's name", () => {
   const w = world();
   try {
-    const out = json(w.ask(["open", "--to", "desk", "--kind", "request", "--title", "Wake May", "--from", "dalglish", "--repo", "ynw"]));
+    const out = json(
+      w.ask([
+        "open",
+        "--to",
+        "desk",
+        "--kind",
+        "request",
+        "--title",
+        "Wake May",
+        "--from",
+        "dalglish",
+        "--repo",
+        "ynw",
+      ]),
+    );
     assert.equal(out.to, "hq");
     assert.equal(out.session, "hq");
     assert.equal(out.repo, "ynw");
@@ -105,15 +154,37 @@ test("open a request to the desk by its alias: the desk's session address is the
 test("open a report blocking nothing: it goes to the desk by default, and takes no --blocks or other seat", () => {
   const w = world([seed("hq-1")]);
   try {
-    const out = json(w.ask(["open", "--kind", "report", "--title", "PR 12 merged", "--from", "gore"]));
+    const out = json(
+      w.ask(["open", "--kind", "report", "--title", "PR 12 merged", "--from", "gore"]),
+    );
     assert.equal(out.to, "hq");
     assert.equal(out.blocks, null);
     assert.deepEqual(w.bead(out.id).labels.sort(), ["ask", "ask:report"]);
     assert.deepEqual(w.state().edges, []);
-    const blocking = w.ask(["open", "--kind", "report", "--title", "x", "--from", "gore", "--blocks", "hq-1"]);
+    const blocking = w.ask([
+      "open",
+      "--kind",
+      "report",
+      "--title",
+      "x",
+      "--from",
+      "gore",
+      "--blocks",
+      "hq-1",
+    ]);
     assert.equal(blocking.status, 1);
     assert.match(blocking.stderr, /blocks nothing/);
-    const other = w.ask(["open", "--to", "dalglish", "--kind", "report", "--title", "x", "--from", "gore"]);
+    const other = w.ask([
+      "open",
+      "--to",
+      "dalglish",
+      "--kind",
+      "report",
+      "--title",
+      "x",
+      "--from",
+      "gore",
+    ]);
     assert.equal(other.status, 1);
     assert.match(other.stderr, /goes to the desk/);
   } finally {
@@ -130,11 +201,26 @@ test("open refuses what is not an ask: no --to for a question, a human, itself, 
       assert.match(r.stderr, pattern);
     };
     refused(["open", "--kind", "question", "--title", "t", "--from", "gore"], /needs --to/);
-    refused(["open", "--to", "rook", "--kind", "question", "--title", "t", "--from", "gore"], /human/);
-    refused(["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "gore"], /yourself/);
-    refused(["open", "--to", "nobody", "--kind", "question", "--title", "t", "--from", "gore"], /not a seat/);
-    refused(["open", "--to", "gore", "--kind", "return", "--title", "t", "--from", "dalglish"], /--kind question, request or report/);
-    refused(["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "stranger"], /not a seat/);
+    refused(
+      ["open", "--to", "rook", "--kind", "question", "--title", "t", "--from", "gore"],
+      /human/,
+    );
+    refused(
+      ["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "gore"],
+      /yourself/,
+    );
+    refused(
+      ["open", "--to", "nobody", "--kind", "question", "--title", "t", "--from", "gore"],
+      /not a seat/,
+    );
+    refused(
+      ["open", "--to", "gore", "--kind", "return", "--title", "t", "--from", "dalglish"],
+      /--kind question, request or report/,
+    );
+    refused(
+      ["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "stranger"],
+      /not a seat/,
+    );
     refused(["open", "--to", "gore", "--kind", "question", "--title", "t"], /--from/);
     refused(["open", "--to", "gore", "--kind", "question", "--from", "dalglish"], /--title/);
     assert.deepEqual(w.state().beads, []);
@@ -148,9 +234,13 @@ test("a seat on trial (a harness on the branch, no roster entry) may ask and be 
   try {
     mkdirSync(join(w.dir, "harnesses", "mccoist"), { recursive: true });
     writeFileSync(join(w.dir, "harnesses", "mccoist", "AGENTS.md"), "**Mandate:** Build.\n");
-    const out = json(w.ask(["open", "--to", "mccoist", "--kind", "request", "--title", "t", "--from", "gore"]));
+    const out = json(
+      w.ask(["open", "--to", "mccoist", "--kind", "request", "--title", "t", "--from", "gore"]),
+    );
     assert.equal(out.session, "hq-mccoist");
-    json(w.ask(["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "mccoist"]));
+    json(
+      w.ask(["open", "--to", "gore", "--kind", "question", "--title", "t", "--from", "mccoist"]),
+    );
   } finally {
     w.done();
   }
@@ -159,7 +249,19 @@ test("a seat on trial (a harness on the branch, no roster entry) may ask and be 
 test("answer comments the answer and re-assigns the ask to its asker; the asker then closes it", () => {
   const w = world();
   try {
-    const opened = json(w.ask(["open", "--to", "gore", "--kind", "question", "--title", "Which?", "--from", "dalglish"]));
+    const opened = json(
+      w.ask([
+        "open",
+        "--to",
+        "gore",
+        "--kind",
+        "question",
+        "--title",
+        "Which?",
+        "--from",
+        "dalglish",
+      ]),
+    );
     const out = json(w.ask(["answer", opened.id, "--text", "The first.", "--from", "gore"]));
     assert.deepEqual(out, { id: opened.id, answeredBy: "gore", to: "dalglish" });
     const b = w.bead(opened.id);
@@ -180,7 +282,12 @@ test("answer refuses a non-ask, a report, a return, a closed ask and a seat it i
     seed("hq-1", { assignee: "gore" }),
     seed("hq-2", { assignee: "hq", labels: ["ask", "ask:report"], created_by: "gore" }),
     seed("hq-3", { assignee: "hq", labels: ["ask", "ask:return"], created_by: "gore" }),
-    seed("hq-4", { assignee: "gore", status: "closed", labels: ["ask", "ask:question"], created_by: "dalglish" }),
+    seed("hq-4", {
+      assignee: "gore",
+      status: "closed",
+      labels: ["ask", "ask:question"],
+      created_by: "dalglish",
+    }),
     seed("hq-5", { assignee: "gore", labels: ["ask", "ask:question"], created_by: "dalglish" }),
   ]);
   try {
@@ -204,9 +311,13 @@ test("answer refuses a non-ask, a report, a return, a closed ask and a seat it i
 });
 
 test("return comments why, releases the claim and re-assigns the same bead to the desk: no new bead", () => {
-  const w = world([seed("hq-1", { assignee: "dalglish", status: "in_progress", labels: ["repo:ynh"] })]);
+  const w = world([
+    seed("hq-1", { assignee: "dalglish", status: "in_progress", labels: ["repo:ynh"] }),
+  ]);
   try {
-    const out = json(w.ask(["return", "hq-1", "--reason", "outside my charter", "--from", "dalglish"]));
+    const out = json(
+      w.ask(["return", "hq-1", "--reason", "outside my charter", "--from", "dalglish"]),
+    );
     assert.deepEqual(out, { id: "hq-1", returnedBy: "dalglish", to: "hq" });
     const st = w.state();
     assert.equal(st.beads.length, 1);
@@ -248,11 +359,36 @@ test("return refuses a bead the seat doesn't hold, a report, a closed bead, the 
 const NOW = String(Date.parse("2026-11-10T12:00:00Z") / 1000);
 function showWorld() {
   return world([
-    seed("hq-1", { labels: ["ask", "ask:question"], assignee: "gore", created_by: "dalglish", created_at: "2026-11-08T12:00:00Z" }),
-    seed("hq-2", { labels: ["ask", "ask:request"], assignee: "gore", created_by: "dalglish", created_at: "2026-11-10T11:30:00Z" }),
-    seed("hq-3", { labels: ["ask", "ask:question"], assignee: "dalglish", created_by: "dalglish", created_at: "2026-11-09T12:00:00Z" }),
-    seed("hq-4", { labels: ["ask", "ask:report"], assignee: "hq", created_by: "gore", created_at: "2026-11-08T00:00:00Z" }),
-    seed("hq-5", { labels: ["ask", "ask:question"], assignee: "gore", created_by: "dalglish", status: "closed" }),
+    seed("hq-1", {
+      labels: ["ask", "ask:question"],
+      assignee: "gore",
+      created_by: "dalglish",
+      created_at: "2026-11-08T12:00:00Z",
+    }),
+    seed("hq-2", {
+      labels: ["ask", "ask:request"],
+      assignee: "gore",
+      created_by: "dalglish",
+      created_at: "2026-11-10T11:30:00Z",
+    }),
+    seed("hq-3", {
+      labels: ["ask", "ask:question"],
+      assignee: "dalglish",
+      created_by: "dalglish",
+      created_at: "2026-11-09T12:00:00Z",
+    }),
+    seed("hq-4", {
+      labels: ["ask", "ask:report"],
+      assignee: "hq",
+      created_by: "gore",
+      created_at: "2026-11-08T00:00:00Z",
+    }),
+    seed("hq-5", {
+      labels: ["ask", "ask:question"],
+      assignee: "gore",
+      created_by: "dalglish",
+      status: "closed",
+    }),
     seed("hq-6", { labels: [], assignee: "gore" }),
   ]);
 }
@@ -359,7 +495,10 @@ test("after bd fails, show calls it no more: one list call, and one dep list cal
   // A failing list is run once, not again for its message.
   let w = world();
   try {
-    writeFileSync(join(w.dir, "bin", "bd"), `#!/bin/sh\necho "$@" >> "${join(w.dir, "calls.log")}"\necho 'dolt is down' >&2\nexit 1\n`);
+    writeFileSync(
+      join(w.dir, "bin", "bd"),
+      `#!/bin/sh\necho "$@" >> "${join(w.dir, "calls.log")}"\necho 'dolt is down' >&2\nexit 1\n`,
+    );
     const r = w.ask(["show", "--all"]);
     assert.equal(r.status, 3);
     assert.match(r.stderr, /bd list failed: dolt is down/);
@@ -398,8 +537,18 @@ test("after bd fails, show calls it no more: one list call, and one dep list cal
 
 test("a returned ask carries ask:return and no other kind: the desk sees a return to route, and can't answer it", () => {
   const w = world([
-    seed("hq-1", { labels: ["ask", "ask:request"], assignee: "gore", status: "in_progress", created_by: "dalglish" }),
-    seed("hq-2", { labels: ["ask", "ask:question"], assignee: "gore", status: "in_progress", created_by: "dalglish" }),
+    seed("hq-1", {
+      labels: ["ask", "ask:request"],
+      assignee: "gore",
+      status: "in_progress",
+      created_by: "dalglish",
+    }),
+    seed("hq-2", {
+      labels: ["ask", "ask:question"],
+      assignee: "gore",
+      status: "in_progress",
+      created_by: "dalglish",
+    }),
   ]);
   try {
     json(w.ask(["return", "hq-1", "--reason", "not mine", "--from", "gore"]));
@@ -422,7 +571,13 @@ test("a returned ask carries ask:return and no other kind: the desk sees a retur
 });
 
 test("show reports return when a bead carries both a kind and ask:return (one returned before the kind was dropped)", () => {
-  const w = world([seed("hq-1", { labels: ["ask", "ask:request", "ask:return"], assignee: "hq", created_by: "dalglish" })]);
+  const w = world([
+    seed("hq-1", {
+      labels: ["ask", "ask:request", "ask:return"],
+      assignee: "hq",
+      created_by: "dalglish",
+    }),
+  ]);
   try {
     const out = json(w.ask(["show", "--seat", "hq"]));
     assert.deepEqual(

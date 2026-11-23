@@ -24,9 +24,16 @@ function withWheelhouse({ desk, seats }, fn) {
     };
     write(".agents/harness/plugin.json", desk);
     write("skills/roster/assets/roster.json", {
-      seats: Object.keys(seats).map((c) => ({ name: c, group: "workers", command: c, harness: `harnesses/${c}`, mandate: "m" })),
+      seats: Object.keys(seats).map((c) => ({
+        name: c,
+        group: "workers",
+        command: c,
+        harness: `harnesses/${c}`,
+        mandate: "m",
+      })),
     });
-    for (const [c, m] of Object.entries(seats)) write(`harnesses/${c}/.agents/harness/plugin.json`, m);
+    for (const [c, m] of Object.entries(seats))
+      write(`harnesses/${c}/.agents/harness/plugin.json`, m);
     fn(dir);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -40,7 +47,10 @@ const labelled = (dir) => {
 
 test("the doctor passes a desk and seats that all carry the Wheelhouse's label", () => {
   withWheelhouse(
-    { desk: manifest("hq", { wheelhouse: "hq" }), seats: { okafor: manifest("okafor", { wheelhouse: "hq", team: "x" }) } },
+    {
+      desk: manifest("hq", { wheelhouse: "hq" }),
+      seats: { okafor: manifest("okafor", { wheelhouse: "hq", team: "x" }) },
+    },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, true);
@@ -51,7 +61,10 @@ test("the doctor passes a desk and seats that all carry the Wheelhouse's label",
 
 test("the doctor warns about a harness without the label, the desk's included, and says how to fix it", () => {
   withWheelhouse(
-    { desk: manifest("hq"), seats: { okafor: manifest("okafor", { wheelhouse: "hq" }), gore: manifest("gore") } },
+    {
+      desk: manifest("hq"),
+      seats: { okafor: manifest("okafor", { wheelhouse: "hq" }), gore: manifest("gore") },
+    },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, false);
@@ -67,7 +80,10 @@ test("the doctor warns about a harness without the label, the desk's included, a
 
 test("the doctor warns about a harness carrying another Wheelhouse's label", () => {
   withWheelhouse(
-    { desk: manifest("hq", { wheelhouse: "hq" }), seats: { okafor: manifest("okafor", { wheelhouse: "other" }) } },
+    {
+      desk: manifest("hq", { wheelhouse: "hq" }),
+      seats: { okafor: manifest("okafor", { wheelhouse: "other" }) },
+    },
     (dir) => {
       const c = labelled(dir);
       assert.equal(c.ok, false);
@@ -83,7 +99,16 @@ test("add-seat, create-wheelhouse and the doctor document the label, and name no
   assert.match(read("add-seat", "SKILL.md"), /"labels": \{ "wheelhouse": "<wheelhouse>" \}/);
   assert.match(read("create-wheelhouse", "SKILL.md"), /"labels": \{ "wheelhouse": "<name>" \}/);
   assert.match(read("doctor", "SKILL.md"), /ynr query runs --label wheelhouse:<name>/);
-  for (const f of [["add-seat", "SKILL.md"], ["create-wheelhouse", "SKILL.md"], ["doctor", "SKILL.md"], ["doctor", "scripts", "check.sh"]]) {
-    assert.doesNotMatch(read(...f), /wheelhouse:(ynw|hq)\b/, `${f.join("/")} names a Wheelhouse in a label`);
+  for (const f of [
+    ["add-seat", "SKILL.md"],
+    ["create-wheelhouse", "SKILL.md"],
+    ["doctor", "SKILL.md"],
+    ["doctor", "scripts", "check.sh"],
+  ]) {
+    assert.doesNotMatch(
+      read(...f),
+      /wheelhouse:(ynw|hq)\b/,
+      `${f.join("/")} names a Wheelhouse in a label`,
+    );
   }
 });

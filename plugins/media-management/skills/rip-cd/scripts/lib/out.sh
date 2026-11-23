@@ -27,7 +27,7 @@ with_out() {
   done
   [[ -n "$out" ]] || return 0
   mkdir -p "$(dirname "$out")"
-  bash "$script" "${pass[@]}" >"$out.partial" || rc=$?
+  bash "$script" "${pass[@]+"${pass[@]}"}" >"$out.partial" || rc=$?
   if [[ -s "$out.partial" ]]; then
     mv "$out.partial" "$out"
     cat "$out"

@@ -15,9 +15,29 @@ const claimSh = join(here, "..", "skills", "work-graph", "scripts", "claim.sh");
 const roster = {
   seats: [
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk." },
-    { name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build.", specialities: ["repo:ynh"] },
-    { name: "Albarn", group: "workers", command: "albarn", harness: "harnesses/albarn", mandate: "Build.", specialities: ["repo:assistants", "repo:ynw"] },
-    { name: "Gahan", group: "workers", command: "gahan", harness: "harnesses/gahan", mandate: "Build." },
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+      specialities: ["repo:ynh"],
+    },
+    {
+      name: "Albarn",
+      group: "workers",
+      command: "albarn",
+      harness: "harnesses/albarn",
+      mandate: "Build.",
+      specialities: ["repo:assistants", "repo:ynw"],
+    },
+    {
+      name: "Gahan",
+      group: "workers",
+      command: "gahan",
+      harness: "harnesses/gahan",
+      mandate: "Build.",
+    },
   ],
   humans: [{ name: "Rook", command: "rook", default: true }],
 };

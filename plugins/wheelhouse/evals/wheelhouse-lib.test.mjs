@@ -2,13 +2,30 @@
 // library in bash and calls one helper, with stubs of bd and ynm where it calls them.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-const lib = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "wheelhouse-lib.sh");
+const lib = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "work-graph",
+  "scripts",
+  "wheelhouse-lib.sh",
+);
 
 function scratch() {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-lib-"));
@@ -58,8 +75,14 @@ test("limited gives up with 142 and kills the command's whole process group", ()
 test("limited without perl runs the command unbounded and says so once", () => {
   const s = scratch();
   try {
-    for (const tool of ["sleep", "sh"]) symlinkSync(spawnSync("which", [tool], { encoding: "utf8" }).stdout.trim(), join(s.dir, "bin", tool));
-    const r = run(s.dir, "limited 5 sleep 0; limited 5 sleep 0; echo done", { path: join(s.dir, "bin") });
+    for (const tool of ["sleep", "sh"])
+      symlinkSync(
+        spawnSync("which", [tool], { encoding: "utf8" }).stdout.trim(),
+        join(s.dir, "bin", tool),
+      );
+    const r = run(s.dir, "limited 5 sleep 0; limited 5 sleep 0; echo done", {
+      path: join(s.dir, "bin"),
+    });
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /done/);
     assert.match(r.stderr, /perl is not installed, so 'sleep' runs with no time limit/);
@@ -91,7 +114,10 @@ test("bd_data and bd_first read a bare result and a {data} envelope the same way
       assert.equal(run(s.dir, "bd_data", { input: json }).stdout.trim(), '[{"id":"a"},{"id":"b"}]');
       assert.equal(run(s.dir, "bd_first", { input: json }).stdout.trim(), '{"id":"a"}');
     }
-    assert.equal(run(s.dir, "bd_first", { input: '{"data":{"id":"c"}}' }).stdout.trim(), '{"id":"c"}');
+    assert.equal(
+      run(s.dir, "bd_first", { input: '{"data":{"id":"c"}}' }).stdout.trim(),
+      '{"id":"c"}',
+    );
   } finally {
     s.done();
   }
@@ -100,8 +126,10 @@ test("bd_data and bd_first read a bare result and a {data} envelope the same way
 test("wl_valid_command takes lower-case letters, digits and hyphens, and nothing else", () => {
   const s = scratch();
   try {
-    for (const ok of ["gahan", "a1", "x-y"]) assert.equal(run(s.dir, `wl_valid_command '${ok}'`).status, 0, ok);
-    for (const bad of ["", "-x", "Gahan", "a b", "a.b", "a_b", "../x"]) assert.notEqual(run(s.dir, `wl_valid_command '${bad}'`).status, 0, bad);
+    for (const ok of ["gahan", "a1", "x-y"])
+      assert.equal(run(s.dir, `wl_valid_command '${ok}'`).status, 0, ok);
+    for (const bad of ["", "-x", "Gahan", "a b", "a.b", "a_b", "../x"])
+      assert.notEqual(run(s.dir, `wl_valid_command '${bad}'`).status, 0, bad);
   } finally {
     s.done();
   }
@@ -174,7 +202,11 @@ test("wl_identity_pinned reads the seat's own namespace from ynm, and returns 1 
   try {
     stub(s.dir, "ynm", 'echo \'[{"namespace":"seat/gahan","pinned":true}]\'');
     assert.equal(run(s.dir, "wl_identity_pinned ynm . gahan").stdout, "yes\n");
-    assert.equal(run(s.dir, "wl_identity_pinned ynm . eno").stdout, "no\n", "the namespace is the seat's own");
+    assert.equal(
+      run(s.dir, "wl_identity_pinned ynm . eno").stdout,
+      "no\n",
+      "the namespace is the seat's own",
+    );
     stub(s.dir, "ynm", "exit 1");
     assert.equal(run(s.dir, "wl_identity_pinned ynm . gahan").status, 1);
     assert.equal(run(s.dir, "wl_identity_pinned other . gahan").status, 1);
@@ -195,8 +227,15 @@ test("WL_JQ_MODELS resolves a seat's model from its tier, group default or per-v
         { command: "d", group: "crew" },
       ],
     };
-    const r = run(s.dir, `jq -c "$WL_JQ_MODELS"'[wl_model("claude") | [.seat, .model]]'`, { input: JSON.stringify(roster) });
-    assert.deepEqual(JSON.parse(r.stdout), [["a", "sonnet"], ["b", "big"], ["c", "haiku"], ["d", null]]);
+    const r = run(s.dir, `jq -c "$WL_JQ_MODELS"'[wl_model("claude") | [.seat, .model]]'`, {
+      input: JSON.stringify(roster),
+    });
+    assert.deepEqual(JSON.parse(r.stdout), [
+      ["a", "sonnet"],
+      ["b", "big"],
+      ["c", "haiku"],
+      ["d", null],
+    ]);
   } finally {
     s.done();
   }
@@ -211,10 +250,18 @@ test("every script finds the library from an installed seat layout of picked ski
     const skills = join(dirname(lib), "..", "..");
     const installed = join(dir, ".claude", "skills");
     const picked = ["wake", "work-graph", "add-seat", "doctor", "refresh", "patrol"];
-    for (const name of picked) cpSync(join(skills, name), join(installed, name), { recursive: true });
+    for (const name of picked)
+      cpSync(join(skills, name), join(installed, name), { recursive: true });
     const scripts = readdirSync(installed)
-      .flatMap((name) => readdirSync(join(installed, name, "scripts")).filter((f) => f.endsWith(".sh")).map((f) => join(installed, name, "scripts", f)))
-      .filter((f) => readFileSync(f, "utf8").includes("wheelhouse-lib.sh") && !f.endsWith("wheelhouse-lib.sh"));
+      .flatMap((name) =>
+        readdirSync(join(installed, name, "scripts"))
+          .filter((f) => f.endsWith(".sh"))
+          .map((f) => join(installed, name, "scripts", f)),
+      )
+      .filter(
+        (f) =>
+          readFileSync(f, "utf8").includes("wheelhouse-lib.sh") && !f.endsWith("wheelhouse-lib.sh"),
+      );
     assert.ok(scripts.length >= 10, `found ${scripts.length} scripts that source the library`);
     for (const script of scripts) {
       const r = spawnSync("/bin/bash", [script, "--help"], { cwd: dir, encoding: "utf8" });
@@ -226,7 +273,9 @@ test("every script finds the library from an installed seat layout of picked ski
     rmSync(join(installed, "doctor"), { recursive: true });
     rmSync(join(installed, "refresh"), { recursive: true });
     rmSync(join(installed, "patrol"), { recursive: true });
-    const wake = spawnSync("/bin/bash", [join(installed, "wake", "scripts", "wake.sh"), "--help"], { encoding: "utf8" });
+    const wake = spawnSync("/bin/bash", [join(installed, "wake", "scripts", "wake.sh"), "--help"], {
+      encoding: "utf8",
+    });
     assert.equal(wake.status, 0, wake.stderr);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -237,7 +286,11 @@ test("every script finds the library from an installed seat layout of picked ski
 const withConf = (conf, fn) => {
   const s = scratch();
   try {
-    if (conf !== undefined) writeFileSync(join(s.dir, "wheelhouse.json"), typeof conf === "string" ? conf : JSON.stringify(conf));
+    if (conf !== undefined)
+      writeFileSync(
+        join(s.dir, "wheelhouse.json"),
+        typeof conf === "string" ? conf : JSON.stringify(conf),
+      );
     return fn(s.dir);
   } finally {
     s.done();
@@ -250,7 +303,10 @@ const FULL = {
   tasks: "beads",
   shared_checkouts: ["../ynh", "../ynm"],
   protected_branches: ["main", "develop"],
-  sanctioned_force: [{ who: "reviewer", on: "review-fix bead held by its author" }, { who: "desk", on: "inbox bead", via: "inbox.sh close" }],
+  sanctioned_force: [
+    { who: "reviewer", on: "review-fix bead held by its author" },
+    { who: "desk", on: "inbox bead", via: "inbox.sh close" },
+  ],
   budgets: { constitution_words: 2671, charter_words: 1715 },
   guards: { mode: "log", overrides: { "shared-checkout": "log" } },
 };
@@ -267,7 +323,15 @@ test("wl_conf returns each key's value from the file", () => {
 
 test("wl_conf gives each key's default when the file is missing", () => {
   withConf(undefined, (dir) => {
-    const expected = { memory: "ynm", tasks: "beads", shared_checkouts: [], protected_branches: [], sanctioned_force: [], budgets: {}, guards: { mode: "block", overrides: {} } };
+    const expected = {
+      memory: "ynm",
+      tasks: "beads",
+      shared_checkouts: [],
+      protected_branches: [],
+      sanctioned_force: [],
+      budgets: {},
+      guards: { mode: "block", overrides: {} },
+    };
     for (const [key, value] of Object.entries(expected)) {
       const r = conf(dir, key);
       assert.equal(r.status, 0, key);
@@ -280,7 +344,10 @@ test("wl_conf gives each key's default when the file is missing", () => {
 test("wl_conf gives a key's default when the file lacks it, and guards keeps its mode with only overrides set", () => {
   withConf({ guards: { overrides: { x: "log" } } }, (dir) => {
     assert.deepEqual(JSON.parse(conf(dir, "protected_branches").stdout), []);
-    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), { mode: "block", overrides: { x: "log" } });
+    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), {
+      mode: "block",
+      overrides: { x: "log" },
+    });
   });
 });
 
@@ -313,7 +380,16 @@ test("wl_conf_problems names each bad key with how to fix it", () => {
     const r = run(dir, `wl_conf_problems "${dir}"`);
     assert.equal(r.status, 1);
     const lines = r.stdout.trim().split("\n");
-    for (const key of ["colour", "memory", "tasks", "shared_checkouts", "protected_branches", "sanctioned_force", "budgets", "guards.mode"]) {
+    for (const key of [
+      "colour",
+      "memory",
+      "tasks",
+      "shared_checkouts",
+      "protected_branches",
+      "sanctioned_force",
+      "budgets",
+      "guards.mode",
+    ]) {
       const line = lines.find((l) => l.startsWith(`${key}:`));
       assert.ok(line, `a line for ${key}`);
       assert.match(line, /Fix: /, key);

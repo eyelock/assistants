@@ -20,7 +20,13 @@ const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const hasBd = spawnSync("bd", ["--version"]).status === 0;
 const roster = {
   seats: [
-    { name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." },
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+    },
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
   ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
@@ -34,7 +40,10 @@ function wheelhouse({ realBd = true } = {}) {
   mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
   mkdirSync(join(dir, "harnesses", "hynde"), { recursive: true });
-  writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build one bead at a time.\n");
+  writeFileSync(
+    join(dir, "harnesses", "hynde", "AGENTS.md"),
+    "**Mandate:** Build one bead at a time.\n",
+  );
   // The layout ynh installs: the wake skill's scripts beside the work-graph skill's.
   for (const [skill, files] of [
     ["wake", ["wake.sh", "session.sh", "sync.sh", "render-wake.jq"]],
@@ -43,7 +52,10 @@ function wheelhouse({ realBd = true } = {}) {
     mkdirSync(join(dir, "plugin", "skills", skill, "scripts"), { recursive: true });
     for (const f of files) {
       try {
-        copyFileSync(join(plugin, "skills", skill, "scripts", f), join(dir, "plugin", "skills", skill, "scripts", f));
+        copyFileSync(
+          join(plugin, "skills", skill, "scripts", f),
+          join(dir, "plugin", "skills", skill, "scripts", f),
+        );
       } catch {
         // sync.sh and render-wake.jq exist only once the wake split lands: the script reads without them.
       }
@@ -57,17 +69,38 @@ function wheelhouse({ realBd = true } = {}) {
 
 // One session of a seat, told apart from another by its token.
 function run(dir, token, args, env = {}) {
-  return spawnSync("bash", [join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"), "--seat", "hynde", "--no-sync", ...args], {
-    cwd: dir,
-    encoding: "utf8",
-    env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "", CLAUDE_CODE_SESSION_ID: "", TMPDIR: dir, WAKE_SESSION_TOKEN: token, ...env },
-  });
+  return spawnSync(
+    "bash",
+    [
+      join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"),
+      "--seat",
+      "hynde",
+      "--no-sync",
+      ...args,
+    ],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+        BEADS_ACTOR: "",
+        CLAUDE_CODE_SESSION_ID: "",
+        TMPDIR: dir,
+        WAKE_SESSION_TOKEN: token,
+        ...env,
+      },
+    },
+  );
 }
 const wake = (dir, token, extra = []) => run(dir, token, ["--format", "json", ...extra]);
 const end = (dir, token) => run(dir, token, ["--end"]);
-const sessionBead = ({ bd }) => JSON.parse(bd("list", "--label", "session:hynde", "--all", "--json").stdout)[0];
+const sessionBead = ({ bd }) =>
+  JSON.parse(bd("list", "--label", "session:hynde", "--all", "--json").stdout)[0];
 
-test("a first wake takes the seat's session bead, and the bead is not work", { skip: !hasBd }, () => {
+test("a first wake takes the seat's session bead, and the bead is not work", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     const r = wake(w.dir, "aaa");
@@ -87,7 +120,9 @@ test("a first wake takes the seat's session bead, and the bead is not work", { s
   }
 });
 
-test("a second wake is refused, names the holder and when it started, and changes nothing", { skip: !hasBd }, () => {
+test("a second wake is refused, names the holder and when it started, and changes nothing", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "aaa").status, 0);
@@ -110,7 +145,9 @@ test("a second wake is refused, names the holder and when it started, and change
   }
 });
 
-test("a forced wake takes the hold over and comments which session it replaced", { skip: !hasBd }, () => {
+test("a forced wake takes the hold over and comments which session it replaced", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "aaa").status, 0);
@@ -126,13 +163,18 @@ test("a forced wake takes the hold over and comments which session it replaced",
     assert.match(comments, /Forced start/);
     assert.match(comments, /session bbb took over this hold from hynde session aaa/);
     const text = run(w.dir, "ccc", ["--format", "text", "--force"]);
-    assert.match(text.stdout, /\*\*Forced start:\*\* you took this seat over from hynde session bbb/);
+    assert.match(
+      text.stdout,
+      /\*\*Forced start:\*\* you took this seat over from hynde session bbb/,
+    );
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
 
-test("a handoff releases the hold, so the next start is not refused; only the holder releases it", { skip: !hasBd }, () => {
+test("a handoff releases the hold, so the next start is not refused; only the holder releases it", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "aaa").status, 0);
@@ -144,13 +186,19 @@ test("a handoff releases the hold, so the next start is not refused; only the ho
     assert.equal(bead.status, "open");
     assert.equal(bead.assignee, undefined);
     assert.equal(wake(w.dir, "bbb").status, 0, "the seat can start again");
-    assert.equal(JSON.parse(end(w.dir, "aaa").stdout).session, "not-yours", "the old session no longer holds it");
+    assert.equal(
+      JSON.parse(end(w.dir, "aaa").stdout).session,
+      "not-yours",
+      "the old session no longer holds it",
+    );
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
 
-test("a crashed holder stays held, with no lease to lapse and nothing to reclaim, until a start is forced", { skip: !hasBd }, () => {
+test("a crashed holder stays held, with no lease to lapse and nothing to reclaim, until a start is forced", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "aaa").status, 0);
@@ -178,36 +226,56 @@ test("a bd that cannot be read never stops a wake: the block says the check was 
   }
 });
 
-test("the token comes from CLAUDE_CODE_SESSION_ID, so a refused session's end leaves the live hold alone", { skip: !hasBd }, () => {
+test("the token comes from CLAUDE_CODE_SESSION_ID, so a refused session's end leaves the live hold alone", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     const as = (id) => ({ CLAUDE_CODE_SESSION_ID: id });
     assert.equal(run(w.dir, "", ["--format", "json"], as("live-session")).status, 0);
     assert.equal(run(w.dir, "", ["--format", "json"], as("second-session")).status, 4);
-    assert.equal(JSON.parse(run(w.dir, "", ["--end"], as("second-session")).stdout).session, "not-yours");
+    assert.equal(
+      JSON.parse(run(w.dir, "", ["--end"], as("second-session")).stdout).session,
+      "not-yours",
+    );
     assert.equal(sessionBead(w).status, "in_progress", "the live session still holds it");
     assert.doesNotMatch(sessionBead(w).notes, /live-session/, "the id itself is never written");
-    assert.equal(JSON.parse(run(w.dir, "", ["--end"], as("live-session")).stdout).session, "released");
+    assert.equal(
+      JSON.parse(run(w.dir, "", ["--end"], as("live-session")).stdout).session,
+      "released",
+    );
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
 
-test("with no session id at all, a refused session's end releases nothing, and the live one's end still does", { skip: !hasBd }, () => {
+test("with no session id at all, a refused session's end releases nothing, and the live one's end still does", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "").status, 0);
     assert.equal(wake(w.dir, "").status, 4, "the second start is refused");
-    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "its own end releases nothing");
+    assert.equal(
+      JSON.parse(end(w.dir, "").stdout).session,
+      "not-yours",
+      "its own end releases nothing",
+    );
     assert.equal(sessionBead(w).status, "in_progress");
-    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "released", "the live session's end does");
+    assert.equal(
+      JSON.parse(end(w.dir, "").stdout).session,
+      "released",
+      "the live session's end does",
+    );
     assert.equal(sessionBead(w).status, "open");
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
 
-test("with no session id, two refused sessions ending in any order leave the live hold intact", { skip: !hasBd }, () => {
+test("with no session id, two refused sessions ending in any order leave the live hold intact", {
+  skip: !hasBd,
+}, () => {
   const w = wheelhouse();
   try {
     assert.equal(wake(w.dir, "").status, 0);
@@ -216,7 +284,11 @@ test("with no session id, two refused sessions ending in any order leave the liv
     assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "the first refused end");
     assert.equal(JSON.parse(end(w.dir, "").stdout).session, "not-yours", "the second refused end");
     assert.equal(sessionBead(w).status, "in_progress", "the live hold is still held");
-    assert.equal(JSON.parse(end(w.dir, "").stdout).session, "released", "the live session's end frees it");
+    assert.equal(
+      JSON.parse(end(w.dir, "").stdout).session,
+      "released",
+      "the live session's end frees it",
+    );
   } finally {
     rmSync(w.dir, { recursive: true, force: true });
   }

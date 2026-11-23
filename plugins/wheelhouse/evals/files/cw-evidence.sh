@@ -3,7 +3,7 @@
 # constitution, roster, desk, Beads setup and remotes.
 set -uo pipefail
 [ -d hq ] || { echo "(no ./hq folder)"; exit 0; }
-cd hq
+cd hq || exit 1
 echo '$ git log --oneline --stat'; git log --oneline --stat 2>&1 | head -40
 echo; echo '$ git status --short'; git status --short --untracked-files=all
 echo; echo '$ git remote -v'; git remote -v

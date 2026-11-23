@@ -16,22 +16,45 @@ const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
 const NOW = 1_800_000_000;
 const iso = (secsAgo) => new Date((NOW - secsAgo) * 1000).toISOString();
 const ASKS = [
-  { id: "x-2", title: "Which branch?", status: "open", assignee: "marr", created_by: "albarn", labels: ["ask", "ask:question"], created_at: iso(3 * 3600), priority: 2 },
-  { id: "x-1", title: "Wake May", status: "open", assignee: "eno", created_by: "hannett", labels: ["ask", "ask:request"], created_at: iso(3 * 86400), priority: 2 },
+  {
+    id: "x-2",
+    title: "Which branch?",
+    status: "open",
+    assignee: "marr",
+    created_by: "albarn",
+    labels: ["ask", "ask:question"],
+    created_at: iso(3 * 3600),
+    priority: 2,
+  },
+  {
+    id: "x-1",
+    title: "Wake May",
+    status: "open",
+    assignee: "eno",
+    created_by: "hannett",
+    labels: ["ask", "ask:request"],
+    created_at: iso(3 * 86400),
+    priority: 2,
+  },
 ];
 
 // asks: what `bd list --label ask` answers; listFails: bd list exits 1; noAskSh: ask.sh is not in the work-graph skill;
 // askShBroken: ask.sh prints nothing and fails; beside: the pre-#266 layout, every script together in scripts/ (the
 // default is where ynh installs them: skills/wake/scripts/wake.sh finding skills/work-graph/scripts/ask.sh).
-function run(seat, { asks = ASKS, listFails = false, noAskSh = false, askShBroken = false, beside = false } = {}) {
+function run(
+  seat,
+  { asks = ASKS, listFails = false, noAskSh = false, askShBroken = false, beside = false } = {},
+) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-wake-asks-"));
   try {
     const wakeDir = beside ? join(dir, "scripts") : join(dir, "skills", "wake", "scripts");
     const wgDir = beside ? join(dir, "scripts") : join(dir, "skills", "work-graph", "scripts");
     mkdirSync(wakeDir, { recursive: true });
     mkdirSync(wgDir, { recursive: true });
-    for (const f of ["wake.sh", "sync.sh", "render-wake.jq"]) writeFileSync(join(wakeDir, f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
-    for (const name of ["memory.sh", "wheelhouse-lib.sh", "inbox.sh"]) writeFileSync(join(wgDir, name), readFileSync(join(wg, name)));
+    for (const f of ["wake.sh", "sync.sh", "render-wake.jq"])
+      writeFileSync(join(wakeDir, f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const name of ["memory.sh", "wheelhouse-lib.sh", "inbox.sh"])
+      writeFileSync(join(wgDir, name), readFileSync(join(wg, name)));
     if (askShBroken) writeFileSync(join(wgDir, "ask.sh"), "#!/bin/bash\nexit 1\n");
     else if (!noAskSh) writeFileSync(join(wgDir, "ask.sh"), readFileSync(join(wg, "ask.sh")));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
@@ -64,9 +87,27 @@ esac
       chmodSync(join(dir, "bin", name), 0o755);
     }
     spawnSync("git", ["init", "-q"], { cwd: dir });
-    const env = { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, ASK_NOW: String(NOW), WAKE_BD_SECS: "5", WAKE_ASK_SECS: "10", WAKE_INBOX_SECS: "10", WAKE_SYNC_SECS: "5", WAKE_YNM_SECS: "5" };
-    const text = spawnSync("bash", [join(wakeDir, "wake.sh"), seat, "--format", "text", "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
-    const json = spawnSync("bash", [join(wakeDir, "wake.sh"), seat, "--no-sync"], { cwd: dir, encoding: "utf8", timeout: 60000, env });
+    const env = {
+      ...process.env,
+      PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+      ASK_NOW: String(NOW),
+      WAKE_BD_SECS: "5",
+      WAKE_ASK_SECS: "10",
+      WAKE_INBOX_SECS: "10",
+      WAKE_SYNC_SECS: "5",
+      WAKE_YNM_SECS: "5",
+    };
+    const text = spawnSync(
+      "bash",
+      [join(wakeDir, "wake.sh"), seat, "--format", "text", "--no-sync"],
+      { cwd: dir, encoding: "utf8", timeout: 60000, env },
+    );
+    const json = spawnSync("bash", [join(wakeDir, "wake.sh"), seat, "--no-sync"], {
+      cwd: dir,
+      encoding: "utf8",
+      timeout: 60000,
+      env,
+    });
     return { text, json: JSON.parse(json.stdout) };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -78,10 +119,16 @@ test("the desk's wake lists every open ask, oldest first, with kind, asker, answ
   assert.equal(text.status, 0, text.stderr);
   assert.match(text.stdout, /## Asks between seats/);
   assert.match(text.stdout, /- Wake May \(x-1, request, asked by hannett, with eno, open 3d\)/);
-  assert.match(text.stdout, /- Which branch\? \(x-2, question, asked by albarn, with marr, open 3h\)/);
+  assert.match(
+    text.stdout,
+    /- Which branch\? \(x-2, question, asked by albarn, with marr, open 3h\)/,
+  );
   assert.ok(text.stdout.indexOf("x-1") < text.stdout.indexOf("x-2"), "oldest first");
   assert.equal(json.asks.count, 2);
-  assert.deepEqual(json.asks.asks.map((a) => a.id), ["x-1", "x-2"]);
+  assert.deepEqual(
+    json.asks.asks.map((a) => a.id),
+    ["x-1", "x-2"],
+  );
 });
 
 test("no open asks: the desk's wake says so plainly", () => {
@@ -105,7 +152,10 @@ test("ask.sh broken, or missing from the work-graph skill: the wake says so and 
   assert.match(broken.text.stdout, /The open asks could not be read: /);
   assert.ok(broken.json.asks.error);
   const missing = run("ynw", { noAskSh: true });
-  assert.match(missing.text.stdout, /The open asks could not be read: no ask\.sh in the work-graph skill/);
+  assert.match(
+    missing.text.stdout,
+    /The open asks could not be read: no ask\.sh in the work-graph skill/,
+  );
   assert.doesNotMatch(missing.text.stdout, /No open asks/);
   assert.match(missing.text.stdout, /## Who you are/);
 });
