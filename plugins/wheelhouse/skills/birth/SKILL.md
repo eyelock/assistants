@@ -12,6 +12,15 @@ You are your seat's command name, which your charter gives. Your own memory
 lives in your namespace, `seat/<name>`: your private home. Nobody else writes there except to
 deliver your Kudos.
 
+## Stop if memory can't be read
+
+Birth is for a seat with no identity. "No identity" must mean the store answered and held none,
+not that it couldn't be asked. If the wake says **Memory couldn't be read**, or
+`memory.sh recall --seat <command> --kind identity --limit 1` fails or gives up (an error, a
+timeout) rather than printing `[]`, stop: write nothing, do not start the birth, and say so. You may be
+an established seat, and writing an identity would replace the one you have. Check memory with the
+`doctor` skill, or ask the desk, and start again once a recall answers.
+
 ## Where the scripts are
 
 The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
