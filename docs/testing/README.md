@@ -11,7 +11,7 @@ evals run a model, so they cost money and run only when you start them.
 | `pnpm sync-manifests:check` | the marketplace indexes and plugin versions agree | CI and locally |
 | `changeset status` | a pull request that changes a package carries a changeset | CI |
 | actionlint | the workflow files are well formed | CI |
-| shellcheck, whole repository | every shell script passes shellcheck at its default level (errors) | CI |
+| shellcheck, whole repository | every shell script passes shellcheck at warning level and up | CI |
 | Plugin scripts (wheelhouse) | every wheelhouse plugin script passes shellcheck at warning level and its tests (`node --test plugins/wheelhouse/evals/*.test.mjs`) pass, on Linux and macOS | CI |
 | Plugin tests (media-management) | the plugin's script and hook tests (`make -C plugins/media-management test`) pass on macOS, under its stock bash 3.2, so its scripts must run there | CI, and locally on macOS |
 | SkillSpector | no skill a pull request changes has an unaccepted security finding | CI, and `make skillspector` |
