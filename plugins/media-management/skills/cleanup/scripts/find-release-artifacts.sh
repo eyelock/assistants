@@ -167,7 +167,7 @@ done < <(
       for f in "$DOWNLOADS/$RELEASE"*; do
         [[ -f "$f" ]] || continue
         case "$(echo "${f##*.}" | tr '[:upper:]' '[:lower:]')" in
-          mp3|wav|flac) { same_release "$(basename "$f")" && echo "$f"; } || true ;;
+          mp3|wav|flac) if same_release "$(basename "$f")"; then echo "$f"; fi ;;
         esac
       done
     fi

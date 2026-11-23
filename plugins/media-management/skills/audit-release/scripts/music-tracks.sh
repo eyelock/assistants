@@ -74,7 +74,9 @@ fi
 # Each property is fetched for every matching track in one Apple Event
 # (asking track by track takes minutes for a large artist); albums, when
 # given, are fetched one by one so Apple Music does the filtering.
-if ! raw=$(osascript - "$ARTIST" "${ALBUMS[@]:-}" <<'APPLESCRIPT'
+# The script is read into a variable first: bash 3.2 (macOS /bin/bash) miscounts
+# the parentheses of a heredoc inside $( ).
+IFS= read -r -d '' APPLE_SCRIPT <<'APPLESCRIPT' || true
 on run argv
   set wanted to item 1 of argv
   set albumNames to rest of argv
@@ -143,7 +145,8 @@ on fetch(wanted, albumName)
   return o's rows
 end fetch
 APPLESCRIPT
-); then
+
+if ! raw=$(osascript -e "$APPLE_SCRIPT" "$ARTIST" "${ALBUMS[@]:-}"); then
   echo "Error: could not query Apple Music (is it running, and is automation allowed?)" >&2
   exit 3
 fi
