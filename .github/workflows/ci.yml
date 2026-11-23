@@ -78,7 +78,7 @@ jobs:
         with:
           scandir: "."
           ignore_paths: "node_modules"
-          severity: error
+          severity: warning
 
       - name: Changeset status (PRs only)
         if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
@@ -133,12 +133,34 @@ jobs:
       - name: Plugin script tests
         run: node --test plugins/wheelhouse/evals/*.test.mjs
 
+  # media-management's own test suite (its Makefile `test`: script and hook tests). It is a macOS
+  # plugin (Apple Music, BSD tools), so it runs on macOS. The matrix lists plugins that carry a
+  # Makefile `test` target; add one to the list to put its tests in CI.
+  plugin-tests:
+    name: Plugin tests (${{ matrix.plugin }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [media-management]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tools the tests need
+        run: |
+          for tool in ffmpeg jq shellcheck; do
+            command -v "$tool" >/dev/null 2>&1 || brew install "$tool"
+          done
+
+      - name: Tests
+        run: make -C "plugins/${{ matrix.plugin }}" test
+
   # The one required check. It fails when any job it needs failed, was cancelled or
   # was skipped, so a green All Clear means every gate actually ran and passed.
   all-clear:
     name: All Clear
     if: always()
-    needs: [check, skillspector, scripts]
+    needs: [check, skillspector, scripts, plugin-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Every gate passed

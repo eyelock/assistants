@@ -31,7 +31,7 @@
   },
   "files": {
     "includes": [
-      "scripts/**/*.mjs",
+      "**/*.mjs",
       "scripts/**/*.js",
       "**/*.json",
       "**/*.jsonc",

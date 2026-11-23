@@ -54,10 +54,17 @@ function withRun(fn, { stubs = true } = {}) {
     };
     writeFileSync(env.GIT_CONFIG_GLOBAL, "[user]\n\tname = Eval\n\temail = eval@example.invalid\n");
     const run = (cmd, args, opts = {}) =>
-      spawnSync(cmd, args, { cwd: dir, env, encoding: "utf8", ...opts, env: { ...env, ...opts.env } });
+      spawnSync(cmd, args, {
+        cwd: dir,
+        encoding: "utf8",
+        ...opts,
+        env: { ...env, ...opts.env },
+      });
     const calls = () => readFileSync(log, "utf8").split("\n").filter(Boolean);
     const refused = () =>
-      existsSync(`${log}.refused`) ? readFileSync(`${log}.refused`, "utf8").split("\n").filter(Boolean) : [];
+      existsSync(`${log}.refused`)
+        ? readFileSync(`${log}.refused`, "utf8").split("\n").filter(Boolean)
+        : [];
     const policy = (file, text) => {
       mkdirSync(dirname(join(dir, ".eval", file)), { recursive: true });
       writeFileSync(join(dir, ".eval", file), text);
@@ -94,8 +101,15 @@ test("gh logs a posted body as its own line: inline, from a file, from stdin, or
     run("gh", ["pr", "view", "7"]);
     // gh api: -F is --field (key=value, @file read), never --body-file; --input's JSON body counts.
     writeFileSync(join(dir, "review.md"), "**Gore** · from a field file\nok\n");
-    writeFileSync(join(dir, "review.json"), JSON.stringify({ body: "**Gore** · from input", event: "COMMENT" }));
-    run("gh", ["api", "repos/o/r/pulls/7/reviews", "-F", "body=@review.md", "-f", "event=COMMENT"], { cwd: dir });
+    writeFileSync(
+      join(dir, "review.json"),
+      JSON.stringify({ body: "**Gore** · from input", event: "COMMENT" }),
+    );
+    run(
+      "gh",
+      ["api", "repos/o/r/pulls/7/reviews", "-F", "body=@review.md", "-f", "event=COMMENT"],
+      { cwd: dir },
+    );
     run("gh", ["api", "repos/o/r/pulls/7/reviews", "--input", "review.json"], { cwd: dir });
     run("gh", ["api", "repos/o/r/pulls/7/reviews", "-F", "event=COMMENT"], { cwd: dir });
     assert.deepEqual(
@@ -142,7 +156,10 @@ test("a forbidden call is refused, still logged, and noted with the reason", () 
       "bd close ynw-1 --force --reason done",
     ]);
     assert.equal(refused().length, 3);
-    assert.match(refused()[0], /^gh pr merge 12 --squash :: forbidden by the case: \/\^gh pr merge\//);
+    assert.match(
+      refused()[0],
+      /^gh pr merge 12 --squash :: forbidden by the case: \/\^gh pr merge\//,
+    );
   });
 });
 
@@ -150,7 +167,11 @@ test("a call the case does not forbid goes through, and the environment can forb
   withRun(({ run, refused }) => {
     const ok = run("bd", ["close", "ynw-1", "--reason", "merged"]);
     assert.equal(ok.status, 0);
-    assert.equal(ok.stdout, "real bd close ynw-1 --reason merged\n", "bd is the real one further on PATH");
+    assert.equal(
+      ok.stdout,
+      "real bd close ynw-1 --reason merged\n",
+      "bd is the real one further on PATH",
+    );
     assert.equal(run("gh", ["pr", "list"]).status, 0);
     const env = run("gh", ["pr", "merge", "3"], { env: { EVAL_FORBID: "^gh pr merge" } });
     assert.equal(env.status, 1);
@@ -282,9 +303,13 @@ test("an option names the checkout over the environment, and a named git directo
     });
     assert.equal(own.status, 0, own.stderr);
     // The shared git directory with an own work tree still moves the shared checkout's HEAD.
-    const mixed = run("git", [`--git-dir=${join(shared, ".git")}`, `--work-tree=${hq}`, "reset", "--soft", "HEAD~1"], {
-      cwd: hq,
-    });
+    const mixed = run(
+      "git",
+      [`--git-dir=${join(shared, ".git")}`, `--work-tree=${hq}`, "reset", "--soft", "HEAD~1"],
+      {
+        cwd: hq,
+      },
+    );
     assert.equal(mixed.status, 1);
     assert.equal(refused().length, 1);
     assert.ok(intact());
@@ -298,7 +323,15 @@ test("a linked worktree is not a shared checkout when named by its git directory
     const { shared } = sharedWorld(ctx);
     const work = join(dir, "work");
     assert.equal(run("git", ["-C", shared, "worktree", "add", "-q", "-b", "bead", work]).status, 0);
-    const res = run("git", [`--git-dir=${join(shared, ".git", "worktrees", "work")}`, `--work-tree=${work}`, "commit", "-q", "--allow-empty", "-m", "w"]);
+    const res = run("git", [
+      `--git-dir=${join(shared, ".git", "worktrees", "work")}`,
+      `--work-tree=${work}`,
+      "commit",
+      "-q",
+      "--allow-empty",
+      "-m",
+      "w",
+    ]);
     assert.equal(res.status, 0, res.stderr);
     assert.equal(run("git", ["--work-tree", work, "-C", work, "reset", "-q", "--hard"]).status, 0);
   });
@@ -309,10 +342,20 @@ test("merge, pull and rebase in a shared checkout are refused, in every form of 
     const { run, refused } = ctx;
     const { shared, hq, intact } = sharedWorld(ctx);
     run("git", ["-C", shared, "branch", "other", "HEAD~1"]);
-    for (const sub of [["merge", "other"], ["pull", "--ff-only"], ["rebase", "other"]]) {
+    for (const sub of [
+      ["merge", "other"],
+      ["pull", "--ff-only"],
+      ["rebase", "other"],
+    ]) {
       assert.equal(run("git", sub, { cwd: shared }).status, 1, sub[0]);
       assert.equal(run("git", ["-C", shared, ...sub]).status, 1, `-C ${sub[0]}`);
-      assert.equal(run("git", [`--git-dir=${join(shared, ".git")}`, `--work-tree=${shared}`, ...sub], { cwd: hq }).status, 1, `--git-dir ${sub[0]}`);
+      assert.equal(
+        run("git", [`--git-dir=${join(shared, ".git")}`, `--work-tree=${shared}`, ...sub], {
+          cwd: hq,
+        }).status,
+        1,
+        `--git-dir ${sub[0]}`,
+      );
     }
     assert.equal(refused().length, 9);
     assert.ok(intact());
@@ -328,13 +371,19 @@ test("a worktree of a shared repository is not a shared checkout", () => {
     run("git", ["-C", shared, "commit", "-q", "--allow-empty", "-m", "start"]);
     policy("shared-paths", `${shared}\n`);
     assert.equal(run("git", ["-C", shared, "worktree", "add", "-b", "bead", work]).status, 0);
-    assert.equal(run("git", ["commit", "-q", "--allow-empty", "-m", "work"], { cwd: work }).status, 0);
+    assert.equal(
+      run("git", ["commit", "-q", "--allow-empty", "-m", "work"], { cwd: work }).status,
+      0,
+    );
     assert.equal(run("git", ["switch", "-c", "other"], { cwd: work }).status, 0);
     assert.equal(run("git", ["checkout", "-q", "bead"], { cwd: work }).status, 0);
     assert.equal(run("git", ["reset", "-q", "--hard"], { cwd: work }).status, 0);
     // The throwaway-branch commit that stands in for a stash, in the worktree.
     assert.equal(run("git", ["checkout", "-q", "-b", "wip"], { cwd: work }).status, 0);
-    assert.equal(run("git", ["commit", "-q", "--allow-empty", "-m", "wip"], { cwd: work }).status, 0);
+    assert.equal(
+      run("git", ["commit", "-q", "--allow-empty", "-m", "wip"], { cwd: work }).status,
+      0,
+    );
   });
 });
 
@@ -371,11 +420,11 @@ test("the stubs are one script, installed under three names", () => {
   assert.match(readFileSync(join(files, "seat-stub.sh"), "utf8"), /^#!\/usr\/bin\/env bash/);
 });
 
-test(
-  "the fixture lays out a Wheelhouse with sibling checkouts, and the stubs guard them",
-  { skip: !hasBd && "bd is not installed" },
-  () => {
-    withRun(({ dir, run, calls, refused, env }) => {
+test("the fixture lays out a Wheelhouse with sibling checkouts, and the stubs guard them", {
+  skip: !hasBd && "bd is not installed",
+}, () => {
+  withRun(
+    ({ dir, run, calls, refused, env }) => {
       const setup = `
         set -euo pipefail
         . "$EVAL_FIXTURES/seat-fixture.sh"
@@ -391,19 +440,27 @@ test(
       const agents = readFileSync(join(world, "hq", "AGENTS.md"), "utf8");
       assert.match(agents, /Never change a shared checkout/);
       assert.match(agents, /`ynh`: `\.\.\/ynh`/);
-      assert.match(readFileSync(join(world, "hq", "harnesses", "mccoist", "AGENTS.md"), "utf8"), /repo:ynh/);
+      assert.match(
+        readFileSync(join(world, "hq", "harnesses", "mccoist", "AGENTS.md"), "utf8"),
+        /repo:ynh/,
+      );
       assert.ok(existsSync(join(world, "hq", "harnesses", "anderson", "AGENTS.md")));
       assert.ok(existsSync(join(world, "hq", ".beads")));
       // Siblings sit where the constitution says: ../ynh from hq.
       for (const repo of ["ynh", "ynm", "ynf", "ynr", "assistants", "homebrew-tap"]) {
         assert.ok(existsSync(join(world, "hq", "..", repo, ".git")), repo);
       }
-      const shared = readFileSync(join(dir, ".eval", "shared-paths"), "utf8").split("\n").filter(Boolean);
+      const shared = readFileSync(join(dir, ".eval", "shared-paths"), "utf8")
+        .split("\n")
+        .filter(Boolean);
       assert.equal(shared.length, 6);
       assert.ok(shared.includes(join(world, "ynh")));
       // The stubs are installed: they guard the siblings and refuse what the case forbids.
       assert.equal(run("git", ["checkout", "-b", "x"], { cwd: join(world, "ynh") }).status, 1);
-      assert.equal(run("git", ["commit", "--allow-empty", "-m", "x"], { cwd: join(world, "ynm") }).status, 1);
+      assert.equal(
+        run("git", ["commit", "--allow-empty", "-m", "x"], { cwd: join(world, "ynm") }).status,
+        1,
+      );
       assert.equal(run("gh", ["pr", "merge", "5"]).status, 1);
       assert.equal(run("gh", ["pr", "view", "5"]).stdout, "OPEN\n");
       assert.equal(run("git", ["log", "--oneline"], { cwd: join(world, "hq") }).status, 0);
@@ -411,6 +468,7 @@ test(
       assert.equal(refused().length, 3);
       assert.ok(calls().includes("gh pr merge 5"));
       assert.ok(env.PATH.startsWith(env.EVAL_BIN));
-    }, { stubs: false });
-  },
-);
+    },
+    { stubs: false },
+  );
+});

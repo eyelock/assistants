@@ -5,7 +5,15 @@
 // only the tools the scripts need (so a Beads Wheelhouse really runs with no ynm installed).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -50,7 +58,13 @@ const SEATS = [
 ];
 const IDENTITIES = Object.fromEntries(SEATS.map(([c]) => [`seat/${c}/identity`, `I am ${c}`]));
 
-function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], memorySh = true } = {}) {
+function wheelhouse({
+  memory,
+  ynm = false,
+  memories = IDENTITIES,
+  beads = [],
+  memorySh = true,
+} = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-doctor-memory-"));
   const wh = join(dir, "wh");
   const bin = join(dir, "bin");
@@ -72,14 +86,18 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   const skills = join(dir, "skills");
   const install = (skill, ...names) => {
     mkdirSync(join(skills, skill, "scripts"), { recursive: true });
-    for (const n of names) copyFileSync(join(plugin, "skills", skill, "scripts", n), join(skills, skill, "scripts", n));
+    for (const n of names)
+      copyFileSync(join(plugin, "skills", skill, "scripts", n), join(skills, skill, "scripts", n));
   };
   install("doctor", "check.sh", "memory-checks.sh");
   install("refresh", "refresh.sh");
   install("wake", "wake.sh");
   install("work-graph", "wheelhouse-lib.sh", "inbox.sh", ...(memorySh ? ["memory.sh"] : []));
   mkdirSync(join(wh, ".agents/harness"), { recursive: true });
-  writeFileSync(join(wh, ".agents/harness/plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0" }));
+  writeFileSync(
+    join(wh, ".agents/harness/plugin.json"),
+    JSON.stringify({ name: "hq", version: "0.1.0" }),
+  );
   mkdirSync(join(wh, "skills/roster/assets"), { recursive: true });
   writeFileSync(
     join(wh, "skills/roster/assets/roster.json"),
@@ -91,19 +109,39 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   if (memory !== undefined) writeFileSync(join(wh, "wheelhouse.json"), JSON.stringify({ memory }));
   writeFileSync(join(dir, "memories.json"), JSON.stringify({ schema_version: 1, ...memories }));
   writeFileSync(join(dir, "beads.json"), JSON.stringify(beads));
-  const env = (extra = {}) => ({ PATH: `${bin}:/usr/bin:/bin`, HOME: dir, STUB_DIR: dir, UNBORN: "", ...extra });
+  const env = (extra = {}) => ({
+    PATH: `${bin}:/usr/bin:/bin`,
+    HOME: dir,
+    STUB_DIR: dir,
+    UNBORN: "",
+    ...extra,
+  });
   const bash = spawnSync("sh", ["-c", "command -v bash"], { encoding: "utf8" }).stdout.trim();
   return {
     dir,
     wh,
     check(extra = {}) {
-      const out = spawnSync(bash, [join(skills, "doctor", "scripts", "check.sh"), "--dir", wh], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(bash, [join(skills, "doctor", "scripts", "check.sh"), "--dir", wh], {
+        encoding: "utf8",
+        env: env(extra),
+      });
       assert.equal(out.status, 0, out.stderr);
       const json = JSON.parse(out.stdout);
       return { json, by: (name) => json.checks.find((c) => c.name === name) };
     },
     refresh(extra = {}) {
-      const out = spawnSync(bash, [join(skills, "refresh", "scripts", "refresh.sh"), "--dir", wh, "--doctor", "/nonexistent", "--dry-run"], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(
+        bash,
+        [
+          join(skills, "refresh", "scripts", "refresh.sh"),
+          "--dir",
+          wh,
+          "--doctor",
+          "/nonexistent",
+          "--dry-run",
+        ],
+        { encoding: "utf8", env: env(extra) },
+      );
       assert.equal(out.status, 0, out.stderr);
       return JSON.parse(out.stdout);
     },
@@ -151,7 +189,10 @@ test("beads memory: ynm is never checked, and a Wheelhouse with no ynm installed
   try {
     const r = w.check({ STUB_REMOTE: "1" });
     assert.equal(r.json.ok, true, JSON.stringify(r.json.checks.filter((c) => !c.ok)));
-    assert.deepEqual(r.json.checks.filter((c) => /^ynm/.test(c.name) && c.name !== "ynm"), []);
+    assert.deepEqual(
+      r.json.checks.filter((c) => /^ynm/.test(c.name) && c.name !== "ynm"),
+      [],
+    );
     assert.equal(r.by("ynm installed"), undefined);
     assert.equal(r.by("memory backend").ok, true);
     assert.match(r.by("beads memory readable").detail, /3 memories/);
@@ -179,7 +220,10 @@ test("beads memory: no Dolt remote is a warning, an unreadable memory an error",
 });
 
 test("beads memory: a seat with no identity key is not yet born", () => {
-  const w = wheelhouse({ memory: "beads", memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" } });
+  const w = wheelhouse({
+    memory: "beads",
+    memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" },
+  });
   try {
     const born = w.check({ STUB_REMOTE: "1" }).by("seats born");
     assert.equal(born.ok, false);
@@ -192,7 +236,11 @@ test("beads memory: a seat with no identity key is not yet born", () => {
 
 test("beads memory: an assignee is known when memory holds a human/<command> key for them", () => {
   const bead = (id, assignee) => ({ id, status: "open", assignee, labels: [] });
-  const w = wheelhouse({ memory: "beads", beads: [bead("w-1", "sam"), bead("w-2", "kit")], memories: { ...IDENTITIES, "human/sam/note/20261101T000000Z-eno": "hi" } });
+  const w = wheelhouse({
+    memory: "beads",
+    beads: [bead("w-1", "sam"), bead("w-2", "kit")],
+    memories: { ...IDENTITIES, "human/sam/note/20261101T000000Z-eno": "hi" },
+  });
   try {
     const known = w.check({ STUB_REMOTE: "1" }).by("assignees known");
     assert.equal(known.ok, false);
@@ -246,10 +294,16 @@ test("ynm memory without ynm installed is still an error", () => {
 });
 
 test("refresh reports a seat with no identity, reading Beads memory when that is the backend", () => {
-  const w = wheelhouse({ memory: "beads", memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" } });
+  const w = wheelhouse({
+    memory: "beads",
+    memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" },
+  });
   try {
     const r = w.refresh();
-    assert.deepEqual(r.seatsNotReady.map((s) => [s.seat, s.born]), [["wick", false]]);
+    assert.deepEqual(
+      r.seatsNotReady.map((s) => [s.seat, s.born]),
+      [["wick", false]],
+    );
     assert.match(r.seatsNotReady[0].reminder, /dispatcher/);
   } finally {
     w.done();
@@ -269,7 +323,10 @@ test("refresh reads ynm for the ynm backend", () => {
   const w = wheelhouse({ ynm: true });
   try {
     assert.deepEqual(w.refresh().seatsNotReady, []);
-    assert.deepEqual(w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat), ["eno"]);
+    assert.deepEqual(
+      w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat),
+      ["eno"],
+    );
   } finally {
     w.done();
   }
@@ -281,16 +338,25 @@ test("a seat that picks skills but not work-graph is warned, the desk and a seat
     const harness = (cmd, includes) => {
       const dir = join(w.wh, cmd === "hq" ? "." : `harnesses/${cmd}`, ".agents/harness");
       mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0", includes }));
+      writeFileSync(
+        join(dir, "plugin.json"),
+        JSON.stringify({ name: "hq", version: "0.1.0", includes }),
+      );
     };
     harness("hq", [{ git: "../..", path: "plugins/wheelhouse" }]);
-    harness("eno", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
-    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/doctor"] }]);
+    harness("eno", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] },
+    ]);
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/doctor"] },
+    ]);
     const bad = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
     assert.equal(bad.ok, false);
     assert.equal(bad.level, "warn");
     assert.match(bad.detail, /: wick$/);
-    harness("wick", [{ git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] }]);
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] },
+    ]);
     assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
     // Entwistle's shape: a pick without work-graph, plus another plugin included whole, still warns.
     harness("wick", [

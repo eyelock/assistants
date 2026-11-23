@@ -14,7 +14,9 @@ const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 
 const roster = {
-  seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
+  seats: [
+    { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
@@ -46,17 +48,25 @@ function inbox(args, check) {
 }
 
 test("assign: a seat on trial (harness on the branch, no roster entry) may ask", () => {
-  inbox(["assign", "--title", "Decide the name", "--from", "newcomer", "--kind", "decision"], (out) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).askedBy, "newcomer");
-  });
+  inbox(
+    ["assign", "--title", "Decide the name", "--from", "newcomer", "--kind", "decision"],
+    (out) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).askedBy, "newcomer");
+    },
+  );
 });
 
 test("assign: a command with no roster entry and no harness AGENTS.md is refused, saying how a trial seat counts", () => {
   for (const from of ["stranger", "empty"]) {
     inbox(["assign", "--title", "Decide the name", "--from", from], (out) => {
       assert.equal(out.status, 1);
-      assert.match(out.stderr, new RegExp(`${from} is not a seat in the roster, and there is no harnesses/${from}/AGENTS.md`));
+      assert.match(
+        out.stderr,
+        new RegExp(
+          `${from} is not a seat in the roster, and there is no harnesses/${from}/AGENTS.md`,
+        ),
+      );
     });
   }
 });

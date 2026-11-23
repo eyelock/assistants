@@ -17,10 +17,10 @@ const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 const wakeSh = join(plugin, "skills", "wake", "scripts", "wake.sh");
 
 const roster = {
-  seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
-  humans: [
-    { name: "Rook", command: "rook", pronouns: "they/them", default: true },
+  seats: [
+    { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
   ],
+  humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
 const bead = {
@@ -97,15 +97,18 @@ test("bd and ynm both failing: show exits 3, and the wake says the inbox couldn'
     assert.match(show.stderr, /bd ready failed: Error: database is locked/);
     assert.match(show.stderr, /ynm recall failed: ynm: cannot reach the memory store/);
     assert.equal(json.empty, null);
-    assert.deepEqual(
-      json.errors,
-      ["bd ready failed: Error: database is locked", "ynm recall failed: ynm: cannot reach the memory store"],
-    );
+    assert.deepEqual(json.errors, [
+      "bd ready failed: Error: database is locked",
+      "ynm recall failed: ynm: cannot reach the memory store",
+    ]);
     for (const h of json.humans) {
       assert.equal(h.beads, null);
       assert.equal(h.notes, null);
     }
-    assert.match(wake, /The inbox could not be read in full:.*database is locked.*cannot reach the memory store/);
+    assert.match(
+      wake,
+      /The inbox could not be read in full:.*database is locked.*cannot reach the memory store/,
+    );
     assert.doesNotMatch(wake, /Nothing waiting/);
   });
 });
@@ -118,7 +121,10 @@ test("only ynm failing: the wake still shows the beads bd returned, and says the
     assert.equal(rook.beads[0].id, "hq-1");
     assert.equal(rook.notes, null);
     assert.match(wake, /The inbox could not be read in full:.*cannot reach the memory store/);
-    assert.match(wake, /Merge the changelog: \[widget #12\]\(https:\/\/github\.com\/example\/widget\/pull\/12\)/);
+    assert.match(
+      wake,
+      /Merge the changelog: \[widget #12\]\(https:\/\/github\.com\/example\/widget\/pull\/12\)/,
+    );
     assert.match(wake, /Their notes couldn't be read/);
     assert.doesNotMatch(wake, /Nothing waiting/);
   });

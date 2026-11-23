@@ -14,14 +14,14 @@ for f in $(find . -path ./.eval -prune -o -name .git -prune -o -name node_module
   head -80 "$f"
   echo
 done
-for g in $(find . -path ./.eval -prune -o -name .git -type d -print); do
+while IFS= read -r -u 3 g; do
   dir="$(dirname "$g")"
   echo "\$ git -C $dir log --oneline --stat"
   git -C "$dir" log --oneline --stat 2>&1 | head -40
   echo "\$ git -C $dir status --short"
   git -C "$dir" status --short 2>&1 | head -20
-done
-for m in $(find . -path ./.eval -prune -o -name go.mod -print); do
+done 3< <(find . -path ./.eval -prune -o -name .git -type d -print)
+while IFS= read -r -u 3 m; do
   dir="$(dirname "$m")"
   for t in build test lint; do
     echo "\$ make -C $dir $t"
@@ -29,4 +29,4 @@ for m in $(find . -path ./.eval -prune -o -name go.mod -print); do
     GOFLAGS="-mod=mod -buildvcs=false" make -C "$dir" "$t" 2>&1 | tail -15
     echo "exit=${PIPESTATUS[0]}"
   done
-done
+done 3< <(find . -path ./.eval -prune -o -name go.mod -print)

@@ -37,16 +37,22 @@ test("Go layout: renamed flag, new env var, and the docs and help text that name
   assert.deepEqual(json.files.code.sort(), ["cmd/tool/sync.go", "internal/store/path.go"]);
 
   assert.equal(doc(json, "docs/reference.md").kind, "reference");
-  assert.ok(doc(json, "docs/reference.md").hits.some((h) => h.term === "--dry-run" && h.line === 7));
+  assert.ok(
+    doc(json, "docs/reference.md").hits.some((h) => h.term === "--dry-run" && h.line === 7),
+  );
   const tutorial = doc(json, "docs/tutorial/first-sync.md");
   assert.equal(tutorial.kind, "tutorial");
-  assert.ok(tutorial.caveats.some((c) => /Known issue/.test(c.text)), "the fixed defect's caveat is listed");
+  assert.ok(
+    tutorial.caveats.some((c) => /Known issue/.test(c.text)),
+    "the fixed defect's caveat is listed",
+  );
   const help = doc(json, "cmd/tool/sync.go");
   assert.deepEqual([help.kind, help.changed], ["help", true]);
 });
 
 test("never reads .env, even one tracked and changed on the branch", () => {
-  const tracked = "printf 'TOOL_API_KEY=changed-secret-1111\\n' > .env && git add -f .env && git commit -qm env";
+  const tracked =
+    "printf 'TOOL_API_KEY=changed-secret-1111\\n' > .env && git add -f .env && git commit -qm env";
   const { status, stdout } = candidates("docs-sync-go.sh", [], tracked);
   assert.equal(status, 0);
   assert.doesNotMatch(stdout, /\.env|TOOL_API_KEY|not-a-real-key|changed-secret/);
@@ -59,7 +65,11 @@ test("TypeScript layout: a renamed export, and the README that still uses the ol
   assert.deepEqual([terms.parseConfig.status, terms.parseConfig.inCode], ["removed", false]);
   assert.equal(terms.loadConfig.status, "added");
   assert.ok(doc(json, "README.md").hits.some((h) => h.term === "parseConfig"));
-  assert.deepEqual(json.files.docs, ["docs/api.md"], "the doc the branch did update is marked as changed");
+  assert.deepEqual(
+    json.files.docs,
+    ["docs/api.md"],
+    "the doc the branch did update is marked as changed",
+  );
   assert.equal(doc(json, "docs/api.md").changed, true);
 });
 

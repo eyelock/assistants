@@ -12,7 +12,9 @@ const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 
 const roster = {
-  seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
+  seats: [
+    { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 const url = "https://github.com/example/widget/pull/12";
@@ -35,14 +37,31 @@ const run = (gh) => {
     // With no gh stub, a PATH of bd's stub and the basics only, so a real gh can't answer.
     if (gh === null) {
       for (const b of ["bash", "jq", "tr", "grep", "head", "env", "dirname", "cat"]) {
-        const which = spawnSync("sh", ["-c", `command -v ${b}`], { encoding: "utf8" }).stdout.trim();
+        const which = spawnSync("sh", ["-c", `command -v ${b}`], {
+          encoding: "utf8",
+        }).stdout.trim();
         if (which) spawnSync("ln", ["-sf", which, join(dir, "bin", b)]);
       }
     }
     const path = gh === null ? join(dir, "bin") : `${join(dir, "bin")}:${process.env.PATH}`;
     return spawnSync(
       "bash",
-      [inboxSh, "assign", "--dir", ".", "--from", "hq", "--kind", "merge", "--title", "Merge widget #12", "--url", url, "--repo", "widget"],
+      [
+        inboxSh,
+        "assign",
+        "--dir",
+        ".",
+        "--from",
+        "hq",
+        "--kind",
+        "merge",
+        "--title",
+        "Merge widget #12",
+        "--url",
+        url,
+        "--repo",
+        "widget",
+      ],
       { cwd: dir, encoding: "utf8", env: { ...process.env, PATH: path } },
     );
   } finally {
