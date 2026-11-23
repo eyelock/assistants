@@ -20,7 +20,7 @@ function* files(dir) {
 
 test("no skill or template calls a seat's memory a private home", () => {
   const hits = [];
-  for (const dir of ["skills", "templates", "evals/files"]) {
+  for (const dir of ["skills", "templates", "evals/files", "../../docs/wheelhouse"]) {
     try {
       for (const f of files(join(root, dir))) {
         readFileSync(f, "utf8").split("\n").forEach((line, i) => {
