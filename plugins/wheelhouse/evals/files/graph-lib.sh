@@ -123,7 +123,7 @@ roster_wheelhouse() {
   "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
   "labels": {"wheelhouse": "hq"},
-  "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
+  "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse", "ref": "@eyelock-assistants/wheelhouse@0.3.0" }],
   "delegates_to": []
 }
 JSON

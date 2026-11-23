@@ -285,6 +285,7 @@ rules. In short:
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "plugins/wheelhouse",
+      "ref": "@eyelock-assistants/wheelhouse@<version>",
       "pick": ["skills/add-seat", "skills/birth", "skills/comms", "skills/create-wheelhouse", "skills/diataxis", "skills/doctor", "skills/handoff", "skills/kudos", "skills/patrol", "skills/vet-skill", "skills/wake", "skills/work-graph"]
     },
     { "git": "../..", "pick": ["skills/roster"] }
@@ -302,6 +303,15 @@ rules. In short:
 }
 ```
 
+- `ref` pins the plugin to a release tag, so a seat runs the released plugin and a merge to
+  `develop` doesn't reach it on the next `ynh update`. The tag is `@eyelock-assistants/wheelhouse@<version>`.
+  Copy it from the desk's own manifest, so every seat of a Wheelhouse runs the same release; if
+  the desk has none, take the newest release tag:
+  `git ls-remote --tags https://github.com/eyelock/assistants '@eyelock-assistants/wheelhouse@*'`
+  (highest version, ignoring `^{}` lines). Never write `develop`, a branch name or an empty ref: a
+  Wheelhouse floats on `develop` only when the human says so, in words, and then you say that you
+  left the ref off. A pin moves deliberately, by the human's own change: see the refresh skill's
+  "Moving a pin".
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.

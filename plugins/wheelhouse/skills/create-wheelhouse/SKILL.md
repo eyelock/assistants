@@ -267,7 +267,7 @@ the files it finds, and would commit the human's.
      "default_vendor": "claude",
      "labels": { "wheelhouse": "<name>" },
      "includes": [
-       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
+       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse", "ref": "@eyelock-assistants/wheelhouse@<version>" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
      ],
      "hooks": {
