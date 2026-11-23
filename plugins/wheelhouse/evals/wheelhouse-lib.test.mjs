@@ -286,7 +286,11 @@ test("every script finds the library from an installed seat layout of picked ski
 const withConf = (conf, fn) => {
   const s = scratch();
   try {
-    if (conf !== undefined) writeFileSync(join(s.dir, "wheelhouse.json"), typeof conf === "string" ? conf : JSON.stringify(conf));
+    if (conf !== undefined)
+      writeFileSync(
+        join(s.dir, "wheelhouse.json"),
+        typeof conf === "string" ? conf : JSON.stringify(conf),
+      );
     return fn(s.dir);
   } finally {
     s.done();
@@ -299,7 +303,10 @@ const FULL = {
   tasks: "beads",
   shared_checkouts: ["../ynh", "../ynm"],
   protected_branches: ["main", "develop"],
-  sanctioned_force: [{ who: "reviewer", on: "review-fix bead held by its author" }, { who: "desk", on: "inbox bead", via: "inbox.sh close" }],
+  sanctioned_force: [
+    { who: "reviewer", on: "review-fix bead held by its author" },
+    { who: "desk", on: "inbox bead", via: "inbox.sh close" },
+  ],
   budgets: { constitution_words: 2671, charter_words: 1715 },
   guards: { mode: "log", overrides: { "shared-checkout": "log" } },
 };
@@ -316,7 +323,15 @@ test("wl_conf returns each key's value from the file", () => {
 
 test("wl_conf gives each key's default when the file is missing", () => {
   withConf(undefined, (dir) => {
-    const expected = { memory: "ynm", tasks: "beads", shared_checkouts: [], protected_branches: [], sanctioned_force: [], budgets: {}, guards: { mode: "block", overrides: {} } };
+    const expected = {
+      memory: "ynm",
+      tasks: "beads",
+      shared_checkouts: [],
+      protected_branches: [],
+      sanctioned_force: [],
+      budgets: {},
+      guards: { mode: "block", overrides: {} },
+    };
     for (const [key, value] of Object.entries(expected)) {
       const r = conf(dir, key);
       assert.equal(r.status, 0, key);
@@ -329,7 +344,10 @@ test("wl_conf gives each key's default when the file is missing", () => {
 test("wl_conf gives a key's default when the file lacks it, and guards keeps its mode with only overrides set", () => {
   withConf({ guards: { overrides: { x: "log" } } }, (dir) => {
     assert.deepEqual(JSON.parse(conf(dir, "protected_branches").stdout), []);
-    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), { mode: "block", overrides: { x: "log" } });
+    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), {
+      mode: "block",
+      overrides: { x: "log" },
+    });
   });
 });
 
@@ -362,7 +380,16 @@ test("wl_conf_problems names each bad key with how to fix it", () => {
     const r = run(dir, `wl_conf_problems "${dir}"`);
     assert.equal(r.status, 1);
     const lines = r.stdout.trim().split("\n");
-    for (const key of ["colour", "memory", "tasks", "shared_checkouts", "protected_branches", "sanctioned_force", "budgets", "guards.mode"]) {
+    for (const key of [
+      "colour",
+      "memory",
+      "tasks",
+      "shared_checkouts",
+      "protected_branches",
+      "sanctioned_force",
+      "budgets",
+      "guards.mode",
+    ]) {
       const line = lines.find((l) => l.startsWith(`${key}:`));
       assert.ok(line, `a line for ${key}`);
       assert.match(line, /Fix: /, key);

@@ -267,7 +267,10 @@ test("the doctor errors on a bad or unknown wheelhouse.json key, with the fix, a
   const w = wheelhouse({ memory: "ynm", ynm: true });
   try {
     const file = join(w.wh, "wheelhouse.json");
-    writeFileSync(file, JSON.stringify({ memory: "ynm", protected_branches: ["main"], guards: { mode: "log" } }));
+    writeFileSync(
+      file,
+      JSON.stringify({ memory: "ynm", protected_branches: ["main"], guards: { mode: "log" } }),
+    );
     assert.equal(w.check().by("wheelhouse.json keys").ok, true);
     writeFileSync(file, JSON.stringify({ memory: "ynm", colour: 1, guards: { mode: "warn" } }));
     const r = w.check();
@@ -397,16 +400,33 @@ test("a seat that picks skills but not work-graph is warned, the desk and a seat
 test("the doctor fails a bd older than the minimum, passes the minimum and later, and warns on a version it cannot read", () => {
   const w = wheelhouse({ memory: "beads" });
   try {
-    const old = w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.2 (stub)" }).by("beads version");
+    const old = w
+      .check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.2 (stub)" })
+      .by("beads version");
     assert.equal(old.ok, false);
     assert.equal(old.level, "error");
     assert.match(old.detail, /1\.2\.2 is older than 1\.3\.0/);
     assert.match(old.fix, /brew upgrade beads/);
-    for (const v of ["bd version 1.3.0 (stub)", "bd version 1.3.2 (Homebrew)", "bd version 1.4.0-rc.1", "bd version 2.0.0", "bd version 1.10.0"]) {
-      assert.equal(w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: v }).by("beads version").ok, true, v);
+    for (const v of [
+      "bd version 1.3.0 (stub)",
+      "bd version 1.3.2 (Homebrew)",
+      "bd version 1.4.0-rc.1",
+      "bd version 2.0.0",
+      "bd version 1.10.0",
+    ]) {
+      assert.equal(
+        w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: v }).by("beads version").ok,
+        true,
+        v,
+      );
     }
-    assert.equal(w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.10" }).by("beads version").ok, false);
-    const unreadable = w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "dev build" }).by("beads version");
+    assert.equal(
+      w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.10" }).by("beads version").ok,
+      false,
+    );
+    const unreadable = w
+      .check({ STUB_REMOTE: "1", STUB_BD_VERSION: "dev build" })
+      .by("beads version");
     assert.equal(unreadable.ok, false);
     assert.equal(unreadable.level, "warn");
   } finally {

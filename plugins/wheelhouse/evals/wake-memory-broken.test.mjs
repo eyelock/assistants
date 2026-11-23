@@ -10,28 +10,60 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
-const worker = { name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." };
+const worker = {
+  name: "Hynde",
+  group: "workers",
+  command: "hynde",
+  harness: "harnesses/hynde",
+  mandate: "Build.",
+};
 
 function wake(ynm, format, env = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-wake-memory-broken-"));
   try {
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
-    writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [worker], humans: [] }));
+    writeFileSync(
+      join(dir, "skills", "roster", "assets", "roster.json"),
+      JSON.stringify({ seats: [worker], humans: [] }),
+    );
     for (const [skill, files] of [
       ["wake", ["wake.sh", "sync.sh", "render-wake.jq"]],
       ["work-graph", ["memory.sh", "wheelhouse-lib.sh"]],
     ]) {
       mkdirSync(join(dir, "plugin", "skills", skill, "scripts"), { recursive: true });
-      for (const f of files) copyFileSync(join(plugin, "skills", skill, "scripts", f), join(dir, "plugin", "skills", skill, "scripts", f));
+      for (const f of files)
+        copyFileSync(
+          join(plugin, "skills", skill, "scripts", f),
+          join(dir, "plugin", "skills", skill, "scripts", f),
+        );
     }
     mkdirSync(join(dir, "bin"));
-    for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", ynm], ["gh", "#!/bin/sh\nexit 1\n"]]) {
+    for (const [name, body] of [
+      ["bd", "#!/bin/sh\necho '[]'\n"],
+      ["ynm", ynm],
+      ["gh", "#!/bin/sh\nexit 1\n"],
+    ]) {
       writeFileSync(join(dir, "bin", name), body);
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    const args = [join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"), "--seat", "hynde", "--no-sync"];
+    const args = [
+      join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"),
+      "--seat",
+      "hynde",
+      "--no-sync",
+    ];
     if (format === "text") args.push("--format", "text");
-    const r = spawnSync("bash", args, { cwd: dir, encoding: "utf8", env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "", WAKE_YNM_SECS: "2", ...env } });
+    const r = spawnSync("bash", args, {
+      cwd: dir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+        BEADS_ACTOR: "",
+        WAKE_YNM_SECS: "2",
+        ...env,
+      },
+    });
     assert.equal(r.status, 0, r.stderr);
     return format === "text" ? r.stdout : JSON.parse(r.stdout);
   } finally {
