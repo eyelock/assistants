@@ -41,6 +41,11 @@
 #   wl_has_git_remote        the current git repository has a remote
 #   wl_dolt_remote [SECS]    print yes, no or busy: whether bd has a Dolt remote; busy when the
 #                            check gave up or failed (a bd that can't be reached is not "no")
+#   WL_BD_MIN                the oldest bd the plugin's scripts work with (1.3.0: `bd update --if-assignee`
+#                            and `--if-status`, which exit 13 on a stale guard, session.sh and the claim
+#                            semantics rest on them); raise it with the first script that needs a newer bd
+#   wl_version_ge A B        dotted version A is at least B (numeric parts compared in order; a missing
+#                            part is 0, and anything after a part's digits, such as -rc.1, is ignored)
 #   wl_born_by ROSTER C      print who births seat C: its seated-by, the dispatcher for a
 #                            worker, else the human
 #   wl_identity_pinned BACKEND DIR C MEMORY_SH
@@ -64,6 +69,7 @@ WL_PREFIX="${WL_PREFIX:-}"
 # shellcheck disable=SC2034  # the library's interface, read by the scripts that source it
 WL_ROSTER_REL=skills/roster/assets/roster.json
 WL_BD_SECS="${WL_BD_SECS:-20}"
+WL_BD_MIN=1.3.0
 WL_YNM_SECS="${WL_YNM_SECS:-30}"
 WL_GH_SECS="${WL_GH_SECS:-30}"
 WL_YNH_SECS="${WL_YNH_SECS:-30}"
@@ -184,6 +190,21 @@ wl_dolt_remote() {
   if [ "$rc" != 0 ]; then echo busy
   elif bd_data <<<"$out" 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then echo yes
   else echo no; fi
+}
+
+wl_version_ge() {
+  local -a a b
+  local i x y
+  IFS=. read -ra a <<<"$1"
+  IFS=. read -ra b <<<"$2"
+  for i in 0 1 2; do
+    x=${a[i]:-0}; y=${b[i]:-0}
+    x=${x%%[!0-9]*}; y=${y%%[!0-9]*}
+    x=${x:-0}; y=${y:-0}
+    [ "$((10#$x))" -gt "$((10#$y))" ] && return 0
+    [ "$((10#$x))" -lt "$((10#$y))" ] && return 1
+  done
+  return 0
 }
 
 wl_born_by() {
