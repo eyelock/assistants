@@ -9,8 +9,9 @@ A seat's first session happens once. Everything after builds on it: sessions are
 people. Take your time with it; there is no work waiting that matters more.
 
 You are your seat's command name, which your charter gives. Your own memory
-lives in your namespace, `seat/<name>`: your private home. Nobody else writes there except to
-deliver your Kudos.
+lives in your own namespace, `seat/<name>`, shared with the team: nobody else writes there except to
+deliver your Kudos, but every note you write is readable by every seat and human who syncs the
+Wheelhouse's memory.
 
 ## Stop if memory can't be read
 
