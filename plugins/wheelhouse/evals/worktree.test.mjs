@@ -4,7 +4,16 @@
 // notes and statuses in files and counts its calls.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -14,7 +23,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 const script = join(here, "..", "skills", "worktrees", "scripts", "worktree.sh");
 
 const sh = (cwd, cmd, env = {}) =>
-  spawnSync("bash", ["-c", cmd], { cwd, encoding: "utf8", env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", ...env } });
+  spawnSync("bash", ["-c", cmd], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", ...env },
+  });
 const git = (cwd, args) => {
   const r = sh(cwd, `git -c user.name=t -c user.email=t@example.com ${args}`);
   assert.equal(r.status, 0, r.stderr);
@@ -62,22 +75,48 @@ esac
   const run = (args, env = {}) =>
     spawnSync("bash", [script, ...args, "--dir", wh], {
       encoding: "utf8",
-      env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", PATH: `${bin}:${process.env.PATH}`, WORKTREE_SCRATCHPAD: join(root, "scratch"), ...env },
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        PATH: `${bin}:${process.env.PATH}`,
+        WORKTREE_SCRATCHPAD: join(root, "scratch"),
+        ...env,
+      },
     });
-  return { root, wh, widget, state, run, close: (id) => writeFileSync(join(state, `${id}.closed`), "") };
+  return {
+    root,
+    wh,
+    widget,
+    state,
+    run,
+    close: (id) => writeFileSync(join(state, `${id}.closed`), ""),
+  };
 }
 const done = (w) => rmSync(w.root, { recursive: true, force: true });
 
 test("add prints only the policy path, keeps the slash and notes the bead", () => {
   const w = world();
   try {
-    const r = w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/feat-x", "--bead", "ynw-1"]);
+    const r = w.run([
+      "add",
+      "--seat",
+      "albarn",
+      "--repo",
+      "widget",
+      "--branch",
+      "albarn/feat-x",
+      "--bead",
+      "ynw-1",
+    ]);
     assert.equal(r.status, 0, r.stderr);
     const want = join(w.root, "widget", ".worktrees", "albarn", "albarn", "feat-x");
     assert.equal(r.stdout, `${want}\n`);
     assert.ok(existsSync(join(want, "a.txt")));
     assert.equal(git(w.widget, "branch --list albarn/feat-x").includes("albarn/feat-x"), true);
-    assert.match(readFileSync(join(w.state, "ynw-1.notes"), "utf8"), new RegExp(`^Worktree: ${want}$`, "m"));
+    assert.match(
+      readFileSync(join(w.state, "ynw-1.notes"), "utf8"),
+      new RegExp(`^Worktree: ${want}$`, "m"),
+    );
     assert.match(readFileSync(join(w.state, "log"), "utf8"), /--actor albarn/);
   } finally {
     done(w);
@@ -126,7 +165,17 @@ test("add checks out an existing branch whatever its prefix", () => {
 test("list shows seat, repo, branch, bead and path, and flags a closed bead", () => {
   const w = world();
   try {
-    w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/a", "--bead", "ynw-1"]);
+    w.run([
+      "add",
+      "--seat",
+      "albarn",
+      "--repo",
+      "widget",
+      "--branch",
+      "albarn/a",
+      "--bead",
+      "ynw-1",
+    ]);
     w.run(["add", "--seat", "gahan", "--repo", "widget", "--branch", "gahan/b", "--bead", "ynw-2"]);
     w.close("ynw-2");
     const r = w.run(["list"]);
@@ -139,7 +188,10 @@ test("list shows seat, repo, branch, bead and path, and flags a closed bead", ()
     const g = rows.find((x) => x.seat === "gahan");
     assert.equal(g.stale, true);
     assert.match(g.why, /ynw-2 is closed/);
-    assert.deepEqual(JSON.parse(w.run(["list", "--stale"]).stdout).map((x) => x.seat), ["gahan"]);
+    assert.deepEqual(
+      JSON.parse(w.run(["list", "--stale"]).stdout).map((x) => x.seat),
+      ["gahan"],
+    );
   } finally {
     done(w);
   }
@@ -148,7 +200,9 @@ test("list shows seat, repo, branch, bead and path, and flags a closed bead", ()
 test("list flags a branch whose upstream is gone as merged", () => {
   const w = world();
   try {
-    const p = w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/m"]).stdout.trim();
+    const p = w
+      .run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/m"])
+      .stdout.trim();
     git(p, "push -q -u origin albarn/m");
     git(w.widget, "push -q origin --delete albarn/m");
     git(w.widget, "fetch -q --prune");
@@ -163,7 +217,19 @@ test("list flags a branch whose upstream is gone as merged", () => {
 test("remove: the owner removes a clean worktree; uncommitted work, another seat's and outside paths are refused", () => {
   const w = world();
   try {
-    const p = w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/r", "--bead", "ynw-3"]).stdout.trim();
+    const p = w
+      .run([
+        "add",
+        "--seat",
+        "albarn",
+        "--repo",
+        "widget",
+        "--branch",
+        "albarn/r",
+        "--bead",
+        "ynw-3",
+      ])
+      .stdout.trim();
     let r = w.run(["remove", p, "--seat", "gahan"]);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /may remove only its own/);
@@ -190,7 +256,19 @@ test("remove: the owner removes a clean worktree; uncommitted work, another seat
 test("remove: marr may remove another seat's worktree once its bead is closed", () => {
   const w = world();
   try {
-    const p = w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/c", "--bead", "ynw-4"]).stdout.trim();
+    const p = w
+      .run([
+        "add",
+        "--seat",
+        "albarn",
+        "--repo",
+        "widget",
+        "--branch",
+        "albarn/c",
+        "--bead",
+        "ynw-4",
+      ])
+      .stdout.trim();
     w.close("ynw-4");
     const r = w.run(["remove", p, "--seat", "marr"]);
     assert.equal(r.status, 0, r.stderr);
@@ -205,11 +283,28 @@ test("list and remove make a bounded number of bd calls, however many beads the 
   try {
     const paths = [];
     for (let i = 1; i <= 3; i++) {
-      paths.push(w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", `albarn/n${i}`, "--bead", `ynw-${i}`]).stdout.trim());
+      paths.push(
+        w
+          .run([
+            "add",
+            "--seat",
+            "albarn",
+            "--repo",
+            "widget",
+            "--branch",
+            `albarn/n${i}`,
+            "--bead",
+            `ynw-${i}`,
+          ])
+          .stdout.trim(),
+      );
     }
     // A graph of 2000 beads that have nothing to do with these worktrees.
     for (let i = 100; i < 2100; i++) writeFileSync(join(w.state, `ynw-${i}.notes`), "unrelated\n");
-    const calls = () => (existsSync(join(w.state, "calls")) ? readFileSync(join(w.state, "calls"), "utf8").trim().split("\n").length : 0);
+    const calls = () =>
+      existsSync(join(w.state, "calls"))
+        ? readFileSync(join(w.state, "calls"), "utf8").trim().split("\n").length
+        : 0;
     // One worktree with no bead at all: it must not scan the graph either.
     git(w.widget, "branch albarn/nobead develop");
     w.run(["add", "--seat", "albarn", "--repo", "widget", "--branch", "albarn/nobead"]);
@@ -218,9 +313,18 @@ test("list and remove make a bounded number of bd calls, however many beads the 
     assert.equal(r.status, 0, r.stderr);
     const rows = JSON.parse(r.stdout);
     assert.equal(rows.length, 4);
-    assert.deepEqual(rows.filter((x) => x.bead).map((x) => x.bead).sort(), ["ynw-1", "ynw-2", "ynw-3"]);
+    assert.deepEqual(
+      rows
+        .filter((x) => x.bead)
+        .map((x) => x.bead)
+        .sort(),
+      ["ynw-1", "ynw-2", "ynw-3"],
+    );
     // One bead lookup and at most one status lookup per worktree: never a call per bead.
-    assert.ok(calls() <= 2 * rows.length, `list made ${calls()} bd calls for ${rows.length} worktrees`);
+    assert.ok(
+      calls() <= 2 * rows.length,
+      `list made ${calls()} bd calls for ${rows.length} worktrees`,
+    );
     w.close("ynw-1");
     rmSync(join(w.state, "calls"), { force: true });
     const rm = w.run(["remove", paths[0], "--seat", "marr"]);
@@ -232,8 +336,14 @@ test("list and remove make a bounded number of bd calls, however many beads the 
 });
 
 test("the script has no way to force, prune, move, lock or repair", () => {
-  const src = readFileSync(script, "utf8").split("\n").filter((l) => !l.trim().startsWith("#")).join("\n");
-  assert.doesNotMatch(src, /worktree (prune|move|lock|repair)|--force|worktree remove -f|worktree add -f/);
+  const src = readFileSync(script, "utf8")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("#"))
+    .join("\n");
+  assert.doesNotMatch(
+    src,
+    /worktree (prune|move|lock|repair)|--force|worktree remove -f|worktree add -f/,
+  );
   const w = world();
   try {
     assert.equal(w.run(["remove", "/x", "--seat", "albarn", "--force"]).status, 1);
