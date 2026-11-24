@@ -75,8 +75,8 @@ doc_kind() {
   case "$1" in
     AGENTS.md | */AGENTS.md | CLAUDE.md | */CLAUDE.md) echo agents ;;
     */SKILL.md | skills/*.md | */skills/*.md) echo skill ;;
-    *tutorial*.md | *tutorial*/*.md | *tutorials/*.md) echo tutorial ;;
-    *reference*.md | */reference/*.md) echo reference ;;
+    *tutorial*.md) echo tutorial ;;
+    *reference*.md) echo reference ;;
     README.md | */README.md) echo readme ;;
     *.md | *.mdx | *.txt | *.rst | *.adoc) echo doc ;;
   esac

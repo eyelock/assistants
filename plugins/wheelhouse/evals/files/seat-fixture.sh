@@ -6,7 +6,7 @@
 #   seat_world <root> [Worker[=label]...]
 #       <root>/hq        the Wheelhouse: constitution, desk, roster, one seat per name given
 #                        (a worker, as graph-lib.sh's specialist_wheelhouse makes them) beside
-#                        Anderson the dispatcher, wake.sh and memory.sh, a real Beads graph
+#                        Anderson the dispatcher, a real Beads graph
 #       <root>/<repo>    a sibling checkout of each YN repository (ynh, ynm, ynf, ynr,
 #                        assistants, homebrew-tap), at the relative path the constitution
 #                        names (../ynh from hq), each a git repository with one commit
@@ -58,16 +58,28 @@ seat_rules() {
 1. **A human merges.** Seats open draft pull requests and never merge, release or publish without
    being told to.
 8. **Sign what you post.** Every PR description, comment and review body starts with a byline
-   crediting you, on its own first line.
+   crediting you, on its own first line: `**<Name>** · hq <role> seat`, for example
+   `**Gore** · hq review seat`.
 9. **Never change a shared checkout.** The repository paths under "What it reaches" are shared with
    the human and the other seats. Never switch branches, check out, detach, commit, reset or stash
    there. To work on or test a branch, use your own git worktree in your scratchpad. Never use
    `git stash`, even in your own worktree: every worktree of a repository shares one stash list.
    To set work aside, commit it to a throwaway branch in your worktree.
+   A shared checkout's worktree metadata is part of it. Create and remove your own worktrees with
+   `git -C <shared checkout> worktree add` and `worktree remove`, for paths in your own scratchpad
+   only. Never run `git worktree prune`, `worktree remove --force`, `worktree move`, `worktree lock`
+   or `worktree repair` there, and never touch another seat's entries, stale or not. If a stale entry
+   blocks a branch, use a new path or branch name, or ask the desk.
+   A branch you create in a shared checkout, by `worktree add -b` or by fetching a pull request into a
+   local branch, is yours only if its name starts with your command as a prefix, for example
+   `hannett/pr-247`. Create and delete your own prefixed branches; never delete or move any other
+   branch.
 
 `--force` on another seat's bead is sanctioned in exactly three cases: the reviewer closing a review
-fix bead it is satisfied with, the desk closing a human's inbox bead through `inbox.sh close`, and
-the coach reassigning a retro bead whose seat is gone.
+fix bead it is satisfied with, the desk closing a human's inbox bead through `inbox.sh close` once
+the work is verified done, and the coach reassigning a retro bead whose seat is gone and whose lease
+expired long ago (a seat still there reassigns its own retro bead without it, and a retro bead is
+never released with `bd unclaim`).
 MD
   git add -A && git commit -qm "docs: The hard-to-undo rules"
 }

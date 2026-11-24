@@ -17,7 +17,13 @@ const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 const roster = {
   seats: [
     { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
-    { name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." },
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+    },
   ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
@@ -37,12 +43,24 @@ function wheelhouse() {
   mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
   mkdirSync(join(dir, "harnesses", "hynde"), { recursive: true });
-  writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build one bead at a time.\n");
+  writeFileSync(
+    join(dir, "harnesses", "hynde", "AGENTS.md"),
+    "**Mandate:** Build one bead at a time.\n",
+  );
   mkdirSync(join(dir, "scripts"));
   writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+  for (const f of ["sync.sh", "render-wake.jq"])
+    writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
   writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+  writeFileSync(
+    join(dir, "scripts", "wheelhouse-lib.sh"),
+    readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+  );
   mkdirSync(join(dir, "bin"));
-  for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", ynmStub]]) {
+  for (const [name, body] of [
+    ["bd", "#!/bin/sh\necho '[]'\n"],
+    ["ynm", ynmStub],
+  ]) {
     writeFileSync(join(dir, "bin", name), body);
     chmodSync(join(dir, "bin", name), 0o755);
   }
@@ -52,11 +70,20 @@ function wheelhouse() {
 function wake(args, { cwd, env = {} } = {}) {
   const dir = wheelhouse();
   try {
-    const out = spawnSync("bash", [join(dir, "scripts", "wake.sh"), ...args.map((a) => (a === "<dir>" ? dir : a)), "--no-sync"], {
-      cwd: cwd === "elsewhere" ? tmpdir() : dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "", ...env },
-    });
+    const out = spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), ...args.map((a) => (a === "<dir>" ? dir : a)), "--no-sync"],
+      {
+        cwd: cwd === "elsewhere" ? tmpdir() : dir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+          BEADS_ACTOR: "",
+          ...env,
+        },
+      },
+    );
     return out;
   } finally {
     rmSync(dir, { recursive: true, force: true });

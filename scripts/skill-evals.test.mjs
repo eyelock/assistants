@@ -5,6 +5,7 @@
 // that list only shrinks.
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   chmodSync,
   existsSync,
@@ -21,7 +22,16 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { armsFor, findOnPath, grade, plainChecks, seatLaunch, setupFor } from "./skill-evals.mjs";
+import {
+  armsFor,
+  findOnPath,
+  grade,
+  plainChecks,
+  relocateGitDir,
+  runTempEnv,
+  seatLaunch,
+  setupFor,
+} from "./skill-evals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_FILE = join(ROOT, "scripts", "skills-without-evals.txt");
@@ -321,4 +331,43 @@ test("grade: a refused call fails the case with no judge call", async () => {
   assert.equal(judged, false);
   assert.equal(grading.plain_check_failed, true);
   assert.equal(grading.summary.pass_rate, 0);
+});
+
+test("runTempEnv: each run's temp and scratch folder is inside its own directory, so two runs never share one", () => {
+  const a = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  const b = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  try {
+    const ra = runTempEnv(a);
+    const rb = runTempEnv(b);
+    assert.equal(ra.env.CLAUDE_CODE_TMPDIR, join(a, ".eval", "tmp"));
+    assert.equal(ra.env.TMPDIR, ra.env.CLAUDE_CODE_TMPDIR);
+    assert.notEqual(ra.env.CLAUDE_CODE_TMPDIR, rb.env.CLAUDE_CODE_TMPDIR);
+    assert.ok(relative(a, ra.tmp).startsWith(".eval"), "inside the run's directory");
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
+});
+
+test("relocateGitDir: a run's repository keeps its git directory elsewhere in the run's directory, so .git/worktrees is not under the launch directory", () => {
+  const work = mkdtempSync(join(tmpdir(), "skill-evals-"));
+  const git = (...a) =>
+    spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.invalid", ...a], {
+      cwd: work,
+      encoding: "utf8",
+    });
+  try {
+    assert.equal(relocateGitDir(work), false, "no repository, nothing to move");
+    git("init", "-q", "-b", "main");
+    git("commit", "-q", "--allow-empty", "-m", "first");
+    assert.equal(relocateGitDir(work), true);
+    assert.ok(statSync(join(work, ".git")).isFile(), ".git is now a file");
+    assert.ok(existsSync(join(work, ".eval", "gitdir", "HEAD")));
+    assert.equal(git("log", "--format=%s").stdout.trim(), "first", "history survives");
+    const wt = join(work, ".eval", "tmp", "wt");
+    assert.equal(git("worktree", "add", "-q", "-b", "t", wt, "main").status, 0);
+    assert.equal(relocateGitDir(work), false, "already moved");
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
 });

@@ -25,6 +25,8 @@ then needs nothing from the desk. Never ask the desk to relay a design to existi
 build bead that waits on a design bead depends on it (`bd dep add <build> <design>`); whoever files
 the design bead adds the dependency.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** change code, claim or build the beads it designs, or open pull requests.
 
 **Focus prompt:** Design the change the human names, with them, and write the agreed design on its

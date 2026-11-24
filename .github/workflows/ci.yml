@@ -5,15 +5,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  # The merge queue runs the required check (All Clear) on the branch as it will be
-  # with the queued pull requests merged. Every job runs there: there is no pull
-  # request to diff, and a skipped required job would stall the queue.
-  merge_group:
 
-# Only a pull request's superseded runs are cancelled. A push run on develop or main
-# is never cancelled by the next merge, so a red result always surfaces.
+# Only a pull request's superseded runs are cancelled. A push run on develop or main is never
+# cancelled by the next merge, so a red result always surfaces, and it gets a group of its own per
+# commit: GitHub keeps one pending run per group, so a quick third merge would otherwise replace the
+# second's push run before it started. Every pull-request run shares the
+# per-ref group and cancels the one before it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -25,18 +24,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "20"
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
         with:
           run_install: false
 
       - name: Get pnpm store directory
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -72,14 +71,14 @@ jobs:
         run: pnpm lint:spell
 
       - name: actionlint
-        uses: reviewdog/action-actionlint@v1
+        uses: reviewdog/action-actionlint@ae857e78c1b42b3d0a49637181b09d3d56d402b4 # v1
 
       - name: shellcheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
         with:
           scandir: "."
           ignore_paths: "node_modules"
-          severity: error
+          severity: warning
 
       - name: Changeset status (PRs only)
         if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
@@ -94,12 +93,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Pull requests scan the skills they change; pushes scan every skill.
-      # Eval fixtures and e2e fixtures are test data, not shipped skills.
+      # Eval fixtures are test data, not shipped skills.
       - uses: eyelock/actions/skillspector@2b4b0eafc45da186506a6fd72774482b636d55aa # skillspector-v1
         with:
           exclude: |
             */evals/files/*
-            e2e-fixtures/*
 
   # Every wheelhouse plugin script is linted (shellcheck, warnings and up) and its tests are run, on
   # Linux and on macOS: the scripts run on both, and the Check job above runs on Linux alone. It sits
@@ -114,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "20"
 
@@ -134,12 +132,34 @@ jobs:
       - name: Plugin script tests
         run: node --test plugins/wheelhouse/evals/*.test.mjs
 
+  # media-management's own test suite (its Makefile `test`: script and hook tests). It is a macOS
+  # plugin (Apple Music, BSD tools), so it runs on macOS. The matrix lists plugins that carry a
+  # Makefile `test` target; add one to the list to put its tests in CI.
+  plugin-tests:
+    name: Plugin tests (${{ matrix.plugin }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [media-management]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tools the tests need
+        run: |
+          for tool in ffmpeg jq shellcheck; do
+            command -v "$tool" >/dev/null 2>&1 || brew install "$tool"
+          done
+
+      - name: Tests
+        run: make -C "plugins/${{ matrix.plugin }}" test
+
   # The one required check. It fails when any job it needs failed, was cancelled or
   # was skipped, so a green All Clear means every gate actually ran and passed.
   all-clear:
     name: All Clear
     if: always()
-    needs: [check, skillspector, scripts]
+    needs: [check, skillspector, scripts, plugin-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Every gate passed

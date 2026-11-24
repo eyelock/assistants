@@ -5,16 +5,21 @@
 // only the tools the scripts need (so a Beads Wheelhouse really runs with no ynm installed).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
-const checkSh = join(plugin, "skills", "doctor", "scripts", "check.sh");
-const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
-const refreshSh = join(plugin, "skills", "refresh", "scripts", "refresh.sh");
 
 // bd: a Wheelhouse database kept in $STUB_DIR. memories answers the map in memories.json (unless
 // STUB_BAD_MEMORIES), dolt remote list answers [] unless STUB_REMOTE, list answers beads.json.
@@ -23,7 +28,7 @@ const fs = require("node:fs");
 const d = process.env.STUB_DIR;
 const read = (f, dflt) => (fs.existsSync(d + "/" + f) ? fs.readFileSync(d + "/" + f, "utf8") : dflt);
 const a = process.argv.slice(2).filter((x) => x !== "--readonly");
-if (a[0] === "version") console.log("bd version 1.0.0 (stub)");
+if (a[0] === "version") console.log(process.env.STUB_BD_VERSION || "bd version 1.3.2 (stub)");
 else if (a[0] === "memories") {
   if (process.env.STUB_BAD_MEMORIES) { console.error("dolt is down"); process.exit(1); }
   console.log(read("memories.json", "{}"));
@@ -53,7 +58,13 @@ const SEATS = [
 ];
 const IDENTITIES = Object.fromEntries(SEATS.map(([c]) => [`seat/${c}/identity`, `I am ${c}`]));
 
-function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], memorySh = true } = {}) {
+function wheelhouse({
+  memory,
+  ynm = false,
+  memories = IDENTITIES,
+  beads = [],
+  memorySh = true,
+} = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-doctor-memory-"));
   const wh = join(dir, "wh");
   const bin = join(dir, "bin");
@@ -71,12 +82,22 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
     chmodSync(join(bin, "ynm"), 0o755);
   }
   mkdirSync(join(wh, ".beads"));
-  if (memorySh) {
-    mkdirSync(join(wh, "scripts"));
-    writeFileSync(join(wh, "scripts", "memory.sh"), readFileSync(memorySrc));
-  }
+  // The scripts run where ynh installs them, side by side in their skills' folders; the Wheelhouse keeps none.
+  const skills = join(dir, "skills");
+  const install = (skill, ...names) => {
+    mkdirSync(join(skills, skill, "scripts"), { recursive: true });
+    for (const n of names)
+      copyFileSync(join(plugin, "skills", skill, "scripts", n), join(skills, skill, "scripts", n));
+  };
+  install("doctor", "check.sh", "memory-checks.sh");
+  install("refresh", "refresh.sh");
+  install("wake", "wake.sh");
+  install("work-graph", "wheelhouse-lib.sh", "inbox.sh", ...(memorySh ? ["memory.sh"] : []));
   mkdirSync(join(wh, ".agents/harness"), { recursive: true });
-  writeFileSync(join(wh, ".agents/harness/plugin.json"), JSON.stringify({ name: "hq", version: "0.1.0" }));
+  writeFileSync(
+    join(wh, ".agents/harness/plugin.json"),
+    JSON.stringify({ name: "hq", version: "0.1.0" }),
+  );
   mkdirSync(join(wh, "skills/roster/assets"), { recursive: true });
   writeFileSync(
     join(wh, "skills/roster/assets/roster.json"),
@@ -88,18 +109,39 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   if (memory !== undefined) writeFileSync(join(wh, "wheelhouse.json"), JSON.stringify({ memory }));
   writeFileSync(join(dir, "memories.json"), JSON.stringify({ schema_version: 1, ...memories }));
   writeFileSync(join(dir, "beads.json"), JSON.stringify(beads));
-  const env = (extra = {}) => ({ PATH: `${bin}:/usr/bin:/bin`, HOME: dir, STUB_DIR: dir, UNBORN: "", ...extra });
+  const env = (extra = {}) => ({
+    PATH: `${bin}:/usr/bin:/bin`,
+    HOME: dir,
+    STUB_DIR: dir,
+    UNBORN: "",
+    ...extra,
+  });
   const bash = spawnSync("sh", ["-c", "command -v bash"], { encoding: "utf8" }).stdout.trim();
   return {
     dir,
+    wh,
     check(extra = {}) {
-      const out = spawnSync(bash, [checkSh, "--dir", wh], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(bash, [join(skills, "doctor", "scripts", "check.sh"), "--dir", wh], {
+        encoding: "utf8",
+        env: env(extra),
+      });
       assert.equal(out.status, 0, out.stderr);
       const json = JSON.parse(out.stdout);
       return { json, by: (name) => json.checks.find((c) => c.name === name) };
     },
     refresh(extra = {}) {
-      const out = spawnSync(bash, [refreshSh, "--dir", wh, "--doctor", "/nonexistent", "--dry-run"], { encoding: "utf8", env: env(extra) });
+      const out = spawnSync(
+        bash,
+        [
+          join(skills, "refresh", "scripts", "refresh.sh"),
+          "--dir",
+          wh,
+          "--doctor",
+          "/nonexistent",
+          "--dry-run",
+        ],
+        { encoding: "utf8", env: env(extra) },
+      );
       assert.equal(out.status, 0, out.stderr);
       return JSON.parse(out.stdout);
     },
@@ -107,18 +149,38 @@ function wheelhouse({ memory, ynm = false, memories = IDENTITIES, beads = [], me
   };
 }
 
-test("a Wheelhouse with no scripts/memory.sh is an error that says how to fix it, and one with it is fine", () => {
+test("a seat with no work-graph memory.sh is an error that says how to fix it, and one with it is fine", () => {
   const without = wheelhouse({ memory: "beads", memorySh: false });
   const withIt = wheelhouse({ memory: "beads" });
   try {
-    const bad = without.check({ STUB_REMOTE: "1" }).by("memory script");
+    const bad = without.check({ STUB_REMOTE: "1" }).by("plugin script memory.sh");
     assert.equal(bad.ok, false);
     assert.equal(bad.level, "error");
-    assert.match(bad.fix, /scripts\/memory\.sh/);
-    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("memory script").ok, true);
+    assert.match(bad.fix, /skills\/work-graph/);
+    assert.equal(withIt.check({ STUB_REMOTE: "1" }).by("plugin script memory.sh").ok, true);
   } finally {
     without.done();
     withIt.done();
+  }
+});
+
+test("a copy of a plugin script in the Wheelhouse's scripts/ is a warning that says to delete it", () => {
+  const w = wheelhouse({ memory: "beads" });
+  const clean = wheelhouse({ memory: "beads" });
+  try {
+    mkdirSync(join(w.wh, "scripts"));
+    writeFileSync(join(w.wh, "scripts", "wake.sh"), "#!/bin/sh\n");
+    writeFileSync(join(w.wh, "scripts", "mine.sh"), "#!/bin/sh\n");
+    const bad = w.check({ STUB_REMOTE: "1" }).by("plugin script copies");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.detail, /scripts\/wake\.sh/);
+    assert.doesNotMatch(bad.detail, /mine\.sh/);
+    assert.match(bad.fix, /delete/);
+    assert.equal(clean.check({ STUB_REMOTE: "1" }).by("plugin script copies").ok, true);
+  } finally {
+    w.done();
+    clean.done();
   }
 });
 
@@ -127,7 +189,10 @@ test("beads memory: ynm is never checked, and a Wheelhouse with no ynm installed
   try {
     const r = w.check({ STUB_REMOTE: "1" });
     assert.equal(r.json.ok, true, JSON.stringify(r.json.checks.filter((c) => !c.ok)));
-    assert.deepEqual(r.json.checks.filter((c) => /^ynm/.test(c.name) && c.name !== "ynm"), []);
+    assert.deepEqual(
+      r.json.checks.filter((c) => /^ynm/.test(c.name) && c.name !== "ynm"),
+      [],
+    );
     assert.equal(r.by("ynm installed"), undefined);
     assert.equal(r.by("memory backend").ok, true);
     assert.match(r.by("beads memory readable").detail, /3 memories/);
@@ -155,7 +220,10 @@ test("beads memory: no Dolt remote is a warning, an unreadable memory an error",
 });
 
 test("beads memory: a seat with no identity key is not yet born", () => {
-  const w = wheelhouse({ memory: "beads", memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" } });
+  const w = wheelhouse({
+    memory: "beads",
+    memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" },
+  });
   try {
     const born = w.check({ STUB_REMOTE: "1" }).by("seats born");
     assert.equal(born.ok, false);
@@ -168,7 +236,11 @@ test("beads memory: a seat with no identity key is not yet born", () => {
 
 test("beads memory: an assignee is known when memory holds a human/<command> key for them", () => {
   const bead = (id, assignee) => ({ id, status: "open", assignee, labels: [] });
-  const w = wheelhouse({ memory: "beads", beads: [bead("w-1", "sam"), bead("w-2", "kit")], memories: { ...IDENTITIES, "human/sam/note/20261101T000000Z-eno": "hi" } });
+  const w = wheelhouse({
+    memory: "beads",
+    beads: [bead("w-1", "sam"), bead("w-2", "kit")],
+    memories: { ...IDENTITIES, "human/sam/note/20261101T000000Z-eno": "hi" },
+  });
   try {
     const known = w.check({ STUB_REMOTE: "1" }).by("assignees known");
     assert.equal(known.ok, false);
@@ -185,6 +257,29 @@ test("a bad wheelhouse.json is an error from the doctor", () => {
     const r = w.check();
     assert.equal(r.by("memory backend").level, "error");
     assert.match(r.by("memory backend").detail, /ynm" or "beads"/);
+    assert.equal(r.json.ok, false);
+  } finally {
+    w.done();
+  }
+});
+
+test("the doctor errors on a bad or unknown wheelhouse.json key, with the fix, and passes a good file", () => {
+  const w = wheelhouse({ memory: "ynm", ynm: true });
+  try {
+    const file = join(w.wh, "wheelhouse.json");
+    writeFileSync(
+      file,
+      JSON.stringify({ memory: "ynm", protected_branches: ["main"], guards: { mode: "log" } }),
+    );
+    assert.equal(w.check().by("wheelhouse.json keys").ok, true);
+    writeFileSync(file, JSON.stringify({ memory: "ynm", colour: 1, guards: { mode: "warn" } }));
+    const r = w.check();
+    const c = r.by("wheelhouse.json keys");
+    assert.equal(c.ok, false);
+    assert.equal(c.level, "error");
+    assert.match(c.detail, /colour: unknown key/);
+    assert.match(c.detail, /guards\.mode: must be "block" or "log"/);
+    assert.ok(c.fix);
     assert.equal(r.json.ok, false);
   } finally {
     w.done();
@@ -222,10 +317,16 @@ test("ynm memory without ynm installed is still an error", () => {
 });
 
 test("refresh reports a seat with no identity, reading Beads memory when that is the backend", () => {
-  const w = wheelhouse({ memory: "beads", memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" } });
+  const w = wheelhouse({
+    memory: "beads",
+    memories: { "seat/hq/identity": "I am hq", "seat/eno/identity": "I am eno" },
+  });
   try {
     const r = w.refresh();
-    assert.deepEqual(r.seatsNotReady.map((s) => [s.seat, s.born]), [["wick", false]]);
+    assert.deepEqual(
+      r.seatsNotReady.map((s) => [s.seat, s.born]),
+      [["wick", false]],
+    );
     assert.match(r.seatsNotReady[0].reminder, /dispatcher/);
   } finally {
     w.done();
@@ -245,7 +346,89 @@ test("refresh reads ynm for the ynm backend", () => {
   const w = wheelhouse({ ynm: true });
   try {
     assert.deepEqual(w.refresh().seatsNotReady, []);
-    assert.deepEqual(w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat), ["eno"]);
+    assert.deepEqual(
+      w.refresh({ UNBORN: "eno" }).seatsNotReady.map((s) => s.seat),
+      ["eno"],
+    );
+  } finally {
+    w.done();
+  }
+});
+
+test("a seat that picks skills but not work-graph is warned, the desk and a seat that picks it are not", () => {
+  const w = wheelhouse({ memory: "beads" });
+  try {
+    const harness = (cmd, includes) => {
+      const dir = join(w.wh, cmd === "hq" ? "." : `harnesses/${cmd}`, ".agents/harness");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(
+        join(dir, "plugin.json"),
+        JSON.stringify({ name: "hq", version: "0.1.0", includes }),
+      );
+    };
+    harness("hq", [{ git: "../..", path: "plugins/wheelhouse" }]);
+    harness("eno", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] },
+    ]);
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/doctor"] },
+    ]);
+    const bad = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.level, "warn");
+    assert.match(bad.detail, /: wick$/);
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake", "skills/work-graph"] },
+    ]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
+    // Entwistle's shape: a pick without work-graph, plus another plugin included whole, still warns.
+    harness("wick", [
+      { git: "../..", path: "plugins/wheelhouse", pick: ["skills/wake"] },
+      { git: "../..", path: "plugins/gitflow" },
+    ]);
+    const shaped = w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph");
+    assert.equal(shaped.ok, false);
+    assert.match(shaped.detail, /: wick$/);
+    // A seat with no wheelhouse include has no wheelhouse scripts, so it is not checked.
+    harness("wick", [{ git: "../..", path: "plugins/gitflow", pick: ["skills/branching"] }]);
+    assert.equal(w.check({ STUB_REMOTE: "1" }).by("seats pick work-graph").ok, true);
+  } finally {
+    w.done();
+  }
+});
+
+test("the doctor fails a bd older than the minimum, passes the minimum and later, and warns on a version it cannot read", () => {
+  const w = wheelhouse({ memory: "beads" });
+  try {
+    const old = w
+      .check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.2 (stub)" })
+      .by("beads version");
+    assert.equal(old.ok, false);
+    assert.equal(old.level, "error");
+    assert.match(old.detail, /1\.2\.2 is older than 1\.3\.0/);
+    assert.match(old.fix, /brew upgrade beads/);
+    for (const v of [
+      "bd version 1.3.0 (stub)",
+      "bd version 1.3.2 (Homebrew)",
+      "bd version 1.4.0-rc.1",
+      "bd version 2.0.0",
+      "bd version 1.10.0",
+    ]) {
+      assert.equal(
+        w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: v }).by("beads version").ok,
+        true,
+        v,
+      );
+    }
+    assert.equal(
+      w.check({ STUB_REMOTE: "1", STUB_BD_VERSION: "bd version 1.2.10" }).by("beads version").ok,
+      false,
+    );
+    const unreadable = w
+      .check({ STUB_REMOTE: "1", STUB_BD_VERSION: "dev build" })
+      .by("beads version");
+    assert.equal(unreadable.ok, false);
+    assert.equal(unreadable.level, "warn");
   } finally {
     w.done();
   }

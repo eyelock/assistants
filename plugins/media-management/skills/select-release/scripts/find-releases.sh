@@ -102,7 +102,7 @@ fi
 # Inspect each source
 declare -a inspected_json=()
 
-for zip in "${zip_files[@]}"; do
+for zip in "${zip_files[@]+"${zip_files[@]}"}"; do
   result=$("$INSPECT_ZIP_SCRIPT" "$zip" 2>/dev/null) || continue
   type=$(echo "$result" | jq -r '.type')
   # Only include ZIPs with audio content
@@ -111,7 +111,7 @@ for zip in "${zip_files[@]}"; do
   fi
 done
 
-for f in "${audio_files[@]}"; do
+for f in "${audio_files[@]+"${audio_files[@]}"}"; do
   result=$("$INSPECT_FILE_SCRIPT" "$f" 2>/dev/null) || continue
   type=$(echo "$result" | jq -r '.type')
   if [[ "$type" != "unknown" ]]; then

@@ -50,7 +50,7 @@ item for planned work first, and only then cut a build bead for it, labelled wit
 with the item's full URL or key as its `external_ref` (never a release copied onto the bead: the
 release is read from the item); or ask the designer through the desk when it first needs design;
 report to the humans through the desk, as report items in the default human's inbox (`bash
-scripts/inbox.sh assign --kind report`): a weekly roadmap report, and a short one whenever a
+inbox.sh assign --kind report`): a weekly roadmap report, and a short one whenever a
 milestone moves.
 
 **Gaps found by audits, spikes and finished designs come to it first.** An audit, spike or

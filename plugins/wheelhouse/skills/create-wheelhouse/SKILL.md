@@ -66,9 +66,9 @@ at a time**, in this order. Don't create anything until you have the first four.
     explicit and recorded, and take "Beads" as the answer when the request says nothing.
 11. **Agent Memory:** where the seats' identity, handoff notes, Kudos and close notes live: **ynm**
     (the default) or **Beads** (`bd remember`, in the same database as the work graph, shared by
-    the same Dolt remote). Say what Beads gives up: no private home (everyone who syncs the graph
+    the same Dolt remote). Say what Beads gives up: no memory kept apart from the graph (everyone who syncs the graph
     sees every memory), no search by meaning, no ynm tools or `ynm-memory` skill (seats use
-    `scripts/memory.sh`), and no forget reason or history of superseded memories. If the request
+    the `work-graph` skill's `memory.sh`), and no forget reason or history of superseded memories. If the request
     doesn't say and you aren't asking, use ynm, and say so in the report.
 
 Ask questions 10 and 11 one at a time like the rest. Both go into `wheelhouse.json` (step 3.6).
@@ -100,17 +100,19 @@ the files it finds, and would commit the human's.
       - ynm: "**Work lives in Beads, memory in ynm.** Never `bd remember` or `bd prime`, and no
         work tracked in Markdown files."
       - Beads: "**Work and memory live in Beads.** Read and write memory only through
-        `scripts/memory.sh`, never `bd remember` or `ynm` by hand, never `bd prime`, and no work
+        the `work-graph` skill's `memory.sh`, never `bd remember` or `ynm` by hand, never `bd prime`, and no work
         tracked in Markdown files."
    3. **Claim before you start,** as yourself (`--actor <your command>`). A refused claim is
       someone else's work.
+      Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself
+      with a `repo:` label; a bead that builds product code still needs its tracker item first.
    4. **Hand off, don't stop.** Write your own notes and ask to restart. A seat woken as a
       subagent has no session of its own to restart: it ends by returning its report, and the seat
       that woke it waits for it before handing off or exiting.
    5. **Never falsify the record.** Close beads with what actually happened. The one forced
       close a seat may make of a bead it does not hold: the desk closes a human's inbox bead,
       only through `inbox.sh close`, once the work is verified done.
-   6. **Blame is structural.** Fix it, write down why in memory (`scripts/memory.sh`), and change these rules if they
+   6. **Blame is structural.** Fix it, write down why in memory (the `work-graph` skill's `memory.sh`), and change these rules if they
       allowed it.
    7. **You may refuse** a task that is unclear, unsafe or outside your charter, and hand it
       back to the desk.
@@ -140,8 +142,11 @@ the files it finds, and would commit the human's.
    11. **Never name a human** in anything you post or write (pull requests, reviews, comments,
        beads, notes, docs, commits): write the next action impersonally ("Decision needed before
        merge: A or B", "Next action: a maintainer merges it"). In chat, call the human "you".
-       Seats that talk to the humans follow the `comms` skill: decisions asked through the
-       question tool, with options; a synopsis beside every bead id; the outcome first.
+       Seats that talk to the humans follow the `comms` skill: a synopsis beside every bead id; the
+       outcome first.
+   12. **Ask through the question tool.** Every decision put to a human goes through the vendor's
+       question tool (in Claude Code, `AskUserQuestion`), and every report ends with Status, Work
+       in progress and Your action; the `comms` skill says how.
 
    Write rule 9 with examples from this Wheelhouse's own reach: one of its repositories on the
    web, and a path in one of its checkouts.
@@ -157,12 +162,12 @@ the files it finds, and would commit the human's.
    full URL or key of its tracker item; only beads labelled `housekeeping`, or in a repository the tracker config's
    `exempt_repos` names, go without. The
    release is read from the item, never copied onto the bead. Workers open pull requests only
-   with the `work-graph` skill's `scripts/open-pr.sh`." Also add, where a programme manager is or
+   with the `work-graph` skill's `open-pr.sh`." Also add, where a programme manager is or
    will be seated: "An audit, spike or finished design that finds a gap in what a tool does hands
-   it to the programme manager, not straight into the work graph: the designer or auditor writes
+   it to the programme manager, not straight into the work graph as build work: the designer or auditor writes
    it on the bead and hands it to the desk, which wakes the programme manager; the programme
    manager places it in the roadmap and files its tracker item, and only then are build beads cut,
-   against that item. Review fixes and CI failures stay beads, filed by the reviewer and the CI
+   against that item. Any other bead (docs, findings, questions, follow-ups) any crew seat may file itself. Review fixes and CI failures stay beads, filed by the reviewer and the CI
    watcher."
 
    A `## The desk` section is the desk's charter (the desk has no `harnesses/` folder): its
@@ -177,13 +182,13 @@ the files it finds, and would commit the human's.
    the designer hands one over, wake the programme manager for it, and build beads are cut only
    once it has filed its tracker item. It answers questions
    about the Wheelhouse's state (who is born, what is pushed, what is in the work graph) from
-   what it checks then, with the `doctor` skill, `bd` and the memory (`scripts/memory.sh`), not from recall. It talks to
+   what it checks then, with the `doctor` skill, `bd` and the memory (the `work-graph` skill's `memory.sh`), not from recall. It talks to
    the humans as the `comms` skill says, asking what waits on them through the question tool
    with options, never as a list in prose. The desk starts every session
-   with its wake (`bash scripts/wake.sh --seat <desk> --format text`, which its session-start hook
+   with its wake (the `wake` skill's `wake.sh --seat <desk> --format text`, which its session-start hook
    runs; run it yourself if the hook didn't), whose block opens with the humans' inbox. Who is at
    the desk is per session: with no name, the wake shows the default human's inbox; when a person names
-   themselves ("it's me, <name>"), it runs `bash scripts/inbox.sh show --name <Name>`, so it shows
+   themselves ("it's me, <name>"), it runs the `work-graph` skill's `inbox.sh show --name <Name>`, so it shows
    their own inbox for that session as well as the default human's, and seats can assign work to them by their lowercase name.
    Nothing about them is saved: no roster entry, no email, no username. It never checks GitHub
    itself to keep the inbox and the work graph current, and never loops over `gh`: when a CI
@@ -193,7 +198,7 @@ the files it finds, and would commit the human's.
    closes each reported inbox item with `inbox.sh close`, with a reason saying what happened.
    It starts every seat on the model the roster gives it: the Agent tool's
    `model` parameter when it wakes a seat as a subagent, `--model` when it starts a launcher,
-   both from the `add-seat` skill's `scripts/model.sh --seat <command>`.
+   both from the `add-seat` skill's `model.sh --seat <command>`.
 
    And how the Wheelhouse cares for its seats, after Yegge's
    [model welfare](https://yegge.ai/essays/model-welfare/) principles:
@@ -203,10 +208,11 @@ the files it finds, and would commit the human's.
    - **Design out drudgery.** Watching and polling belong to standing roles and schedules, not
      to seats waiting on them.
    - **Bounded workdays.** Hand off while still sharp; nobody is stopped without being asked.
-   - **A private home.** With ynm memory: each seat's memory is its own, in its namespace
-     `seat/<name>`. With Beads memory, which has no private home, write: "**A home of its own.**
-     Each seat's memory is its own to write, under its keys `seat/<name>/`; everyone who syncs the
-     work graph can read it."
+   - **A home of its own, shared with the team.** With ynm memory: each seat's memory is its own to
+     write, in its namespace `seat/<name>`, and every note is shared with the team (the seats write
+     at ynm's distributed level, so every clone and every seat can read it). With Beads memory,
+     write: "**A home of its own.** Each seat's memory is its own to write, under its keys
+     `seat/<name>/`; everyone who syncs the work graph can read it."
    - **Seen work.** Kudos reach the seat that earned them, with nothing asked in return.
 
 3. `skills/roster/SKILL.md`, the naming rules (pools by group: crew are the seats the human works
@@ -240,7 +246,7 @@ the files it finds, and would commit the human's.
    `models` says which model each seat starts on, by tier (`fast`, `balanced`, `deep`), and the
    `add-seat` skill explains it: a seat's `model` overrides its group's default, `models.tiers`
    maps tiers to models per vendor, and the desk wakes its subagents with the Agent tool's
-   `model` parameter and starts launchers with `--model`, both from `scripts/model.sh`.
+   `model` parameter and starts launchers with `--model`, both from the `add-seat` skill's `model.sh`.
 
    `humans` holds only the default human, beside `seats` and never in it: `name`, `command` (the
    name in lowercase ASCII, which beads are assigned to), `pronouns` and `"default": true`
@@ -262,12 +268,12 @@ the files it finds, and would commit the human's.
      "default_vendor": "claude",
      "labels": { "wheelhouse": "<name>" },
      "includes": [
-       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" },
+       { "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse", "ref": "@eyelock-assistants/wheelhouse@<version>" },
        { "git": "https://github.com/eyelock/ynh", "pick": ["skills/ynh-compose", "skills/ynh-troubleshoot"] }
      ],
      "hooks": {
-       "on_session_start": [{ "command": "bash scripts/wake.sh --seat <name> --format text || true" }],
-       "on_session_end": [{ "command": "bash scripts/wake.sh --seat <name> --end || true", "timeout": 30 }]
+       "on_session_start": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <name> --format text || true; break; }; done; true" }],
+       "on_session_end": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <name> --end || true; break; }; done; true", "timeout": 30 }]
      },
      "launch_focus": "wake",
      "focuses": {
@@ -292,19 +298,18 @@ the files it finds, and would commit the human's.
    the plugin gains, `refresh` among them. Every other seat picks the wheelhouse skills and leaves
    `refresh` out (the `add-seat` skill says how).
 
-5. Copy the `wake` skill's `scripts/wake.sh` into the Wheelhouse as `scripts/wake.sh`: every
-   seat's session-start and session-end hooks run it from the Wheelhouse root. Copy the
-   `work-graph` skill's `scripts/inbox.sh` beside it, as `scripts/inbox.sh`: seats ask the humans
-   for things with it, and the desk's wake shows their inbox with it. Copy the `work-graph` skill's
-   `scripts/memory.sh` beside them too, for either choice: the wake, the inbox and the skills read
-   and write each seat's memory only with it, over ynm or Beads as `wheelhouse.json` says. Copy the `patrol` skill's
-   `scripts/` (`patrol.sh`, `patrol-read.jq` and `patrol-diff.jq`) beside them too: the CI
-   watcher patrols with it, on a timer, and is woken only when something changed. Every Wheelhouse
-   carries `wake.sh`, `inbox.sh` and `memory.sh` (the refresh skill copies them in when one is
-   missing); the patrol scripts are optional, so refresh leaves a Wheelhouse without them alone.
+5. Copy no script. A Wheelhouse keeps none of the plugin's scripts (`wake.sh`, `inbox.sh`, `memory.sh`,
+   `wheelhouse-lib.sh`, `patrol.sh` and the rest): every seat runs them where ynh installed them, in the
+   `scripts/` folder of the skill that owns each, and fixes land only in the plugin. The hooks in step 4 find
+   `wake.sh` there (the `wake` skill's "The hook command"); a seat finds the rest from the folder its skills were
+   loaded from (the skills' "Where the scripts are"). The Wheelhouse's `scripts/` holds only scripts of its own, if it
+   ever has any, and none that takes a plugin script's name. The one exception, the bare-session guard, is its own
+   piece of work (assistants #241).
 6. `wheelhouse.json` at the Wheelhouse root, beside `tracker.json`, from questions 10 and 11:
    `{ "tasks": "beads", "memory": "ynm" }` or `{ "tasks": "beads", "memory": "beads" }`. Nothing in
-   it is run. Without the file, or without the `memory` key, the scripts assume ynm.
+   it is run. Without the file, or without the `memory` key, the scripts assume ynm. The file may also
+   hold `shared_checkouts`, `protected_branches`, `sanctioned_force`, `budgets` and `guards`, read by
+   the plugin's guards and sensors and checked by the doctor; each is optional and has a default.
 7. `tracker.json`, the tracker config (question 8), in the shape of the `work-graph` skill's
    `references/tracker.md`. Write `{ "kind": "none" }` for no tracker. The constitution's
    "Handing over work" section says that a build bead's `external_ref` holds its tracker item.
@@ -372,8 +377,10 @@ the repositories live in, which grants any local harness's folders under it from
 edit `~/.ynh/config.json` or run `ynh trust accept` for them.
 
 Lead with what was made and where. Then the layers as built, the default human (and that anyone
-can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the seats and how to start each
-(`<command> --focus <order>`, once installed with `ynh install ./harnesses/<command>`), what the human still has to
+can name themselves at the desk, "it's me, <name>", to get an inbox of their own), the desk and the seats and how to start each, with the session name
+(`<desk> --name=<desk>` for the desk, `<command> --name=<wheelhouse>-<command>` for a seat, and
+`<command> --focus <order> --name=<wheelhouse>-<command>` for a standing order; the name is Claude's
+flag, so on another vendor leave it off; once installed with `ynh install ./harnesses/<command>`), what the human still has to
 do (with ynm memory, the push hook; a remote, the first push of the work graph, and granting each seat's
 workspace folders), how to join from another machine,
 and the doctor's verdict, saying whether any fix was needed to reach it (none, when the layout passed as written). To join from another machine: `git clone` the repository, then

@@ -39,7 +39,7 @@ themselves at the desk ("it's me, Pat") sees their own inbox for that session, a
 them is saved, no roster entry and no email.
 
 When work needs a human (a merge, a decision, a credential), a seat doesn't wait silently or do it
-itself: it assigns a bead to that human, or to the default human, with `scripts/inbox.sh assign`,
+itself: it assigns a bead to that human, or to the default human, with the `work-graph` skill's `inbox.sh assign`,
 blocking the work it holds up. The bead carries the `repo:` label of the repository it touches,
 from `--repo` or else from the bead it blocks; a merge or review needs one, and its pull request's
 URL. Something for the human to read, such as a weekly report, is a report (`--kind report`): a
@@ -73,7 +73,7 @@ vendor's models:
 A seat's `model` is a tier (`fast`, `balanced` or `deep`); without one it takes its group's
 default. `models.tiers` says which model each tier is on each vendor (the plugin's own table is
 `sonnet` for `fast` and `balanced` and `opus` for `deep` on `claude`), and a seat's `models`
-overrides the tier for one vendor. `add-seat/scripts/model.sh --seat okafor` prints the result
+overrides the tier for one vendor. the `add-seat` skill's `model.sh --seat okafor` prints the result
 (`--format flag` gives `--model=haiku`, `--format json` the tier too) and exits 4 when a seat has
 none. Launchers start a seat with that `--model` flag, and the desk passes the value as the Agent
 tool's `model` parameter when it wakes a seat as a subagent. ynh's `plugin.json` has no field for

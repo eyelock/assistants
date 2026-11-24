@@ -59,7 +59,7 @@ want those answers from the terminal. They need credentials, covered in
 - `.claude-plugin/`, `.cursor-plugin/`, `.github/plugin/` and `.agents/harness/` each hold a
   marketplace index for one tool.
 - `docs/` is this documentation; `make docs` serves it at http://localhost:3000.
-- `scripts/`, `e2e-fixtures/` and each package's `evals/` check the rest: see
+- `scripts/` and each package's `evals/` check the rest: see
   [Testing and CI](../testing/README.md).
 
 ## Where to go next

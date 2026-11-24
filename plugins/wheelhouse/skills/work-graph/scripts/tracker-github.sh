@@ -10,6 +10,13 @@
 # Nothing here runs text from a config: the commands are written out below, and the item reaches
 # gh only as one argument, after it has matched the safe pattern for an issue URL.
 set -uo pipefail
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-lib.sh"; do
+  # shellcheck source=../../work-graph/scripts/wheelhouse-lib.sh
+  [ -f "$lib" ] && { . "$lib"; break; }
+done
+type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
+
 
 safe_url='^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$'
 
@@ -38,10 +45,10 @@ case "${1:-}" in
     fi ;;
   release)
     need_issue "${2:-}"
-    gh issue view "$2" --json milestone --jq '.milestone.title // empty' || exit 3 ;;
+    limited "$WL_GH_SECS" gh issue view "$2" --json milestone --jq '.milestone.title // empty' || exit 3 ;;
   state)
     need_issue "${2:-}"
-    st=$(gh issue view "$2" --json state --jq .state) || exit 3
+    st=$(limited "$WL_GH_SECS" gh issue view "$2" --json state --jq .state) || exit 3
     case "$st" in OPEN) echo open ;; CLOSED) echo closed ;; *) echo unknown ;; esac ;;
   pr-flags)
     [ $# -eq 2 ] || { echo "usage: tracker-github.sh pr-flags <milestone>" >&2; exit 1; }

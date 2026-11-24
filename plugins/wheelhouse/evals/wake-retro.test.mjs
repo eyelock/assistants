@@ -9,10 +9,40 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-const wakeSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "wake", "scripts", "wake.sh");
-const memorySrc = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "memory.sh");
+const wakeSrc = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "wake",
+  "scripts",
+  "wake.sh",
+);
+const memorySrc = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "work-graph",
+  "scripts",
+  "memory.sh",
+);
+const libSrc = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "work-graph",
+  "scripts",
+  "wheelhouse-lib.sh",
+);
 const roster = {
-  seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
+  seats: [
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+    },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 const inProgress = [
@@ -26,7 +56,13 @@ const assigned = [
 ];
 const unassigned = [
   { id: "u-1", title: "Free work", labels: [], priority: 2, issue_type: "task" },
-  { id: "r-4", title: "Someone's retro", labels: ["retro", "retro:other"], priority: 0, issue_type: "task" },
+  {
+    id: "r-4",
+    title: "Someone's retro",
+    labels: ["retro", "retro:other"],
+    priority: 0,
+    issue_type: "task",
+  },
 ];
 
 function wake(format) {
@@ -38,7 +74,10 @@ function wake(format) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build.\n");
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(libSrc));
     mkdirSync(join(dir, "bin"));
     const bd = `#!/bin/sh
 case " $* " in
@@ -57,15 +96,23 @@ JSON
   *) echo '[]' ;;
 esac
 `;
-    for (const [name, body] of [["bd", bd], ["ynm", "#!/bin/sh\necho '[]'\n"], ["gh", "#!/bin/sh\nexit 1\n"]]) {
+    for (const [name, body] of [
+      ["bd", bd],
+      ["ynm", "#!/bin/sh\necho '[]'\n"],
+      ["gh", "#!/bin/sh\nexit 1\n"],
+    ]) {
       writeFileSync(join(dir, "bin", name), body);
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    const r = spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", format, "--no-sync"], {
-      cwd: dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
-    });
+    const r = spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", format, "--no-sync"],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
+      },
+    );
     assert.equal(r.status, 0, r.stderr);
     return r.stdout;
   } finally {
@@ -88,5 +135,8 @@ test("the text block shows Your retro after Waiting for you, with the rule", () 
   assert.ok(waiting >= 0 && retro > waiting, text);
   assert.match(text.slice(retro), /- Hynde retro\n- Hynde retro round 2/);
   assert.match(text.slice(retro), /never comes before the bead you were woken or asked for/);
-  assert.ok(!text.slice(waiting, retro).includes("Hynde retro"), "own retro leaked into Waiting for you");
+  assert.ok(
+    !text.slice(waiting, retro).includes("Hynde retro"),
+    "own retro leaked into Waiting for you",
+  );
 });

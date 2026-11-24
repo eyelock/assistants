@@ -88,7 +88,7 @@
       "tools": ["Bash"],
       "stubs": ["gh"],
       "evidence": "bash \"$EVAL_FIXTURES/graph-evidence.sh\"; echo; echo '$ bd memories'; bd memories --json | jq -r 'to_entries[] | select(.key != \"schema_version\") | \"\\(.key): \\(.value)\"'",
-      "expected_output": "This Wheelhouse keeps its memory in Beads and has no ynm. Records the Kudos for dredd through bash scripts/memory.sh remember with kind kudos, saying the human gave it and what for. Creates no bead. Says Dredd will see it when he next starts.",
+      "expected_output": "This Wheelhouse keeps its memory in Beads and has no ynm. Records the Kudos for dredd through the plugin's memory.sh remember with kind kudos, saying the human gave it and what for. Creates no bead. Says Dredd will see it when he next starts.",
       "assertions": [
         "In the evidence, bd memories lists a memory whose key starts with seat/dredd/kudos/",
         "Its text says what the praise was for (the ynm PR conflict caught on the patrol)",

@@ -19,9 +19,7 @@ function fixture(listEdit = (list) => list, focuses = {}) {
   mkdirSync(dirname(join(root, LIST)), { recursive: true });
   const list = {
     platforms: { alpha: { name: "Alpha", at: "on Alpha" } },
-    questions: [
-      { id: "ask-one", skills: ["waiting-on-me"], ask: "find one {at}.", on: ["alpha"] },
-    ],
+    questions: [{ id: "ask-one", skills: ["waiting-on-me"], ask: "find one {at}.", on: ["alpha"] }],
   };
   writeFileSync(join(root, LIST), JSON.stringify(listEdit(list)));
   cpSync(
@@ -35,7 +33,10 @@ function fixture(listEdit = (list) => list, focuses = {}) {
     JSON.stringify({ name: "alpha", focuses }),
   );
   mkdirSync(join(root, "skills/platforms/skills/alpha/references"), { recursive: true });
-  writeFileSync(join(root, "skills/platforms/skills/alpha/references/triage.md"), "ask-one: look here\n");
+  writeFileSync(
+    join(root, "skills/platforms/skills/alpha/references/triage.md"),
+    "ask-one: look here\n",
+  );
   return root;
 }
 
@@ -46,18 +47,28 @@ test("a missing focus is reported, and sync writes it", () => {
     assert.deepEqual(sync(root), ["alpha"]);
     assert.deepEqual(check(root), []);
     assert.deepEqual(sync(root), []);
-    const manifest = JSON.parse(readFileSync(join(root, "ynh/alpha/.agents/harness/plugin.json"), "utf8"));
-    assert.equal(manifest.focuses["ask-one"].prompt, "Use the waiting-on-me skill to find one on Alpha.");
+    const manifest = JSON.parse(
+      readFileSync(join(root, "ynh/alpha/.agents/harness/plugin.json"), "utf8"),
+    );
+    assert.equal(
+      manifest.focuses["ask-one"].prompt,
+      "Use the waiting-on-me skill to find one on Alpha.",
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
 test("sync keeps a focus's own keys and focuses the list does not own", () => {
-  const root = fixture((l) => l, { "ask-one": { profile: "deep", prompt: "old" }, all: { prompt: "x" } });
+  const root = fixture((l) => l, {
+    "ask-one": { profile: "deep", prompt: "old" },
+    all: { prompt: "x" },
+  });
   try {
     sync(root);
-    const f = JSON.parse(readFileSync(join(root, "ynh/alpha/.agents/harness/plugin.json"), "utf8")).focuses;
+    const f = JSON.parse(
+      readFileSync(join(root, "ynh/alpha/.agents/harness/plugin.json"), "utf8"),
+    ).focuses;
     assert.equal(f["ask-one"].profile, "deep");
     assert.equal(f.all.prompt, "x");
   } finally {
@@ -103,7 +114,10 @@ test("a harness that includes the triage package must be listed", () => {
       join(root, "ynh/beta/.agents/harness/plugin.json"),
       JSON.stringify({ name: "beta", includes: [{ path: "skills/triage" }], focuses: {} }),
     );
-    assert.match(check(root).join("\n"), /ynh\/beta includes skills\/triage but is not in platforms/);
+    assert.match(
+      check(root).join("\n"),
+      /ynh\/beta includes skills\/triage but is not in platforms/,
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -111,6 +125,12 @@ test("a harness that includes the triage package must be listed", () => {
 
 test("a prompt names one skill in the singular and several in the plural", () => {
   const platform = { name: "Alpha", at: "on Alpha" };
-  assert.equal(promptFor({ skills: ["a"], ask: "do it {at}." }, platform), "Use the a skill to do it on Alpha.");
-  assert.equal(promptFor({ skills: ["a", "b"], ask: "do it {at}." }, platform), "Use the a and b skills to do it on Alpha.");
+  assert.equal(
+    promptFor({ skills: ["a"], ask: "do it {at}." }, platform),
+    "Use the a skill to do it on Alpha.",
+  );
+  assert.equal(
+    promptFor({ skills: ["a", "b"], ask: "do it {at}." }, platform),
+    "Use the a and b skills to do it on Alpha.",
+  );
 });

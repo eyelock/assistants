@@ -4,7 +4,16 @@
 // The scripts are copied into each case's folder, so a case can add an adapter of its own.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -34,21 +43,45 @@ esac
 const ISSUE = "https://github.com/eyelock/ynh/issues/680";
 const github = {
   kind: "github",
-  item: { name: "issue", pattern: "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$" },
+  item: {
+    name: "issue",
+    pattern: "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+$",
+  },
   release: { name: "milestone" },
 };
-const bead = (id, over = {}) => ({ id, status: "in_progress", labels: ["repo:ynh"], external_ref: ISSUE, ...over });
+const bead = (id, over = {}) => ({
+  id,
+  status: "in_progress",
+  labels: ["repo:ynh"],
+  external_ref: ISSUE,
+  ...over,
+});
 
-function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.0", listFails = false, noteFails = false, adapters = {} } = {}) {
+function harness({
+  tracker = github,
+  beads = [bead("hq-1")],
+  milestone = "v0.17.0",
+  listFails = false,
+  noteFails = false,
+  adapters = {},
+} = {}) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-openpr-"));
   mkdirSync(join(dir, "bin"));
-  for (const [n, body] of [["bd", bdStub], ["gh", ghStub]]) {
+  for (const [n, body] of [
+    ["bd", bdStub],
+    ["gh", ghStub],
+  ]) {
     writeFileSync(join(dir, "bin", n), body);
     chmodSync(join(dir, "bin", n), 0o755);
   }
   const scripts = join(dir, "scripts");
   cpSync(scriptsDir, scripts, { recursive: true });
-  for (const [kind, body] of Object.entries(adapters)) writeFileSync(join(scripts, `tracker-${kind}.sh`), body);
+  cpSync(
+    join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh"),
+    join(scripts, "wheelhouse-lib.sh"),
+  );
+  for (const [kind, body] of Object.entries(adapters))
+    writeFileSync(join(scripts, `tracker-${kind}.sh`), body);
   const script = join(scripts, "open-pr.sh");
   const wh = join(dir, "wh");
   mkdirSync(join(wh, ".beads"), { recursive: true });
@@ -82,7 +115,8 @@ function harness({ tracker = github, beads = [bead("hq-1")], milestone = "v0.17.
       } catch {}
       return { ...out, json };
     },
-    notes: () => (existsSync(join(dir, "notes.log")) ? readFileSync(join(dir, "notes.log"), "utf8") : ""),
+    notes: () =>
+      existsSync(join(dir, "notes.log")) ? readFileSync(join(dir, "notes.log"), "utf8") : "",
     log: () => (existsSync(join(dir, "gh.log")) ? readFileSync(join(dir, "gh.log"), "utf8") : ""),
     done: () => rmSync(dir, { recursive: true, force: true }),
   };
@@ -104,7 +138,9 @@ test("the last open bead on an item closes it, and the PR gets the milestone", (
 });
 
 test("another open bead on the item means Part of, not Closes", () => {
-  const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open" }), bead("hq-3", { status: "closed" })] });
+  const h = harness({
+    beads: [bead("hq-1"), bead("hq-2", { status: "open" }), bead("hq-3", { status: "closed" })],
+  });
   const r = h.run();
   assert.equal(r.json.closing, "Part of #680");
   h.done();
@@ -199,7 +235,11 @@ const jira = {
 };
 
 test("another tracker kind works through an adapter of its own", () => {
-  const h = harness({ tracker: jira, beads: [bead("hq-1", { external_ref: "PLAT-12" })], adapters: { jira: jiraAdapter } });
+  const h = harness({
+    tracker: jira,
+    beads: [bead("hq-1", { external_ref: "PLAT-12" })],
+    adapters: { jira: jiraAdapter },
+  });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.release, "2.4");
@@ -219,6 +259,7 @@ test("a kind with no adapter of its own cannot read a release: a fault, nothing 
 });
 
 test("a hostile reference is refused before any command runs", () => {
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a hostile reference, deliberately not a template
   const evil = "https://github.com/a;touch${IFS}PWNED;/b/issues/1";
   const h = harness({ beads: [bead("hq-1", { external_ref: evil })] });
   const r = h.run();
@@ -230,7 +271,11 @@ test("a hostile reference is refused before any command runs", () => {
 });
 
 test("nothing in tracker.json is run: a command-looking field is ignored", () => {
-  const tracker = { ...github, release: { name: "milestone", read: "touch PWNED" }, state: { read: "touch PWNED" } };
+  const tracker = {
+    ...github,
+    release: { name: "milestone", read: "touch PWNED" },
+    state: { read: "touch PWNED" },
+  };
   const h = harness({ tracker });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
@@ -241,11 +286,18 @@ test("nothing in tracker.json is run: a command-looking field is ignored", () =>
 test("the GitHub adapter reads a release and a state with gh, and refuses anything but an issue URL", () => {
   const h = harness();
   const adapter = join(h.scripts, "tracker-github.sh");
-  const env = { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, GH_LOG: join(h.dir, "gh.log"), GH_MILESTONE: "v1.2", GH_STATE: "CLOSED" };
+  const env = {
+    ...process.env,
+    PATH: `${join(h.dir, "bin")}:${process.env.PATH}`,
+    GH_LOG: join(h.dir, "gh.log"),
+    GH_MILESTONE: "v1.2",
+    GH_STATE: "CLOSED",
+  };
   const call = (...a) => spawnSync("bash", [adapter, ...a], { encoding: "utf8", env });
   assert.equal(call("release", ISSUE).stdout.trim(), "v1.2");
   assert.equal(call("state", ISSUE).stdout.trim(), "closed");
   assert.equal(call("release", ISSUE).status, 0);
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a hostile reference, deliberately not a template
   const evil = call("release", "https://github.com/a;touch${IFS}PWNED;/b/issues/1");
   assert.equal(evil.status, 1);
   assert.equal(existsSync(join(h.dir, "PWNED")), false);
@@ -255,7 +307,11 @@ test("the GitHub adapter reads a release and a state with gh, and refuses anythi
   mkdirSync(bad);
   writeFileSync(join(bad, "gh"), "#!/bin/sh\nexit 4\n");
   chmodSync(join(bad, "gh"), 0o755);
-  const broken = (...a) => spawnSync("bash", [adapter, ...a], { encoding: "utf8", env: { ...env, PATH: `${bad}:${env.PATH}` } });
+  const broken = (...a) =>
+    spawnSync("bash", [adapter, ...a], {
+      encoding: "utf8",
+      env: { ...env, PATH: `${bad}:${env.PATH}` },
+    });
   assert.equal(broken("release", ISSUE).status, 3);
   assert.equal(broken("state", ISSUE).status, 3);
   h.done();
@@ -286,25 +342,47 @@ test("--dry-run opens nothing, and bad args and unknown beads fail", () => {
 test("--dry-run needs no title, and names the item, release and relation a dispatch note quotes", () => {
   const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open" })] });
   const run = (id) => {
-    const out = spawnSync("bash", [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), "--bead", id, "--dry-run"], {
-      cwd: h.dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, BD_STATE: join(h.dir, "beads.json"), GH_LOG: join(h.dir, "gh.log"), GH_REPO: "eyelock/ynh", GH_MILESTONE: "v0.17.0" },
-    });
+    const out = spawnSync(
+      "bash",
+      [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), "--bead", id, "--dry-run"],
+      {
+        cwd: h.dir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${join(h.dir, "bin")}:${process.env.PATH}`,
+          BD_STATE: join(h.dir, "beads.json"),
+          GH_LOG: join(h.dir, "gh.log"),
+          GH_REPO: "eyelock/ynh",
+          GH_MILESTONE: "v0.17.0",
+        },
+      },
+    );
     return JSON.parse(out.stdout);
   };
   const a = run("hq-1");
-  assert.deepEqual([a.item, a.item_name, a.release, a.release_name, a.relation], [ISSUE, "issue", "v0.17.0", "milestone", "part-of"]);
+  assert.deepEqual(
+    [a.item, a.item_name, a.release, a.release_name, a.relation],
+    [ISSUE, "issue", "v0.17.0", "milestone", "part-of"],
+  );
   h.done();
 });
 
 test("a sibling bead written in another case or the short form still counts as the same item", () => {
-  for (const sibling of ["https://github.com/Eyelock/ynh/issues/680", "eyelock/ynh#680", "EyeLock/YNH#680"]) {
-    const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: sibling })] });
+  for (const sibling of [
+    "https://github.com/Eyelock/ynh/issues/680",
+    "eyelock/ynh#680",
+    "EyeLock/YNH#680",
+  ]) {
+    const h = harness({
+      beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: sibling })],
+    });
     assert.equal(h.run().json.closing, "Part of #680", sibling);
     h.done();
   }
-  const h = harness({ beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: "eyelock/ynh#681" })] });
+  const h = harness({
+    beads: [bead("hq-1"), bead("hq-2", { status: "open", external_ref: "eyelock/ynh#681" })],
+  });
   assert.equal(h.run().json.closing, "Closes #680");
   h.done();
 });
@@ -335,7 +413,10 @@ test("when bd list fails it is a fault: exit 3, nothing opened, and never Closes
 const exemptGithub = { ...github, exempt_repos: ["hq"] };
 
 test("a bead in an exempt repository opens with no item, no Closes line and no milestone, even with no external_ref", () => {
-  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })],
+  });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.exempt, true);
@@ -360,7 +441,10 @@ test("an open bead in an exempt repository on the same item is no sibling: Close
 });
 
 test("an open bead in a non-exempt repository on the same item still means Part of", () => {
-  const h = harness({ tracker: exemptGithub, beads: [bead("a-1"), bead("b-2", { status: "open" })] });
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("a-1"), bead("b-2", { status: "open" })],
+  });
   assert.equal(h.run(["--bead", "a-1"]).json.closing, "Part of #680");
   h.done();
 });
@@ -375,7 +459,10 @@ test("an exempt bead's external_ref is ignored: no closing link, and the tracker
 });
 
 test("--dry-run on an exempt bead says exempt, with no tracker line to quote", () => {
-  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })],
+  });
   const r = h.run(["--bead", "hq-1", "--dry-run"]);
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.dry_run, true);
@@ -403,7 +490,10 @@ test("a bead in a repository not on the list is not exempt: it still needs its i
 });
 
 test("a bead with an exempt repo label and another is exempt only by the one on the list", () => {
-  const h = harness({ tracker: exemptGithub, beads: [bead("hq-1", { labels: ["repo:ynh", "repo:hq"], external_ref: null })] });
+  const h = harness({
+    tracker: exemptGithub,
+    beads: [bead("hq-1", { labels: ["repo:ynh", "repo:hq"], external_ref: null })],
+  });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.exempt, true);
@@ -412,7 +502,10 @@ test("a bead with an exempt repo label and another is exempt only by the one on 
 
 test("an exempt_repos that is not a list of strings is a fault, never nothing exempt", () => {
   for (const bad of ["hq", [1], { hq: true }]) {
-    const h = harness({ tracker: { ...github, exempt_repos: bad }, beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })] });
+    const h = harness({
+      tracker: { ...github, exempt_repos: bad },
+      beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })],
+    });
     const r = h.run();
     assert.equal(r.status, 3, JSON.stringify(bad));
     assert.match(r.stderr, /exempt_repos must be a list/);
@@ -425,7 +518,7 @@ test("exemption holds for another tracker kind, without calling its adapter", ()
   const h = harness({
     tracker: { ...jira, exempt_repos: ["hq"] },
     beads: [bead("hq-1", { labels: ["repo:hq"], external_ref: null })],
-    adapters: { jira: "#!/usr/bin/env bash\necho adapter-called >> \"$GH_LOG\"\n" },
+    adapters: { jira: '#!/usr/bin/env bash\necho adapter-called >> "$GH_LOG"\n' },
   });
   const r = h.run();
   assert.equal(r.status, 0, r.stderr);
@@ -476,7 +569,16 @@ function runIn(h, cwd, args) {
   return spawnSync("bash", [join(h.scripts, "open-pr.sh"), "--dir", join(h.dir, "wh"), ...args], {
     cwd,
     encoding: "utf8",
-    env: { ...process.env, PATH: `${join(h.dir, "bin")}:${process.env.PATH}`, BD_STATE: join(h.dir, "beads.json"), GH_LOG: join(h.dir, "gh.log"), GH_REPO: "eyelock/ynh", GH_MILESTONE: "v0.17.0", GH_STATE: "OPEN", BD_NOTE_LOG: join(h.dir, "notes.log") },
+    env: {
+      ...process.env,
+      PATH: `${join(h.dir, "bin")}:${process.env.PATH}`,
+      BD_STATE: join(h.dir, "beads.json"),
+      GH_LOG: join(h.dir, "gh.log"),
+      GH_REPO: "eyelock/ynh",
+      GH_MILESTONE: "v0.17.0",
+      GH_STATE: "OPEN",
+      BD_NOTE_LOG: join(h.dir, "notes.log"),
+    },
   });
 }
 
@@ -494,7 +596,10 @@ test("matching branch names and an explicit --head", () => {
   const work = repoTracking(h.dir, "same", "same");
   assert.equal(runIn(h, work, ["--bead", "hq-1", "--title", "feat: x"]).status, 0);
   assert.doesNotMatch(h.log(), /--head/);
-  assert.equal(runIn(h, work, ["--bead", "hq-1", "--title", "feat: x", "--head", "other"]).status, 0);
+  assert.equal(
+    runIn(h, work, ["--bead", "hq-1", "--title", "feat: x", "--head", "other"]).status,
+    0,
+  );
   assert.match(h.log(), /--head other/);
   h.done();
 });

@@ -1,23 +1,29 @@
 ---
 name: patrol
-description: Patrol a Wheelhouse's repositories - pull requests, issues and CI - with scripts/patrol.sh, which compares them with the last patrol and prints only what changed (merged, closed, draft or ready, retargeted, conflicting, new, CI red or green again), so a CI-watcher seat on a 5-minute timer is woken only when there's news. Use when asked to patrol, to watch pull requests or CI, to report what changed since last time, or to set up a patrol timer.
+description: Patrol a Wheelhouse's repositories - pull requests, issues and CI - with <skills>/patrol/scripts/patrol.sh, which compares them with the last patrol and prints only what changed (merged, closed, draft or ready, retargeted, conflicting, new, CI red or green again), so a CI-watcher seat on a 5-minute timer is woken only when there's news. Use when asked to patrol, to watch pull requests or CI, to report what changed since last time, or to set up a patrol timer.
 allowed-tools: Bash Read
 ---
 
 # Patrol
 
-Watching is a script's job, not a model's. `scripts/patrol.sh` reads each repository's open and
+Watching is a script's job, not a model's. `<skills>/patrol/scripts/patrol.sh` reads each repository's open and
 recently closed pull requests and issues, and its CI, with `gh`; compares them with the snapshot
 the last patrol left; prints what changed as a JSON list; and saves the new snapshot. It costs a
 few `gh` calls and no tokens, so it can run every 5 minutes, and a seat is woken only when the
 list isn't empty.
 
-Run it from the Wheelhouse root, where `create-wheelhouse` copies it (with its two `.jq` files)
-into `scripts/`:
+Run it from the Wheelhouse root, where ynh installed it (it finds its two `.jq` files beside itself);
+`<skills>` is the folder that holds the skill folders (see "Where the scripts are"):
 
 ```bash
-bash scripts/patrol.sh
+bash <skills>/patrol/scripts/patrol.sh
 ```
+
+## Where the scripts are
+
+The plugin's scripts are not copied into the Wheelhouse: they run where ynh installed them, in the `scripts/` folder
+of the skill that owns each. `<skills>` below is the folder that holds the skill folders, the parent of this
+skill's base directory (the wake skill says more). Run them from the Wheelhouse's root.
 
 ## What it reads
 
@@ -64,7 +70,7 @@ Pick one; the human chooses, since each runs on their machine or account:
 
   ```bash
   while true; do
-    out=$(bash scripts/patrol.sh 2>&1)
+    out=$(bash <skills>/patrol/scripts/patrol.sh 2>&1)
     [ "$out" = "[]" ] || echo "$out"
     sleep 300
   done
@@ -74,9 +80,11 @@ Pick one; the human chooses, since each runs on their machine or account:
   `--dry-run`, and the seat's own patrol saves the snapshot:
 
   ```bash
-  */5 * * * * cd <the Wheelhouse root> && [ "$(bash scripts/patrol.sh --dry-run 2>/dev/null)" != "[]" ] && <command> --focus patrol
+  */5 * * * * cd <the Wheelhouse root> && [ "$(bash <skills>/patrol/scripts/patrol.sh --dry-run 2>/dev/null)" != "[]" ] && <command> --focus patrol
   ```
 
+  In that line, `<skills>` stands for the absolute path of the CI watcher's skills folder (under ynh on Claude Code,
+  `~/.ynh/run/<harness>/.claude/skills`), since a timer has no session to name it.
   On a Mac, a launchd agent with `StartInterval` 300 runs the same command line.
 - **A scheduled routine** in the vendor's cloud, where one exists, running the seat's patrol
   focus every 5 minutes. It needs the repositories and `gh` there, and acts only on a non-empty

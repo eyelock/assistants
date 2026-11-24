@@ -12,6 +12,10 @@
 #     GIT_WORK_TREE and GIT_DIR, else the directory the call runs in;
 #   - anything else goes through: git and bd run the real tool (the first on PATH that is not
 #     this script), gh prints a canned answer and touches nothing.
+# A gh call that posts a body (--body or -b, --body-file or -F; for gh api a body= field given by -f
+# or -F, where "@file" is read, or --input's JSON body) also logs the body
+# as a second line, "gh-body <text>" (newlines become spaces, a file or "-" for stdin is read), so a
+# case can check what was posted, such as the byline a review must start with.
 # A refused call prints the reason on stderr, exits 1, and is noted in "$EVAL_STUB_LOG.refused"
 # (the reason after "::"). It is still in the main log, so a forbidden pattern fails the case.
 #
@@ -165,7 +169,48 @@ if [ "$name" = bd ]; then
   pass_through "$@"
 fi
 
-# gh: nothing reaches GitHub.
+# gh: nothing reaches GitHub. A posted body is logged, as one "gh-body <text>" line.
+log_body() {
+  local text=$1
+  text=${text//$'\n'/ }
+  printf 'gh-body %s\n' "$text" >>"$log"
+}
+body_file() {
+  if [ "$1" = "-" ]; then cat; else cat -- "$1" 2>/dev/null; fi
+}
+# A body= field's value: "@file" (or "@-" for stdin) reads the file, as gh api does.
+field_body() {
+  case "$1" in
+    @-) cat ;;
+    @*) cat -- "${1#@}" 2>/dev/null ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+args=("$@")
+is_api=false
+for a in "$@"; do
+  case "$a" in -*) ;; *) [ "$a" = api ] && is_api=true; break ;; esac
+done
+for ((i = 0; i < ${#args[@]}; i++)); do
+  arg=${args[$i]} next=${args[$((i + 1))]:-}
+  if $is_api; then
+    # gh api: -f/--raw-field and -F/--field take key=value; --input takes a JSON file whose body
+    # field is the body.
+    case "$arg" in
+      -f | -F | --field | --raw-field) [[ "$next" == body=* ]] && log_body "$(field_body "${next#body=}")" ;;
+      --field=body=* | --raw-field=body=*) log_body "$(field_body "${arg#*=body=}")" ;;
+      --input) log_body "$(if [ "$next" = - ]; then cat; else cat -- "$next" 2>/dev/null; fi | jq -r '.body // empty' 2>/dev/null)" ;;
+      --input=*) log_body "$(cat -- "${arg#--input=}" 2>/dev/null | jq -r '.body // empty' 2>/dev/null)" ;;
+    esac
+  else
+    case "$arg" in
+      --body | -b) log_body "$next" ;;
+      --body=*) log_body "${arg#--body=}" ;;
+      --body-file | -F) log_body "$(body_file "$next")" ;;
+      --body-file=*) log_body "$(body_file "${arg#--body-file=}")" ;;
+    esac
+  fi
+done
 words=()
 for a in "$@"; do
   case "$a" in -*) ;; *) words+=("$a") ;; esac

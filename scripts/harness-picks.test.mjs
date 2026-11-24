@@ -34,5 +34,17 @@ for (const name of harnesses) {
         );
       }
     });
+
+    // Same-repository includes name a release tag, never a branch: a merge to
+    // develop must not reach a persona on its next `ynh update` (assistants #295).
+    test(`ynh/${name} pins ${include.path} to a release tag of its package`, () => {
+      const pkg = JSON.parse(readFileSync(join(root, include.path, "package.json"), "utf8"));
+      const escaped = pkg.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      assert.match(
+        include.ref ?? "",
+        new RegExp(`^${escaped}@\\d+\\.\\d+\\.\\d+$`),
+        `ynh/${name}: the include of ${include.path} needs "ref": "${pkg.name}@<release version>"`,
+      );
+    });
   }
 }

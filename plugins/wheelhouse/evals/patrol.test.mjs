@@ -4,7 +4,15 @@
 // real patrol.sh against a gh stub that answers from a JSON file the test rewrites between runs.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
@@ -57,7 +65,13 @@ const issue = (number, over = {}) => ({
 });
 const red = [{ __typename: "CheckRun", status: "COMPLETED", conclusion: "FAILURE" }];
 const run = (conclusion) => [
-  { workflowName: "CI", status: "completed", conclusion, url: `https://github.com/${R}/actions/runs/1`, headSha: "a" },
+  {
+    workflowName: "CI",
+    status: "completed",
+    conclusion,
+    url: `https://github.com/${R}/actions/runs/1`,
+    headSha: "a",
+  },
 ];
 
 function harness() {
@@ -81,7 +95,11 @@ function harness() {
     wh,
     set: (state) => writeFileSync(join(dir, "state.json"), JSON.stringify(state)),
     patrol: (args = ["--repo", R], extra = {}) => {
-      const out = spawnSync("bash", [patrolSh, ...args], { cwd: wh, encoding: "utf8", env: env(extra) });
+      const out = spawnSync("bash", [patrolSh, ...args], {
+        cwd: wh,
+        encoding: "utf8",
+        env: env(extra),
+      });
       let json = null;
       try {
         json = JSON.parse(out.stdout);
@@ -132,7 +150,12 @@ const after = {
         pr(10),
         pr(11),
       ],
-      issues: [issue(20, { state: "CLOSED", stateReason: "NOT_PLANNED" }), issue(21), issue(22), issue(23)],
+      issues: [
+        issue(20, { state: "CLOSED", stateReason: "NOT_PLANNED" }),
+        issue(21),
+        issue(22),
+        issue(23),
+      ],
       runs: run("failure"),
     },
   },
@@ -262,10 +285,16 @@ test("a repository gh can't read: an error, exit 3, and its changes are kept for
     h.set(after);
     const down = h.patrol(["--repo", R], { GH_FAIL: R });
     assert.equal(down.status, 3);
-    assert.deepEqual(down.json, [{ kind: "error", repo: R, detail: "gh pr list: HTTP 502: Bad Gateway" }]);
+    assert.deepEqual(down.json, [
+      { kind: "error", repo: R, detail: "gh pr list: HTTP 502: Bad Gateway" },
+    ]);
     const back = h.patrol();
     assert.equal(back.status, 0, back.stderr);
-    assert.equal(back.json.length, 15, "what happened while gh was down is reported once it's back");
+    assert.equal(
+      back.json.length,
+      15,
+      "what happened while gh was down is reported once it's back",
+    );
   } finally {
     h.done();
   }
@@ -284,7 +313,10 @@ test("--snapshot keeps the snapshot where it's told, and a new repository starts
     const out = h.patrol(["--repo", R, "--repo", "example/gadget", "--snapshot", snap]);
     assert.equal(out.status, 0, out.stderr);
     assert.deepEqual(out.json, [], "a repository the last run never saw reports nothing");
-    assert.deepEqual(Object.keys(JSON.parse(readFileSync(snap, "utf8")).repos).sort(), ["example/gadget", R]);
+    assert.deepEqual(Object.keys(JSON.parse(readFileSync(snap, "utf8")).repos).sort(), [
+      "example/gadget",
+      R,
+    ]);
   } finally {
     h.done();
   }
@@ -294,7 +326,11 @@ test("--snapshot under .wheelhouse/ still makes the folder ignore itself", () =>
   const h = harness();
   try {
     h.set(before);
-    for (const name of [".wheelhouse/reni-patrol.json", join(h.wh, ".wheelhouse", "abs-patrol.json"), ".wheelhouse/sub/nested.json"]) {
+    for (const name of [
+      ".wheelhouse/reni-patrol.json",
+      join(h.wh, ".wheelhouse", "abs-patrol.json"),
+      ".wheelhouse/sub/nested.json",
+    ]) {
       rmSync(join(h.wh, ".wheelhouse"), { recursive: true, force: true });
       mkdirSync(dirname(resolve(h.wh, name)), { recursive: true });
       const out = h.patrol(["--repo", R, "--snapshot", name]);
@@ -352,8 +388,18 @@ test("a green draft with commits no review has seen is stalled, once, after --st
     const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
     const commit = (min) => [{ committedDate: ago(min) }];
     const draft = (n, over) => pr(n, { isDraft: true, ...over });
-    const state = (prs) => ({ repos: { [R]: { branch: "develop", prs, issues: [], runs: run("success") } } });
-    const start = [draft(1, { commits: commit(5) }), draft(2), draft(3), draft(4), draft(5), draft(6), pr(7)];
+    const state = (prs) => ({
+      repos: { [R]: { branch: "develop", prs, issues: [], runs: run("success") } },
+    });
+    const start = [
+      draft(1, { commits: commit(5) }),
+      draft(2),
+      draft(3),
+      draft(4),
+      draft(5),
+      draft(6),
+      pr(7),
+    ];
     h.set(state(start));
     h.patrol();
     h.set(

@@ -137,3 +137,110 @@ test("a ynh harness gets dependencies from its profiles' includes, as ynh-regist
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+const harnessIndex = (...entries) => ({
+  name: "idx",
+  harnesses: entries.map(([name, path, version]) => ({
+    name,
+    source: { type: "github", repo: "github.com/eyelock/assistants", path },
+    version,
+  })),
+});
+const INDEX = ".agents/harness/marketplace.json";
+
+test("check fails when the ynh marketplace index lags a package's version", () => {
+  const root = tree({
+    "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+    "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+    [INDEX]: harnessIndex(["gitflow", "plugins/gitflow", "0.1.0"]),
+  });
+  try {
+    const r = run(root, "check");
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stderr, /marketplace\.json:gitflow version 0\.1\.0 != 0\.3\.0/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check fails when a workspace package is missing from the ynh marketplace index", () => {
+  const root = tree({
+    "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+    "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+    "plugins/wheelhouse/.claude-plugin/plugin.json": agents("wheelhouse", "0.3.0"),
+    "plugins/wheelhouse/package.json": pkg("wheelhouse", "0.3.0"),
+    [INDEX]: harnessIndex(["gitflow", "plugins/gitflow", "0.3.0"]),
+  });
+  try {
+    const r = run(root, "check");
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stderr, /marketplace\.json: plugins\/wheelhouse is not listed/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+const vendorIndex = (...entries) => ({
+  name: "idx",
+  plugins: entries.map(([name, version]) => ({ name, source: `./plugins/${name}`, version })),
+});
+
+for (const index of [
+  ".claude-plugin/marketplace.json",
+  ".cursor-plugin/marketplace.json",
+  ".github/plugin/marketplace.json",
+]) {
+  test(`check fails when a plugin is missing from ${index}`, () => {
+    const root = tree({
+      "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+      "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+      "plugins/wheelhouse/.claude-plugin/plugin.json": agents("wheelhouse", "0.3.0"),
+      "plugins/wheelhouse/package.json": pkg("wheelhouse", "0.3.0"),
+      [index]: vendorIndex(["gitflow", "0.3.0"]),
+    });
+    try {
+      const r = run(root, "check");
+      assert.equal(r.status, 1, r.stdout + r.stderr);
+      assert.ok(r.stderr.includes(`${index}: plugins/wheelhouse is not listed`), r.stderr);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+test("check does not ask the vendor indexes to list a ynh harness", () => {
+  const root = tree({
+    "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+    "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+    "ynh/termq-dev/.agents/harness/plugin.json": agents("termq-dev", "0.3.0"),
+    "ynh/termq-dev/package.json": pkg("termq-dev", "0.3.0"),
+    ".claude-plugin/marketplace.json": vendorIndex(["gitflow", "0.3.0"]),
+  });
+  try {
+    const r = run(root, "check");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("generate syncs the ynh marketplace index versions, then check passes", () => {
+  const root = tree({
+    "plugins/gitflow/.claude-plugin/plugin.json": agents("gitflow", "0.3.0"),
+    "plugins/gitflow/package.json": pkg("gitflow", "0.3.0"),
+    [INDEX]: harnessIndex(["gitflow", "plugins/gitflow", "0.1.0"]),
+  });
+  try {
+    assert.equal(run(root, "generate").status, 0);
+    assert.equal(read(root, INDEX).harnesses[0].version, "0.3.0");
+    const r = run(root, "check");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("this repository's ynh marketplace index lists every package at its version", () => {
+  const r = spawnSync("node", [script, "check"], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+});

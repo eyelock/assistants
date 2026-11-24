@@ -15,7 +15,9 @@ const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 const wakeSh = join(plugin, "skills", "wake", "scripts", "wake.sh");
 
 const roster = {
-  seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
+  seats: [
+    { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
@@ -63,8 +65,16 @@ test("show lists reports after the rest, whatever their priority, and the wake u
       writeFileSync(join(dir, "bin", name), body);
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    const env = { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, WHEELHOUSE_HUMAN_EMAIL: "" };
-    const show = spawnSync("bash", [inboxSh, "show", "--dir", "."], { cwd: dir, encoding: "utf8", env });
+    const env = {
+      ...process.env,
+      PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+      WHEELHOUSE_HUMAN_EMAIL: "",
+    };
+    const show = spawnSync("bash", [inboxSh, "show", "--dir", "."], {
+      cwd: dir,
+      encoding: "utf8",
+      env,
+    });
     assert.equal(show.status, 0, show.stderr);
     const rook = JSON.parse(show.stdout).humans.find((h) => h.command === "rook");
     assert.deepEqual(

@@ -1,5 +1,5 @@
-// A merge goes in the inbox only once its pull request has left draft. inbox.sh assign --kind merge
-// asks gh (stubbed here) and refuses a draft; without gh it warns and carries on.
+// A merge goes in the inbox only while its pull request is open and out of draft. inbox.sh assign --kind merge
+// asks gh (stubbed here) and refuses a draft, merged or closed one; without gh it warns and carries on.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -12,7 +12,9 @@ const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 
 const roster = {
-  seats: [{ name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." }],
+  seats: [
+    { name: "Hq", group: "desk", command: "hq", harness: ".", mandate: "Talk with the human." },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 const url = "https://github.com/example/widget/pull/12";
@@ -35,14 +37,31 @@ const run = (gh) => {
     // With no gh stub, a PATH of bd's stub and the basics only, so a real gh can't answer.
     if (gh === null) {
       for (const b of ["bash", "jq", "tr", "grep", "head", "env", "dirname", "cat"]) {
-        const which = spawnSync("sh", ["-c", `command -v ${b}`], { encoding: "utf8" }).stdout.trim();
+        const which = spawnSync("sh", ["-c", `command -v ${b}`], {
+          encoding: "utf8",
+        }).stdout.trim();
         if (which) spawnSync("ln", ["-sf", which, join(dir, "bin", b)]);
       }
     }
     const path = gh === null ? join(dir, "bin") : `${join(dir, "bin")}:${process.env.PATH}`;
     return spawnSync(
       "bash",
-      [inboxSh, "assign", "--dir", ".", "--from", "hq", "--kind", "merge", "--title", "Merge widget #12", "--url", url, "--repo", "widget"],
+      [
+        inboxSh,
+        "assign",
+        "--dir",
+        ".",
+        "--from",
+        "hq",
+        "--kind",
+        "merge",
+        "--title",
+        "Merge widget #12",
+        "--url",
+        url,
+        "--repo",
+        "widget",
+      ],
       { cwd: dir, encoding: "utf8", env: { ...process.env, PATH: path } },
     );
   } finally {
@@ -51,16 +70,31 @@ const run = (gh) => {
 };
 
 test("a merge for a draft pull request is refused, saying why", () => {
-  const r = run(`echo true`);
+  const r = run(`echo "OPEN true"`);
   assert.equal(r.status, 1, r.stderr);
   assert.match(r.stderr, /still a draft/);
   assert.equal(r.stdout, "");
 });
 
 test("a merge for a pull request out of draft is accepted", () => {
-  const r = run(`echo false`);
+  const r = run(`echo "OPEN false"`);
   assert.equal(r.status, 0, r.stderr);
   assert.equal(JSON.parse(r.stdout).id, "hq-9");
+});
+
+for (const state of ["MERGED false", "CLOSED false", "CLOSED true"]) {
+  test(`a merge for a ${state.toLowerCase()} pull request is refused, saying it is already ${state.split(" ")[0]}`, () => {
+    const r = run(`echo "${state}"`);
+    assert.equal(r.status, 1, r.stderr);
+    assert.match(r.stderr, new RegExp(`already ${state.split(" ")[0]}`));
+    assert.equal(r.stdout, "");
+  });
+}
+
+test("a state gh does not recognise warns and carries on", () => {
+  const r = run(`echo "WHATEVER"`);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stderr, /warning/);
 });
 
 test("when gh fails, it warns and carries on", () => {

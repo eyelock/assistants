@@ -46,8 +46,16 @@ exit 1
 `;
     writeFileSync(join(dir, "bin", "bd"), stub);
     chmodSync(join(dir, "bin", "bd"), 0o755);
-    const env = { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" };
-    const r = spawnSync("bash", [inboxSh, ...args, "--dir", "."], { cwd: dir, encoding: "utf8", env });
+    const env = {
+      ...process.env,
+      PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+      BEADS_ACTOR: "",
+    };
+    const r = spawnSync("bash", [inboxSh, ...args, "--dir", "."], {
+      cwd: dir,
+      encoding: "utf8",
+      env,
+    });
     let log = "";
     try {
       log = readFileSync(join(dir, "bd.log"), "utf8");
@@ -62,7 +70,11 @@ test("close closes a human's inbox bead with the note, forced, as the asking sea
   for (const verb of ["close", "done"]) {
     const { r, log } = run([verb, "hq-1", "--reason", "Merged by the human", "--from", "hq"]);
     assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(JSON.parse(r.stdout), { id: "hq-1", closedBy: "hq", note: "Merged by the human" });
+    assert.deepEqual(JSON.parse(r.stdout), {
+      id: "hq-1",
+      closedBy: "hq",
+      note: "Merged by the human",
+    });
     assert.match(log, /^close hq-1 --reason Merged by the human --force --actor hq$/m);
   }
 });

@@ -14,11 +14,25 @@ const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
 const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 const roster = {
-  seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
+  seats: [
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+    },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
-const note = (id, bead, content, updatedAt) => ({ memoryId: id, subject: bead, content, updatedAt, tags: ["close-note"] });
+const note = (id, bead, content, updatedAt) => ({
+  memoryId: id,
+  subject: bead,
+  content,
+  updatedAt,
+  tags: ["close-note"],
+});
 const four = [
   note("N1", "b-1", "Surprised: oldest.\nSharp edges: one.", "2026-11-01T10:00:00Z"),
   note("N2", "b-2", "Surprised: second.\nSharp edges: two.", "2026-11-02T10:00:00Z"),
@@ -49,17 +63,30 @@ function wake(notes, format) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build.\n");
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     mkdirSync(join(dir, "bin"));
-    for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", ynmStub(notes)]]) {
+    for (const [name, body] of [
+      ["bd", "#!/bin/sh\necho '[]'\n"],
+      ["ynm", ynmStub(notes)],
+    ]) {
       writeFileSync(join(dir, "bin", name), body);
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    return spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", format, "--no-sync"], {
-      cwd: dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
-    });
+    return spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", format, "--no-sync"],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
+      },
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -74,7 +101,9 @@ test("the wake shows the latest three close notes, newest first, each on one lin
   assert.match(shown, /- b-3: /);
   assert.match(shown, /- b-2: /);
   assert.doesNotMatch(shown, /b-1/);
-  assert.ok(shown.indexOf("b-4") < shown.indexOf("b-3") && shown.indexOf("b-3") < shown.indexOf("b-2"));
+  assert.ok(
+    shown.indexOf("b-4") < shown.indexOf("b-3") && shown.indexOf("b-3") < shown.indexOf("b-2"),
+  );
 });
 
 test("the JSON carries closeNotes as {bead, note}", () => {

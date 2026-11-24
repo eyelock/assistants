@@ -10,7 +10,7 @@ It runs this command, which you can also run directly:
 
 ```bash
 docker run --rm -v "$PWD:/scan:ro" ghcr.io/eyelock/skillspector:1 gate . \
-  --exclude '*/evals/files/*' --exclude 'e2e-fixtures/*'
+  --exclude '*/evals/files/*'
 ```
 
 To accept a false positive, add a rule to `.skillspector-baseline.yaml` with an `id`, a `path`

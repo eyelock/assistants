@@ -8,11 +8,13 @@
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/dev",
+      "ref": "@eyelock-assistants/dev-skills@0.2.0",
       "pick": ["skills/dev-project", "skills/dev-review"]
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/infra",
+      "ref": "@eyelock-assistants/infra-skills@0.2.0",
       "pick": ["skills/gh-os-repo"]
     }
   ]
