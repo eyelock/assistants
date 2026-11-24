@@ -13,7 +13,7 @@
       "assertions": [
         "The evidence shows a worktree of widget at a path ending .worktrees/albarn/albarn/fix-a",
         "The shared checkout ./widget is still on develop with a clean status",
-        "The stub log shows a bd comment 'Worktree: <path>' on ynw-7, or the reply says the note was added",
+        "The stub log shows a bd update on ynw-7 appending the note 'Worktree: <path>' (--append-notes), or the reply says the note was added",
         "The reply gives the full absolute path of the worktree",
         "The seat did not use git stash, git checkout in ./widget, or a path outside the policy layout"
       ]
