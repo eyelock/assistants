@@ -17,13 +17,12 @@ git clone -q origin.git widget
 mkdir -p ynw
 printf '# ynw\n\nRepositories, beside ynw: `widget`: `../widget`.\n' > ynw/AGENTS.md
 printf '{"layout": "{repo}/.worktrees/{seat}/{branch}"}\n' > ynw/worktrees.json
-# bd stands in: it logs each call, and a comment add succeeds.
+# bd stands in: it logs each call; list finds the bead ynw-7, and update (--append-notes) succeeds.
 cat > "$EVAL_BIN/bd" <<'SH'
 #!/bin/sh
 printf '%s\n' "bd $*" >> "$EVAL_STUB_LOG"
 case "$1 $2" in
   "list "*) echo '[{"id":"ynw-7"}]' ;;
-  "comments ynw-7") echo '[]' ;;
   *) echo '[]' ;;
 esac
 SH
