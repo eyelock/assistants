@@ -60,7 +60,7 @@
         "path": "ynh/ynh-dev"
       },
       "description": "Development harness for the ynh project — Gitflow workflow with Go language support",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "keywords": ["ynh", "go", "development", "gitflow"]
     },
     {
@@ -71,7 +71,7 @@
         "path": "ynh/termq-dev"
       },
       "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "keywords": ["termq", "swift", "swiftui", "macos", "development", "gitflow"]
     },
     {
@@ -82,7 +82,7 @@
         "path": "plugins/gitflow"
       },
       "description": "Gitflow branching model: develop/main strategy, conventional commits, quality gate, tag-driven release automation, and push/PR workflow.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "keywords": ["gitflow", "branching", "commits", "release", "ci", "github-actions"]
     },
     {
