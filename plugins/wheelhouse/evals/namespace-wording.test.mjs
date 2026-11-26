@@ -14,7 +14,13 @@ function* files(dir) {
     if (name === "node_modules") continue;
     const p = join(dir, name);
     if (statSync(p).isDirectory()) yield* files(p);
-    else if (/\.(md|sh|jq|json|mjs)$/.test(name) && name !== "CHANGELOG.md" && name !== "package.json" && name !== "namespace-wording.test.mjs") yield p;
+    else if (
+      /\.(md|sh|jq|json|mjs)$/.test(name) &&
+      name !== "CHANGELOG.md" &&
+      name !== "package.json" &&
+      name !== "namespace-wording.test.mjs"
+    )
+      yield p;
   }
 }
 
@@ -23,9 +29,12 @@ test("no skill or template calls a seat's memory a private home", () => {
   for (const dir of ["skills", "templates", "evals/files", "../../docs/wheelhouse"]) {
     try {
       for (const f of files(join(root, dir))) {
-        readFileSync(f, "utf8").split("\n").forEach((line, i) => {
-          if (/private home|no private|your private|private namespace/i.test(line)) hits.push(`${f}:${i + 1}: ${line.trim()}`);
-        });
+        readFileSync(f, "utf8")
+          .split("\n")
+          .forEach((line, i) => {
+            if (/private home|no private|your private|private namespace/i.test(line))
+              hits.push(`${f}:${i + 1}: ${line.trim()}`);
+          });
       }
     } catch (e) {
       if (e.code !== "ENOENT") throw e;
