@@ -72,6 +72,27 @@ test("limited gives up with 142 and kills the command's whole process group", ()
   }
 });
 
+test("limited sends SIGKILL to a command that ignores SIGTERM, leaving no orphan", () => {
+  const s = scratch();
+  try {
+    const pidfile = join(s.dir, "pid");
+    const began = Date.now();
+    const r = run(
+      s.dir,
+      `limited 1 sh -c 'trap "" TERM; (trap "" TERM; echo $$ > "${pidfile}"; while :; do sleep 1; done) & wait'`,
+      { env: { WL_KILL_GRACE: "1" } },
+    );
+    assert.equal(r.status, 142);
+    assert.ok(Date.now() - began < 10000, "gave up soon after the limit and the grace");
+    const pid = Number(readFileSync(pidfile, "utf8").trim());
+    const alive = spawnSync("kill", ["-0", String(pid)]).status === 0;
+    if (alive) spawnSync("kill", ["-9", String(pid)]);
+    assert.equal(alive, false, "the TERM-ignoring grandchild was killed");
+  } finally {
+    s.done();
+  }
+});
+
 test("limited without perl runs the command unbounded and says so once", () => {
   const s = scratch();
   try {
