@@ -89,7 +89,7 @@ function wheelhouse({
     for (const n of names)
       copyFileSync(join(plugin, "skills", skill, "scripts", n), join(skills, skill, "scripts", n));
   };
-  install("doctor", "check.sh", "memory-checks.sh");
+  install("doctor", "check.sh", "memory-checks.sh", "static-checks.sh");
   install("refresh", "refresh.sh");
   install("wake", "wake.sh");
   install("work-graph", "wheelhouse-lib.sh", "inbox.sh", ...(memorySh ? ["memory.sh"] : []));

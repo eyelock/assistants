@@ -12,7 +12,7 @@ repository (the one with the desk's `.agents/harness/` and `.beads/`). From the 
 bash path/to/doctor/scripts/check.sh --dir .
 ```
 
-`check.sh` calls `scripts/memory-checks.sh` for the checks that depend on the memory backend.
+`check.sh` calls `scripts/memory-checks.sh` for the checks that depend on the memory backend, and `scripts/static-checks.sh` for the four that read only the Wheelhouse's own files (no copy of a plugin script, every seat started by its own name, one default human, no Beads agent setup). The plugin's rule sensors run those four too, so CI and the doctor never disagree.
 
 It prints JSON: `ok`, and one entry per check with `name`, `ok`, `level`, `detail` and `fix`. It
 changes nothing. `ok` is false when any check has level `error`.

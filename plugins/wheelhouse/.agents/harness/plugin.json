@@ -5,5 +5,77 @@
   "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
   "author": {
     "name": "eyelock"
+  },
+  "sensors": {
+    "includes-pinned": {
+      "category": "maintainability",
+      "tolerance": "blocking",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/rules/includes-pinned.sh\""
+      },
+      "reference": {
+        "path": "sensors/fixtures/includes-pinned",
+        "expect": "fail"
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "references-exist": {
+      "category": "maintainability",
+      "tolerance": "blocking",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/rules/references-exist.sh\""
+      },
+      "reference": {
+        "path": "sensors/fixtures/references-exist",
+        "expect": "fail"
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "roster-consistent": {
+      "category": "maintainability",
+      "tolerance": "blocking",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/rules/roster-consistent.sh\""
+      },
+      "reference": {
+        "path": "sensors/fixtures/roster-consistent",
+        "expect": "fail"
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "no-forked-scripts": {
+      "category": "maintainability",
+      "tolerance": "blocking",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/rules/no-forked-scripts.sh\""
+      },
+      "reference": {
+        "path": "sensors/fixtures/no-forked-scripts",
+        "expect": "fail"
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "work-in-beads": {
+      "category": "maintainability",
+      "tolerance": "blocking",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/rules/work-in-beads.sh\""
+      },
+      "reference": {
+        "path": "sensors/fixtures/work-in-beads",
+        "expect": "fail"
+      },
+      "output": {
+        "format": "text"
+      }
+    }
   }
 }

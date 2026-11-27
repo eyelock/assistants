@@ -1,0 +1,7 @@
+{
+  "seats": [
+    { "name": "Hq", "group": "desk", "command": "hq", "harness": "." },
+    { "name": "Eno", "group": "crew", "command": "eno", "harness": "harnesses/eno" }
+  ],
+  "humans": [{ "name": "Stakker", "command": "stakker", "default": true }]
+}

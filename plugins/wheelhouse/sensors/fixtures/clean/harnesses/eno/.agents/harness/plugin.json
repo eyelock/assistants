@@ -1,0 +1,14 @@
+{
+  "name": "eno",
+  "version": "0.1.0",
+  "includes": [
+    { "git": "../..", "pick": ["skills/roster"] },
+    {
+      "git": "https://github.com/example/plugin",
+      "ref": "0123456789abcdef0123456789abcdef01234567"
+    }
+  ],
+  "hooks": {
+    "on_session_start": [{ "command": "bash scripts/wake.sh --seat eno --format text || true" }]
+  }
+}

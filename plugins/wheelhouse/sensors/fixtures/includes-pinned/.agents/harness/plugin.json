@@ -1,0 +1,6 @@
+{
+  "name": "hq",
+  "version": "0.1.0",
+  "delegates_to": [{ "git": ".", "path": "harnesses/eno" }],
+  "includes": [{ "git": "https://github.com/example/plugin" }]
+}
