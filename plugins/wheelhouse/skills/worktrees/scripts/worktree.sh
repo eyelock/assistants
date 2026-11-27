@@ -47,10 +47,8 @@ add     --branch must exist, or start with "<seat>/" (then it is created from --
 list    Prints a JSON list of {seat, repo, branch, bead, path, stale, why}. --stale keeps those
         whose bead is closed or whose branch is merged (its upstream gone, or already in the
         default branch of a pushed branch).
-remove  --seat is the acting seat: it may remove its own worktrees, and a cleaner may remove a
-        worktree whose bead is closed. The cleaners are the roster's dispatcher (the seat with
-        "role": "dispatcher" in skills/roster/assets/roster.json), unless WORKTREE_CLEANERS
-        (space-separated seat commands) is set, which replaces that default.
+remove  --seat is the acting seat: it may remove its own worktrees; the roster's dispatcher, or
+        the seats in WORKTREE_CLEANERS (space-separated, replaces it), may remove one whose bead is closed.
 EOT
 }
 
@@ -95,8 +93,7 @@ expand() {
   printf '%s\n' "$p"
 }
 
-# layout_regex REPO: an ERE matching a worktree path of the layout; group 1 is the seat (when the
-# layout has {seat}), the last group the branch.
+# layout_regex REPO: an ERE for a worktree path of the layout; group 1 the seat, the last the branch.
 layout_regex() {
   local p=$layout out='' rest tok
   p=${p//\{scratchpad\}/$scratch}; p=${p//\{repo\}/$1}
@@ -134,9 +131,7 @@ bd_note() { # bead path seat
     || echo "worktree.sh: could not note the worktree on $1; add 'Worktree: $2' by hand" >&2
 }
 
-# bead_of PATH: the bead whose notes hold the line "Worktree: PATH", else empty. One bd call, whatever
-# the size of the graph: bd filters the notes itself, and jq keeps only an exact line, so a path that
-# is a prefix of another (or quoted in prose) does not match.
+# bead_of PATH: the bead whose notes hold the exact line "Worktree: PATH", else empty (one bd call).
 bead_of() {
   command -v bd >/dev/null 2>&1 || return 0
   limited "${WL_BD_SECS:-20}" bd list --all --limit 0 --notes-contains "Worktree: $1" --json 2>/dev/null | bd_data \
@@ -157,7 +152,7 @@ worktrees_of() {
 branch_merged() { # checkout branch
   local up def
   up=$(git -C "$1" for-each-ref --format='%(upstream:track)|%(upstream)' "refs/heads/$2" 2>/dev/null)
-  # A branch cut from origin/develop tracks it until pushed: that is not a merge.
+  # Tracking origin/develop before any push is not a merge.
   case "$up" in '[gone]|'*) return 0 ;; '|'|''|*'|refs/remotes/origin/develop'|*'|refs/remotes/origin/main') return 1 ;; esac
   for def in origin/develop origin/main; do
     git -C "$1" rev-parse -q --verify "$def" >/dev/null 2>&1 || continue
@@ -220,8 +215,7 @@ do_list() {
 # cleaners: seats that may remove another's finished worktree: $WORKTREE_CLEANERS, else the roster's dispatcher.
 cleaners() {
   if [ -n "${WORKTREE_CLEANERS:-}" ]; then printf '%s\n' $WORKTREE_CLEANERS; return 0; fi
-  [ -f "$dir/$WL_ROSTER_REL" ] || return 0
-  jq -r '.seats[]? | select(.role == "dispatcher") | .command' "$dir/$WL_ROSTER_REL" 2>/dev/null
+  jq -r '.seats[]? | select(.role == "dispatcher") | .command' "$dir/$WL_ROSTER_REL" 2>/dev/null || true
 }
 
 # --- remove -----------------------------------------------------------------------------------
@@ -241,8 +235,7 @@ do_remove() {
     [ -n "$found" ] && break
   done
   [ -n "$found" ] || die 1 "$target is not a worktree of the policy layout ($layout) in a repository this Wheelhouse reaches"
-  # The owner is the seat the layout names. A layout with no {seat} cannot tell whose a worktree
-  # is, so any seat may remove one (the other refusals still stand).
+  # A layout with no {seat} cannot tell whose a worktree is, so any seat may remove one.
   co=${paths[$found]}
   if [ "$layout" != "${layout//\{seat\}/}" ] && [ "$owner" != "$seat" ]; then
     cleaner=no; for c in $(cleaners); do [ "$c" = "$seat" ] && cleaner=yes; done
