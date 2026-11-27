@@ -11,6 +11,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -153,6 +154,46 @@ test("stale-claims prints nothing and exits 0 when every claim is live, and exit
   const bad = sensor(w, "stale-claims", { BD_FAIL: "1" });
   assert.equal(bad.code, 3);
   assert.match(bad.err, /bd could not list/);
+});
+
+test("stale-claims names the lease once, or says there is none", () => {
+  const w = world({
+    beads: {
+      in_progress: [bead("a-1", { lease_expires_at: PAST }), bead("a-2", { assignee: "" })],
+    },
+  });
+  const r = sensor(w, "stale-claims");
+  assert.deepEqual(r.lines, [
+    `a-1: Bead a-1 (held by gahan, lease ended ${PAST})`,
+    "a-2: Bead a-2 (held by no one, no lease at all)",
+  ]);
+});
+
+test("stale-claims exits 3, and counts nothing, when gh can't say whether a waiting pull request is open", () => {
+  const w = world({
+    beads: {
+      in_progress: [
+        bead("a-1", { lease_expires_at: PAST, notes: `PR: ${pr(1)}` }),
+        bead("a-2", { lease_expires_at: PAST }),
+      ],
+    },
+    gh: { pulls: { [pr(1)]: "OPEN" } },
+  });
+  const failing = sensor(w, "stale-claims", { GH_FAIL: "1" });
+  assert.equal(failing.code, 3);
+  assert.deepEqual(failing.lines.filter((l) => l.startsWith("a-1")), []);
+  assert.match(failing.err, /could not read the state of .*pull\/1/);
+  // gh missing altogether is the same: no gh on the PATH.
+  rmSync(join(w.dir, "bin", "gh"));
+  const missing = sensor(w, "stale-claims");
+  assert.equal(missing.code, 3);
+  assert.match(missing.err, /could not read the state/);
+  // and with gh answering, the open pull request is skipped and the other bead counted.
+  const ok = world({
+    beads: { in_progress: [bead("a-1", { lease_expires_at: PAST, notes: `PR: ${pr(1)}` })] },
+    gh: { pulls: { [pr(1)]: "OPEN" } },
+  });
+  assert.deepEqual(sensor(ok, "stale-claims"), { code: 0, lines: [], err: "" });
 });
 
 test("merged-not-closed counts an open or in-progress bead whose noted pull request merged", () => {
