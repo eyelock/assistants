@@ -79,21 +79,6 @@ for f in memory.sh inbox.sh; do
   fi
 done
 
-# A copy of a plugin script left in the Wheelhouse's scripts/ is a fork: the plugin's fixes never reach it, and no seat
-# runs it unless something still names it. Seats run the plugin's scripts; a Wheelhouse keeps only its own.
-copies=""
-for f in "$here"/../../*/scripts/*.sh "$here"/../../*/scripts/*.jq; do
-  [ -f "$f" ] || continue
-  b=$(basename "$f")
-  [ -f "$dir/scripts/$b" ] && copies="$copies scripts/$b"
-done
-if [ -n "$copies" ]; then
-  add "plugin script copies" false warn "the Wheelhouse keeps copies of the plugin's scripts, which the plugin's fixes never reach:$copies" \
-    "delete them, and point hooks and docs at the installed scripts (the work-graph skill's \"Where the scripts are\"); a script of the Wheelhouse's own with one of these names has to be renamed"
-else
-  add "plugin script copies" true info "scripts/ holds none of the plugin's scripts"
-fi
-
 # --- ynm ---------------------------------------------------------------------
 if [ "$backend" != ynm ]; then
   [ -z "$backend" ] || add "memory backend" true info "$backend: ynm is not checked"
@@ -179,47 +164,16 @@ else
   fi
 fi
 
-# Beads' own agent setup tells agents to keep memory in bd remember, which
-# splits memory away from ynm. A Wheelhouse uses none of it.
-found=""
-for f in AGENTS.md CLAUDE.md; do
-  grep -q "BEGIN BEADS" "$dir/$f" 2>/dev/null && found="$found $f"
-done
-for f in .agents/skills/beads .cursor/rules/beads.mdc; do
-  [ -e "$dir/$f" ] && found="$found $f"
-done
-for f in .claude/settings.json .codex/hooks.json .cursor/hooks.json; do
-  grep -qE "bd (prime|codex-hook|cursor-hook)" "$dir/$f" 2>/dev/null && found="$found $f"
-done
-if [ -n "$found" ]; then
-  add "no Beads agent setup" false error "Beads' own agent setup is present:$found" \
-    "remove the BEGIN BEADS ... END BEADS blocks and the beads skill, rule and bd prime hooks; seats get Beads through the wheelhouse plugin"
-else
-  add "no Beads agent setup" true info "none found"
-fi
 [ "$backend" != beads ] || checks=$(jq -c --argjson m "$(bash "$mc" beads --dir "$dir")" '. + $m' <<<"$checks")
 
 # --- seats -------------------------------------------------------------------
-# Every seat in the roster but the desk has a harness of its own whose wake hook
-# names it, and none passes BEADS_ACTOR through (a seat names itself).
+# The checks of the Wheelhouse's own files (no forked plugin scripts, every seat started by its own name, one
+# default human, no Beads agent setup) are static-checks.sh's, which the rule sensors run too: ynh check runs
+# them in CI with no ynm, no bd and no network.
+checks=$(jq -c --argjson m "$(bash "$here/static-checks.sh" --dir "$dir")" '. + $m' <<<"$checks")
+
 roster="$dir/$WL_ROSTER_REL"
 if [ -f "$roster" ]; then
-  unwired=""
-  while IFS=$'\t' read -r cmd harness; do
-    [ "$harness" = "." ] && continue
-    manifest="$dir/$harness/.agents/harness/plugin.json"
-    if [ ! -f "$manifest" ] || ! jq -e --arg s "--seat $cmd " '[.hooks.on_session_start[]?.command | contains($s)] | any' "$manifest" >/dev/null 2>&1 \
-      || jq -e '(.env_passthrough // []) | index("BEADS_ACTOR")' "$manifest" >/dev/null 2>&1; then
-      unwired="$unwired $cmd"
-    fi
-  done < <(jq -r '.seats[] | [.command, .harness] | @tsv' "$roster" 2>/dev/null)
-  if [ -n "$unwired" ]; then
-    add "seats wired" false warn "seats without a harness of their own that wakes them by name:$unwired" \
-      "give each its own harnesses/<command>/ whose on_session_start hook runs the installed wake.sh with --seat <command> (the wake skill's "The hook command"), with no BEADS_ACTOR in env_passthrough (the add-seat skill)"
-  else
-    add "seats wired" true info "$(jq '.seats | length' "$roster") seat(s), each with its own harness"
-  fi
-
   # Every seat, the desk too, pushes what it wrote when its session ends.
   unpushed=""
   while IFS=$'\t' read -r cmd harness; do
@@ -361,24 +315,12 @@ if [ -f "$roster" ]; then
 fi
 
 # --- humans ------------------------------------------------------------------
-# The roster's humans, beside its seats: exactly one, the default human, the
-# name for work that needs a human but no particular one. Any other human is per
-# session and never in the roster. Every bead still open is assigned to a seat,
+# The roster's humans, beside its seats (exactly one is the default human: static-checks.sh).
+# Every bead still open is assigned to a seat,
 # to the default human, or to a human command with a human/<command> namespace
 # in ynm (or an inbox bead, which inbox.sh labels), so none waits on someone
 # whose inbox nobody can show.
 if [ -f "$roster" ]; then
-  defaults=$(wl_default_humans "$roster" 2>/dev/null || echo 0)
-  if [ "${defaults:-0}" -eq 1 ]; then
-    add "default human" true info "$(jq -r '[.humans[] | select(.default == true)][0] | "\(.name) (\(.command))"' "$roster"), and no other human in the roster"
-  elif [ "${defaults:-0}" -eq 0 ]; then
-    add "default human" false warn "the roster has no default human, so work that needs a human has nowhere to go and the desk's wake shows no inbox" \
-      "add to the roster's humans one entry with \"default\": true: {\"name\": \"<Name>\", \"command\": \"<name>\", \"pronouns\": \"they/them\", \"default\": true}, named with the human (create-wheelhouse, question 5)"
-  else
-    add "default human" false error "the roster has $defaults default humans ($(jq -r '[.humans[] | select(.default == true) | .command] | join(", ")' "$roster")); the inbox needs exactly one" \
-      "ask the human which is the default, and remove \"default\": true from the others"
-  fi
-
   if command -v bd >/dev/null 2>&1 && [ -d "$dir/.beads" ]; then
     # A seat on trial is not in the roster until the trial ends; its harness, on its branch,
     # is what makes it known meanwhile.

@@ -51,3 +51,17 @@ Needs `ynh`, Beads 1.3.0 or later (`brew install beads`; the `doctor` fails on a
   hook there yourself.
 
 Run the `doctor` skill to check all of this.
+
+## Rule sensors
+
+The plugin declares five blocking `command` sensors in `.agents/harness/plugin.json`, one script each under `sensors/rules/`. They are plain bash and `jq`, run in the root of a Wheelhouse repository (the tree under test), read nothing from ynh and print one line per violation, exiting 1 if there is any. Each has a fixture built to trip it under `sensors/fixtures/<name>/`, and `sensors/fixtures/clean/` is a Wheelhouse that passes all five.
+
+| Sensor | Fails when |
+|---|---|
+| `includes-pinned` | A git include (or delegate) in any seat's manifest has no `ref`. An include of a path in the same repository is not a git include here |
+| `references-exist` | The constitution or a charter names a path, skill or seat that is not there: a path in backticks, "the X skill", `seat/X`, `--actor X` or `--seat X` |
+| `roster-consistent` | The roster, the `harnesses/` folders, the desk's delegates and the charters' headings, identity lines and bylines disagree on who the seats are; a seat is not started by its own name; or the roster has no default human or more than one |
+| `no-forked-scripts` | The Wheelhouse keeps a copy of a plugin script in its `scripts/` |
+| `work-in-beads` | The Wheelhouse has no `.beads/`, or carries Beads' own agent setup |
+
+The last three wrap the doctor's checks (`skills/doctor/scripts/static-checks.sh`), which moved behind the sensors and were not rewritten. To adopt them, include the plugin in the Wheelhouse's desk and run `ynh check <desk> --calibrate`, then `ynh check <desk>` in CI. A `pick` include of the plugin still carries all its sensors and its hooks (it is the `pick` that narrows skills only), so an include that must not carry the sensors needs `"sensors": false`.
