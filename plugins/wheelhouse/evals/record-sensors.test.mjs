@@ -227,6 +227,40 @@ test("merged-not-closed counts an open or in-progress bead whose noted pull requ
   );
 });
 
+for (const [name, mk] of [
+  [
+    "merged-not-closed",
+    () =>
+      world({
+        beads: { open: [bead("m-1", { notes: `PR: ${pr(1)}` })] },
+        gh: { pulls: { [pr(1)]: "MERGED" } },
+      }),
+  ],
+  [
+    "ask-for-merged",
+    () =>
+      world({
+        beads: {
+          open: [bead("k-1", { labels: ["inbox", "inbox:merge"], external_ref: pr(1) })],
+        },
+        gh: { pulls: { [pr(1)]: "MERGED" } },
+      }),
+  ],
+]) {
+  test(`${name} exits 3, and counts nothing, when gh fails or is missing`, () => {
+    const w = mk();
+    const failing = sensor(w, name, { GH_FAIL: "1" });
+    assert.equal(failing.code, 3);
+    assert.deepEqual(failing.lines, []);
+    assert.match(failing.err, /could not read the state of .*pull\/1/);
+    rmSync(join(w.dir, "bin", "gh"));
+    const missing = sensor(w, name);
+    assert.equal(missing.code, 3);
+    assert.deepEqual(missing.lines, []);
+    assert.match(missing.err, /gh is not installed/);
+  });
+}
+
 test("ready-without-ask counts an open, non-draft pull request with a ready verdict and no open merge bead", () => {
   const review = (body) => ({ body });
   const w = world({

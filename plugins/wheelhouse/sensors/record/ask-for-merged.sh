@@ -11,7 +11,8 @@ need jq; need bd; need gh
 beads=$(rs_beads open) || exit 3
 while IFS=$'\t' read -r id title url; do
   [ -n "$id" ] && [ -n "$url" ] || continue
-  state=$(rs_pr_state "$url" || echo unknown)
+  # When gh can't say, nothing is counted: exit 3, never a clean zero.
+  state=$(rs_pr_state "$url") || die 3 "could not read the state of $url (gh is missing, slow or failing)"
   case "$state" in MERGED | CLOSED) rs_out "$id: $title ($url is $state)" ;; esac
 done < <(jq -r '.[] | select((.labels // []) | index("inbox:merge")) | [.id, .title, (.external_ref // "")] | @tsv' <<<"$beads")
 rs_done
