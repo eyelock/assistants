@@ -177,19 +177,26 @@ fi
 changes=$(jq -c 'map(del(.mergeCommit))' <<<"$changes")
 
 # Where ynh keeps the plugin's sensors for a seat that includes it: the cache clone at the commit an
-# installed harness's record (installed/*.json, resolved[]) names for the plugin's path. Prints the
-# sensors folder; nothing when there is none.
+# installed harness's record (installed/*.json, resolved[]) names for the plugin's path. The running
+# seat's own record comes first (its name is read from the run folder this script sits in:
+# $YNH_HOME/run/<seat>/... or $YNH_HOME/run/.snapshots/<source>--<seat>/<hash>/...); then any other
+# harness's record, by sha. Prints the sensors folder; nothing when there is none.
 find_installed_sensors() {
-  local home="${YNH_HOME:-$HOME/.ynh}" sha path c
+  local home="${YNH_HOME:-$HOME/.ynh}" sha path c me="" rel
+  rel="${here#"$home"/run/}"
+  if [ "$rel" != "$here" ]; then
+    me="${rel%%/*}"
+    [ "$me" != .snapshots ] || { me="${rel#.snapshots/}"; me="${me%%/*}"; me="${me##*--}"; }
+  fi
   compgen -G "$home/installed/*.json" >/dev/null || return 0
-  while IFS=$'\t' read -r sha path; do
+  while IFS=$'\t' read -r _ sha path; do
     [ -n "$sha" ] && [ -n "$path" ] || continue
     for c in "$home"/cache/*/; do
       [ -x "$c$path/sensors/run-record-sensors.sh" ] || continue
       [ "$(git -C "$c" rev-parse HEAD 2>/dev/null)" = "$sha" ] || continue
       printf '%s\n' "$c$path/sensors"; return 0
     done
-  done < <(jq -r '.resolved[]? | select((.path // "") == "plugins/wheelhouse") | [.sha, .path] | @tsv' "$home"/installed/*.json 2>/dev/null | sort -u)
+  done < <(jq -r --arg me "$me" '. as $r | .resolved[]? | select((.path // "") == "plugins/wheelhouse") | [(($r.name // "") != $me | tostring), .sha, .path] | @tsv' "$home"/installed/*.json 2>/dev/null | sort -u)
 }
 
 # The record sensors run before the snapshot is saved, so patrol-alive and guard-log read the
