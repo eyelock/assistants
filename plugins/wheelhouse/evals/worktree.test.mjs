@@ -35,12 +35,17 @@ const git = (cwd, args) => {
 };
 
 // A folder with a Wheelhouse "ynw" and a checkout "widget" beside it, whose origin has develop.
-function world({ policy = { layout: "{repo}/.worktrees/{seat}/{branch}" } } = {}) {
+function world({ policy = { layout: "{repo}/.worktrees/{seat}/{branch}" }, dispatcher = "marr" } = {}) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "wheelhouse-worktree-")));
   const wh = join(root, "ynw");
   const widget = join(root, "widget");
   mkdirSync(wh);
   writeFileSync(join(wh, "AGENTS.md"), "# ynw\n\nRepositories: `widget`: `../widget`.\n");
+  mkdirSync(join(wh, "skills", "roster", "assets"), { recursive: true });
+  writeFileSync(
+    join(wh, "skills", "roster", "assets", "roster.json"),
+    JSON.stringify({ seats: [{ command: dispatcher, role: "dispatcher" }, { command: "albarn" }] }),
+  );
   if (policy) writeFileSync(join(wh, "worktrees.json"), JSON.stringify(policy));
   git(root, "init -q --bare -b develop origin.git");
   git(root, "clone -q origin.git widget");
@@ -273,6 +278,31 @@ test("remove: marr may remove another seat's worktree once its bead is closed", 
     const r = w.run(["remove", p, "--seat", "marr"]);
     assert.equal(r.status, 0, r.stderr);
     assert.ok(!existsSync(p));
+  } finally {
+    done(w);
+  }
+});
+
+test("remove: the cleaner is the roster's dispatcher, whatever it is named; WORKTREE_CLEANERS overrides it", () => {
+  const w = world({ dispatcher: "tharg" });
+  try {
+    const add = (b, bead) =>
+      w
+        .run(["add", "--seat", "albarn", "--repo", "widget", "--branch", `albarn/${b}`, "--bead", bead])
+        .stdout.trim();
+    const p1 = add("d1", "ynw-7");
+    const p2 = add("d2", "ynw-8");
+    w.close("ynw-7");
+    w.close("ynw-8");
+    let r = w.run(["remove", p1, "--seat", "marr"]);
+    assert.equal(r.status, 1, "marr is no dispatcher here");
+    assert.match(r.stderr, /may remove only its own/);
+    r = w.run(["remove", p1, "--seat", "tharg"]);
+    assert.equal(r.status, 0, r.stderr);
+    r = w.run(["remove", p2, "--seat", "tharg"], { WORKTREE_CLEANERS: "gahan" });
+    assert.equal(r.status, 1, "the override replaces the roster default");
+    r = w.run(["remove", p2, "--seat", "gahan"], { WORKTREE_CLEANERS: "gahan" });
+    assert.equal(r.status, 0, r.stderr);
   } finally {
     done(w);
   }

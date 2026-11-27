@@ -47,8 +47,10 @@ add     --branch must exist, or start with "<seat>/" (then it is created from --
 list    Prints a JSON list of {seat, repo, branch, bead, path, stale, why}. --stale keeps those
         whose bead is closed or whose branch is merged (its upstream gone, or already in the
         default branch of a pushed branch).
-remove  --seat is the acting seat: it may remove its own worktrees, and marr (or any seat named
-        by WORKTREE_CLEANERS, space-separated) may remove a worktree whose bead is closed.
+remove  --seat is the acting seat: it may remove its own worktrees, and a cleaner may remove a
+        worktree whose bead is closed. The cleaners are the roster's dispatcher (the seat with
+        "role": "dispatcher" in skills/roster/assets/roster.json), unless WORKTREE_CLEANERS
+        (space-separated seat commands) is set, which replaces that default.
 EOT
 }
 
@@ -215,6 +217,14 @@ do_list() {
   if [ -n "$want_stale" ]; then jq '[.[] | select(.stale)]' <<<"$out"; else jq '.' <<<"$out"; fi
 }
 
+# cleaners: the seats that may remove another seat's finished worktree, one per line. WORKTREE_CLEANERS
+# (space-separated), when set, is the whole answer; else the roster's dispatcher(s); else none.
+cleaners() {
+  if [ -n "${WORKTREE_CLEANERS:-}" ]; then printf '%s\n' $WORKTREE_CLEANERS; return 0; fi
+  [ -f "$dir/$WL_ROSTER_REL" ] || return 0
+  jq -r '.seats[]? | select(.role == "dispatcher") | .command' "$dir/$WL_ROSTER_REL" 2>/dev/null
+}
+
 # --- remove -----------------------------------------------------------------------------------
 do_remove() {
   local i n co rx wt br found='' owner='' bead_id st cleaner c
@@ -236,7 +246,7 @@ do_remove() {
   # is, so any seat may remove one (the other refusals still stand).
   co=${paths[$found]}
   if [ "$layout" != "${layout//\{seat\}/}" ] && [ "$owner" != "$seat" ]; then
-    cleaner=no; for c in marr ${WORKTREE_CLEANERS:-}; do [ "$c" = "$seat" ] && cleaner=yes; done
+    cleaner=no; for c in $(cleaners); do [ "$c" = "$seat" ] && cleaner=yes; done
     [ "$cleaner" = yes ] || die 1 "$seat may remove only its own worktrees (this one is ${owner:-not told apart by this layout})"
     bead_id=$(bead_of "$target")
     [ -n "$bead_id" ] || die 1 "$target has no bead noting it, so it is not shown to be finished work"
