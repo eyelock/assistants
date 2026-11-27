@@ -31,6 +31,14 @@
 #   repository: its last snapshot is kept, so nothing is lost or reported twice.
 # A squash merge and a rebase merge both leave one parent: both read as squash.
 #
+# The record sensors (sensors/record/ in the plugin) run on every patrol that saves its snapshot:
+# the patrol runs sensors/run-record-sensors.sh, which keeps their counts in record-sensors.json
+# beside the snapshot, and a count that rose since the last patrol is a change of kind
+# record-sensor-rose (sensor, from, to, lines). The desk's wake shows the counts above zero. The
+# snapshot also records when the patrol ran (at) and --interval (interval_minutes), which the
+# patrol-alive sensor reads. The sensors are found at $WHEELHOUSE_SENSORS_DIR, else in the plugin
+# beside this skill; where neither exists the patrol says so on stderr and goes on without them.
+#
 # Exit codes: 0 done, 1 bad args, 2 not a Wheelhouse, 3 a tool (jq, gh, git)
 # is missing or gh failed for a repository (the change list says which).
 set -uo pipefail
@@ -38,7 +46,7 @@ set -uo pipefail
 usage() {
   cat <<'EOF'
 Usage: patrol.sh [--dir <wheelhouse repo>] [--repo <owner/name>]... [--snapshot <file>]
-                 [--limit <n>] [--stale-after <minutes>] [--dry-run]
+                 [--limit <n>] [--stale-after <minutes>] [--interval <minutes>] [--no-sensors] [--dry-run]
 
 Prints a JSON list of what changed in the repositories' pull requests, issues
 and CI since the last run, and saves a new snapshot. [] means nothing changed.
@@ -47,6 +55,9 @@ repository (default 30). --dry-run prints the changes without saving the
 snapshot.
 --stale-after is how many minutes a green draft pull request may sit with
 commits no review has seen before it is reported as stalled (default 30).
+--interval is the minutes between the patrol's runs on its timer (default 5): the
+patrol-alive sensor calls the patrol dead after twice that. --no-sensors skips the
+record sensors.
 EOF
 }
 
@@ -57,21 +68,23 @@ for lib in "$here/wheelhouse-lib.sh" "$here/../../work-graph/scripts/wheelhouse-
 done
 type wl_loaded >/dev/null 2>&1 || { echo "wheelhouse-lib.sh not found beside $0 or in the work-graph skill's scripts folder" >&2; exit 3; }
 
-dir="."; snapshot=""; limit=30; stale=30; repos=(); dry=false
+dir="."; snapshot=""; limit=30; stale=30; interval=5; repos=(); dry=false; sensors=true
 while [ $# -gt 0 ]; do
   case "$1" in
     --help | -h) usage; exit 0 ;;
     --dry-run) dry=true; shift ;;
-    --dir | --repo | --snapshot | --limit | --stale-after)
+    --no-sensors) sensors=false; shift ;;
+    --dir | --repo | --snapshot | --limit | --stale-after | --interval)
       [ $# -ge 2 ] || { usage >&2; exit 1; }
       case "$1" in
-        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;; --stale-after) stale="$2" ;;
+        --dir) dir="$2" ;; --repo) repos+=("$2") ;; --snapshot) snapshot="$2" ;; --limit) limit="$2" ;; --stale-after) stale="$2" ;; --interval) interval="$2" ;;
       esac
       shift 2 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
 [[ "$limit" =~ ^[1-9][0-9]*$ ]] || die 1 "--limit must be a positive number"
+[[ "$interval" =~ ^[1-9][0-9]*$ ]] || die 1 "--interval must be a positive number of minutes"
 [[ "$stale" =~ ^[0-9]+$ ]] || die 1 "--stale-after must be a number of minutes"
 
 for t in jq gh git; do need "$t"; done
@@ -80,24 +93,14 @@ for t in jq gh git; do need "$t"; done
 # `bash scripts/patrol.sh --dir <elsewhere>` looks for its .jq files there.
 cd "$dir" || exit 2
 
-# owner/name of a checkout's GitHub remote, or nothing.
-gh_name() {
-  git -C "$1" remote get-url origin 2>/dev/null |
-    sed -nE 's#^(https://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/]+)$#\2#p' |
-    sed -E 's#\.git$##'
-}
-
 if [ ${#repos[@]} -eq 0 ] && [ -n "${WHEELHOUSE_REPOS:-}" ]; then
   read -r -a repos <<<"$WHEELHOUSE_REPOS"
 fi
 if [ ${#repos[@]} -eq 0 ]; then
   [ -f AGENTS.md ] || die 2 "not a Wheelhouse (no AGENTS.md): pass --repo"
-  own=$(gh_name .)
-  [ -n "$own" ] && repos+=("$own")
-  while IFS= read -r path; do
-    name=$(gh_name "$path")
-    [ -n "$name" ] && repos+=("$name")
-  done < <(awk '/^## /{on = ($0 ~ /^## What it reaches/)} on' AGENTS.md | grep -oE '`\.\.?/[^`]+`' | tr -d '`')
+  while IFS= read -r name; do
+    [ -z "$name" ] || repos+=("$name")
+  done < <(wl_repos .)
 fi
 [ ${#repos[@]} -gt 0 ] || die 1 "no repositories: pass --repo <owner/name>, or name their checkouts under What it reaches"
 for r in "${repos[@]}"; do
@@ -170,8 +173,26 @@ if [ "$merged" != '[]' ]; then
 fi
 changes=$(jq -c 'map(del(.mergeCommit))' <<<"$changes")
 
+# The record sensors run before the snapshot is saved, so patrol-alive and guard-log read the
+# previous run's time from it.
+if [ "$dry" = false ] && [ "$sensors" = true ]; then
+  runner=""
+  for d in "${WHEELHOUSE_SENSORS_DIR:-}" "$here/../../../sensors"; do
+    [ -n "$d" ] && [ -x "$d/run-record-sensors.sh" ] && { runner="$d/run-record-sensors.sh"; break; }
+  done
+  if [ -z "$runner" ]; then
+    echo "patrol: the record sensors were not found (set WHEELHOUSE_SENSORS_DIR to the plugin's sensors folder); skipped" >&2
+  elif rose=$(bash "$runner" --dir . --out "$(dirname "$snapshot")/record-sensors.json" --patrol-file "$snapshot" --interval "$interval") &&
+    jq -e 'type == "array"' <<<"$rose" >/dev/null 2>&1; then
+    changes=$(jq -c --argjson r "$rose" '. + $r' <<<"$changes")
+  else
+    echo "patrol: the record sensors could not be run" >&2
+    status=3
+  fi
+fi
+
 if [ "$dry" = false ]; then
-  jq -nc --argjson repos "$now" '{repos: $repos}' > "$snapshot.new" && mv "$snapshot.new" "$snapshot" ||
+  jq -nc --argjson repos "$now" --argjson at "$(date +%s)" --argjson i "$interval" '{at: $at, interval_minutes: $i, repos: $repos}' > "$snapshot.new" && mv "$snapshot.new" "$snapshot" ||
     die 3 "could not write the snapshot $snapshot"
 fi
 

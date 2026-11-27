@@ -55,11 +55,16 @@ title, url}` plus what the kind needs:
 | `pr-stalled` | a draft, green on CI, whose last commit is older than `--stale-after` minutes (default 30) and newer than its last review, or that has no review: nobody is looking at it (a commit's time is when it was committed, not pushed, so a commit made before a push can read as stalled or as already reviewed; close enough to prompt a look) |
 | `issue-opened`, `issue-closed`, `issue-reopened` | an issue's state changed (`reason` on close) |
 | `ci-red`, `ci-green` | the default branch's CI failed, or passed again (`branch` instead of `number`) |
+| `record-sensor-rose` | a record sensor's count rose since the last patrol (`sensor`, `from`, `to`, `lines`): see below |
 | `error` | `gh` couldn't read a repository (`detail`); exit 3 |
 
 A repository `gh` can't read keeps its last snapshot, so what happened meanwhile is reported once
 `gh` reads it again, never lost and never twice. `--dry-run` prints the changes without saving the
 snapshot.
+
+## The record sensors
+
+Every patrol that saves its snapshot also runs the plugin's record sensors (`sensors/run-record-sensors.sh`: stale claims, merged-not-closed beads, a ready verdict with no merge bead, a merge bead for a merged pull request, a finished milestone with no tag, scope added to an open milestone, a dead patrol, guard log lines). Their counts go to `.wheelhouse/record-sensors.json` beside the snapshot, which the desk's wake reads, and a count that rose is a `record-sensor-rose` change. Report it to the desk with its `lines`, one line each; it gets no bead. `--interval <minutes>` says how often the timer runs (default 5), so the `patrol-alive` sensor can tell a dead patrol; `--no-sensors` skips them, and a `--dry-run` never runs them. The sensors are found at `$WHEELHOUSE_SENSORS_DIR`, else in the plugin beside the skill; where neither exists the patrol says so on stderr and goes on.
 
 ## Running it every 5 minutes
 

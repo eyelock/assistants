@@ -55,6 +55,15 @@
       then (if ((.asks.errors // []) | length) > 0 then "None could be read.\n" else "No open asks.\n" end)
       else "Oldest first. An answered ask waits for its asker to close it; a return (kind return) waits for you to route it.\n\n" + (.asks.asks | map(ask) | join("\n")) + "\n" end)
    end),
+  (if .recordSensors == null then empty
+   elif .recordSensors.error then "## Record sensors\n\n\(.recordSensors.error): say so when you reply; don't say nothing was counted.\n"
+   elif .recordSensors.stale or (.recordSensors.lines | length) > 0 or (.recordSensors.errors | length) > 0
+   then "## Record sensors\n",
+     (if .recordSensors.stale then "**The patrol may be down:** these counts are \(.recordSensors.ageMinutes) minutes old, over twice its \(.recordSensors.intervalMinutes)-minute interval. Say so when you reply.\n" else empty end),
+     ((.recordSensors.lines | map("- \(.sensor): \(.count)" + (if .rose then " (rose from \(.previous))" else "" end)))
+       + (.recordSensors.errors | map("- \(.sensor): could not be counted (\(.error))")) | join("\n")) + "\n",
+     "Each count is the patrol's last read; the items are in .wheelhouse/record-sensors.json. Relay these to the human at the desk.\n"
+   else empty end),
   "## Who you are\n",
   (if .memoryRead == false
     then "**Memory couldn't be read** (ynm or Beads was slow or failed): your identity, handoff notes and Kudos are missing, not empty. Do not use the birth skill and do not write a new identity: you may be an established seat. Say so when you reply, and run `\($memsh) recall --seat \(.seat) --kind identity --limit 1` yourself, or ask the desk to check memory with the doctor skill, before relying on what follows.\n"
