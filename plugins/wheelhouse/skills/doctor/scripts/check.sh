@@ -406,6 +406,35 @@ if [ -f "$roster" ]; then
   fi
 fi
 
+# --- the record --------------------------------------------------------------
+# The record half: what the patrol's record sensors counted at its last run, read from .wheelhouse/record-sensors.json
+# (run-record-sensors.sh writes it). The doctor runs no sensor: it reads the stored results, and says plainly when there
+# are none, which is "not checked yet", never a clean record.
+rsfile="${WHEELHOUSE_RECORD_SENSORS:-$dir/.wheelhouse/record-sensors.json}"
+if [ ! -f "$rsfile" ]; then
+  add "record sensors" true info "no stored results at $rsfile: no patrol has run yet, so the record has not been checked (this is not a clean record)" \
+    "run the patrol (patrol skill) so it runs the record sensors and stores their counts"
+elif ! rs=$(jq -c --argjson now "$(date +%s)" '
+    ((($now - .at) / 60) | floor) as $age
+    | {age: $age, interval: .interval_minutes, stale: ($age > 2 * .interval_minutes),
+       above: [.sensors | to_entries[] | select((.value.count // 0) > 0) | "\(.key) \(.value.count)"],
+       errored: [.sensors | to_entries[] | select(.value.error != null) | "\(.key) (\(.value.error))"]}' "$rsfile" 2>/dev/null); then
+  add "record sensors" false warn "$rsfile could not be read as the patrol's results" \
+    "move it aside and run the patrol again to write it afresh"
+else
+  rsnote=""
+  [ "$(jq -r '.above | length' <<<"$rs")" = 0 ] || rsnote="$rsnote; above zero: $(jq -r '.above | join(", ")' <<<"$rs")"
+  [ "$(jq -r '.errored | length' <<<"$rs")" = 0 ] || rsnote="$rsnote; could not be counted: $(jq -r '.errored | join(", ")' <<<"$rs")"
+  [ "$(jq -r '.stale' <<<"$rs")" != true ] ||
+    rsnote="$rsnote; results are $(jq -r '.age' <<<"$rs") minutes old, more than twice the patrol's $(jq -r '.interval' <<<"$rs")-minute interval, so the patrol may be down"
+  if [ -n "$rsnote" ]; then
+    add "record sensors" false warn "${rsnote#; }" \
+      "read the lines in $rsfile and act on each; for old results, check the patrol's timer is running"
+  else
+    add "record sensors" true info "every sensor counted zero, $(jq -r '.age' <<<"$rs") minutes ago"
+  fi
+fi
+
 # --- shared ------------------------------------------------------------------
 # Work and memory reach other machines only when pushed: the commits, and ynm's
 # notes with them (the pre-push hook syncs memory).
