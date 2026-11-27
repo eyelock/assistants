@@ -12,15 +12,14 @@
 #
 # The policy is worktrees.json in the Wheelhouse root, beside tracker.json:
 #   {"layout": "{repo}/.worktrees/{seat}/{branch}"}
-# {repo} is the repository's name, {seat} the seat's command, {branch} the branch name (a slash is
-# kept), {scratchpad} the seat's scratchpad ($WORKTREE_SCRATCHPAD, else ${TMPDIR:-/tmp}/worktrees).
+# {repo} is the repository name, {seat} the seat command, {branch} the branch (slashes kept), {scratchpad}
+# the seat's scratchpad ($WORKTREE_SCRATCHPAD, else ${TMPDIR:-/tmp}/worktrees).
 # A relative layout is relative to the folder that holds the repositories' checkouts (the parent of
 # the Wheelhouse root), so the layout above is <checkout>/.worktrees/<seat>/<branch>. With no
 # worktrees.json the layout is {scratchpad}/{repo}/{branch}. Checkouts are the sibling folders the
 # constitution (AGENTS.md) names under "What it reaches" as `../<name>`, or --repo-path name=dir.
 #
-# Run it from the Wheelhouse root, or pass --dir. Output: the path (add), a JSON list (list), or
-# nothing (remove); diagnostics on stderr.
+# Run it from the Wheelhouse root, or pass --dir. Output: the path (add), a JSON list (list), nothing (remove).
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse, 3 a tool it needs failed or is missing.
 set -uo pipefail
 
@@ -141,7 +140,7 @@ bead_of() {
 
 bead_status() { limited "${WL_BD_SECS:-20}" bd show "$1" --json 2>/dev/null | bd_first | jq -r '.status // empty' 2>/dev/null; }
 
-# worktrees_of CHECKOUT: "path<TAB>branch" for each linked worktree (not the checkout itself).
+# worktrees_of CHECKOUT: "path<TAB>branch" per linked worktree.
 worktrees_of() {
   git -C "$1" worktree list --porcelain 2>/dev/null | awk -v root="$1" '
     /^worktree /{p=substr($0,10); b=""} /^branch /{b=$2; sub("refs/heads/","",b)}
