@@ -11,6 +11,9 @@
 #
 # take prints one JSON object on stdout and exits 0 whatever the state:
 #   {state: held, bead}                          the seat took the hold (a new bead is made on first use)
+#   {state: held, bead, resumed: true}          only when a hold with this session's own token and an owed-release
+#                                                note was taken back (see below); the wake shows **Hold taken back**.
+#                                                Absent on an ordinary take, never false.
 #   {state: refused, bead, holder: {label, started}}   another session holds it: the wake must stop
 #   {state: forced, bead, replaced: {label, started}}  --force took it over and commented which it replaced
 #   {state: unknown, why}                        bd could not be read or written; the wake carries on
@@ -24,6 +27,13 @@
 # no number of refused sessions can free a live one's hold. Chosen over releasing whatever the seat holds,
 # and over one flag, which the second refused session's end would find spent. If the live session ends
 # among the first N, the hold stays until forced (the safe side).
+#
+# A release that cannot reach bd (busy, locked, failing) is tried again until its budget is spent, and
+# when it still fails it leaves a note in TMPDIR that this token owes the seat a release. Seats the
+# desk runs as subagents all share the desk's session id, so they share its token, and a later start
+# of the same seat by the same session that finds a hold with its own token AND that note takes the
+# hold back (state held, resumed true) instead of being refused by its own earlier run. Without the
+# note a hold with the same token is still refused: another subagent of that seat may be live.
 #
 # Only a human, answering the refused seat's question, or the desk, after checking that the seat's
 # named session (<wheelhouse>-<command>) is absent from ListAgents, may pass --force. A seat never forces
@@ -70,6 +80,7 @@ for tool in jq bd; do need "$tool"; done
 cd "$dir" || exit 2
 
 bd_secs="${WAKE_BD_SECS:-20}"
+began=$SECONDS
 label="session:$seat"
 
 # This session: a token (a hash of the vendor's session id, never the id itself, or WAKE_SESSION_TOKEN),
@@ -84,7 +95,11 @@ mylabel="${WAKE_SESSION_LABEL:-${seat} session ${token:-(pid $PPID)}}"
 now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 mynotes=$(jq -nc --arg t "$token" --arg l "$mylabel" --arg s "$now" '{token: $t, label: $l, started: $s}')
 
-unknown() { jq -nc --arg why "$1" '{state: "unknown", why: $why}'; exit 0; }
+# A release that fails records that this token owes the seat a release (see the header).
+owed="${TMPDIR:-/tmp}/wheelhouse-session-release-owed.$(printf '%s' "$PWD" | shasum -a 256 2>/dev/null | cut -c1-8).$seat"
+owe() { [ "$cmd" = release ] && [ -n "$token" ] && printf '%s\n' "$token" >"$owed" 2>/dev/null; return 0; }
+
+unknown() { owe; jq -nc --arg why "$1" '{state: "unknown", why: $why}'; exit 0; }
 
 # The seat's session bead: its id, status, assignee and notes, or nothing when it has none yet.
 bead=""
@@ -110,8 +125,17 @@ if [ "$cmd" = release ]; then
   holdtoken=$(jq -r .token <<<"$holder")
   # A session that has a token lets go only of the hold it took; a hold with no token is anyone's.
   if [ -n "$token" ] && [ -n "$holdtoken" ] && [ "$token" != "$holdtoken" ]; then rel not-yours; fi
-  if limited "$bd_secs" bd update "$id" --status open --assignee "" --notes "" --if-assignee "$seat" --actor "$seat" >/dev/null 2>&1; then rel released; fi
-  rel unknown
+  # Retry within the budget: a bd busy with another seat's write often frees within a second or two.
+  deadline=$(( began + bd_secs ))
+  while :; do
+    left=$(( deadline - SECONDS )); [ "$left" -ge 1 ] || left=1
+    if limited "$left" bd update "$id" --status open --assignee "" --notes "" --if-assignee "$seat" --actor "$seat" >/dev/null 2>&1; then
+      rm -f "$owed" 2>/dev/null; rel released
+    fi
+    [ "$SECONDS" -lt $(( deadline - 1 )) ] || break
+    sleep 1
+  done
+  owe; rel unknown
 fi
 
 # take
@@ -123,10 +147,18 @@ if [ -z "$id" ]; then
   [[ "$id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || unknown "bd did not return a bead id for the session bead"
   status=open
 fi
-held() { jq -nc --arg b "$id" '{state: "held", bead: $b}'; exit 0; }
+held() { rm -f "$owed" 2>/dev/null; jq -nc --arg b "$id" '{state: "held", bead: $b}'; exit 0; }
 refused() { [ -n "$token" ] || echo refused >>"$marker" 2>/dev/null; jq -nc --arg b "$id" --argjson h "$holder" '{state: "refused", bead: $b, holder: {label: $h.label, started: $h.started}}'; exit 0; }
 
 if [ "$status" = in_progress ]; then
+  # This token's own earlier run said it could not release (see the header): the hold is its own.
+  if [ "$force" = 0 ] && [ -n "$token" ] && [ "$(jq -r .token <<<"$holder")" = "$token" ] && [ "$(cat "$owed" 2>/dev/null)" = "$token" ]; then
+    if limited "$bd_secs" bd update "$id" --assignee "$seat" --notes "$mynotes" --if-assignee "$seat" --actor "$seat" >/dev/null 2>&1; then
+      rm -f "$owed" 2>/dev/null
+      jq -nc --arg b "$id" '{state: "held", bead: $b, resumed: true}'; exit 0
+    fi
+    unknown "bd would not let the hold be taken back"
+  fi
   [ "$force" = 1 ] || refused
   # A forced start: reassign the bead over the old hold and say which session it replaced.
   limited "$bd_secs" bd update "$id" --assignee "$seat" --notes "$mynotes" --force --actor "$seat" >/dev/null 2>&1 || unknown "bd would not let the hold be taken over"

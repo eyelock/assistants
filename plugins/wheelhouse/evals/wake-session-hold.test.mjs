@@ -293,3 +293,72 @@ test("with no session id, two refused sessions ending in any order leave the liv
     rmSync(w.dir, { recursive: true, force: true });
   }
 });
+
+// A bd in front of the real one that fails while <dir>/bd-down exists, and fails the first `update`
+// when <dir>/bd-fail-first-update exists (then removes it): a bd that is busy for a moment, or locked.
+function flakyBd(dir) {
+  const real = spawnSync("sh", ["-c", "command -v bd"], { encoding: "utf8" }).stdout.trim();
+  writeFileSync(
+    join(dir, "bin", "bd"),
+    `#!/bin/sh
+[ -e "${dir}/bd-down" ] && { echo "database is locked" >&2; exit 1; }
+if [ "$1" = update ] && [ -e "${dir}/bd-fail-first-update" ]; then rm -f "${dir}/bd-fail-first-update"; echo "database is locked" >&2; exit 1; fi
+exec "${real}" "$@"
+`,
+  );
+  chmodSync(join(dir, "bin", "bd"), 0o755);
+}
+
+test("a release that cannot reach bd is owed, and the same session's next start takes the hold back", {
+  skip: !hasBd,
+}, () => {
+  const w = wheelhouse();
+  try {
+    flakyBd(w.dir);
+    assert.equal(JSON.parse(wake(w.dir, "aaa").stdout).session.state, "held");
+    // The subagent's --end finds bd locked: the release fails and the hold sticks.
+    writeFileSync(join(w.dir, "bd-down"), "");
+    const e = JSON.parse(end(w.dir, "aaa").stdout);
+    assert.equal(e.session, "unknown");
+    rmSync(join(w.dir, "bd-down"));
+    assert.equal(sessionBead(w).status, "in_progress");
+    // Another session is still refused; the same token, with the release owed, is not.
+    assert.equal(wake(w.dir, "bbb").status, 4);
+    const again = wake(w.dir, "aaa");
+    assert.equal(again.status, 0, again.stderr);
+    const out = JSON.parse(again.stdout);
+    assert.equal(out.session.state, "held");
+    assert.equal(out.session.resumed, true);
+    assert.equal(JSON.parse(sessionBead(w).notes).token, "aaa");
+    // Taken back, the release is no longer owed: a plain second start is refused again.
+    assert.equal(wake(w.dir, "aaa").status, 4);
+    assert.equal(JSON.parse(end(w.dir, "aaa").stdout).session, "released");
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test("a hold with the same token and no release owed is still refused: another run may be live", {
+  skip: !hasBd,
+}, () => {
+  const w = wheelhouse();
+  try {
+    assert.equal(wake(w.dir, "aaa").status, 0);
+    assert.equal(wake(w.dir, "aaa").status, 4);
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test("--end retries a release that bd refuses the first time", { skip: !hasBd }, () => {
+  const w = wheelhouse();
+  try {
+    flakyBd(w.dir);
+    assert.equal(wake(w.dir, "aaa").status, 0);
+    writeFileSync(join(w.dir, "bd-fail-first-update"), "");
+    assert.equal(JSON.parse(end(w.dir, "aaa").stdout).session, "released");
+    assert.equal(sessionBead(w).status, "open");
+  } finally {
+    rmSync(w.dir, { recursive: true, force: true });
+  }
+});
