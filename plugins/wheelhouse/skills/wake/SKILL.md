@@ -64,7 +64,9 @@ syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`)
 when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28; the Dolt-remote check takes at most a
-third of it and the work sync gets what is left, so the whole stays inside it), because the session-end hook
+third of it and the work sync gets what is left, so the whole stays inside it). The budget is the
+most the syncs take in all, kill grace included: a sync that ignores SIGTERM is given SIGKILL
+`WL_KILL_GRACE` (2) seconds after its limit, so each limit is the budget less the grace, because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
 can print anything: keep the budget under the hook's timeout. It first releases the seat's session hold (above). It prints
 `{seat, session, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
