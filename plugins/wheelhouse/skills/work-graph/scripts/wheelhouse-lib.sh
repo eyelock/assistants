@@ -36,6 +36,10 @@
 #   wl_conf_problems [DIR]   print one line per problem in DIR/wheelhouse.json, each saying the
 #                            key, what is wrong and how to fix it; return 1 when there is any.
 #                            A missing file has none. Unknown top-level keys are problems.
+#   wl_repos [DIR]           print the GitHub repositories a Wheelhouse watches, one owner/name per
+#                            line: $WHEELHOUSE_REPOS (space-separated) if set, else DIR's own
+#                            remote and that of every checkout its AGENTS.md names under "## What it
+#                            reaches" as a backticked relative path; return 1 when there are none
 #   wl_is_trial_seat DIR C   C has no roster entry but a harness at DIR/harnesses/C/AGENTS.md
 #   wl_is_seat ROSTER DIR C  C is in the roster's seats, or is a seat on trial
 #   wl_default_humans ROSTER print how many humans the roster marks "default": true
@@ -184,6 +188,30 @@ wl_conf_problems() {
   out=$(jq -r "$WL_JQ_CONF_PROBLEMS" "$file") || { echo "wheelhouse.json: could not be checked"; return 1; }
   [ -z "$out" ] && return 0
   printf '%s\n' "$out"; return 1
+}
+
+# owner/name of a checkout's GitHub remote, or nothing.
+wl_gh_name() {
+  git -C "$1" remote get-url origin 2>/dev/null |
+    sed -nE 's#^(https://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/]+)$#\2#p' |
+    sed -E 's#\.git$##'
+}
+
+wl_repos() {
+  local dir="${1:-.}" found="" name path r
+  if [ -n "${WHEELHOUSE_REPOS:-}" ]; then
+    for r in $WHEELHOUSE_REPOS; do printf '%s\n' "$r"; done
+    return 0
+  fi
+  [ -f "$dir/AGENTS.md" ] || return 1
+  name=$(wl_gh_name "$dir")
+  [ -z "$name" ] || found+="$name"$'\n'
+  while IFS= read -r path; do
+    name=$(wl_gh_name "$dir/$path")
+    [ -z "$name" ] || found+="$name"$'\n'
+  done < <(awk '/^## /{on = ($0 ~ /^## What it reaches/)} on' "$dir/AGENTS.md" | grep -oE '`\.\.?/[^`]+`' | tr -d '`')
+  [ -n "$found" ] || return 1
+  printf '%s' "$found"
 }
 
 wl_is_trial_seat() { [ -f "$1/harnesses/$2/AGENTS.md" ]; }

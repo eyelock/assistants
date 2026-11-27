@@ -354,15 +354,32 @@ if [ "$group" = desk ]; then
   fi
 fi
 
+# The desk's wake shows what the record sensors counted at the patrol's last run: one line per sensor above zero, and a line
+# for a sensor that could not run or when the results are older than twice the patrol's interval (the patrol may be down).
+# The results are the patrol's record-sensors.json, beside its snapshot; no file means no patrol has run, and the wake says nothing.
+recordsensors='null'
+if [ "$group" = desk ]; then
+  rsfile="${WHEELHOUSE_RECORD_SENSORS:-.wheelhouse/record-sensors.json}"
+  if [ -f "$rsfile" ]; then
+    recordsensors=$(jq -c --argjson now "$(date +%s)" '
+      ((($now - .at) / 60) | floor) as $age
+      | {ageMinutes: $age, intervalMinutes: .interval_minutes, stale: ($age > 2 * .interval_minutes),
+         lines: [.sensors | to_entries[] | select((.value.count // 0) > 0)
+                 | {sensor: .key, count: .value.count, previous: .value.previous, rose: .value.rose}],
+         errors: [.sensors | to_entries[] | select(.value.error != null) | {sensor: .key, error: .value.error}]}' "$rsfile" 2>/dev/null) ||
+      recordsensors=$(jq -nc --arg f "$rsfile" '{error: "\($f) could not be read"}')
+  fi
+fi
+
 json=$(jq -n --arg seat "$seat" --arg group "$group" --arg mandate "$mandate" \
   --argjson identity "$identity" --argjson handoff "$handoff" --argjson handoffid "$handoffid" --argjson kudos "$kudos" --argjson closenotes "$closenotes" --argjson facts "$facts" --arg backend "$backend" \
   --argjson record "$record" --argjson inprogress "$inprogress" --argjson assigned "$assigned" --argjson retro "$retro" \
   --argjson unassigned "$unassigned" --arg memsync "$memsync" --arg worksync "$worksync" --argjson workread "$workread" --argjson memoryread "$memoryread" \
-  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson asks "$asks" --argjson wakefirst "$wakefirst" '{
+  --argjson inbox "$inbox" --argjson session "$sessionjson" --argjson asks "$asks" --argjson wakefirst "$wakefirst" --argjson recordsensors "$recordsensors" '{
     seat: $seat, group: $group, backend: $backend, firstWake: ($memoryread and $identity == null), memoryRead: $memoryread, identity: $identity,
     mandate: $mandate, handoff: $handoff, handoffId: $handoffid, facts: $facts, kudos: $kudos, closeNotes: $closenotes, record: $record,
     inProgress: $inprogress, assigned: $assigned, retro: $retro, unassignedReady: $unassigned, workRead: $workread,
-    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst
+    sync: {memory: $memsync, work: $worksync}, session: $session, inbox: $inbox, asks: $asks, wakeFirst: $wakefirst, recordSensors: $recordsensors
   }')
 
 if [ "$format" = json ]; then

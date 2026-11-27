@@ -36,6 +36,23 @@ from parts that work on any vendor:
 | `vet-skill` | vet and pin a skill someone else wrote before a seat includes it: publisher and license, every file read, a SkillSpector scan of the folder as included, a full commit SHA, a `pinned-skills.md` record; and the one-finding exception rule, accepted only by a human in their own message and never granted by a worker |
 | `diataxis` | write, restructure and review documentation with the Diataxis framework: tutorials, how-to guides, reference and explanation, each page exactly one kind; the framework text (Daniele Procida, CC-BY-SA 4.0) is pinned in the skill's `references/` |
 
+## Record sensors
+
+Eight advisory sensors under `sensors/record/` count what the Wheelhouse's own record gets wrong, each a plain-bash script that runs without ynh in the Wheelhouse's root, prints one line per item and exits 1 when there is any (3 when it could not read what it counts):
+
+| Sensor | Counts |
+|---|---|
+| `stale-claims` | in-progress beads whose lease has lapsed and that no open pull request is waiting on |
+| `merged-not-closed` | open beads whose `PR: <url>` note names a merged pull request |
+| `ready-without-ask` | pull requests out of draft whose review holds `✅ ready to merge`, with no open merge bead (label `inbox:merge`) |
+| `ask-for-merged` | open merge beads whose pull request is merged or closed |
+| `finished-uncut` | open milestones with nothing open, a closed issue and no tag for their version |
+| `scope-after-open` | issues put into an open milestone on a later day than it was created (from the repository's issue events, last 100) |
+| `patrol-alive` | 1 when `.wheelhouse/patrol.json` is older than twice its `interval_minutes` |
+| `guard-log` | lines in `.wheelhouse/guard.log` (`$WHEELHOUSE_GUARD_LOG`), each starting with its UTC time, newer than the patrol's last run |
+
+They have no ratchet. `sensors/run-record-sensors.sh`, run by the patrol, keeps each count in `.wheelhouse/record-sensors.json` beside the patrol's snapshot, and a count that rose since its last run is a `record-sensor-rose` change in the patrol's output. The desk's wake prints one line per sensor above zero. **Including the plugin brings them.** The plugin's manifest declares all eight, and a sensor travels with an include unless the include sets `"sensors": false`, so every seat that includes the plugin carries them, the desk too (`pick` does not drop them). That is intended. Two things follow: each seat's trust digest changes when the plugin updates, so every seat needs `ynh trust accept` once; and `ynh check` on a seat runs them under `ynh check <seat> --only <name>`, reading the work graph and GitHub across the repositories. ynh keeps the plugin's own files, the sensors included, in its clone under `$YNH_HOME/cache` (default `~/.ynh`), and copies only the skills into a seat's run folder. So an installed patrol looks in three places, in order: `$WHEELHOUSE_SENSORS_DIR`; the plugin beside the skill (a checkout); then the cache clone at the commit the running seat's own installed record (`$YNH_HOME/installed/*.json`) names for `plugins/wheelhouse`, and only then any other installed harness's record whose clone matches its sha. An empty or runner-less sensors folder at an earlier place falls through to the next. Set `WHEELHOUSE_SENSORS_DIR` to point it elsewhere. They read the work graph and GitHub, so run them where the patrol runs, not in GitHub's CI. The repositories come from `$WHEELHOUSE_REPOS` or the checkouts `AGENTS.md` names under "What it reaches".
+
 ## Setting up
 
 Needs `ynh`, Beads 1.3.0 or later (`brew install beads`; the `doctor` fails on an older `bd`, as `bd update --if-assignee` and `--if-status` arrived in 1.3.0) and, when memory is in ynm, `ynm` (`brew install eyelock/tap/ynh eyelock/tap/ynm`). `create-wheelhouse` asks where Agent Tasks (Beads) and Agent Memory (ynm or Beads) live, and records the answer in `wheelhouse.json`.
