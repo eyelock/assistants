@@ -217,8 +217,7 @@ do_list() {
   if [ -n "$want_stale" ]; then jq '[.[] | select(.stale)]' <<<"$out"; else jq '.' <<<"$out"; fi
 }
 
-# cleaners: the seats that may remove another seat's finished worktree, one per line. WORKTREE_CLEANERS
-# (space-separated), when set, is the whole answer; else the roster's dispatcher(s); else none.
+# cleaners: seats that may remove another's finished worktree: $WORKTREE_CLEANERS, else the roster's dispatcher.
 cleaners() {
   if [ -n "${WORKTREE_CLEANERS:-}" ]; then printf '%s\n' $WORKTREE_CLEANERS; return 0; fi
   [ -f "$dir/$WL_ROSTER_REL" ] || return 0
