@@ -116,11 +116,15 @@ function runStub(ynmBody, env = {}, bdBody = "exit 0") {
     chmodSync(join(dir, "bin", "bd"), 0o755);
     spawnSync("git", ["init", "-q"], { cwd: dir });
     spawnSync("git", ["remote", "add", "origin", "https://example.invalid/x.git"], { cwd: dir });
-    return spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--end", "hynde"], {
+    // elapsed times the script alone: the fixture's setup and teardown are not the budget.
+    const began = Date.now();
+    const r = spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--end", "hynde"], {
       cwd: dir,
       encoding: "utf8",
       env: { ...process.env, ...env, PATH: `${join(dir, "bin")}:${process.env.PATH}` },
     });
+    r.elapsed = (Date.now() - began) / 1000;
+    return r;
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -155,13 +159,15 @@ test("--end reports a sync killed by the budget as a timeout", () => {
 });
 
 test("--end counts the kill grace in its budget: a TERM-ignoring sync still ends inside it", () => {
-  // Budget 5 with the default 2-second grace: the sync's limit is 3 s, SIGKILL follows at 5 s.
-  // Without the grace in the budget this ran to about 7 s.
-  const start = Date.now();
-  const r = runStub("trap '' TERM; while :; do sleep 1; done", { WHEELHOUSE_END_SYNC_SECS: "5" });
-  const secs = (Date.now() - start) / 1000;
+  // Budget 6 with a 4-second grace: the sync's limit is 2 s and SIGKILL follows at 6 s. Without
+  // the grace in the budget it ran to about 10 s. The bound sits midway, 8 s, so a loaded runner
+  // has 2 s of slack over the budget before it fails, and the old behaviour still fails by 2 s.
+  const r = runStub("trap '' TERM; while :; do sleep 1; done", {
+    WHEELHOUSE_END_SYNC_SECS: "6",
+    WL_KILL_GRACE: "4",
+  });
   assert.equal(r.status, 0, r.stderr);
-  assert.ok(secs < 6, `took ${secs}s, over the 5s budget`);
+  assert.ok(r.elapsed < 8, `took ${r.elapsed}s, over the 8s bound (budget 6s, old behaviour ~10s)`);
   assert.equal(JSON.parse(r.stdout).push.memory, "timeout");
 });
 
