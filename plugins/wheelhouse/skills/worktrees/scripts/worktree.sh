@@ -46,8 +46,9 @@ add     --branch must exist, or start with "<seat>/" (then it is created from --
 list    Prints a JSON list of {seat, repo, branch, bead, path, stale, why}. --stale keeps those
         whose bead is closed or whose branch is merged (its upstream gone, or already in the
         default branch of a pushed branch).
-remove  --seat is the acting seat: it may remove its own worktrees; the roster's dispatcher, or
-        the seats in WORKTREE_CLEANERS (space-separated, replaces it), may remove one whose bead is closed.
+remove  --seat is the acting seat: it may remove its own worktrees, and the dispatcher named in
+        the roster (or any seat named by WORKTREE_CLEANERS, space-separated, instead) may remove
+        a worktree whose bead is closed.
 EOT
 }
 
@@ -211,9 +212,8 @@ do_list() {
   if [ -n "$want_stale" ]; then jq '[.[] | select(.stale)]' <<<"$out"; else jq '.' <<<"$out"; fi
 }
 
-# cleaners: seats that may remove another's finished worktree: $WORKTREE_CLEANERS, else the roster's dispatcher.
-cleaners() {
-  if [ -n "${WORKTREE_CLEANERS:-}" ]; then printf '%s\n' $WORKTREE_CLEANERS; return 0; fi
+cleaners() { # who may remove another's finished worktree: $WORKTREE_CLEANERS, else the roster's dispatcher
+  [ -z "${WORKTREE_CLEANERS:-}" ] || { printf '%s\n' $WORKTREE_CLEANERS; return 0; }
   jq -r '.seats[]? | select(.role == "dispatcher") | .command' "$dir/$WL_ROSTER_REL" 2>/dev/null || true
 }
 
