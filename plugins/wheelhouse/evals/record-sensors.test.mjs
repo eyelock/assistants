@@ -667,9 +667,103 @@ test("an installed patrol finds the sensors in ynh's clone of the plugin, and WH
   assert.doesNotMatch(found.err, /not found/);
   assert.equal(JSON.parse(readFileSync(counts(), "utf8")).sensors["stale-claims"].count, 1);
 
-  // WHEELHOUSE_SENSORS_DIR wins: an empty folder there means the runner is missing, so the next candidate runs.
+  // WHEELHOUSE_SENSORS_DIR wins when it holds a runner: a folder elsewhere whose runner marks the run
+  // is the one that runs, not the clone's.
+  const marker = join(w.dir, "override-ran");
+  const elsewhere = join(w.dir, "elsewhere-sensors");
+  mkdirSync(elsewhere, { recursive: true });
+  writeFileSync(
+    join(elsewhere, "run-record-sensors.sh"),
+    `#!/usr/bin/env bash\necho ran > "${marker}"\necho '[]'\n`,
+    { mode: 0o755 },
+  );
   rmSync(counts());
-  const over = go({ WHEELHOUSE_SENSORS_DIR: join(clone, "plugins", "wheelhouse", "sensors") });
+  const over = go({ WHEELHOUSE_SENSORS_DIR: elsewhere });
   assert.equal(over.code, 0, over.err);
-  assert.equal(existsSync(counts()), true);
+  assert.equal(existsSync(marker), true, "the override's runner ran");
+  assert.equal(existsSync(counts()), false, "the clone's runner did not");
+
+  // An empty folder there has no runner, so it falls through to the next place: the clone's.
+  rmSync(marker);
+  const empty = join(w.dir, "empty-sensors");
+  mkdirSync(empty, { recursive: true });
+  const fell = go({ WHEELHOUSE_SENSORS_DIR: empty });
+  assert.equal(fell.code, 0, fell.err);
+  assert.equal(existsSync(marker), false);
+  assert.equal(JSON.parse(readFileSync(counts(), "utf8")).sensors["stale-claims"].count, 1);
+});
+
+test("an installed patrol prefers its own seat's record over another harness's with a matching clone", () => {
+  const w = world({
+    beads: { in_progress: [] },
+    gh: { prs: { [R]: [] }, issues: { [R]: [] } },
+  });
+  writeFileSync(
+    join(w.dir, "bin", "gh"),
+    ghStub.replace(
+      `case "$1 $2" in`,
+      `case "$1 $2" in
+  "issue list") echo '[]' ;;
+  "repo view") echo main ;;
+  "run list") echo '[]' ;;`,
+    ),
+  );
+  const home = join(w.dir, "ynh-home");
+  const marker = join(w.dir, "which");
+  // Two clones of the plugin at different commits; each runner says which clone it is.
+  const clones = ["one", "two"].map((name) => {
+    const clone = join(home, "cache", `eyelock--assistants--${name}`);
+    const sensors = join(clone, "plugins", "wheelhouse", "sensors");
+    mkdirSync(sensors, { recursive: true });
+    writeFileSync(
+      join(sensors, "run-record-sensors.sh"),
+      `#!/usr/bin/env bash\necho ${name} > "${marker}"\necho '[]'\n`,
+      { mode: 0o755 },
+    );
+    const git = (...a) =>
+      spawnSync("git", ["-C", clone, "-c", "user.email=a@b.c", "-c", "user.name=t", ...a], {
+        encoding: "utf8",
+      });
+    git("init", "-q");
+    git("add", "-A");
+    git("commit", "-q", "-m", name);
+    return { name, sha: git("rev-parse", "HEAD").stdout.trim() };
+  });
+  // The seat's own record names the clone whose sha sorts last, so a sort by sha alone would pick the other.
+  const [other, own] = clones.sort((a, b) => a.sha.localeCompare(b.sha));
+  mkdirSync(join(home, "installed"), { recursive: true });
+  const record = (name, c) =>
+    writeFileSync(
+      join(home, "installed", `local--${name}.json`),
+      JSON.stringify({
+        id: `local/${name}`,
+        name,
+        resolved: [
+          { git: "https://github.com/eyelock/assistants", path: "plugins/wheelhouse", sha: c.sha },
+        ],
+      }),
+    );
+  record("aaa", other);
+  record("reni", own);
+  const patrolHome = (seat) => {
+    const run = join(home, "run", seat, ".claude", "skills");
+    mkdirSync(run, { recursive: true });
+    spawnSync("cp", ["-R", join(plugin, "skills", "patrol"), join(run, "patrol")]);
+    spawnSync("cp", ["-R", join(plugin, "skills", "work-graph"), join(run, "work-graph")]);
+    return join(run, "patrol", "scripts", "patrol.sh");
+  };
+  const go = (script) =>
+    spawnSync("bash", [script, "--dir", w.wh], {
+      encoding: "utf8",
+      env: w.env({ YNH_HOME: home }),
+    });
+  const mine = go(patrolHome("reni"));
+  assert.equal(mine.status, 0, mine.stderr);
+  assert.equal(readFileSync(marker, "utf8").trim(), own.name, "the seat's own record wins");
+
+  // A seat with no record of its own falls back to another harness's matching record.
+  rmSync(marker);
+  const stranger = go(patrolHome("nobody"));
+  assert.equal(stranger.status, 0, stranger.stderr);
+  assert.equal(readFileSync(marker, "utf8").trim(), other.name, "then any other record");
 });
