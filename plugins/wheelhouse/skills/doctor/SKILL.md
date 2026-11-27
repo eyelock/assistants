@@ -55,6 +55,7 @@ skill's base directory (the wake skill says more). Run them from the Wheelhouse'
 | pushed | work and memory reach other machines only when pushed; it warns about commits not yet pushed (as of the last fetch), and notes when there is no remote yet |
 | work graph shared (once there is a remote) | `git push` doesn't carry the work graph: it shares through a Dolt remote on the repository's own origin, and pushes itself after each write once `dolt.auto-push` is on |
 | memory syncs itself (once there is a remote) | ynm's `sync.auto` (ynm 0.5.0) syncs memory in the background after a turn; without it, what a seat remembers mid-session waits for a push, a wake or its session end, and a crash skips the end. An error when ynm is older than 0.5.0, which refuses a config with a `sync` block |
+| record sensors | the record half: reads the patrol's stored results in `.wheelhouse/record-sensors.json` (`WHEELHOUSE_RECORD_SENSORS` names another file) and runs no sensor itself. A warning naming each sensor above zero with its count, each one that could not be counted, and results older than twice the patrol's interval (the patrol may be down); a file that cannot be read is a warning too. With no file it says plainly that no patrol has run yet, so the record has not been checked, which is not a clean record (`ok` stays true: a new Wheelhouse has not failed anything). Every sensor at zero and fresh reports as such |
 
 ## Reporting
 
