@@ -11,6 +11,9 @@
 #
 # take prints one JSON object on stdout and exits 0 whatever the state:
 #   {state: held, bead}                          the seat took the hold (a new bead is made on first use)
+#   {state: held, bead, resumed: true}          only when a hold with this session's own token and an owed-release
+#                                                note was taken back (see below); the wake shows **Hold taken back**.
+#                                                Absent on an ordinary take, never false.
 #   {state: refused, bead, holder: {label, started}}   another session holds it: the wake must stop
 #   {state: forced, bead, replaced: {label, started}}  --force took it over and commented which it replaced
 #   {state: unknown, why}                        bd could not be read or written; the wake carries on
