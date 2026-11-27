@@ -82,13 +82,18 @@ need() { command -v "$1" >/dev/null 2>&1 || die 3 "$1 is not installed"; }
 
 # A command that hangs gives up after SECS seconds (macOS has no timeout; perl's alarm does it).
 # The command runs in a process group of its own and the whole group is killed on the alarm: a bd
-# that has spawned a child would otherwise hold the output pipe open past the limit. The group
+# that has spawned a child would otherwise hold the output pipe open past the limit. The timer
+# (perl) sits in a group of its own too, so killing the caller's group (the session-end hook's
+# timeout, Ctrl-C) cannot take the timer and leave the command running with no limit: the timer
+# outlives the caller and still kills and reaps the command at the alarm. The group
 # gets SIGTERM, then SIGKILL after WL_KILL_GRACE seconds (default 2): a bd sync that ignores or is
-# stuck past SIGTERM would otherwise be orphaned and keep holding Dolt's lock. Exit 142.
+# stuck past SIGTERM would otherwise be orphaned and keep holding Dolt's lock. Exit 142. The
+# command can run SECS plus the grace, so a caller with a hard deadline passes SECS minus it.
 limited() {
   local secs="$1"; shift
   if command -v perl >/dev/null 2>&1; then
     WL_KILL_GRACE="${WL_KILL_GRACE:-2}" perl -e 'my $s = shift; my $g = $ENV{WL_KILL_GRACE} + 0;
+      setpgrp(0, 0);
       my $p = fork; if (!$p) { setpgrp(0, 0); exec @ARGV; exit 127 }
       setpgrp($p, $p);
       $SIG{ALRM} = sub { $SIG{TERM} = "IGNORE"; kill "TERM", -$p;

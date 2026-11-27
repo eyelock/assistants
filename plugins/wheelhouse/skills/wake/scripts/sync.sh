@@ -16,7 +16,8 @@
 # each skipped without a remote and run side by side (with Beads, memory and work are one bd sync,
 # reported for both; the Dolt-remote check is inside the work sync's budget, a third of it) and
 # given up after 25 seconds, inside the 30-second session-end hook (WHEELHOUSE_END_SYNC_SECS sets
-# the budget, at most 28). A full sync, not a push alone: when another seat has pushed since, a
+# the budget, at most 28). The budget is the most the syncs may take in all: limited() runs its
+# command up to WL_KILL_GRACE (2 seconds) past its limit, so each limit is the budget less the grace. A full sync, not a push alone: when another seat has pushed since, a
 # push alone is rejected until it merges. It prints {seat, push {memory, work:
 # pushed|skipped|failed|timeout}} and, when a sync did not push, errors {memory, work}: its exit
 # code and the first line it printed. With --no-sync it syncs neither and reports both as skipped.
@@ -74,13 +75,19 @@ if [ "$end" = 1 ]; then
   case "$budget" in '' | *[!0-9]*) budget=25 ;; esac
   [ "$budget" -gt 28 ] && budget=28
   [ "$budget" -lt 1 ] && budget=1
+  # limited() gives a command up to WL_KILL_GRACE seconds past its limit before SIGKILL, so the
+  # limits below are the budget less the grace: budget 28 stays 28 in all, not 28 + 2 = the hook's 30.
+  grace="${WL_KILL_GRACE:-2}"
+  case "$grace" in '' | *[!0-9]*) grace=2 ;; esac
+  [ "$grace" -ge "$budget" ] && grace=$(( budget / 3 ))
+  export WL_KILL_GRACE="$grace"
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/wake-end.XXXXXX")
   # Runs one sync for <secs> seconds and keeps its output in <tmp>/<name>.rc and .err: the exit
   # code (142 when the alarm killed it) and "exit N: first line".
   endsync() {
     local secs="$1" name="$2"; shift 2
     local rc first
-    limited "$secs" "$@" >"$tmp/$name.out" 2>&1
+    limited "$(( secs > grace ? secs - grace : 1 ))" "$@" >"$tmp/$name.out" 2>&1
     rc=$?
     echo "$rc" >"$tmp/$name.rc"
     if [ "$rc" != 0 ]; then
@@ -94,7 +101,7 @@ if [ "$end" = 1 ]; then
   endwork() {
     local check=$(( budget / 3 )) began=$SECONDS rest
     [ "$check" -ge 1 ] || check=1
-    remote=$(wl_dolt_remote "$check")
+    remote=$(wl_dolt_remote "$(( check > grace ? check - grace : 1 ))")
     # SECONDS counts whole seconds, so one more is held back for the rounding.
     rest=$(( budget - (SECONDS - began) - 1 ))
     [ "$rest" -ge 1 ] || rest=1

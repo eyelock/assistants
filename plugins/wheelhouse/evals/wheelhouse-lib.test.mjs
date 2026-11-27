@@ -93,6 +93,34 @@ test("limited sends SIGKILL to a command that ignores SIGTERM, leaving no orphan
   }
 });
 
+test("limited still reaps the command at its limit when the caller's process group is killed", () => {
+  const s = scratch();
+  try {
+    const pidfile = join(s.dir, "pid");
+    // The caller runs as a job of its own (set -m), so TERM to its group is a TERM to the caller
+    // and its children, as the session-end hook's timeout is. The timer is outside that group
+    // and must still kill the TERM-ignoring command at the limit (3 s) plus the grace (1 s).
+    const r = run(
+      s.dir,
+      `set -m
+      ( limited 3 sh -c 'trap "" TERM; echo $$ > "${pidfile}"; while :; do sleep 1; done' ) >/dev/null 2>&1 &
+      caller=$!
+      sleep 1
+      kill -TERM -- -$caller 2>/dev/null
+      wait $caller 2>/dev/null
+      sleep 5`,
+      { env: { WL_KILL_GRACE: "1" } },
+    );
+    assert.equal(r.status, 0, r.stderr);
+    const pid = Number(readFileSync(pidfile, "utf8").trim());
+    const alive = spawnSync("kill", ["-0", String(pid)]).status === 0;
+    if (alive) spawnSync("kill", ["-9", String(pid)]);
+    assert.equal(alive, false, "the command did not outlive its limit after the caller was killed");
+  } finally {
+    s.done();
+  }
+});
+
 test("limited without perl runs the command unbounded and says so once", () => {
   const s = scratch();
   try {

@@ -154,6 +154,17 @@ test("--end reports a sync killed by the budget as a timeout", () => {
   assert.match(out.errors.memory, /^exit 142/);
 });
 
+test("--end counts the kill grace in its budget: a TERM-ignoring sync still ends inside it", () => {
+  // Budget 5 with the default 2-second grace: the sync's limit is 3 s, SIGKILL follows at 5 s.
+  // Without the grace in the budget this ran to about 7 s.
+  const start = Date.now();
+  const r = runStub("trap '' TERM; while :; do sleep 1; done", { WHEELHOUSE_END_SYNC_SECS: "5" });
+  const secs = (Date.now() - start) / 1000;
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(secs < 6, `took ${secs}s, over the 5s budget`);
+  assert.equal(JSON.parse(r.stdout).push.memory, "timeout");
+});
+
 test("--end reports a failing sync with its exit code and first error line", () => {
   const r = runStub("echo 'rejected: non-fast-forward' >&2; echo second line >&2; exit 7");
   assert.equal(r.status, 0, r.stderr);
