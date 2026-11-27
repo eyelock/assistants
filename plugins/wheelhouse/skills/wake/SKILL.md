@@ -64,7 +64,9 @@ syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`)
 when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28; the Dolt-remote check takes at most a
-third of it and the work sync gets what is left, so the whole stays inside it), because the session-end hook
+third of it and the work sync gets what is left, so the whole stays inside it). The budget is the
+most the syncs take in all, kill grace included: a sync that ignores SIGTERM is given SIGKILL
+`WL_KILL_GRACE` (2) seconds after its limit, so each limit is the budget less the grace, because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
 can print anything: keep the budget under the hook's timeout. It first releases the seat's session hold (above). It prints
 `{seat, session, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
@@ -121,6 +123,12 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
   sessions apart is a short hash of the vendor's session id (Claude Code sets `CLAUDE_CODE_SESSION_ID`, checked in
   a live session; the id is never printed or written). A vendor with no session id (Codex, Copilot, OpenCode and
   Cursor today) gives no token, so each refused start adds one to a count for the seat in `TMPDIR`, and each `--end` with no token spends one and releases nothing; an `--end` that finds the count empty releases the hold. With the live session and N refused ones, the first N ends release nothing and only the last frees the hold, so no number of refused sessions can free a live one's hold. Chosen over "release whatever the seat holds", which lets a refused session free the live one's hold, and over one flag, which a second refused session's end would find spent. If the live session ends among the first N, the hold stays until a start is forced: the safe side.
+- **A release that cannot reach bd is retried, then owed.** The `--end` release retries `bd` until its budget (a third of
+  the end budget) is spent. A seat the desk runs as a subagent shares the desk's token, so if the release still failed
+  (`session: unknown`), `session.sh` left a note in `TMPDIR` that this token owes the seat a release, and the next
+  start of that seat by the same session, finding a hold with its own token and that note, takes the hold back
+  (`session.state: held, resumed: true`, and the block says **Hold taken back**) rather than being refused by its own
+  earlier run. Without the note, a hold with the same token is still refused: another subagent of the seat may be live.
 - **A crash leaves the hold.** Nothing lapses, so the next start is refused, naming the old session, until it is forced.
 - **`wake.sh --force` takes the hold over**: it reassigns the session bead (a `--force` on a bead another session holds)
   and comments which session it replaced; the block says **Forced start**. Only two parties may force: a human,
