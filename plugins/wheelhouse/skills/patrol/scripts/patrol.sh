@@ -37,7 +37,10 @@
 # record-sensor-rose (sensor, from, to, lines). The desk's wake shows the counts above zero. The
 # snapshot also records when the patrol ran (at) and --interval (interval_minutes), which the
 # patrol-alive sensor reads. The sensors are found at $WHEELHOUSE_SENSORS_DIR, else in the plugin
-# beside this skill; where neither exists the patrol says so on stderr and goes on without them.
+# beside this skill (a checkout), else where ynh keeps the plugin a seat includes: its clone under
+# $YNH_HOME/cache (default ~/.ynh), the one whose commit an installed harness's record names for
+# plugins/wheelhouse. ynh copies only the plugin's skills into a seat's run folder, so an installed
+# patrol has no sensors folder beside it. Where none exists the patrol says so on stderr and goes on.
 #
 # Exit codes: 0 done, 1 bad args, 2 not a Wheelhouse, 3 a tool (jq, gh, git)
 # is missing or gh failed for a repository (the change list says which).
@@ -173,15 +176,31 @@ if [ "$merged" != '[]' ]; then
 fi
 changes=$(jq -c 'map(del(.mergeCommit))' <<<"$changes")
 
+# Where ynh keeps the plugin's sensors for a seat that includes it: the cache clone at the commit an
+# installed harness's record (installed/*.json, resolved[]) names for the plugin's path. Prints the
+# sensors folder; nothing when there is none.
+find_installed_sensors() {
+  local home="${YNH_HOME:-$HOME/.ynh}" sha path c
+  compgen -G "$home/installed/*.json" >/dev/null || return 0
+  while IFS=$'\t' read -r sha path; do
+    [ -n "$sha" ] && [ -n "$path" ] || continue
+    for c in "$home"/cache/*/; do
+      [ -x "$c$path/sensors/run-record-sensors.sh" ] || continue
+      [ "$(git -C "$c" rev-parse HEAD 2>/dev/null)" = "$sha" ] || continue
+      printf '%s\n' "$c$path/sensors"; return 0
+    done
+  done < <(jq -r '.resolved[]? | select((.path // "") == "plugins/wheelhouse") | [.sha, .path] | @tsv' "$home"/installed/*.json 2>/dev/null | sort -u)
+}
+
 # The record sensors run before the snapshot is saved, so patrol-alive and guard-log read the
 # previous run's time from it.
 if [ "$dry" = false ] && [ "$sensors" = true ]; then
   runner=""
-  for d in "${WHEELHOUSE_SENSORS_DIR:-}" "$here/../../../sensors"; do
+  for d in "${WHEELHOUSE_SENSORS_DIR:-}" "$here/../../../sensors" "$(find_installed_sensors)"; do
     [ -n "$d" ] && [ -x "$d/run-record-sensors.sh" ] && { runner="$d/run-record-sensors.sh"; break; }
   done
   if [ -z "$runner" ]; then
-    echo "patrol: the record sensors were not found (set WHEELHOUSE_SENSORS_DIR to the plugin's sensors folder); skipped" >&2
+    echo "patrol: the record sensors were not found (set WHEELHOUSE_SENSORS_DIR to the plugin's sensors folder, or update the seat so ynh has the plugin's sensors); skipped" >&2
   elif rose=$(bash "$runner" --dir . --out "$(dirname "$snapshot")/record-sensors.json" --patrol-file "$snapshot" --interval "$interval") &&
     jq -e 'type == "array"' <<<"$rose" >/dev/null 2>&1; then
     changes=$(jq -c --argjson r "$rose" '. + $r' <<<"$changes")

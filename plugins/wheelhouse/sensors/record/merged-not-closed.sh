@@ -12,7 +12,9 @@ for status in open in_progress; do
   beads=$(rs_beads "$status") || exit 3
   while IFS=$'\t' read -r id title url; do
     [ -n "$id" ] && [ -n "$url" ] || continue
-    [ "$(rs_pr_state "$url" || echo unknown)" = MERGED ] && rs_out "$id: $title ($url merged)"
+    # When gh can't say, the bead is neither done nor not: exit 3, never a count.
+    state=$(rs_pr_state "$url") || die 3 "could not read the state of $url (gh is missing, slow or failing)"
+    [ "$state" != MERGED ] || rs_out "$id: $title ($url merged)"
   done < <(jq -r '.[] | select((.labels // []) | any(startswith("session:")) | not)
     | [.id, .title, ((.notes // "") | [scan("PR: (https?://[^ \n]+)") | .[0]] | last // "")] | @tsv' <<<"$beads")
 done
