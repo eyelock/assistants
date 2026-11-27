@@ -181,7 +181,10 @@ test("stale-claims exits 3, and counts nothing, when gh can't say whether a wait
   });
   const failing = sensor(w, "stale-claims", { GH_FAIL: "1" });
   assert.equal(failing.code, 3);
-  assert.deepEqual(failing.lines.filter((l) => l.startsWith("a-1")), []);
+  assert.deepEqual(
+    failing.lines.filter((l) => l.startsWith("a-1")),
+    [],
+  );
   assert.match(failing.err, /could not read the state of .*pull\/1/);
   // gh missing altogether is the same: no gh on the PATH.
   rmSync(join(w.dir, "bin", "gh"));
@@ -555,4 +558,84 @@ test("the patrol runs the record sensors on a saving run, reports a rise as a ch
     ],
   });
   assert.deepEqual(patrol(["--no-sensors"]).changes, [], "--no-sensors skips them");
+});
+
+test("an installed patrol finds the sensors in ynh's clone of the plugin, and WHEELHOUSE_SENSORS_DIR still overrides", () => {
+  // The layout ynh makes: a seat's run folder holds only the plugin's skills; the plugin's own files
+  // (sensors included) stay in a clone under $YNH_HOME/cache, which an installed harness's record names.
+  const w = world({
+    beads: { in_progress: [bead("a-1", { lease_expires_at: PAST })] },
+    gh: { prs: { [R]: [] }, issues: { [R]: [] } },
+  });
+  writeFileSync(
+    join(w.dir, "bin", "gh"),
+    ghStub.replace(
+      `case "$1 $2" in`,
+      `case "$1 $2" in
+  "issue list") echo '[]' ;;
+  "repo view") echo main ;;
+  "run list") echo '[]' ;;`,
+    ),
+  );
+  const home = join(w.dir, "ynh-home");
+  const clone = join(home, "cache", "eyelock--assistants--abc123");
+  const copy = (from, to) => {
+    mkdirSync(dirname(to), { recursive: true });
+    spawnSync("cp", ["-R", from, to]);
+  };
+  copy(join(plugin, "sensors"), join(clone, "plugins", "wheelhouse", "sensors"));
+  copy(join(plugin, "skills"), join(clone, "plugins", "wheelhouse", "skills"));
+  const git = (...a) =>
+    spawnSync("git", ["-C", clone, "-c", "user.email=a@b.c", "-c", "user.name=t", ...a], {
+      encoding: "utf8",
+    });
+  git("init", "-q");
+  git("add", "-A");
+  git("commit", "-q", "-m", "plugin");
+  const sha = git("rev-parse", "HEAD").stdout.trim();
+  const record = (s) => {
+    mkdirSync(join(home, "installed"), { recursive: true });
+    writeFileSync(
+      join(home, "installed", "local--reni.json"),
+      JSON.stringify({
+        id: "local/reni",
+        resolved: [
+          { git: "https://github.com/eyelock/assistants", path: "plugins/wheelhouse", sha: s },
+        ],
+      }),
+    );
+  };
+  // The installed patrol: skills copied into the run folder, with no sensors folder anywhere near.
+  const run = join(w.dir, "run", ".claude", "skills");
+  copy(join(plugin, "skills", "patrol"), join(run, "patrol"));
+  copy(join(plugin, "skills", "work-graph"), join(run, "work-graph"));
+  const installed = join(run, "patrol", "scripts", "patrol.sh");
+  const go = (extra = {}) => {
+    const r = spawnSync("bash", [installed, "--dir", w.wh], {
+      encoding: "utf8",
+      env: w.env({ YNH_HOME: home, ...extra }),
+    });
+    return { code: r.status, err: r.stderr };
+  };
+  const counts = () => join(w.wh, ".wheelhouse", "record-sensors.json");
+
+  record("0".repeat(40));
+  const lost = go();
+  assert.match(
+    lost.err,
+    /record sensors were not found/,
+    "a clone at another commit is not the seat's plugin",
+  );
+  assert.equal(existsSync(counts()), false);
+
+  record(sha);
+  const found = go();
+  assert.doesNotMatch(found.err, /not found/);
+  assert.equal(JSON.parse(readFileSync(counts(), "utf8")).sensors["stale-claims"].count, 1);
+
+  // WHEELHOUSE_SENSORS_DIR wins: an empty folder there means the runner is missing, so the next candidate runs.
+  rmSync(counts());
+  const over = go({ WHEELHOUSE_SENSORS_DIR: join(clone, "plugins", "wheelhouse", "sensors") });
+  assert.equal(over.code, 0, over.err);
+  assert.equal(existsSync(counts()), true);
 });
