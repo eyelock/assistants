@@ -179,3 +179,4 @@ Licence
 opencode
 gsub
 gitdir
+HMAC
