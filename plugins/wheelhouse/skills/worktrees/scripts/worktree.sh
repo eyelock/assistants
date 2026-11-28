@@ -12,15 +12,14 @@
 #
 # The policy is worktrees.json in the Wheelhouse root, beside tracker.json:
 #   {"layout": "{repo}/.worktrees/{seat}/{branch}"}
-# {repo} is the repository's name, {seat} the seat's command, {branch} the branch name (a slash is
-# kept), {scratchpad} the seat's scratchpad ($WORKTREE_SCRATCHPAD, else ${TMPDIR:-/tmp}/worktrees).
+# {repo} is the repository name, {seat} the seat command, {branch} the branch (slashes kept), {scratchpad}
+# the seat's scratchpad ($WORKTREE_SCRATCHPAD, else ${TMPDIR:-/tmp}/worktrees).
 # A relative layout is relative to the folder that holds the repositories' checkouts (the parent of
 # the Wheelhouse root), so the layout above is <checkout>/.worktrees/<seat>/<branch>. With no
 # worktrees.json the layout is {scratchpad}/{repo}/{branch}. Checkouts are the sibling folders the
 # constitution (AGENTS.md) names under "What it reaches" as `../<name>`, or --repo-path name=dir.
 #
-# Run it from the Wheelhouse root, or pass --dir. Output: the path (add), a JSON list (list), or
-# nothing (remove); diagnostics on stderr.
+# Run it from the Wheelhouse root, or pass --dir. Output: the path (add), a JSON list (list), nothing (remove).
 # Exit codes: 0 done, 1 bad args or refused, 2 not a Wheelhouse, 3 a tool it needs failed or is missing.
 set -uo pipefail
 
@@ -47,8 +46,9 @@ add     --branch must exist, or start with "<seat>/" (then it is created from --
 list    Prints a JSON list of {seat, repo, branch, bead, path, stale, why}. --stale keeps those
         whose bead is closed or whose branch is merged (its upstream gone, or already in the
         default branch of a pushed branch).
-remove  --seat is the acting seat: it may remove its own worktrees, and marr (or any seat named
-        by WORKTREE_CLEANERS, space-separated) may remove a worktree whose bead is closed.
+remove  --seat is the acting seat: it may remove its own worktrees, and the dispatcher named in
+        the roster (or any seat named by WORKTREE_CLEANERS, space-separated, instead) may remove
+        a worktree whose bead is closed.
 EOT
 }
 
@@ -93,8 +93,7 @@ expand() {
   printf '%s\n' "$p"
 }
 
-# layout_regex REPO: an ERE matching a worktree path of the layout; group 1 is the seat (when the
-# layout has {seat}), the last group the branch.
+# layout_regex REPO: an ERE for a worktree path of the layout; group 1 the seat, the last the branch.
 layout_regex() {
   local p=$layout out='' rest tok
   p=${p//\{scratchpad\}/$scratch}; p=${p//\{repo\}/$1}
@@ -132,9 +131,7 @@ bd_note() { # bead path seat
     || echo "worktree.sh: could not note the worktree on $1; add 'Worktree: $2' by hand" >&2
 }
 
-# bead_of PATH: the bead whose notes hold the line "Worktree: PATH", else empty. One bd call, whatever
-# the size of the graph: bd filters the notes itself, and jq keeps only an exact line, so a path that
-# is a prefix of another (or quoted in prose) does not match.
+# bead_of PATH: the bead whose notes hold the exact line "Worktree: PATH", else empty (one bd call).
 bead_of() {
   command -v bd >/dev/null 2>&1 || return 0
   limited "${WL_BD_SECS:-20}" bd list --all --limit 0 --notes-contains "Worktree: $1" --json 2>/dev/null | bd_data \
@@ -144,7 +141,7 @@ bead_of() {
 
 bead_status() { limited "${WL_BD_SECS:-20}" bd show "$1" --json 2>/dev/null | bd_first | jq -r '.status // empty' 2>/dev/null; }
 
-# worktrees_of CHECKOUT: "path<TAB>branch" for each linked worktree (not the checkout itself).
+# worktrees_of CHECKOUT: "path<TAB>branch" per linked worktree.
 worktrees_of() {
   git -C "$1" worktree list --porcelain 2>/dev/null | awk -v root="$1" '
     /^worktree /{p=substr($0,10); b=""} /^branch /{b=$2; sub("refs/heads/","",b)}
@@ -155,7 +152,7 @@ worktrees_of() {
 branch_merged() { # checkout branch
   local up def
   up=$(git -C "$1" for-each-ref --format='%(upstream:track)|%(upstream)' "refs/heads/$2" 2>/dev/null)
-  # A branch cut from origin/develop tracks it until pushed: that is not a merge.
+  # Tracking origin/develop before any push is not a merge.
   case "$up" in '[gone]|'*) return 0 ;; '|'|''|*'|refs/remotes/origin/develop'|*'|refs/remotes/origin/main') return 1 ;; esac
   for def in origin/develop origin/main; do
     git -C "$1" rev-parse -q --verify "$def" >/dev/null 2>&1 || continue
@@ -215,6 +212,11 @@ do_list() {
   if [ -n "$want_stale" ]; then jq '[.[] | select(.stale)]' <<<"$out"; else jq '.' <<<"$out"; fi
 }
 
+cleaners() { # who may remove another's finished worktree: $WORKTREE_CLEANERS, else the roster's dispatcher
+  [ -z "${WORKTREE_CLEANERS:-}" ] || { printf '%s\n' $WORKTREE_CLEANERS; return 0; }
+  jq -r '.seats[]? | select(.role == "dispatcher") | .command' "$dir/$WL_ROSTER_REL" 2>/dev/null || true
+}
+
 # --- remove -----------------------------------------------------------------------------------
 do_remove() {
   local i n co rx wt br found='' owner='' bead_id st cleaner c
@@ -232,11 +234,10 @@ do_remove() {
     [ -n "$found" ] && break
   done
   [ -n "$found" ] || die 1 "$target is not a worktree of the policy layout ($layout) in a repository this Wheelhouse reaches"
-  # The owner is the seat the layout names. A layout with no {seat} cannot tell whose a worktree
-  # is, so any seat may remove one (the other refusals still stand).
+  # A layout with no {seat} cannot tell whose a worktree is, so any seat may remove one.
   co=${paths[$found]}
   if [ "$layout" != "${layout//\{seat\}/}" ] && [ "$owner" != "$seat" ]; then
-    cleaner=no; for c in marr ${WORKTREE_CLEANERS:-}; do [ "$c" = "$seat" ] && cleaner=yes; done
+    cleaner=no; for c in $(cleaners); do [ "$c" = "$seat" ] && cleaner=yes; done
     [ "$cleaner" = yes ] || die 1 "$seat may remove only its own worktrees (this one is ${owner:-not told apart by this layout})"
     bead_id=$(bead_of "$target")
     [ -n "$bead_id" ] || die 1 "$target has no bead noting it, so it is not shown to be finished work"
