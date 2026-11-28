@@ -72,7 +72,7 @@ const git = (cwd, ...args) =>
     encoding: "utf8",
   });
 
-function ynhLs(names, installedRef = "aaa", availableRef = "aaa") {
+function ynhLs(names, installedRef = "aaa", availableRef = "aaa", isPinned = false) {
   return {
     harnesses: names.map((name) => ({
       id: `local/${name}`,
@@ -83,7 +83,7 @@ function ynhLs(names, installedRef = "aaa", availableRef = "aaa") {
           path: "plugins/wheelhouse",
           ref_installed: installedRef,
           ref_available: availableRef,
-          is_pinned: false,
+          is_pinned: isPinned,
         },
       ],
     })),
@@ -572,13 +572,13 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
       "ynh update local/hq",
       "ynh update local/wick",
     ]);
-    assert.deepEqual(Object.keys(offer.json.upstream), ["updates"]);
+    assert.deepEqual(Object.keys(offer.json.upstream), ["updates", "pinned"]);
     assert.doesNotMatch(w.log(), /ynh update/);
 
     const done = w.run(["HEAD..HEAD", "--update"]);
     assert.equal(done.status, 0, done.stderr);
     assert.match(w.log(), /^ynh update local\/hq$/m);
-    assert.deepEqual(Object.keys(done.json.upstream), ["updates"]);
+    assert.deepEqual(Object.keys(done.json.upstream), ["updates", "pinned"]);
     assert.equal(
       readFileSync(join(w.wh, "scripts", "wake.sh"), "utf8"),
       "#!/bin/sh\n# an old copy\n",
@@ -586,6 +586,44 @@ test("with no diff it offers ynh update for a stale wheelhouse include, and --up
     assert.equal(existsSync(join(w.wh, "scripts", "memory.sh")), false);
     assert.equal(existsSync(join(w.wh, "scripts", "wheelhouse-lib.sh")), false);
     assert.deepEqual(done.json.restart, ["dree", "eno", "hq", "wick"]);
+  } finally {
+    w.done();
+  }
+});
+
+test("a pinned seat is never offered or run ynh update, and is listed as pinned with a bump due; a floating seat beside it still is", () => {
+  const w = wheelhouse();
+  try {
+    const sha = "a".repeat(40);
+    const ahead = "b".repeat(40);
+    const names = SEATS.map(([c]) => c);
+    const ls = ynhLs(names, "old", "new");
+    // eno floats and is behind; dree is pinned and upstream is ahead; wick is pinned and current.
+    ls.harnesses = ls.harnesses.filter((h) => ["eno", "dree", "wick"].includes(h.name));
+    for (const h of ls.harnesses) {
+      if (h.name === "dree")
+        Object.assign(h.includes[0], { ref_installed: sha, ref_available: ahead, is_pinned: true });
+      if (h.name === "wick")
+        Object.assign(h.includes[0], { ref_installed: sha, ref_available: sha, is_pinned: true });
+    }
+    writeFileSync(join(w.dir, "ls.json"), JSON.stringify(ls));
+    for (const args of [["HEAD..HEAD"], ["HEAD..HEAD", "--update"]]) {
+      const r = w.run(args);
+      assert.equal(r.status, 0, r.stderr);
+      assert.deepEqual(
+        r.json.upstream.updates.map((u) => u.command),
+        ["ynh update local/eno"],
+      );
+      assert.deepEqual(
+        r.json.upstream.pinned.sort((a, b) => a.seat.localeCompare(b.seat)),
+        [
+          { seat: "dree", pinnedAt: sha, available: ahead, bumpDue: true },
+          { seat: "wick", pinnedAt: sha, available: sha, bumpDue: false },
+        ],
+      );
+    }
+    assert.match(w.log(), /^ynh update local\/eno$/m);
+    assert.doesNotMatch(w.log(), /ynh update local\/(dree|wick)/);
   } finally {
     w.done();
   }

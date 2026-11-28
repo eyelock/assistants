@@ -16,7 +16,10 @@
 #
 # With no diff (nothing to compare, or --upstream) it also compares each
 # seat's cached wheelhouse include with upstream (`ynh ls --check-updates`) and
-# offers `ynh update`; --update runs it. It copies no script: a Wheelhouse keeps none of the
+# offers `ynh update` for a seat whose include floats; --update runs it. A seat whose include is
+# pinned to a full commit SHA (ynh's is_pinned) is never offered it and never updated: it is
+# listed under upstream.pinned as "pinned at <sha>", with bumpDue true when upstream is ahead,
+# because a pin moves only by a pin bump pull request. It copies no script: a Wheelhouse keeps none of the
 # plugin's scripts, and seats run them where ynh installed them.
 #
 # Trust: ynh's digest covers a harness's sensors, hooks and MCP servers (top level and every
@@ -46,7 +49,8 @@ Maps the git diff <from>..<to> (default ORIG_HEAD..HEAD) to the ynh installs,
 trust instructions and restarts it needs, runs the safe ones, then the doctor,
 and prints a JSON report. --dry-run only prints. --upstream (implied by an
 empty diff) also compares each seat's wheelhouse include with upstream;
---update then runs `ynh update`. It copies no script: a Wheelhouse keeps none of the plugin's scripts,
+--update then runs `ynh update` for a seat whose include floats, never for one pinned to a full SHA
+(listed under upstream.pinned; a pin moves only by a pin bump pull request). It copies no script: a Wheelhouse keeps none of the plugin's scripts,
 and seats run them where ynh installed them.
 EOF2
 }
@@ -212,6 +216,7 @@ fi
 
 # --- upstream: the cached wheelhouse include against the plugin's upstream -----------
 updates="[]"
+pinned="[]"
 if [ "$upstream" = 1 ]; then
   if [ "$ynh_ok" = 0 ]; then
     note "ynh is not on PATH: upstream not checked"
@@ -221,6 +226,12 @@ if [ "$upstream" = 1 ]; then
         | . as $h | .includes[]? | select((.path // "") | endswith("plugins/wheelhouse"))
         | select((.is_pinned | not) and (.ref_available // "") != "" and .ref_installed != .ref_available)
         | {seat: $h.name, installed: .ref_installed, available: .ref_available, command: ("ynh update " + $h.id)} ]' <<<"$listing")
+    pinned=$(jq -c --arg seats "$desk $(printf '%s' "$seats" | tr '\n' ' ')" '
+      [ .harnesses[] | select(.id | startswith("local/")) | select(.name as $n | ($seats | split(" ") | index($n)) != null)
+        | . as $h | .includes[]? | select((.path // "") | endswith("plugins/wheelhouse"))
+        | select(.is_pinned)
+        | {seat: $h.name, pinnedAt: .ref_installed, available: (.ref_available // ""),
+           bumpDue: ((.ref_available // "") != "" and .ref_installed != .ref_available)} ]' <<<"$listing")
     if [ "$update" = 1 ] && [ "$dry" = 0 ]; then
       while IFS= read -r c; do [ -n "$c" ] && run_step "$c" $c; done < <(jq -r '.[].command' <<<"$updates")
       # An updated seat runs the plugin's new scripts only when its session restarts.
@@ -280,7 +291,7 @@ if [ "$ynh_ok" = 1 ]; then
         changed | unreviewed) trust="$trust$s"$'\n' ;;
         unavailable)
           why=$(jq -r --arg id "local/$s" '[.[] | select(.harness == $id) | (.problems // [])[]] | join("; ")' <<<"$tl")
-          note "local/$s is unavailable to ynh trust: what it runs could not be read in full${why:+ ($why)}. It gets none of its workspace folders, and ynh trust accept does not fix it: ynh update local/$s fetches the missing include (then run refresh again)" ;;
+          note "local/$s is unavailable to ynh trust: what it runs could not be read in full${why:+ ($why)}. It gets none of its workspace folders, and ynh trust accept does not fix it: ynh update local/$s fetches the missing include, and for an include pinned to a full SHA it fetches that commit and does not move the pin (then run refresh again)" ;;
       esac
     done
     [ "$dry" = 1 ] && [ "$(jq length <<<"$planned")" -gt 0 ] && note "dry run: trust was read before the installs, so a seat they would change is not listed"
@@ -319,11 +330,11 @@ jq -n --arg range "$range" --argjson dry "$([ "$dry" = 1 ] && echo true || echo 
   --argjson install "$planned" --argjson ran "$ran" --argjson failed "$([ "$failed" = 1 ] && echo true || echo false)" \
   --argjson trust "$(lines_json "$trust_cmds")" --argjson restart "$(lines_json "$restart")" \
   --argjson scripts "$(lines_json "$scripts_changed")" --argjson ignored "$(lines_json "$ignored")" \
-  --argjson updates "$updates" \
+  --argjson updates "$updates" --argjson pinned "$pinned" \
   --argjson missing "$missing" --argjson doctor "$doctor_json" --argjson notes "$notes" \
   '{range: (if $range == "" then null else $range end), dryRun: $dry, failed: $failed,
     install: $install, ran: $ran,
     trust: $trust, restart: $restart, scriptsChanged: $scripts, ignored: $ignored,
-    upstream: {updates: $updates},
+    upstream: {updates: $updates, pinned: $pinned},
     seatsNotReady: $missing, doctor: $doctor, notes: $notes}'
 [ "$failed" = 0 ] || exit 3
