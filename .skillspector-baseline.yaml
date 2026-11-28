@@ -224,7 +224,7 @@ rules:
 
   - id: "AS1"
     path: "plugins/wheelhouse/skills/create-wheelhouse/scripts/add-bare-guard-hook.sh"
-    reason: "Writing the vendors' project hook files (.claude/settings.json, .codex/hooks.json, .cursor/hooks.json) is the script's job: it appends the bare-session guard's session-start hook, append-only and idempotent, keeping every other key and hook, and the human reads the diff before the commit. A human accepted this on 2026-11-10 (ynw decision ynw-6qtq, option A, recorded on ynw-v981)."
+    reason: "Writing the vendors' project hook files (.claude/settings.json, .codex/hooks.json, .cursor/hooks.json) is the script's job: it appends the bare-session guard's session-start hook, append-only and idempotent, keeping every other key and hook, and the human reads the diff before the commit. A human accepted this on 2026-11-28, in their own answer at the desk with the rule text shown in full (recorded on ynw bead ynw-71ac)."
 
   - id: "AE1"
     path: "plugins/wheelhouse/skills/refresh/SKILL.md"
