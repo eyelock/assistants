@@ -288,7 +288,7 @@ rules. In short:
       "ref": "@eyelock-assistants/wheelhouse@<version>",
       "pick": ["skills/add-seat", "skills/birth", "skills/comms", "skills/create-wheelhouse", "skills/diataxis", "skills/doctor", "skills/handoff", "skills/kudos", "skills/patrol", "skills/vet-skill", "skills/wake", "skills/work-graph"]
     },
-    { "git": "../..", "pick": ["skills/roster"] }
+    { "git": "../..", "hooks": false, "pick": ["skills/roster"] }
   ],
   "hooks": {
     "on_session_start": [{ "command": "for d in \"$CLAUDE_PLUGIN_ROOT\" \"$PLUGIN_ROOT\" \"$CURSOR_PLUGIN_ROOT\" .codex .cursor .opencode; do [ -f \"$d/skills/wake/scripts/wake.sh\" ] && { bash \"$d/skills/wake/scripts/wake.sh\" --seat <command> --format text || true; break; }; done; true" }],
@@ -320,6 +320,9 @@ rules. In short:
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
+  Keep `"hooks": false` on it, and on every other include of `../..` (such as a retro profile's).
+  The desk's own hooks start the desk's wake, which a seat must not run; without the field, ynh
+  prints "included harness ../.. declares hooks ... that are not active" at every launch of the seat.
 - A seat other than the desk picks the wheelhouse skills one by one: every skill in
   `plugins/wheelhouse/skills/` except `refresh`, as above (list the folder for the current set).
   `refresh` is the desk's alone: it reinstalls seats, so it belongs to the seat the human talks to,
