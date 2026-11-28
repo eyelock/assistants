@@ -320,10 +320,9 @@ rules. In short:
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.
-  Write `"hooks": false` on it, and on every other include of `../..` (such as a retro profile's):
-  the desk declares hooks that wake the desk, which a seat must not run, and ynh prints "included
-  harness ../.. declares hooks ... that are not active" on every launch of a seat that leaves them
-  on.
+  Keep `"hooks": false` on it, and on every other include of `../..` (such as a retro profile's).
+  The desk's own hooks start the desk's wake, which a seat must not run; without the field, ynh
+  prints "included harness ../.. declares hooks ... that are not active" at every launch of the seat.
 - A seat other than the desk picks the wheelhouse skills one by one: every skill in
   `plugins/wheelhouse/skills/` except `refresh`, as above (list the folder for the current set).
   `refresh` is the desk's alone: it reinstalls seats, so it belongs to the seat the human talks to,
