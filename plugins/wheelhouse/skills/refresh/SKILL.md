@@ -1,6 +1,6 @@
 ---
 name: refresh
-description: Apply merged Wheelhouse changes after a pull - works out from the git diff which seats to reinstall (ynh install), which seats ynh no longer counts as trusted (any change to a seat's sensors, hooks, MCP servers, workspace or focuses) and need the human to run ynh trust accept local/<seat>, and which seats to restart, runs the safe steps, then the doctor. Also checks every roster seat is installed and born, and offers ynh update when a seat's cached wheelhouse plugin is behind upstream. The desk's skill. Use after the human pulls the Wheelhouse repository, when the CI watcher reports merges to it, or when asked what needs reinstalling or restarting.
+description: Apply merged Wheelhouse changes after a pull - works out from the git diff which seats to reinstall (ynh install), which seats ynh no longer counts as trusted (any change to a seat's sensors, hooks, MCP servers, workspace or focuses) and need the human to run ynh trust accept local/<seat>, and which seats to restart, runs the safe steps, then the doctor. Also checks every roster seat is installed and born, and offers ynh update when a seat's cached wheelhouse plugin is behind upstream and its include floats; an include pinned to a full commit SHA is never updated, it is reported as pinned and moves only by a pin bump pull request. The desk's skill. Use after the human pulls the Wheelhouse repository, when the CI watcher reports merges to it, or when asked what needs reinstalling or restarting.
 allowed-tools: Bash Read
 ---
 
@@ -53,13 +53,19 @@ brings in from the included harness.
 A seat ynh lists as `unavailable` (what it runs could not be read in full, usually an include that
 isn't cached) is reported in `notes` with the problems ynh gives. It loses its workspace folders, and
 `ynh trust accept` does not fix it: `ynh update local/<seat>` fetches the include, and then refresh
-is run again.
+is run again. For an include pinned to a full SHA that fetches the pinned commit and does not move
+the pin, so it is safe to run.
 
 ## With no diff
 
 When the diff is empty, or with `--upstream`, it also compares each seat's cached `wheelhouse`
 include with upstream (`ynh ls --check-updates`) and lists the `ynh update local/<seat>` each one
-needs. `--update` runs them, and the seats it updates are listed to restart. Refresh copies no script: a Wheelhouse
+needs. `--update` runs them, and the seats it updates are listed to restart.
+A seat whose include is pinned to a full commit SHA (ynh's `is_pinned`) is different: the pin, not the cache,
+decides what it runs, so refresh never offers or runs `ynh update` for it. It lists the seat under
+`upstream.pinned` (`pinnedAt`, `available`, `bumpDue`): report "pinned at <sha>", and when `bumpDue` is true,
+that a pin bump is due. A pin moves only by a pin bump pull request that changes the `ref` and the ledger SHA together,
+which a human merges; then run refresh again. Refresh copies no script: a Wheelhouse
 keeps none of the plugin's scripts, and seats run them where ynh installed them, so `ynh update` is the whole way a fix reaches a seat.
 A copy left in `scripts/` by an older Wheelhouse is a fork the update never reaches; the doctor warns about each, and the fix is to delete it. Ask before `--update`: it changes what the seats run.
 
@@ -101,3 +107,6 @@ manifests and updates each seat's cached include, and a changed `ref` is a chang
 the seats may need `ynh trust accept local/<seat>`, which refresh prints and never runs. List
 the tags with `git ls-remote --tags https://github.com/eyelock/assistants '@eyelock-assistants/wheelhouse@*'`.
 Never move a pin to `develop` to pick up a fix: ask for a release.
+
+An include pinned to a full commit SHA instead of a release tag moves the same way, by a pull request that changes the `ref`
+(and the ledger SHA beside it) and that a human merges; `ynh update` never moves it, so refresh doesn't offer it.
