@@ -3,7 +3,15 @@
 // and the doctor warns about a vendor with no guard. Each case runs the real scripts.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -68,7 +76,11 @@ const hookFor = (vendor) => {
     ? { version: 1, hooks: { sessionStart: [{ command: cmd }] } }
     : { hooks: { SessionStart: [{ hooks: [{ type: "command", command: cmd }] }] } };
 };
-const hookFile = { claude: ".claude/settings.json", codex: ".codex/hooks.json", cursor: ".cursor/hooks.json" };
+const hookFile = {
+  claude: ".claude/settings.json",
+  codex: ".codex/hooks.json",
+  cursor: ".cursor/hooks.json",
+};
 
 function guardCheck({ vendor, guarded }) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-bare-"));
@@ -124,7 +136,8 @@ function withHookFile(vendor, existing, fn) {
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, existing);
     }
-    const run = () => spawnSync("bash", [addHookSh, "--dir", dir, "--vendor", vendor], { encoding: "utf8" });
+    const run = () =>
+      spawnSync("bash", [addHookSh, "--dir", dir, "--vendor", vendor], { encoding: "utf8" });
     return fn({ run, read: () => readFileSync(path, "utf8"), path });
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -146,7 +159,10 @@ test("the merge keeps another SessionStart hook, a permissions block and other e
     assert.deepEqual(once.hooks.Stop, existing.hooks.Stop);
     assert.equal(once.hooks.SessionStart.length, 2);
     assert.deepEqual(once.hooks.SessionStart[0], existing.hooks.SessionStart[0]);
-    assert.match(once.hooks.SessionStart[1].hooks[0].command, /CLAUDE_PROJECT_DIR.*bare-guard\.sh.*--vendor claude/);
+    assert.match(
+      once.hooks.SessionStart[1].hooks[0].command,
+      /CLAUDE_PROJECT_DIR.*bare-guard\.sh.*--vendor claude/,
+    );
     const before = read();
     assert.match(run().stdout, /^already present /);
     assert.equal(read(), before);
@@ -166,7 +182,10 @@ test("the merge creates a missing file for each vendor, in that vendor's shape, 
 });
 
 test("the merge keeps another Cursor hook and its version, and a doctor-visible entry results", () => {
-  const existing = { version: 1, hooks: { sessionStart: [{ command: "echo hi" }], stop: [{ command: "echo bye" }] } };
+  const existing = {
+    version: 1,
+    hooks: { sessionStart: [{ command: "echo hi" }], stop: [{ command: "echo bye" }] },
+  };
   withHookFile("cursor", JSON.stringify(existing), ({ run, read }) => {
     run();
     const got = JSON.parse(read());
@@ -193,7 +212,8 @@ test("a merged file satisfies the doctor, and the hook command runs the guard fr
     copyFileSync(guardSrc, join(dir, "scripts", "bare-guard.sh"));
     spawnSync("git", ["init", "-q"], { cwd: dir });
     spawnSync("bash", [addHookSh, "--dir", dir, "--vendor", "codex"]);
-    const cmd = JSON.parse(readFileSync(join(dir, ".codex/hooks.json"), "utf8")).hooks.SessionStart[0].hooks[0].command;
+    const cmd = JSON.parse(readFileSync(join(dir, ".codex/hooks.json"), "utf8")).hooks
+      .SessionStart[0].hooks[0].command;
     mkdirSync(join(dir, "sub"));
     const env = { ...process.env };
     delete env.YNH_LABELS;
