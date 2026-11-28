@@ -73,6 +73,12 @@ at a time**, in this order. Don't create anything until you have the first four.
 
 Ask questions 10 and 11 one at a time like the rest. Both go into `wheelhouse.json` (step 3.6).
 
+12. **Telemetry (optional).** Ask only when `command -v ynr` finds ynr; with no ynr, don't ask, don't
+    mention it beyond one line in the report, and change nothing. Say what it is: one standing
+    `ynr relay` on a loopback port that the seats report their runs through, with account ids hashed
+    by a key kept on this machine, never content; nothing runs on its own (no daemon), and the human
+    starts and stops the relay. Take anything but a clear yes as no.
+
 ## 2. Check the tools
 
 `ynh`, `bd` (Beads) and `jq` must be on the PATH, and `ynm` too when memory is in ynm (a Beads
@@ -363,6 +369,24 @@ config and no ynm push sync.
 3. Tell the human the desk applies merged changes with the `refresh` skill after they pull: it
    reinstalls the seats the diff touches, prints each `ynh trust accept local/<seat>` for them to run (it asks ynh which seats are no longer trusted), and
    lists the seats to restart. It is the desk's alone; no other seat is told to run it.
+
+4. **Telemetry, only when the human said yes to question 12** (and again later, whenever they ask to
+   add it: the same steps work in a Wheelhouse made before). It is the `create-wheelhouse` skill's
+   `scripts/telemetry.sh`, run where ynh installed it:
+   1. `telemetry.sh init --dir <the Wheelhouse>` (with `--port` or `--spool` when the human names
+      them). It picks a free port, creates the relay's HMAC key (32 random bytes, mode 0600, in a
+      private folder under `$YNH_HOME`, outside the spool and outside the repository: it refuses a key
+      path in either) and records only the port, and a spool that isn't the default, under
+      `telemetry` in `wheelhouse.json`. The key is never printed, committed or put in a bead or memory.
+      Commit `wheelhouse.json` with the rest.
+   2. Give the human, to run themselves: `telemetry.sh start --dir <the Wheelhouse>` (the relay runs in
+      the foreground, in their terminal, tmux or launchd; `telemetry.sh stop` ends it), and either
+      `export YNH_TELEMETRY_RELAY_ENDPOINT=$(telemetry.sh endpoint --dir <the Wheelhouse>)` for the
+      shell that starts the seats, or `telemetry.sh configure-ynh --dir <the Wheelhouse>`, which sets
+      `telemetry_relay_endpoint` in their `~/.ynh/config.json` for every harness on the machine (as
+      the report says, you never edit that file for them). `telemetry.sh show` says whether it is up.
+
+   With no ynr, or a no, none of this runs and the Wheelhouse is exactly what it would have been.
 
 Don't add a remote, push or publish unless asked.
 

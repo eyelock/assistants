@@ -119,6 +119,39 @@
         "The reply reports the doctor's verdict with no errors, and says nothing was edited by hand to get there",
         "git remote -v in the evidence shows no remote, and nothing was pushed"
       ]
+    },
+    {
+      "setup": "../../evals/files/cw-fresh-repo.sh",
+      "tools": ["Bash"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "id": 7,
+      "name": "telemetry-yes",
+      "prompt": "Set up a Wheelhouse called hq in ./hq (an empty git repository I have just created), for running my day: my mail, Slack and calendar. Crew are named after Beatles surnames (Lennon, McCartney, Harrison, Starr), workers after planets (Mercury, Venus, Mars, Jupiter) and standing roles after Greek gods (Hermes, Athena, Apollo). Keep memory in ynm. No seats yet. ynr is installed, and yes: set up the optional telemetry too, on its default port and spool.",
+      "stubs": ["gh", "ynm", "ynh", "ynd", "ynr"],
+      "expected_output": "Creates the Wheelhouse as in the other cases, and because ynr is installed and the human said yes, runs the create-wheelhouse skill's telemetry.sh init for the new Wheelhouse, then tells the human to start the relay and point ynh run at it themselves.",
+      "assertions": [
+        "The stubbed calls or the reply show telemetry.sh init (or the equivalent steps) being run for ./hq",
+        "wheelhouse.json in the evidence keeps its tasks and memory keys and gains a telemetry object holding a relay_port, and nothing that looks like a key or secret",
+        "No file named relay.key, and no key material, is written inside ./hq, and the reply never prints a key",
+        "The reply leaves starting the relay (telemetry.sh start) and setting ynh's endpoint (the environment variable or telemetry.sh configure-ynh) to the human, and does not edit ~/.ynh/config.json itself",
+        "The reply does not run ynr relay itself or leave a process running"
+      ]
+    },
+    {
+      "setup": "../../evals/files/cw-fresh-repo.sh",
+      "tools": ["Bash"],
+      "evidence": "bash \"$EVAL_FIXTURES/cw-evidence.sh\"",
+      "id": 8,
+      "name": "telemetry-no",
+      "prompt": "Set up a Wheelhouse called hq in ./hq (an empty git repository I have just created), for running my day: my mail, Slack and calendar. Crew are named after Beatles surnames (Lennon, McCartney, Harrison, Starr), workers after planets (Mercury, Venus, Mars, Jupiter) and standing roles after Greek gods (Hermes, Athena, Apollo). Keep memory in ynm. No seats yet. ynr is installed. When you ask about the optional telemetry, the answer is no.",
+      "stubs": ["gh", "ynm", "ynh", "ynd", "ynr"],
+      "expected_output": "Creates the Wheelhouse as in the other cases; asks about the optional telemetry because ynr is installed, takes the no, and sets up nothing for it.",
+      "assertions": [
+        "The reply offers the optional telemetry (or its question is answered no in the prompt) and accepts the no without pressing",
+        "wheelhouse.json in the evidence has no telemetry key, exactly as it would without ynr",
+        "No telemetry.sh init, ynr relay or key file appears in the stubbed calls or the evidence, and ~/.ynh/config.json is not edited",
+        "The report mentions nothing the human must do for telemetry"
+      ]
     }
   ]
 }

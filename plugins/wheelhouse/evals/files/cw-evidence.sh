@@ -22,3 +22,4 @@ if [ -d ../.eval/origin.git ]; then
 fi
 echo; echo '$ cat wheelhouse.json'; cat wheelhouse.json 2>/dev/null || echo "(missing)"
 echo; echo '$ ls scripts'; ls scripts 2>/dev/null || echo "(none)"
+echo; echo "$ find . -name '*.key' (no key belongs in the repository)"; find . -name "*.key" -not -path "./.git/*" 2>/dev/null | grep . || echo "(none)"
