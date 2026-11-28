@@ -84,7 +84,10 @@ test("--end --no-sync performs no sync", () => {
 });
 
 // A sync stub that sleeps, or fails with a message, to exercise the session-end time budget.
-function runStub(ynmBody, env = {}, bdBody = "exit 0") {
+function runStub(ynmBody, env = {}, bdBody = "exit 0", limitLog = "") {
+  const realPerl = limitLog
+    ? spawnSync("sh", ["-c", "command -v perl"], { encoding: "utf8" }).stdout.trim()
+    : "";
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-end-budget-"));
   try {
     mkdirSync(join(dir, "scripts"));
@@ -114,6 +117,15 @@ function runStub(ynmBody, env = {}, bdBody = "exit 0") {
     );
     chmodSync(join(dir, "bin", "ynm"), 0o755);
     chmodSync(join(dir, "bin", "bd"), 0o755);
+    // With limitLog, a perl stand-in records each limited() call's limit and kill grace, then runs
+    // the real perl: a test can then check the budget by its arguments, with no clock.
+    if (limitLog) {
+      writeFileSync(
+        join(dir, "bin", "perl"),
+        `#!/bin/sh\ncase "$4" in ''|*[!0-9]*) ;; *) echo "$4 $WL_KILL_GRACE" >>"${limitLog}" ;; esac\nexec "${realPerl}" "$@"\n`,
+      );
+      chmodSync(join(dir, "bin", "perl"), 0o755);
+    }
     spawnSync("git", ["init", "-q"], { cwd: dir });
     spawnSync("git", ["remote", "add", "origin", "https://example.invalid/x.git"], { cwd: dir });
     // elapsed times the script alone: the fixture's setup and teardown are not the budget.
@@ -158,16 +170,47 @@ test("--end reports a sync killed by the budget as a timeout", () => {
   assert.match(out.errors.memory, /^exit 142/);
 });
 
-test("--end counts the kill grace in its budget: a TERM-ignoring sync still ends inside it", () => {
-  // Budget 6 with a 4-second grace: the sync's limit is 2 s and SIGKILL follows at 6 s. Without
-  // the grace in the budget it ran to about 10 s. The bound sits midway, 8 s, so a loaded runner
-  // has 2 s of slack over the budget before it fails, and the old behaviour still fails by 2 s.
+test("--end counts the kill grace in its budget: each sync's limit plus the grace stays inside it", () => {
+  // Budget 6 with a 4-second grace: a sync's limit is 2 s and SIGKILL follows at 6 s. Without the
+  // grace in the budget the limit was 6 s and SIGKILL came at 10 s. Read the limit and the grace
+  // that wake.sh hands the timer, so no wall clock decides the result.
+  const log = join(tmpdir(), `wheelhouse-end-limits-${process.pid}-${Date.now()}`);
+  try {
+    const r = runStub(
+      "exit 0",
+      { WHEELHOUSE_END_SYNC_SECS: "6", WL_KILL_GRACE: "4" },
+      "exit 0",
+      log,
+    );
+    assert.equal(r.status, 0, r.stderr);
+    const calls = readFileSync(log, "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => l.split(" ").map(Number));
+    assert.ok(
+      calls.length >= 2,
+      `expected the memory and work syncs to be timed, got ${calls.length}`,
+    );
+    for (const [limit, grace] of calls) {
+      assert.equal(grace, 4, "the grace given to the timer");
+      assert.ok(limit + grace <= 6, `limit ${limit}s + grace ${grace}s is over the 6s budget`);
+    }
+    assert.ok(
+      calls.some(([limit]) => limit === 2),
+      "the memory sync's limit is the budget less the grace",
+    );
+  } finally {
+    rmSync(log, { force: true });
+  }
+});
+
+test("--end ends a TERM-ignoring sync with SIGKILL and reports a timeout", () => {
+  // No time bound: a sync that ignores SIGTERM must still end (the test would hang otherwise).
   const r = runStub("trap '' TERM; while :; do sleep 1; done", {
-    WHEELHOUSE_END_SYNC_SECS: "6",
-    WL_KILL_GRACE: "4",
+    WHEELHOUSE_END_SYNC_SECS: "3",
+    WL_KILL_GRACE: "1",
   });
   assert.equal(r.status, 0, r.stderr);
-  assert.ok(r.elapsed < 8, `took ${r.elapsed}s, over the 8s bound (budget 6s, old behaviour ~10s)`);
   assert.equal(JSON.parse(r.stdout).push.memory, "timeout");
 });
 
