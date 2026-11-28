@@ -4,7 +4,15 @@
 // render-wake.jq (wake.sh exits 3 without either) is caught.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -12,7 +20,15 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const roster = {
-  seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Build." }],
+  seats: [
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Build.",
+    },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
@@ -21,16 +37,26 @@ function installed() {
   mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
   writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
   mkdirSync(join(dir, "harnesses", "hynde"), { recursive: true });
-  writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), "**Mandate:** Build one bead at a time.\n");
+  writeFileSync(
+    join(dir, "harnesses", "hynde", "AGENTS.md"),
+    "**Mandate:** Build one bead at a time.\n",
+  );
   for (const [skill, files] of [
     ["wake", ["wake.sh", "sync.sh", "render-wake.jq"]],
     ["work-graph", ["memory.sh", "wheelhouse-lib.sh"]],
   ]) {
     mkdirSync(join(dir, "plugin", "skills", skill, "scripts"), { recursive: true });
-    for (const f of files) copyFileSync(join(plugin, "skills", skill, "scripts", f), join(dir, "plugin", "skills", skill, "scripts", f));
+    for (const f of files)
+      copyFileSync(
+        join(plugin, "skills", skill, "scripts", f),
+        join(dir, "plugin", "skills", skill, "scripts", f),
+      );
   }
   mkdirSync(join(dir, "bin"));
-  for (const [name, body] of [["bd", "#!/bin/sh\necho '[]'\n"], ["ynm", "#!/bin/sh\necho '[]'\n"]]) {
+  for (const [name, body] of [
+    ["bd", "#!/bin/sh\necho '[]'\n"],
+    ["ynm", "#!/bin/sh\necho '[]'\n"],
+  ]) {
     writeFileSync(join(dir, "bin", name), body);
     chmodSync(join(dir, "bin", name), 0o755);
   }
@@ -38,11 +64,22 @@ function installed() {
 }
 
 function wake(dir) {
-  return spawnSync("bash", [join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"), "--seat", "hynde", "--format", "text", "--no-sync"], {
-    cwd: dir,
-    encoding: "utf8",
-    env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
-  });
+  return spawnSync(
+    "bash",
+    [
+      join(dir, "plugin", "skills", "wake", "scripts", "wake.sh"),
+      "--seat",
+      "hynde",
+      "--format",
+      "text",
+      "--no-sync",
+    ],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
+    },
+  );
 }
 
 test("wake.sh runs from the installed layout, with sync.sh and render-wake.jq beside it", () => {

@@ -16,10 +16,10 @@ const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const inboxSh = join(plugin, "skills", "work-graph", "scripts", "inbox.sh");
 
 const roster = {
-  seats: [{ name: "Dalglish", group: "workers", command: "dalglish", harness: ".", mandate: "Build." }],
-  humans: [
-    { name: "Rook", command: "rook", pronouns: "they/them", default: true },
+  seats: [
+    { name: "Dalglish", group: "workers", command: "dalglish", harness: ".", mandate: "Build." },
   ],
+  humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
 // bd: `create` keeps its arguments, one per line, in bd-args and refuses a flag it doesn't know,
@@ -68,7 +68,11 @@ function inbox(args, check) {
     const out = spawnSync("bash", [inboxSh, ...args, "--dir", "."], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BD_ARGS: join(dir, "bd-args") },
+      env: {
+        ...process.env,
+        PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+        BD_ARGS: join(dir, "bd-args"),
+      },
     });
     const read = (f) => {
       try {
@@ -87,16 +91,24 @@ function inbox(args, check) {
 }
 
 test("assign: a title starting with '-' is created as the title, not read as a flag", () => {
-  inbox(["assign", "--title", "--force the cache clear", "--from", "dalglish", "--kind", "decision"], (out, { bdArgs }) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).id, "wh-1");
-    const i = bdArgs.indexOf("--title");
-    assert.ok(i >= 0, "the title goes in with --title");
-    assert.equal(bdArgs[i + 1], "--force the cache clear");
-  });
+  inbox(
+    ["assign", "--title", "--force the cache clear", "--from", "dalglish", "--kind", "decision"],
+    (out, { bdArgs }) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).id, "wh-1");
+      const i = bdArgs.indexOf("--title");
+      assert.ok(i >= 0, "the title goes in with --title");
+      assert.equal(bdArgs[i + 1], "--force the cache clear");
+    },
+  );
 });
 
-for (const title of ["Merge: widget #13", "Please merge widget #13", "widget #13 needs a REVIEW", "Review widget #13"]) {
+for (const title of [
+  "Merge: widget #13",
+  "Please merge widget #13",
+  "widget #13 needs a REVIEW",
+  "Review widget #13",
+]) {
   test(`assign: "${title}" is a merge or review, refused without --url`, () => {
     inbox(["assign", "--title", title, "--from", "dalglish"], (out, { bdArgs }) => {
       assert.equal(out.status, 1);
@@ -128,26 +140,45 @@ test("assign: a merge named in the title, with --url, is labelled as a merge", (
 });
 
 test("assign: words that only contain merge or review are not one", () => {
-  inbox(["assign", "--title", "Decide whether the merged reviewers stay", "--from", "dalglish"], (out) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).kind, null);
-  });
+  inbox(
+    ["assign", "--title", "Decide whether the merged reviewers stay", "--from", "dalglish"],
+    (out) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).kind, null);
+    },
+  );
 });
 
 test("assign: --kind is the switch, whatever the title says", () => {
-  inbox(["assign", "--title", "Merge or not? Your call", "--from", "dalglish", "--kind", "decision"], (out) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).kind, "decision");
-  });
+  inbox(
+    ["assign", "--title", "Merge or not? Your call", "--from", "dalglish", "--kind", "decision"],
+    (out) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).kind, "decision");
+    },
+  );
 });
 
 test("assign: any human's command is accepted without a roster entry", () => {
-  inbox(["assign", "--title", "Decide the cache size", "--from", "dalglish", "--kind", "decision", "--to", "david"], (out, { bdArgs, roster: after }) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).to, "david");
-    assert.equal(bdArgs[bdArgs.indexOf("--assignee") + 1], "david");
-    assert.deepEqual(after, roster, "the roster is unchanged");
-  });
+  inbox(
+    [
+      "assign",
+      "--title",
+      "Decide the cache size",
+      "--from",
+      "dalglish",
+      "--kind",
+      "decision",
+      "--to",
+      "david",
+    ],
+    (out, { bdArgs, roster: after }) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).to, "david");
+      assert.equal(bdArgs[bdArgs.indexOf("--assignee") + 1], "david");
+      assert.deepEqual(after, roster, "the roster is unchanged");
+    },
+  );
 });
 
 for (const [why, to, message] of [
@@ -157,10 +188,23 @@ for (const [why, to, message] of [
   ["a command starting with '-'", "-david", /is not a human's command/],
 ]) {
   test(`assign: refuses --to ${why}`, () => {
-    inbox(["assign", "--title", "Decide the cache size", "--from", "dalglish", "--kind", "decision", "--to", to], (out) => {
-      assert.equal(out.status, 1, out.stdout);
-      assert.match(out.stderr, message);
-    });
+    inbox(
+      [
+        "assign",
+        "--title",
+        "Decide the cache size",
+        "--from",
+        "dalglish",
+        "--kind",
+        "decision",
+        "--to",
+        to,
+      ],
+      (out) => {
+        assert.equal(out.status, 1, out.stdout);
+        assert.match(out.stderr, message);
+      },
+    );
   });
 }
 
@@ -175,7 +219,7 @@ test("register is gone", () => {
 // ef8.12: every bead names the one repository it touches in a repo: label, inbox beads too.
 const prUrl = "https://github.com/example/widget/pull/13";
 const merge = ["assign", "--title", "Merge widget #13", "--from", "dalglish", "--url", prUrl];
-const labels = (bdArgs) => bdArgs.filter((a, i) => bdArgs[i - 1] === "--labels");
+const labels = (bdArgs) => bdArgs.filter((_a, i) => bdArgs[i - 1] === "--labels");
 
 test("assign: --repo labels the bead repo:<repo>", () => {
   inbox([...merge, "--repo", "widget"], (out, { bdArgs }) => {
@@ -221,18 +265,34 @@ for (const [why, extra] of [
 }
 
 test("assign: a review needs a repository too", () => {
-  inbox(["assign", "--title", "Look at widget #13", "--kind", "review", "--from", "dalglish", "--url", prUrl], (out) => {
-    assert.equal(out.status, 1);
-    assert.match(out.stderr, /a review needs --repo/);
-  });
+  inbox(
+    [
+      "assign",
+      "--title",
+      "Look at widget #13",
+      "--kind",
+      "review",
+      "--from",
+      "dalglish",
+      "--url",
+      prUrl,
+    ],
+    (out) => {
+      assert.equal(out.status, 1);
+      assert.match(out.stderr, /a review needs --repo/);
+    },
+  );
 });
 
 test("assign: a decision that touches no repository goes unlabelled", () => {
-  inbox(["assign", "--title", "Pick the release date", "--kind", "decision", "--from", "dalglish"], (out, { bdArgs }) => {
-    assert.equal(out.status, 0, out.stderr);
-    assert.equal(JSON.parse(out.stdout).repo, null);
-    assert.ok(!labels(bdArgs).some((l) => l.startsWith("repo:")));
-  });
+  inbox(
+    ["assign", "--title", "Pick the release date", "--kind", "decision", "--from", "dalglish"],
+    (out, { bdArgs }) => {
+      assert.equal(out.status, 0, out.stderr);
+      assert.equal(JSON.parse(out.stdout).repo, null);
+      assert.ok(!labels(bdArgs).some((l) => l.startsWith("repo:")));
+    },
+  );
 });
 
 for (const repo of ["widget,gadget", "../widget", "-widget", "wid get"]) {
@@ -248,7 +308,15 @@ for (const repo of ["widget,gadget", "../widget", "-widget", "wid get"]) {
 // ef8.15: a report is something for a human to read, such as a weekly roadmap report. It needs no
 // --url or repository, is labelled inbox:report, and gets priority 3 unless --priority says
 // otherwise.
-const report = ["assign", "--title", "Weekly roadmap report: review of the milestones", "--from", "dalglish", "--kind", "report"];
+const report = [
+  "assign",
+  "--title",
+  "Weekly roadmap report: review of the milestones",
+  "--from",
+  "dalglish",
+  "--kind",
+  "report",
+];
 const priorityOf = (bdArgs) => bdArgs[bdArgs.indexOf("--priority") + 1];
 
 test("assign: a report needs no --url or repository, and gets priority 3", () => {

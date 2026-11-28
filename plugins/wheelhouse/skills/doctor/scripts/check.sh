@@ -56,6 +56,17 @@ if ! backend=$(bash "$mc" backend --dir "$dir"); then
   backend=""
 fi
 
+# wheelhouse.json's other keys: shared_checkouts, protected_branches, sanctioned_force, budgets and guards
+# are read by the plugin's guards and sensors, so a bad or unknown key is an error with the fix on its line.
+if [ -f "$dir/wheelhouse.json" ]; then
+  if problems=$(wl_conf_problems "$dir"); then
+    add "wheelhouse.json keys" true info "every key is known and well formed"
+  else
+    add "wheelhouse.json keys" false error "$(tr '\n' ';' <<<"$problems" | sed 's/;$//; s/;/; /g')" \
+      "$(sed -n 's/.*Fix: //p' <<<"$problems" | head -1), in $dir/wheelhouse.json"
+  fi
+fi
+
 # The plugin's scripts run where ynh installed them, so a Wheelhouse keeps no copy. The ones every seat
 # runs are memory.sh (the wake, the inbox and the skills read and write memory through it) and inbox.sh; the
 # library every script sources is the one this script already loaded. A seat without the work-graph skill has none, so these are errors.
@@ -144,7 +155,20 @@ fi
 if ! command -v bd >/dev/null 2>&1; then
   add "beads installed" false error "bd is not on PATH" "brew install beads"
 else
-  add "beads installed" true info "$(limited "$WL_BD_SECS" bd version 2>/dev/null | head -1)"
+  bdversion=$(limited "$WL_BD_SECS" bd version 2>/dev/null | head -1)
+  bdnumber=$(sed -nE 's/^[^0-9]*([0-9]+(\.[0-9]+)*).*/\1/p' <<<"$bdversion")
+  if [ -z "$bdnumber" ]; then
+    add "beads installed" true info "$bdversion"
+    add "beads version" false warn "could not read a version from \`bd version\` (\"$bdversion\"), so the minimum $WL_BD_MIN is unchecked" \
+      "run bd version, and upgrade to $WL_BD_MIN or later if it is older: brew upgrade beads"
+  elif wl_version_ge "$bdnumber" "$WL_BD_MIN"; then
+    add "beads installed" true info "$bdversion"
+    add "beads version" true info "$bdnumber is at least $WL_BD_MIN"
+  else
+    add "beads installed" true info "$bdversion"
+    add "beads version" false error "bd $bdnumber is older than $WL_BD_MIN, the oldest the plugin's scripts work with: claims and session holds rely on bd update --if-assignee and --if-status (exit 13 on a stale guard), which older bd lacks" \
+      "brew upgrade beads (needs $WL_BD_MIN or later)"
+  fi
   if [ ! -d "$dir/.beads" ]; then
     add "work graph" false error "no .beads/ in the Wheelhouse repository" \
       "bd init --skip-agents --non-interactive --role maintainer --prefix <wheelhouse name> (it commits what it creates, so start from a clean tree)"
@@ -413,6 +437,35 @@ if [ -f "$roster" ]; then
     else
       add "assignees known" true info "every open bead is unassigned, or assigned to a seat, the default human, or a human with a ynm namespace"
     fi
+  fi
+fi
+
+# --- the record --------------------------------------------------------------
+# The record half: what the patrol's record sensors counted at its last run, read from .wheelhouse/record-sensors.json
+# (run-record-sensors.sh writes it). The doctor runs no sensor: it reads the stored results, and says plainly when there
+# are none, which is "not checked yet", never a clean record.
+rsfile="${WHEELHOUSE_RECORD_SENSORS:-$dir/.wheelhouse/record-sensors.json}"
+if [ ! -f "$rsfile" ]; then
+  add "record sensors" true info "no stored results at $rsfile: no patrol has run yet, so the record has not been checked (this is not a clean record)" \
+    "run the patrol (patrol skill) so it runs the record sensors and stores their counts"
+elif ! rs=$(jq -c --argjson now "$(date +%s)" '
+    ((($now - .at) / 60) | floor) as $age
+    | {age: $age, interval: .interval_minutes, stale: ($age > 2 * .interval_minutes),
+       above: [.sensors | to_entries[] | select((.value.count // 0) > 0) | "\(.key) \(.value.count)"],
+       errored: [.sensors | to_entries[] | select(.value.error != null) | "\(.key) (\(.value.error))"]}' "$rsfile" 2>/dev/null); then
+  add "record sensors" false warn "$rsfile could not be read as the patrol's results" \
+    "move it aside and run the patrol again to write it afresh"
+else
+  rsnote=""
+  [ "$(jq -r '.above | length' <<<"$rs")" = 0 ] || rsnote="$rsnote; above zero: $(jq -r '.above | join(", ")' <<<"$rs")"
+  [ "$(jq -r '.errored | length' <<<"$rs")" = 0 ] || rsnote="$rsnote; could not be counted: $(jq -r '.errored | join(", ")' <<<"$rs")"
+  [ "$(jq -r '.stale' <<<"$rs")" != true ] ||
+    rsnote="$rsnote; results are $(jq -r '.age' <<<"$rs") minutes old, more than twice the patrol's $(jq -r '.interval' <<<"$rs")-minute interval, so the patrol may be down"
+  if [ -n "$rsnote" ]; then
+    add "record sensors" false warn "${rsnote#; }" \
+      "read the lines in $rsfile and act on each; for old results, check the patrol's timer is running"
+  else
+    add "record sensors" true info "every sensor counted zero, $(jq -r '.age' <<<"$rs") minutes ago"
   fi
 fi
 

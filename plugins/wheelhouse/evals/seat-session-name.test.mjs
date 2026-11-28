@@ -11,13 +11,20 @@ import { fileURLToPath } from "node:url";
 
 const plugin = join(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(plugin, "skills", "add-seat", "scripts", "session-name.sh");
-const seat = (command, group) => ({ name: command, group, command, harness: `harnesses/${command}`, mandate: "m" });
+const seat = (command, group) => ({
+  name: command,
+  group,
+  command,
+  harness: `harnesses/${command}`,
+  mandate: "m",
+});
 
 function name(roster, ...args) {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-session-name-"));
   try {
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
-    if (roster) writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
+    if (roster)
+      writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify(roster));
     return spawnSync("bash", [script, "--dir", dir, ...args], { encoding: "utf8" });
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -33,7 +40,10 @@ test("the desk is named for the Wheelhouse, every other seat <wheelhouse>-<comma
 });
 
 test("--format flag gives the launcher flag, with an equals sign", () => {
-  assert.equal(name(roster, "--seat", "okafor", "--format", "flag").stdout.trim(), "--name=hq-okafor");
+  assert.equal(
+    name(roster, "--seat", "okafor", "--format", "flag").stdout.trim(),
+    "--name=hq-okafor",
+  );
 });
 
 test("--format flag prints nothing, and exits 0, for a vendor with no launch flag", () => {
@@ -42,7 +52,10 @@ test("--format flag prints nothing, and exits 0, for a vendor with no launch fla
     assert.equal(r.status, 0);
     assert.equal(r.stdout, "");
   }
-  assert.equal(name(roster, "--seat", "okafor", "--format", "flag", "--vendor", "claude").stdout.trim(), "--name=hq-okafor");
+  assert.equal(
+    name(roster, "--seat", "okafor", "--format", "flag", "--vendor", "claude").stdout.trim(),
+    "--name=hq-okafor",
+  );
 });
 
 test("a seat that is not in the roster, or a roster with no desk, exits 4", () => {

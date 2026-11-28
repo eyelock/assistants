@@ -3,7 +3,15 @@
 // command, and syncs once for memory and work. With ynm the retire command is ynm's.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -27,12 +35,24 @@ function wake(memory, { args = ["hynde", "--format", "json"], end = false, remot
   try {
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
-    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     writeFileSync(join(dir, "wheelhouse.json"), JSON.stringify({ tasks: "beads", memory }));
     mkdirSync(join(dir, "skills", "roster", "assets"), { recursive: true });
-    writeFileSync(join(dir, "skills", "roster", "assets", "roster.json"), JSON.stringify({ seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." }], humans: [] }));
+    writeFileSync(
+      join(dir, "skills", "roster", "assets", "roster.json"),
+      JSON.stringify({
+        seats: [
+          { name: "Hynde", group: "workers", command: "hynde", harness: ".", mandate: "Build." },
+        ],
+        humans: [],
+      }),
+    );
     mkdirSync(join(dir, "bin"));
     const log = join(dir, "calls.log");
     const stubs = {
@@ -55,12 +75,17 @@ exit 0
       chmodSync(join(dir, "bin", name), 0o755);
     }
     spawnSync("git", ["init", "-q"], { cwd: dir });
-    if (remote) spawnSync("git", ["remote", "add", "origin", "https://example.invalid/x.git"], { cwd: dir });
-    const r = spawnSync("bash", [join(dir, "scripts", "wake.sh"), ...(end ? ["--end", "hynde"] : args)], {
-      cwd: dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}` },
-    });
+    if (remote)
+      spawnSync("git", ["remote", "add", "origin", "https://example.invalid/x.git"], { cwd: dir });
+    const r = spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), ...(end ? ["--end", "hynde"] : args)],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}` },
+      },
+    );
     return { r, calls: existsSync(log) ? readFileSync(log, "utf8") : "" };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -85,7 +110,10 @@ test("beads: the text block shows the facts and the memory.sh retire command", (
   const { r } = wake("beads", { args: ["hynde", "--format", "text", "--no-sync"] });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /## What the Wheelhouse knows\n\n?- Pull requests target develop\./);
-  assert.match(r.stdout, /`bash \S+\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/);
+  assert.match(
+    r.stdout,
+    /`bash \S+\/memory\.sh forget --id seat\/hynde\/handoff --reason "picked up"`/,
+  );
   assert.doesNotMatch(r.stdout, /ynm forget|bd forget/);
 });
 

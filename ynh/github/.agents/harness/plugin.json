@@ -8,11 +8,13 @@
   "includes": [
     {
       "git": "https://github.com/eyelock/assistants",
-      "path": "skills/triage"
+      "path": "skills/triage",
+      "ref": "@eyelock-assistants/triage-skills@0.2.0"
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/platforms",
+      "ref": "@eyelock-assistants/platform-skills@0.2.0",
       "pick": ["skills/github"]
     }
   ],

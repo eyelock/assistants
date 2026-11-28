@@ -5,5 +5,87 @@
   "description": "Build a Wheelhouse: a bespoke setup of named agent seats for one space, each a ynh harness, sharing a Beads work graph and ynm memory, with handoffs instead of exits and Kudos for work well done.",
   "author": {
     "name": "eyelock"
+  },
+  "sensors": {
+    "stale-claims": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/stale-claims.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "merged-not-closed": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/merged-not-closed.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "ready-without-ask": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/ready-without-ask.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "ask-for-merged": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/ask-for-merged.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "finished-uncut": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/finished-uncut.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "scope-after-open": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/scope-after-open.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "patrol-alive": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/patrol-alive.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    },
+    "guard-log": {
+      "category": "maintainability",
+      "tolerance": "advisory",
+      "source": {
+        "command": "\"$YNH_HARNESS_DIR/sensors/record/guard-log.sh\""
+      },
+      "output": {
+        "format": "text"
+      }
+    }
   }
 }

@@ -13,7 +13,15 @@ const wakeSrc = join(plugin, "skills", "wake", "scripts", "wake.sh");
 const memorySrc = join(plugin, "skills", "work-graph", "scripts", "memory.sh");
 
 const roster = {
-  seats: [{ name: "Hynde", group: "workers", command: "hynde", harness: "harnesses/hynde", mandate: "Roster fallback." }],
+  seats: [
+    {
+      name: "Hynde",
+      group: "workers",
+      command: "hynde",
+      harness: "harnesses/hynde",
+      mandate: "Roster fallback.",
+    },
+  ],
   humans: [{ name: "Rook", command: "rook", pronouns: "they/them", default: true }],
 };
 
@@ -26,9 +34,13 @@ function mandateFor(charter) {
     writeFileSync(join(dir, "harnesses", "hynde", "AGENTS.md"), charter);
     mkdirSync(join(dir, "scripts"));
     writeFileSync(join(dir, "scripts", "wake.sh"), readFileSync(wakeSrc));
-    for (const f of ["sync.sh", "render-wake.jq"]) writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
+    for (const f of ["sync.sh", "render-wake.jq"])
+      writeFileSync(join(dir, "scripts", f), readFileSync(wakeSrc.replace(/wake\.sh$/, f)));
     writeFileSync(join(dir, "scripts", "memory.sh"), readFileSync(memorySrc));
-    writeFileSync(join(dir, "scripts", "wheelhouse-lib.sh"), readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")));
+    writeFileSync(
+      join(dir, "scripts", "wheelhouse-lib.sh"),
+      readFileSync(join(plugin, "skills", "work-graph", "scripts", "wheelhouse-lib.sh")),
+    );
     mkdirSync(join(dir, "bin"));
     for (const [name, body] of [
       ["bd", "#!/bin/sh\necho '[]'\n"],
@@ -37,11 +49,15 @@ function mandateFor(charter) {
       writeFileSync(join(dir, "bin", name), body);
       chmodSync(join(dir, "bin", name), 0o755);
     }
-    const r = spawnSync("bash", [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", "json", "--no-sync"], {
-      cwd: dir,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
-    });
+    const r = spawnSync(
+      "bash",
+      [join(dir, "scripts", "wake.sh"), "--seat", "hynde", "--format", "json", "--no-sync"],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, BEADS_ACTOR: "" },
+      },
+    );
     assert.equal(r.status, 0, r.stderr);
     return JSON.parse(r.stdout).mandate;
   } finally {
@@ -50,8 +66,13 @@ function mandateFor(charter) {
 }
 
 test("a Mandate wrapped over several lines is read whole, up to the blank line", () => {
-  const m = mandateFor("# Hynde\n\n**Mandate:** Build one bead at a time: first one\n  assigned to you, else a ready one.\nTake only labelled beads.\n\n**You may:**\n- x\n");
-  assert.equal(m, "Build one bead at a time: first one assigned to you, else a ready one. Take only labelled beads.");
+  const m = mandateFor(
+    "# Hynde\n\n**Mandate:** Build one bead at a time: first one\n  assigned to you, else a ready one.\nTake only labelled beads.\n\n**You may:**\n- x\n",
+  );
+  assert.equal(
+    m,
+    "Build one bead at a time: first one assigned to you, else a ready one. Take only labelled beads.",
+  );
 });
 
 test("a one-line Mandate is unchanged", () => {

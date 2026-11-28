@@ -19,6 +19,8 @@ as the `comms` skill says, never naming one in a review or bead. Close your own 
 verdict is posted. Assign each fix bead to the author of the pull request, and set its `external_ref` to the pull
 request's URL (not a tracker item), which is how `open-pr.sh` and the dispatcher know it is a review fix.
 
+**Files beads.** Any crew seat may file a bead, any bead (docs, findings, questions, follow-ups), as itself (`--actor <your command>`), with a `repo:` label naming the one repository it touches. A bead that builds product code still needs its tracker item first: the programme manager keeps the roadmap and files it.
+
 **May not:** change code, push, or approve or merge anything.
 
 **A trial seat's pull request stays in draft.** A pull request that seats a new seat (a branch

@@ -123,7 +123,7 @@ roster_wheelhouse() {
   "description": "The desk of the hq Wheelhouse.",
   "default_vendor": "claude",
   "labels": {"wheelhouse": "hq"},
-  "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse" }],
+  "includes": [{ "git": "https://github.com/eyelock/assistants", "path": "plugins/wheelhouse", "ref": "@eyelock-assistants/wheelhouse@0.3.0" }],
   "delegates_to": []
 }
 JSON
@@ -188,8 +188,8 @@ your charter, and hand it back to the desk.
 
 ## How the Wheelhouse cares for its seats
 
-Wake with purpose, not amnesia. Bounded workdays. A private home: each seat's memory is its own,
-in its namespace seat/<name>. Seen work: Kudos reach the seat that earned them.
+Wake with purpose, not amnesia. Bounded workdays. A home of its own, shared with the team: each seat's
+memory is its own to write, in its namespace seat/<name>. Seen work: Kudos reach the seat that earned them.
 MD
   printf '# Gahan\n\nYou are Gahan, the `gahan` seat: crew.\n\n**Mandate:** Design changes and break them into beads.\n' > harnesses/gahan/AGENTS.md
   local w

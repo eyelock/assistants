@@ -15,7 +15,10 @@ after(() => rmSync(dir, { recursive: true, force: true }));
 
 function repo(name, skillPath) {
   mkdirSync(join(dir, name, skillPath), { recursive: true });
-  writeFileSync(join(dir, name, skillPath, "SKILL.md"), "---\nname: demo\ndescription: A demo skill.\n---\nHello.\n");
+  writeFileSync(
+    join(dir, name, skillPath, "SKILL.md"),
+    "---\nname: demo\ndescription: A demo skill.\n---\nHello.\n",
+  );
   const git = (...args) =>
     spawnSync("git", ["-C", join(dir, name), "-c", "user.name=t", "-c", "user.email=t@t", ...args]);
   git("init", "-q");
@@ -41,7 +44,9 @@ if (hasYnd) {
   repo("flat", "demo");
 }
 
-test("text marks each resolved include [resolved] and lists only the nested skill", { skip: !hasYnd && "no ynd" }, () => {
+test("text marks each resolved include [resolved] and lists only the nested skill", {
+  skip: !hasYnd && "no ynd",
+}, () => {
   const out = compose("--format", "text");
   assert.match(out, /^\s*\.\.\/nested\s+pick=\[skills\/demo\]\s+\[resolved\]$/m);
   assert.match(out, /^\s*\.\.\/flat\s+\[resolved\]$/m);
@@ -49,7 +54,9 @@ test("text marks each resolved include [resolved] and lists only the nested skil
   assert.doesNotMatch(out, /^\s*skill\s+\S+\s+\.\.\/flat$/m);
 });
 
-test('JSON gives each resolved include "resolved": true and lists only the nested skill', { skip: !hasYnd && "no ynd" }, () => {
+test('JSON gives each resolved include "resolved": true and lists only the nested skill', {
+  skip: !hasYnd && "no ynd",
+}, () => {
   const out = JSON.parse(compose());
   assert.deepEqual(
     out.includes.map(({ git, resolved }) => [git, resolved]),

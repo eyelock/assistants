@@ -1,7 +1,7 @@
 {
   "$schema": "https://eyelock.github.io/ynh/schema/plugin.schema.json",
   "name": "termq-dev",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Development harness for the TermQ project — Gitflow workflow with Swift/SwiftUI language support.",
   "default_vendor": "claude",
   "profiles": {
@@ -33,16 +33,19 @@
   "includes": [
     {
       "git": "https://github.com/eyelock/assistants",
-      "path": "plugins/gitflow"
+      "path": "plugins/gitflow",
+      "ref": "@eyelock-assistants/gitflow@0.3.0"
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/dev",
+      "ref": "@eyelock-assistants/dev-skills@0.2.0",
       "pick": ["skills/dev-quality", "skills/dev-review", "skills/skill-creator", "skills/gh-cli"]
     },
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "skills/tech",
+      "ref": "@eyelock-assistants/tech-skills@0.2.1",
       "pick": ["skills/swift-lang"]
     }
   ]

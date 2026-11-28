@@ -2,7 +2,7 @@
 // new script (or one a split leaves behind) cannot land with no test coverage. The tests run the
 // real scripts against stubs; this one only checks that each script is named.
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";

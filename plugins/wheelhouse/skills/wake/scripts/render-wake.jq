@@ -10,6 +10,7 @@
      else empty end),
   (if .session.state == "forced" then "**Forced start:** you took this seat over from \(.session.replaced.label)" + (if .session.replaced.started then " (started \(.session.replaced.started))" else "" end) + ". The session bead says so. Say so in your reply.\n"
    elif .session.state == "unknown" then "**Live-session check not made:** \(.session.why). Nothing stopped this start, so another session of you may be live: say so in your reply, and check before you change anything.\n"
+   elif .session.resumed == true then "**Hold taken back:** an earlier run of this seat in your session could not release its hold (bd was busy), so you took it back. Nothing was forced.\n"
    else empty end),
   (if .inbox == null then empty
    elif .inbox.error then "## For the humans\n\nThe inbox could not be read: \(.inbox.error). Say so when you reply; the doctor skill can help.\n"
@@ -55,14 +56,26 @@
       then (if ((.asks.errors // []) | length) > 0 then "None could be read.\n" else "No open asks.\n" end)
       else "Oldest first. An answered ask waits for its asker to close it; a return (kind return) waits for you to route it.\n\n" + (.asks.asks | map(ask) | join("\n")) + "\n" end)
    end),
+  (if .recordSensors == null then empty
+   elif .recordSensors.error then "## Record sensors\n\n\(.recordSensors.error): say so when you reply; don't say nothing was counted.\n"
+   elif .recordSensors.stale or (.recordSensors.lines | length) > 0 or (.recordSensors.errors | length) > 0
+   then "## Record sensors\n",
+     (if .recordSensors.stale then "**The patrol may be down:** these counts are \(.recordSensors.ageMinutes) minutes old, over twice its \(.recordSensors.intervalMinutes)-minute interval. Say so when you reply.\n" else empty end),
+     ((.recordSensors.lines | map("- \(.sensor): \(.count)" + (if .rose then " (rose from \(.previous))" else "" end)))
+       + (.recordSensors.errors | map("- \(.sensor): could not be counted (\(.error))")) | join("\n")) + "\n",
+     "Each count is the patrol's last read; the items are in .wheelhouse/record-sensors.json. Relay these to the human at the desk.\n"
+   else empty end),
   "## Who you are\n",
-  (if .firstWake
+  (if .memoryRead == false
+    then "**Memory couldn't be read** (ynm or Beads was slow or failed): your identity, handoff notes and Kudos are missing, not empty. Do not use the birth skill and do not write a new identity: you may be an established seat. Say so when you reply, and run `\($memsh) recall --seat \(.seat) --kind identity --limit 1` yourself, or ask the desk to check memory with the doctor skill, before relying on what follows.\n"
+  elif .firstWake
     then "This is your first session as \(.seat): your birth. Before anything else, use the birth skill: read your charter, meet the team, and write who you are, in your own words, pinned in your own namespace, seat/\(.seat).\n"
     else "\(.identity)\n" end),
   "## Your purpose\n", "\(.mandate) (\(.group))\n",
   "## Where you left off\n",
   (if .handoff
     then "\(.handoff)\n\nSay where you are picking up when you reply. Once you have, retire this note so it is not read twice: `\(retire(.handoffId; "picked up"))`.\n"
+    elif .memoryRead == false then "Not read: memory couldn't be read (see Who you are), so there may be notes you can't see.\n"
     else "No handoff notes: start fresh.\n" end),
   (if (.facts | length) == 0 then empty
     else "## What the Wheelhouse knows\n", (.facts | map("- " + (. | gsub("\n"; " / "))) | join("\n")) + "\n"

@@ -64,7 +64,9 @@ syncs what the session wrote: memory (`ynm sync`) and the work graph (`bd sync`)
 when there is no remote (with Beads, one `bd sync` reported for both). It syncs rather than only pushing: once another seat has pushed, a push
 alone is rejected until it merges. The two syncs run side by side and share one budget of 25
 seconds (`WHEELHOUSE_END_SYNC_SECS` changes it, to at most 28; the Dolt-remote check takes at most a
-third of it and the work sync gets what is left, so the whole stays inside it), because the session-end hook
+third of it and the work sync gets what is left, so the whole stays inside it). The budget is the
+most the syncs take in all, kill grace included: a sync that ignores SIGTERM is given SIGKILL
+`WL_KILL_GRACE` (2) seconds after its limit, so each limit is the budget less the grace, because the session-end hook
 (`"timeout": 30` in the templates and the doctor's fix) kills the script at 30 seconds, before it
 can print anything: keep the budget under the hook's timeout. It first releases the seat's session hold (above). It prints
 `{seat, session, push: {memory, work}}`, each `pushed`, `skipped`, `timeout` (a sync still running at the end of the budget) or `failed`, and, for the last two, an
@@ -81,7 +83,7 @@ bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind handof
 bash <skills>/work-graph/scripts/memory.sh recall --seat <command> --kind kudos --limit 5
 ```
 
-Each prints a JSON array, newest first, of `{id, kind, text, at, by, bead}`. Your close notes
+Each prints a JSON array, newest first, of `{id, kind, text, at, by, bead}`. A recall that fails or times out (it exits non-zero) means your memory couldn't be read: that is not an empty store, so don't treat it as "no identity yet" and don't use the `birth` skill; say so and retry. Only an empty array `[]` from a recall that succeeded means nothing was written. Your close notes
 are the newest three:
 
 ```bash
@@ -121,6 +123,12 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
   sessions apart is a short hash of the vendor's session id (Claude Code sets `CLAUDE_CODE_SESSION_ID`, checked in
   a live session; the id is never printed or written). A vendor with no session id (Codex, Copilot, OpenCode and
   Cursor today) gives no token, so each refused start adds one to a count for the seat in `TMPDIR`, and each `--end` with no token spends one and releases nothing; an `--end` that finds the count empty releases the hold. With the live session and N refused ones, the first N ends release nothing and only the last frees the hold, so no number of refused sessions can free a live one's hold. Chosen over "release whatever the seat holds", which lets a refused session free the live one's hold, and over one flag, which a second refused session's end would find spent. If the live session ends among the first N, the hold stays until a start is forced: the safe side.
+- **A release that cannot reach bd is retried, then owed.** The `--end` release retries `bd` until its budget (a third of
+  the end budget) is spent. A seat the desk runs as a subagent shares the desk's token, so if the release still failed
+  (`session: unknown`), `session.sh` left a note in `TMPDIR` that this token owes the seat a release, and the next
+  start of that seat by the same session, finding a hold with its own token and that note, takes the hold back
+  (`session.state: held, resumed: true`, and the block says **Hold taken back**) rather than being refused by its own
+  earlier run. Without the note, a hold with the same token is still refused: another subagent of the seat may be live.
 - **A crash leaves the hold.** Nothing lapses, so the next start is refused, naming the old session, until it is forced.
 - **`wake.sh --force` takes the hold over**: it reassigns the session bead (a `--force` on a bead another session holds)
   and comments which session it replaced; the block says **Forced start**. Only two parties may force: a human,
@@ -137,11 +145,12 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
 |---|---|
 | For the humans (the desk only) | the humans' inbox, from `<skills>/work-graph/scripts/inbox.sh show`: what seats asked of the human at the desk and of the default human, and the notes left for them |
 | Wake first (the desk only) | the roster's seats with the role `ci-watcher` and `releaser`, right after the inbox: "Wake first: <CI watcher> (open PRs and CI), <releaser> (release in hand: next on the route)". Absent when the roster has neither role. In the JSON it is `wakeFirst` |
+| Record sensors (the desk only) | the patrol's last record-sensor counts, from `.wheelhouse/record-sensors.json`: one line per sensor above zero (with "rose from N" when it rose), one for a sensor that could not be counted, and a warning when the counts are older than twice the patrol's interval. Absent when every count is zero and fresh, or when no patrol has run. In the JSON it is `recordSensors`. Relay it to the human at the desk |
 | Asks between seats (the desk only) | every open ask, from `<skills>/work-graph/scripts/ask.sh show --all`: kind, asker, answering seat, age and what it blocks, oldest first. Say so in your reply when they couldn't be read (never "no open asks"); route a return and chase an old one. Bounded by `WAKE_ASK_SECS` (30) |
 | What the Wheelhouse knows | the shared facts (`memory.sh recall --shared`), at most ten; shown when there are any |
-| Who you are | your identity, pinned in your namespace `seat/<command>` |
+| Who you are | your identity, pinned in your namespace `seat/<command>`; or, when your memory couldn't be read, **Memory couldn't be read** in its place |
 | Your purpose | the mandate in your charter |
-| Where you left off | your latest handoff notes |
+| Where you left off | your latest handoff notes; **Memory couldn't be read** when your memory couldn't be read |
 | What you have been thanked for | your Kudos |
 | Your record | the beads you closed most recently |
 | Your close notes | the two-line notes you wrote on your last three closes |
@@ -172,7 +181,8 @@ the claim, not bd's lease: nothing heartbeats it, no lease expires on it, and no
    start of the session, on its roster model (`<skills>/add-seat/scripts/model.sh --seat <command>`), or send it a message if it is
    already live, and ask for what its role is for: the CI watcher for the open pull requests and CI, the releaser for the release in
    hand. Relay both reports together with the inbox, and don't check GitHub yourself.
-1. **First session?** If the block says you have no identity yet, this is your birth: use the
+1. **Memory couldn't be read?** If the block says **Memory couldn't be read** (the JSON has `memoryRead: false`), your identity, handoff notes and Kudos are missing, not empty: say so in your reply, don't use the `birth` skill, and run the recalls under "If there is no wake script" yourself before deciding you have no identity.
+   **First session?** Otherwise, if the block says you have no identity yet, this is your birth: use the
    `birth` skill before anything else. It ends with your identity written in `seat/<command>`
    and kept in front of you (`memory.sh` pins it), so you see it every time you wake.
 2. **Who you are** is yours. If it no longer fits, change it (write it again with

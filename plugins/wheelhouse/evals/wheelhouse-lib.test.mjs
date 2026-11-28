@@ -2,13 +2,30 @@
 // library in bash and calls one helper, with stubs of bd and ynm where it calls them.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-const lib = join(dirname(fileURLToPath(import.meta.url)), "..", "skills", "work-graph", "scripts", "wheelhouse-lib.sh");
+const lib = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "work-graph",
+  "scripts",
+  "wheelhouse-lib.sh",
+);
 
 function scratch() {
   const dir = mkdtempSync(join(tmpdir(), "wheelhouse-lib-"));
@@ -55,11 +72,66 @@ test("limited gives up with 142 and kills the command's whole process group", ()
   }
 });
 
+test("limited sends SIGKILL to a command that ignores SIGTERM, leaving no orphan", () => {
+  const s = scratch();
+  try {
+    const pidfile = join(s.dir, "pid");
+    const began = Date.now();
+    const r = run(
+      s.dir,
+      `limited 1 sh -c 'trap "" TERM; (trap "" TERM; echo $$ > "${pidfile}"; while :; do sleep 1; done) & wait'`,
+      { env: { WL_KILL_GRACE: "1" } },
+    );
+    assert.equal(r.status, 142);
+    assert.ok(Date.now() - began < 10000, "gave up soon after the limit and the grace");
+    const pid = Number(readFileSync(pidfile, "utf8").trim());
+    const alive = spawnSync("kill", ["-0", String(pid)]).status === 0;
+    if (alive) spawnSync("kill", ["-9", String(pid)]);
+    assert.equal(alive, false, "the TERM-ignoring grandchild was killed");
+  } finally {
+    s.done();
+  }
+});
+
+test("limited still reaps the command at its limit when the caller's process group is killed", () => {
+  const s = scratch();
+  try {
+    const pidfile = join(s.dir, "pid");
+    // The caller runs as a job of its own (set -m), so TERM to its group is a TERM to the caller
+    // and its children, as the session-end hook's timeout is. The timer is outside that group
+    // and must still kill the TERM-ignoring command at the limit (3 s) plus the grace (1 s).
+    const r = run(
+      s.dir,
+      `set -m
+      ( limited 3 sh -c 'trap "" TERM; echo $$ > "${pidfile}"; while :; do sleep 1; done' ) >/dev/null 2>&1 &
+      caller=$!
+      sleep 1
+      kill -TERM -- -$caller 2>/dev/null
+      wait $caller 2>/dev/null
+      sleep 5`,
+      { env: { WL_KILL_GRACE: "1" } },
+    );
+    assert.equal(r.status, 0, r.stderr);
+    const pid = Number(readFileSync(pidfile, "utf8").trim());
+    const alive = spawnSync("kill", ["-0", String(pid)]).status === 0;
+    if (alive) spawnSync("kill", ["-9", String(pid)]);
+    assert.equal(alive, false, "the command did not outlive its limit after the caller was killed");
+  } finally {
+    s.done();
+  }
+});
+
 test("limited without perl runs the command unbounded and says so once", () => {
   const s = scratch();
   try {
-    for (const tool of ["sleep", "sh"]) symlinkSync(spawnSync("which", [tool], { encoding: "utf8" }).stdout.trim(), join(s.dir, "bin", tool));
-    const r = run(s.dir, "limited 5 sleep 0; limited 5 sleep 0; echo done", { path: join(s.dir, "bin") });
+    for (const tool of ["sleep", "sh"])
+      symlinkSync(
+        spawnSync("which", [tool], { encoding: "utf8" }).stdout.trim(),
+        join(s.dir, "bin", tool),
+      );
+    const r = run(s.dir, "limited 5 sleep 0; limited 5 sleep 0; echo done", {
+      path: join(s.dir, "bin"),
+    });
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /done/);
     assert.match(r.stderr, /perl is not installed, so 'sleep' runs with no time limit/);
@@ -91,7 +163,10 @@ test("bd_data and bd_first read a bare result and a {data} envelope the same way
       assert.equal(run(s.dir, "bd_data", { input: json }).stdout.trim(), '[{"id":"a"},{"id":"b"}]');
       assert.equal(run(s.dir, "bd_first", { input: json }).stdout.trim(), '{"id":"a"}');
     }
-    assert.equal(run(s.dir, "bd_first", { input: '{"data":{"id":"c"}}' }).stdout.trim(), '{"id":"c"}');
+    assert.equal(
+      run(s.dir, "bd_first", { input: '{"data":{"id":"c"}}' }).stdout.trim(),
+      '{"id":"c"}',
+    );
   } finally {
     s.done();
   }
@@ -100,8 +175,10 @@ test("bd_data and bd_first read a bare result and a {data} envelope the same way
 test("wl_valid_command takes lower-case letters, digits and hyphens, and nothing else", () => {
   const s = scratch();
   try {
-    for (const ok of ["gahan", "a1", "x-y"]) assert.equal(run(s.dir, `wl_valid_command '${ok}'`).status, 0, ok);
-    for (const bad of ["", "-x", "Gahan", "a b", "a.b", "a_b", "../x"]) assert.notEqual(run(s.dir, `wl_valid_command '${bad}'`).status, 0, bad);
+    for (const ok of ["gahan", "a1", "x-y"])
+      assert.equal(run(s.dir, `wl_valid_command '${ok}'`).status, 0, ok);
+    for (const bad of ["", "-x", "Gahan", "a b", "a.b", "a_b", "../x"])
+      assert.notEqual(run(s.dir, `wl_valid_command '${bad}'`).status, 0, bad);
   } finally {
     s.done();
   }
@@ -174,7 +251,11 @@ test("wl_identity_pinned reads the seat's own namespace from ynm, and returns 1 
   try {
     stub(s.dir, "ynm", 'echo \'[{"namespace":"seat/gahan","pinned":true}]\'');
     assert.equal(run(s.dir, "wl_identity_pinned ynm . gahan").stdout, "yes\n");
-    assert.equal(run(s.dir, "wl_identity_pinned ynm . eno").stdout, "no\n", "the namespace is the seat's own");
+    assert.equal(
+      run(s.dir, "wl_identity_pinned ynm . eno").stdout,
+      "no\n",
+      "the namespace is the seat's own",
+    );
     stub(s.dir, "ynm", "exit 1");
     assert.equal(run(s.dir, "wl_identity_pinned ynm . gahan").status, 1);
     assert.equal(run(s.dir, "wl_identity_pinned other . gahan").status, 1);
@@ -195,8 +276,15 @@ test("WL_JQ_MODELS resolves a seat's model from its tier, group default or per-v
         { command: "d", group: "crew" },
       ],
     };
-    const r = run(s.dir, `jq -c "$WL_JQ_MODELS"'[wl_model("claude") | [.seat, .model]]'`, { input: JSON.stringify(roster) });
-    assert.deepEqual(JSON.parse(r.stdout), [["a", "sonnet"], ["b", "big"], ["c", "haiku"], ["d", null]]);
+    const r = run(s.dir, `jq -c "$WL_JQ_MODELS"'[wl_model("claude") | [.seat, .model]]'`, {
+      input: JSON.stringify(roster),
+    });
+    assert.deepEqual(JSON.parse(r.stdout), [
+      ["a", "sonnet"],
+      ["b", "big"],
+      ["c", "haiku"],
+      ["d", null],
+    ]);
   } finally {
     s.done();
   }
@@ -211,10 +299,18 @@ test("every script finds the library from an installed seat layout of picked ski
     const skills = join(dirname(lib), "..", "..");
     const installed = join(dir, ".claude", "skills");
     const picked = ["wake", "work-graph", "add-seat", "doctor", "refresh", "patrol"];
-    for (const name of picked) cpSync(join(skills, name), join(installed, name), { recursive: true });
+    for (const name of picked)
+      cpSync(join(skills, name), join(installed, name), { recursive: true });
     const scripts = readdirSync(installed)
-      .flatMap((name) => readdirSync(join(installed, name, "scripts")).filter((f) => f.endsWith(".sh")).map((f) => join(installed, name, "scripts", f)))
-      .filter((f) => readFileSync(f, "utf8").includes("wheelhouse-lib.sh") && !f.endsWith("wheelhouse-lib.sh"));
+      .flatMap((name) =>
+        readdirSync(join(installed, name, "scripts"))
+          .filter((f) => f.endsWith(".sh"))
+          .map((f) => join(installed, name, "scripts", f)),
+      )
+      .filter(
+        (f) =>
+          readFileSync(f, "utf8").includes("wheelhouse-lib.sh") && !f.endsWith("wheelhouse-lib.sh"),
+      );
     assert.ok(scripts.length >= 10, `found ${scripts.length} scripts that source the library`);
     for (const script of scripts) {
       const r = spawnSync("/bin/bash", [script, "--help"], { cwd: dir, encoding: "utf8" });
@@ -226,9 +322,146 @@ test("every script finds the library from an installed seat layout of picked ski
     rmSync(join(installed, "doctor"), { recursive: true });
     rmSync(join(installed, "refresh"), { recursive: true });
     rmSync(join(installed, "patrol"), { recursive: true });
-    const wake = spawnSync("/bin/bash", [join(installed, "wake", "scripts", "wake.sh"), "--help"], { encoding: "utf8" });
+    const wake = spawnSync("/bin/bash", [join(installed, "wake", "scripts", "wake.sh"), "--help"], {
+      encoding: "utf8",
+    });
     assert.equal(wake.status, 0, wake.stderr);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// wheelhouse.json's keys: wl_conf reads each, wl_conf_problems names what is wrong and the fix.
+const withConf = (conf, fn) => {
+  const s = scratch();
+  try {
+    if (conf !== undefined)
+      writeFileSync(
+        join(s.dir, "wheelhouse.json"),
+        typeof conf === "string" ? conf : JSON.stringify(conf),
+      );
+    return fn(s.dir);
+  } finally {
+    s.done();
+  }
+};
+const conf = (dir, key) => run(dir, `wl_conf ${key} "${dir}"`);
+
+const FULL = {
+  memory: "beads",
+  tasks: "beads",
+  shared_checkouts: ["../ynh", "../ynm"],
+  protected_branches: ["main", "develop"],
+  sanctioned_force: [
+    { who: "reviewer", on: "review-fix bead held by its author" },
+    { who: "desk", on: "inbox bead", via: "inbox.sh close" },
+  ],
+  budgets: { constitution_words: 2671, charter_words: 1715 },
+  guards: { mode: "log", overrides: { "shared-checkout": "log" } },
+};
+
+test("wl_conf returns each key's value from the file", () => {
+  withConf(FULL, (dir) => {
+    for (const [key, value] of Object.entries(FULL)) {
+      const r = conf(dir, key);
+      assert.equal(r.status, 0, key);
+      assert.deepEqual(JSON.parse(r.stdout), value, key);
+    }
+  });
+});
+
+test("wl_conf gives each key's default when the file is missing", () => {
+  withConf(undefined, (dir) => {
+    const expected = {
+      memory: "ynm",
+      tasks: "beads",
+      shared_checkouts: [],
+      protected_branches: [],
+      sanctioned_force: [],
+      budgets: {},
+      guards: { mode: "block", overrides: {} },
+    };
+    for (const [key, value] of Object.entries(expected)) {
+      const r = conf(dir, key);
+      assert.equal(r.status, 0, key);
+      assert.deepEqual(JSON.parse(r.stdout), value, key);
+    }
+    assert.equal(run(dir, `wl_conf_problems "${dir}"`).status, 0);
+  });
+});
+
+test("wl_conf gives a key's default when the file lacks it, and guards keeps its mode with only overrides set", () => {
+  withConf({ guards: { overrides: { x: "log" } } }, (dir) => {
+    assert.deepEqual(JSON.parse(conf(dir, "protected_branches").stdout), []);
+    assert.deepEqual(JSON.parse(conf(dir, "guards").stdout), {
+      mode: "block",
+      overrides: { x: "log" },
+    });
+  });
+});
+
+test("wl_conf returns 2 for an unknown key and 1 for a file that is not an object", () => {
+  withConf(FULL, (dir) => assert.equal(conf(dir, "nope").status, 2));
+  withConf("[1]", (dir) => assert.equal(conf(dir, "budgets").status, 1));
+  withConf("{not json", (dir) => assert.equal(conf(dir, "budgets").status, 1));
+});
+
+test("wl_conf_problems passes a full file", () => {
+  withConf(FULL, (dir) => {
+    const r = run(dir, `wl_conf_problems "${dir}"`);
+    assert.equal(r.status, 0, r.stdout);
+    assert.equal(r.stdout, "");
+  });
+});
+
+test("wl_conf_problems names each bad key with how to fix it", () => {
+  const bad = {
+    colour: 1,
+    memory: "redis",
+    tasks: "jira",
+    shared_checkouts: [""],
+    protected_branches: "main",
+    sanctioned_force: [{ who: "desk" }],
+    budgets: { charter_words: -1 },
+    guards: { mode: "warn" },
+  };
+  withConf(bad, (dir) => {
+    const r = run(dir, `wl_conf_problems "${dir}"`);
+    assert.equal(r.status, 1);
+    const lines = r.stdout.trim().split("\n");
+    for (const key of [
+      "colour",
+      "memory",
+      "tasks",
+      "shared_checkouts",
+      "protected_branches",
+      "sanctioned_force",
+      "budgets",
+      "guards.mode",
+    ]) {
+      const line = lines.find((l) => l.startsWith(`${key}:`));
+      assert.ok(line, `a line for ${key}`);
+      assert.match(line, /Fix: /, key);
+    }
+  });
+});
+
+test("wl_conf_problems catches the other bad shapes", () => {
+  const cases = [
+    [{ budgets: { a: 1.5 } }, /^budgets:/],
+    [{ guards: { mode: "block", extra: 1 } }, /^guards:/],
+    [{ guards: { overrides: { x: "block" } } }, /^guards\.overrides:/],
+    [{ guards: { overrides: [] } }, /^guards\.overrides:/],
+    [{ sanctioned_force: [{ who: "a", on: "b", why: "c" }] }, /^sanctioned_force:/],
+    [{ sanctioned_force: "all" }, /^sanctioned_force:/],
+    ["[1]", /not a JSON object/],
+    ["{broken", /not a JSON object/],
+  ];
+  for (const [file, pattern] of cases) {
+    withConf(file, (dir) => {
+      const r = run(dir, `wl_conf_problems "${dir}"`);
+      assert.equal(r.status, 1, JSON.stringify(file));
+      assert.match(r.stdout, pattern, JSON.stringify(file));
+    });
   }
 });

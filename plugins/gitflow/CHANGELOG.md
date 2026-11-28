@@ -1,5 +1,11 @@
 # @eyelock-assistants/gitflow
 
+## 0.3.1
+
+### Patch Changes
+
+- [#332](https://github.com/eyelock/assistants/pull/332) [`ada5bd2`](https://github.com/eyelock/assistants/commit/ada5bd26cd8176dd22b9a70730f0ed9b61b509fa) Thanks [@eyelock](https://github.com/eyelock)! - The branching skill says, beside the rebase step, that a branch already pushed takes `develop` merged in, not a rebase and force-push.
+
 ## 0.3.0
 
 ### Minor Changes

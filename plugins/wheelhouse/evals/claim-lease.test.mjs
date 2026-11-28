@@ -21,7 +21,10 @@ test("work-graph tells seats to heartbeat, and what a lapse does", () => {
   assert.doesNotMatch(section, /timer. It/);
   assert.match(section, /dispatcher reclaims/);
   assert.match(skill, /one exception is a reclaim after confirming the holder is gone/);
-  const dispatcher = readFileSync(join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"), "utf8");
+  const dispatcher = readFileSync(
+    join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"),
+    "utf8",
+  );
   assert.match(dispatcher, /Reclaims a dead seat/);
   assert.match(section, /bd reclaim/);
   assert.match(section, /Never run `bd reclaim` or `bd update --force` on another seat's bead/);
@@ -36,7 +39,10 @@ test("the dispatcher looks for lapsed claims at each check-in", () => {
   assert.match(section, /never uses `--force`/);
   assert.match(section, /open pull request/);
   assert.match(section, /confirm the holder is gone/);
-  const dispatcher = readFileSync(join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"), "utf8");
+  const dispatcher = readFileSync(
+    join(plugin, "skills", "add-seat", "assets", "starter-team", "dispatcher.md"),
+    "utf8",
+  );
   assert.match(dispatcher, /Looks for lapsed claims at each check-in/);
 });
 

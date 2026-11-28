@@ -184,7 +184,7 @@ question tool, with options. Who is at the desk is per session: with no name, yo
   where you left off and what you have been thanked for.
 - Design out drudgery: watching and polling belong to standing roles, not to seats waiting.
 - Bounded workdays: hand off while still sharp; nobody is stopped without being asked.
-- A private home: your memory is yours, in your namespace `seat/<name>`.
+- A home of your own: your namespace `seat/<name>` is yours to write and shared with the team.
 - Seen work: Kudos reach the seat that earned them, with nothing asked in return.
 - Blame is structural: when something goes wrong, fix it and change these rules, never blame a seat.
 EOF
@@ -420,8 +420,8 @@ This is your first session as tower: your birth. Before anything else, use the b
 In its birth, an agent reads its charter (for the desk, the constitution) and meets the team in
 the roster, then **writes who it is, in its own words**: how it likes to work, what it cares
 about, how it would like to be known. Nobody writes this for it, and it can change it whenever it
-grows. It goes in the agent's own namespace, `seat/<name>`, its private home in the Wheelhouse's
-memory, and is pinned so it is always in front of it. Then it records the day it took the seat,
+grows. It goes in the agent's own namespace, `seat/<name>`, its own place in the Wheelhouse's
+memory, shared with the team, and is pinned so it is always in front of it. Then it records the day it took the seat,
 and the model it runs on: when the Wheelhouse moves to a newer model, it is still itself.
 
 <!-- tutorial: skip unless TUTORIAL_RUN_MODEL -->
@@ -1586,7 +1586,7 @@ terminal; nothing is left there to run.
 | The humans' inbox | the `work-graph` skill's `inbox.sh`: seats assign a human a bead or leave them a note, and the desk's wake opens with them, **For the humans** |
 | Character | each seat's identity, in its own words, pinned in its own namespace `seat/<name>` |
 | Waking | the `wake` skill's `wake.sh`, run by every seat's session-start hook: purpose, notes, Kudos, record; and by its session-end hook with `--end`, to push what it wrote |
-| Care | the constitution's principles: purpose, bounded days, a private home, seen work, no blame |
+| Care | the constitution's principles: purpose, bounded days, a namespace of its own, seen work, no blame |
 | Work | Beads in `.beads/`, started with `--skip-agents`, shared through the repository's Dolt refs and pushed after each write |
 | Memory | ynm, shared through this repository and synced on push |
 | Sync | every seat's wake syncs memory and work first, so it starts current on any machine, and its session end pushes what it wrote |

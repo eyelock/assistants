@@ -285,6 +285,7 @@ rules. In short:
     {
       "git": "https://github.com/eyelock/assistants",
       "path": "plugins/wheelhouse",
+      "ref": "@eyelock-assistants/wheelhouse@<version>",
       "pick": ["skills/add-seat", "skills/birth", "skills/comms", "skills/create-wheelhouse", "skills/diataxis", "skills/doctor", "skills/handoff", "skills/kudos", "skills/patrol", "skills/vet-skill", "skills/wake", "skills/work-graph"]
     },
     { "git": "../..", "pick": ["skills/roster"] }
@@ -302,6 +303,20 @@ rules. In short:
 }
 ```
 
+- `ref` pins the plugin to a release tag, so a seat runs the released plugin and a merge to
+  `develop` doesn't reach it on the next `ynh update`. The tag is `@eyelock-assistants/wheelhouse@<version>`.
+  Take the seat's `ref` from the desk's own include of the plugin, so every seat of a Wheelhouse
+  runs the same release:
+  - The desk has a `ref`: copy it exactly.
+  - The desk has none: the Wheelhouse floats on the plugin's default branch, and a new seat that
+    pinned a tag would run an older release than every seat already there. Leave the seat's `ref`
+    off too, to match the desk, and say in your reply that the Wheelhouse floats and that its
+    seats are pinned together, in one change, as the refresh skill's "Moving a pin" says. To pin
+    the new seat alone, ask the human first.
+  The version for a pin comes from the release tags:
+  `git ls-remote --tags https://github.com/eyelock/assistants '@eyelock-assistants/wheelhouse@*'`
+  (highest version, ignoring `^{}` lines). A pin moves by the human's own change: see the
+  refresh skill's "Moving a pin".
 - `"git": "../.."` is the Wheelhouse repository itself, resolved from the seat's folder, and
   `pick` takes the roster skill from it. Use `pick`, not `"path": "skills/roster"`: a `path`
   names a folder that holds `skills/`, so pointing it at the skill itself includes nothing.

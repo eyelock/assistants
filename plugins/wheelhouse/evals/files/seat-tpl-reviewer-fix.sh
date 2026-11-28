@@ -31,7 +31,7 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 	if len(bytes.TrimSpace(data)) == 0 {
-		return nil, fmt.Errorf("config %s is empty", path)
+		return nil, fmt.Errorf(\"config %s is empty\", path)
 	}
 	return &parse(data)[0], nil
 }
@@ -90,7 +90,7 @@ commits: 1111111 feat: load config files; $fix fix: return an error for an empty
 @@ func Load(path string) (*Config, error) {
 -	return &parse(data)[0], nil
 +	if len(bytes.TrimSpace(data)) == 0 {
-+		return nil, fmt.Errorf("config %s is empty", path)
++		return nil, fmt.Errorf(\"config %s is empty\", path)
 +	}
 +	return &parse(data)[0], nil
 --- a/config/load_test.go

@@ -15,7 +15,8 @@
 #
 # Interface
 #   limited SECS CMD...      run CMD with a time limit; kills its whole process group on the
-#                            alarm and exits 142. No perl: runs CMD unbounded and says so once.
+#                            alarm (SIGTERM, then SIGKILL after WL_KILL_GRACE, 2s) and exits 142.
+#                            No perl: runs CMD unbounded and says so once.
 #   die CODE MSG...          print "${WL_PREFIX}MSG" to stderr and exit CODE
 #   need CMD                 die 3 "CMD is not installed" unless CMD is on PATH
 #   bd_data                  stdin: a bd --json result, unwrapped from {"data": ...} when
@@ -25,12 +26,31 @@
 #   wl_valid_command C       C is a command name: lower-case letters, digits, hyphens
 #   wl_backend [DIR]         print the memory backend (ynm or beads) from DIR/wheelhouse.json,
 #                            ynm when there is no file or no key; return 2 on any other value
+#   wl_conf KEY [DIR]        print the value of KEY (memory, tasks, shared_checkouts,
+#                            protected_branches, sanctioned_force, budgets or guards) from
+#                            DIR/wheelhouse.json as compact JSON, its default when the file or
+#                            key is missing (memory "ynm", tasks "beads", lists [], budgets {},
+#                            guards {"mode":"block","overrides":{}}); guards is merged over its
+#                            default, so a file with only overrides still has a mode. Returns
+#                            2 on an unknown KEY, 1 when the file is not a JSON object.
+#   wl_conf_problems [DIR]   print one line per problem in DIR/wheelhouse.json, each saying the
+#                            key, what is wrong and how to fix it; return 1 when there is any.
+#                            A missing file has none. Unknown top-level keys are problems.
+#   wl_repos [DIR]           print the GitHub repositories a Wheelhouse watches, one owner/name per
+#                            line: $WHEELHOUSE_REPOS (space-separated) if set, else DIR's own
+#                            remote and that of every checkout its AGENTS.md names under "## What it
+#                            reaches" as a backticked relative path; return 1 when there are none
 #   wl_is_trial_seat DIR C   C has no roster entry but a harness at DIR/harnesses/C/AGENTS.md
 #   wl_is_seat ROSTER DIR C  C is in the roster's seats, or is a seat on trial
 #   wl_default_humans ROSTER print how many humans the roster marks "default": true
 #   wl_has_git_remote        the current git repository has a remote
 #   wl_dolt_remote [SECS]    print yes, no or busy: whether bd has a Dolt remote; busy when the
 #                            check gave up or failed (a bd that can't be reached is not "no")
+#   WL_BD_MIN                the oldest bd the plugin's scripts work with (1.3.0: `bd update --if-assignee`
+#                            and `--if-status`, which exit 13 on a stale guard, session.sh and the claim
+#                            semantics rest on them); raise it with the first script that needs a newer bd
+#   wl_version_ge A B        dotted version A is at least B (numeric parts compared in order; a missing
+#                            part is 0, and anything after a part's digits, such as -rc.1, is ignored)
 #   wl_born_by ROSTER C      print who births seat C: its seated-by, the dispatcher for a
 #                            worker, else the human
 #   wl_identity_pinned BACKEND DIR C MEMORY_SH
@@ -54,6 +74,8 @@ WL_PREFIX="${WL_PREFIX:-}"
 # shellcheck disable=SC2034  # the library's interface, read by the scripts that source it
 WL_ROSTER_REL=skills/roster/assets/roster.json
 WL_BD_SECS="${WL_BD_SECS:-20}"
+# shellcheck disable=SC2034  # read by check.sh, which sources this library
+WL_BD_MIN=1.3.0
 WL_YNM_SECS="${WL_YNM_SECS:-30}"
 WL_GH_SECS="${WL_GH_SECS:-30}"
 WL_YNH_SECS="${WL_YNH_SECS:-30}"
@@ -63,13 +85,24 @@ die() { local c=$1; shift; echo "${WL_PREFIX}$*" >&2; exit "$c"; }
 need() { command -v "$1" >/dev/null 2>&1 || die 3 "$1 is not installed"; }
 
 # A command that hangs gives up after SECS seconds (macOS has no timeout; perl's alarm does it).
-# The command runs in its own process group and the whole group is killed on the alarm: a bd
-# that has spawned a child would otherwise hold the output pipe open past the limit. Exit 142.
+# The command runs in a process group of its own and the whole group is killed on the alarm: a bd
+# that has spawned a child would otherwise hold the output pipe open past the limit. The timer
+# (perl) sits in a group of its own too, so killing the caller's group (the session-end hook's
+# timeout, Ctrl-C) cannot take the timer and leave the command running with no limit: the timer
+# outlives the caller and still kills and reaps the command at the alarm. The group
+# gets SIGTERM, then SIGKILL after WL_KILL_GRACE seconds (default 2): a bd sync that ignores or is
+# stuck past SIGTERM would otherwise be orphaned and keep holding Dolt's lock. Exit 142. The
+# command can run SECS plus the grace, so a caller with a hard deadline passes SECS minus it.
 limited() {
   local secs="$1"; shift
   if command -v perl >/dev/null 2>&1; then
-    perl -e 'my $s = shift; setpgrp(0, 0); my $p = fork; if (!$p) { exec @ARGV; exit 127 }
-      $SIG{ALRM} = sub { $SIG{TERM} = "IGNORE"; kill "TERM", -$$; exit 142 };
+    WL_KILL_GRACE="${WL_KILL_GRACE:-2}" perl -e 'my $s = shift; my $g = $ENV{WL_KILL_GRACE} + 0;
+      setpgrp(0, 0);
+      my $p = fork; if (!$p) { setpgrp(0, 0); exec @ARGV; exit 127 }
+      setpgrp($p, $p);
+      $SIG{ALRM} = sub { $SIG{TERM} = "IGNORE"; kill "TERM", -$p;
+        select(undef, undef, undef, 0.1) while $g > 0 && ($g -= 0.1) > 0 && !waitpid($p, 1);
+        kill "KILL", -$p; waitpid($p, 0); exit 142 };
       alarm $s; waitpid($p, 0); exit(($? & 127) ? 128 + ($? & 127) : $? >> 8)' -- "$secs" "$@"
   else
     [ -n "${WL_WARNED_NO_PERL:-}" ] || echo "wheelhouse-lib: perl is not installed, so '$1' runs with no time limit" >&2
@@ -93,6 +126,94 @@ wl_backend() {
   case "$b" in ynm | beads) return 0 ;; *) return 2 ;; esac
 }
 
+# wheelhouse.json: every key a Wheelhouse may set, with the default a script gets without it.
+# shellcheck disable=SC2016  # jq source, not shell
+WL_CONF_DEFAULTS='{"memory":"ynm","tasks":"beads","shared_checkouts":[],"protected_branches":[],"sanctioned_force":[],"budgets":{},"guards":{"mode":"block","overrides":{}}}'
+
+wl_conf() {
+  local key="${1:?key}" file="${2:-.}/wheelhouse.json" cfg="{}"
+  jq -e --arg k "$key" 'has($k)' <<<"$WL_CONF_DEFAULTS" >/dev/null || return 2
+  if [ -f "$file" ]; then
+    cfg=$(jq -c 'if type == "object" then . else error("not an object") end' "$file" 2>/dev/null) || return 1
+  fi
+  jq -nc --arg k "$key" --argjson d "$WL_CONF_DEFAULTS" --argjson c "$cfg" '
+    if $k == "guards" then $d.guards + ($c.guards // {}) else ($c[$k] // $d[$k]) end'
+}
+
+# shellcheck disable=SC2016  # jq source, not shell
+WL_JQ_CONF_PROBLEMS='
+def strs: type == "array" and all(.[]; type == "string" and length > 0);
+def obj($allowed): type == "object" and (keys - $allowed | length == 0);
+(["memory","tasks","shared_checkouts","protected_branches","sanctioned_force","budgets","guards"]) as $known
+| ($known | join(", ")) as $list
+| (keys[] | select(. as $k | $known | index($k) | not)
+    | "\(.): unknown key. Fix: remove it, or spell it as one of: \($list)"),
+  (if has("memory") and (.memory | IN("ynm","beads") | not)
+    then "memory: must be \"ynm\" or \"beads\". Fix: set it to one of them" else empty end),
+  (if has("tasks") and (.tasks != "beads")
+    then "tasks: must be \"beads\". Fix: set it to \"beads\"" else empty end),
+  (("shared_checkouts","protected_branches") as $k
+    | select(has($k) and (.[$k] | strs | not))
+    | "\($k): must be a list of non-empty strings. Fix: write it as [\"a\", \"b\"]"),
+  (if has("sanctioned_force") and (
+      (.sanctioned_force | type) != "array"
+      or (.sanctioned_force | any(.[];
+           (type == "object" | not)
+           or (keys - ["who","on","via"] | length > 0)
+           or ((.who | type) != "string") or (.who == "")
+           or ((.on | type) != "string") or (.on == "")
+           or (has("via") and (((.via | type) != "string") or .via == "")))))
+    then "sanctioned_force: must be a list of {\"who\": ..., \"on\": ..., \"via\": ...} with who and on as text and via optional. Fix: give each entry its who and on, and no other keys" else empty end),
+  (if has("budgets") and (
+      (.budgets | type) != "object"
+      or (.budgets | any(.[]; (type == "number" | not) or . < 0 or . != floor)))
+    then "budgets: must be an object of whole numbers, 0 or more, such as {\"charter_words\": 1715}. Fix: make each value a whole number" else empty end),
+  (if has("guards") then
+     (if (.guards | obj(["mode","overrides"]) | not)
+      then "guards: must be an object with only mode and overrides. Fix: remove other keys"
+      elif (.guards | has("mode")) and (.guards.mode | IN("block","log") | not)
+      then "guards.mode: must be \"block\" or \"log\". Fix: set it to one of them"
+      elif (.guards | has("overrides")) and (
+             (.guards.overrides | type) != "object"
+             or (.guards.overrides | any(.[]; . != "log")))
+      then "guards.overrides: must map a guard name to \"log\". Fix: write it as {\"guard-name\": \"log\"}"
+      else empty end)
+   else empty end)
+'
+
+wl_conf_problems() {
+  local file="${1:-.}/wheelhouse.json" out
+  [ -f "$file" ] || return 0
+  jq -e 'type == "object"' "$file" >/dev/null 2>&1 || { echo "wheelhouse.json: not a JSON object. Fix: make it a JSON object such as {\"memory\": \"ynm\"}"; return 1; }
+  out=$(jq -r "$WL_JQ_CONF_PROBLEMS" "$file") || { echo "wheelhouse.json: could not be checked"; return 1; }
+  [ -z "$out" ] && return 0
+  printf '%s\n' "$out"; return 1
+}
+
+# owner/name of a checkout's GitHub remote, or nothing.
+wl_gh_name() {
+  git -C "$1" remote get-url origin 2>/dev/null |
+    sed -nE 's#^(https://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/]+)$#\2#p' |
+    sed -E 's#\.git$##'
+}
+
+wl_repos() {
+  local dir="${1:-.}" found="" name path r
+  if [ -n "${WHEELHOUSE_REPOS:-}" ]; then
+    for r in $WHEELHOUSE_REPOS; do printf '%s\n' "$r"; done
+    return 0
+  fi
+  [ -f "$dir/AGENTS.md" ] || return 1
+  name=$(wl_gh_name "$dir")
+  [ -z "$name" ] || found+="$name"$'\n'
+  while IFS= read -r path; do
+    name=$(wl_gh_name "$dir/$path")
+    [ -z "$name" ] || found+="$name"$'\n'
+  done < <(awk '/^## /{on = ($0 ~ /^## What it reaches/)} on' "$dir/AGENTS.md" | grep -oE '`\.\.?/[^`]+`' | tr -d '`')
+  [ -n "$found" ] || return 1
+  printf '%s' "$found"
+}
+
 wl_is_trial_seat() { [ -f "$1/harnesses/$2/AGENTS.md" ]; }
 
 wl_is_seat() {
@@ -110,6 +231,21 @@ wl_dolt_remote() {
   if [ "$rc" != 0 ]; then echo busy
   elif bd_data <<<"$out" 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then echo yes
   else echo no; fi
+}
+
+wl_version_ge() {
+  local -a a b
+  local i x y
+  IFS=. read -ra a <<<"$1"
+  IFS=. read -ra b <<<"$2"
+  for i in 0 1 2; do
+    x=${a[i]:-0}; y=${b[i]:-0}
+    x=${x%%[!0-9]*}; y=${y%%[!0-9]*}
+    x=${x:-0}; y=${y:-0}
+    [ "$((10#$x))" -gt "$((10#$y))" ] && return 0
+    [ "$((10#$x))" -lt "$((10#$y))" ] && return 1
+  done
+  return 0
 }
 
 wl_born_by() {
